@@ -1,0 +1,56 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-default);
+  padding: 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 480px;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: 48px 40px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+}
+
+.iconWrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--success-500, #22c55e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.title { font-size: 26px; font-weight: 700; color: var(--text-primary); }
+.subtitle { font-size: 15px; color: var(--text-secondary); line-height: 1.6; }
+.note { font-size: 13px; color: var(--text-tertiary); line-height: 1.6; }
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-default);
+  width: 100%;
+  justify-content: center;
+}
+.logoMark {
+  width: 24px; height: 24px; border-radius: 6px;
+  background: var(--primary-600); color: #fff;
+  font-size: 12px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.logoText { font-size: 14px; font-weight: 600; color: var(--text-tertiary); }

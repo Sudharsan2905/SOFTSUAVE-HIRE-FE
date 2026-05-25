@@ -1,0 +1,82 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: var(--bg-default);
+  padding: 32px 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 640px;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: 40px;
+  box-shadow: var(--shadow-lg);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.logoMark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--primary-600);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.logoText { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+
+.title { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+.subtitle { font-size: 14px; color: var(--text-tertiary); margin-bottom: 28px; }
+
+.form { display: flex; flex-direction: column; gap: 16px; }
+
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.label { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+.select {
+  height: 40px;
+  padding: 0 12px;
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  width: 100%;
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+.select:focus { border-color: var(--primary-400); }
+.selectError { border-color: var(--error-500); }
+.fieldError { font-size: 12px; color: var(--error-600); }
+
+.error {
+  font-size: 13px;
+  color: var(--error-600);
+  background: var(--error-50);
+  border: 1px solid var(--error-200, #fecaca);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+.footer { margin-top: 20px; text-align: center; font-size: 13px; color: var(--text-secondary); }
+.link { color: var(--primary-600); font-weight: 500; text-decoration: none; }
+.link:hover { text-decoration: underline; }
+
+@media (max-width: 520px) {
+  .row { grid-template-columns: 1fr; }
+  .card { padding: 28px 20px; }
+}

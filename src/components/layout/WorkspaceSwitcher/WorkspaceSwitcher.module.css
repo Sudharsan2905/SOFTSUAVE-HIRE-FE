@@ -1,0 +1,180 @@
+.container { position: relative; }
+
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  gap: 8px;
+}
+.trigger:hover { background: rgba(255,255,255,0.08); }
+
+.triggerLeft { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+
+.wsIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.wsInfo { overflow: hidden; }
+.wsName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sidebar-text-active);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+.wsLabel { font-size: 10px; color: var(--sidebar-text); display: block; }
+
+.chevron { color: var(--sidebar-text); transition: transform var(--transition-fast); flex-shrink: 0; }
+.chevron.open { transform: rotate(180deg); }
+
+/* Popup */
+.popup {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  width: 240px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  z-index: var(--z-tooltip);
+  overflow: hidden;
+  animation: popIn 0.15s ease;
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.popupActions {
+  display: flex;
+  gap: 6px;
+  padding: 10px 10px 6px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-muted);
+  border: 1px solid var(--border-default);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.actionBtn:hover { background: var(--primary-50); color: var(--primary-700); border-color: var(--primary-200); }
+
+.wsList { max-height: 200px; overflow-y: auto; padding: 6px; }
+.noWs { font-size: 13px; color: var(--text-tertiary); text-align: center; padding: 16px; }
+
+.wsItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.wsItem:hover { background: var(--bg-muted); }
+.wsItemActive { background: var(--bg-active); color: var(--primary-700); }
+
+.wsItemIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.wsItemName { flex: 1; text-align: left; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wsCheckIcon { color: var(--primary-600); flex-shrink: 0; }
+
+.createBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary-600);
+  border-top: 1px solid var(--border-default);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.createBtn:hover { background: var(--bg-muted); }
+
+/* Invite */
+.inviteList { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
+.inviteItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-default);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.inviteItem:hover { border-color: var(--primary-300); background: var(--bg-active); }
+.inviteItemSelected { border-color: var(--primary-500); background: var(--bg-active); }
+
+.inviteAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.inviteInfo { flex: 1; overflow: hidden; }
+.inviteName { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.inviteEmail { font-size: 12px; color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.inviteCheck {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.inviteCheckSelected { background: var(--primary-600); border-color: var(--primary-600); color: #fff; }

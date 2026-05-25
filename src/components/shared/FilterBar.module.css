@@ -1,0 +1,30 @@
+.filterBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1; }
+.right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.viewToggle {
+  display: flex;
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.viewBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--text-tertiary);
+  background: var(--bg-surface);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.viewBtn:hover { color: var(--text-primary); background: var(--bg-muted); }
+.viewActive { color: var(--primary-600); background: var(--primary-50); }

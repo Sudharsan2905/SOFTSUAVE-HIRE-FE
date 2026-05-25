@@ -1,0 +1,125 @@
+.tableWrapper {
+  overflow-x: auto;
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1.5px solid var(--border-default);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-default);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr:hover { background: var(--bg-muted); }
+
+.candidateCell { display: flex; align-items: center; gap: 10px; }
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.candidateName { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.candidateEmail { font-size: 12px; color: var(--text-tertiary); margin-top: 1px; }
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: none;
+  border: none;
+}
+.actionBtn:hover { background: var(--bg-muted); color: var(--text-primary); }
+.reaccess:hover { background: var(--primary-50); color: var(--primary-600); }
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 80px 24px;
+  color: var(--text-tertiary);
+  font-size: 14px;
+  text-align: center;
+}
+
+.detailContent { display: flex; flex-direction: column; gap: 20px; }
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1.5px solid var(--border-default);
+}
+
+.malpracticeBox {
+  background: var(--error-50);
+  border: 1.5px solid var(--error-200, #fecaca);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+}
+.flagItem {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--error-700, #b91c1c);
+  padding: 3px 0;
+}
+
+.roundSection { }
+.answerItem {
+  padding: 8px 12px;
+  background: var(--bg-muted);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+}
+
+.screenshotGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+.screenshotBox {
+  background: var(--bg-muted);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
