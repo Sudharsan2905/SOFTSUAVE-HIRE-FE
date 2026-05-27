@@ -38,6 +38,31 @@
 
 .empty { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 80px 24px; color: var(--text-tertiary); font-size: 14px; }
 
+.lockedState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 100px 24px;
+  opacity: 0.45;
+  user-select: none;
+  pointer-events: none;
+}
+.lockedTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+.lockedDesc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-align: center;
+  max-width: 380px;
+  margin: 0;
+  line-height: 1.6;
+}
+
 /* Share */
 .shareCards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
 .shareCard {
