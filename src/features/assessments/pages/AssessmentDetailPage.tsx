@@ -13,11 +13,11 @@ import { api } from '@/utils/api';
 import { useDebounce } from '@/hooks/useDebounce';
 import { usePagination } from '@/hooks/usePagination';
 import { Submission, PaginationMeta, SortOrder } from '@/types';
-import { formatDateTime, getAvatarColor, getInitials, percentageBadgeColor } from '@/utils/helpers';
+import { formatDateTime, getAvatarColor, getInitials, getFullName, percentageBadgeColor } from '@/utils/helpers';
 import toast from 'react-hot-toast';
 
 interface SubmissionWithCandidate extends Submission {
-  candidate?: { name?: string; email?: string };
+  candidate?: { first_name?: string; last_name?: string; email?: string };
   score_percentage?: number;
 }
 
@@ -131,7 +131,7 @@ export default function AssessmentDetailPage() {
               </thead>
               <tbody>
                 {submissions.map((sub) => {
-                  const name = sub.candidate?.name || 'Unknown';
+                  const name = sub.candidate ? getFullName(sub.candidate as { first_name: string; last_name?: string }) : 'Unknown';
                   const pct = sub.score_percentage;
                   return (
                     <tr key={sub.id}>
@@ -192,11 +192,11 @@ export default function AssessmentDetailPage() {
         {selected && (
           <div className={styles.detailContent}>
             <div className={styles.detailHeader}>
-              <div className={styles.avatar} style={{ background: getAvatarColor(selected.candidate?.name || '') }}>
-                {getInitials(selected.candidate?.name || 'U')}
+              <div className={styles.avatar} style={{ background: getAvatarColor(selected.candidate ? getFullName(selected.candidate as { first_name: string; last_name?: string }) : '') }}>
+                {getInitials(selected.candidate ? getFullName(selected.candidate as { first_name: string; last_name?: string }) : 'U')}
               </div>
               <div>
-                <p style={{ fontWeight: 600, fontSize: 15 }}>{selected.candidate?.name}</p>
+                <p style={{ fontWeight: 600, fontSize: 15 }}>{selected.candidate ? getFullName(selected.candidate as { first_name: string; last_name?: string }) : ''}</p>
                 <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>{selected.candidate?.email}</p>
               </div>
               <StatusBadge status={selected.status} />

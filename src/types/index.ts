@@ -4,7 +4,8 @@ export type UserRole = 'super_admin' | 'admin' | 'candidate';
 
 export interface User {
   id: string;
-  name: string;
+  first_name: string;
+  last_name?: string;
   email: string;
   role: UserRole;
   is_active?: boolean;

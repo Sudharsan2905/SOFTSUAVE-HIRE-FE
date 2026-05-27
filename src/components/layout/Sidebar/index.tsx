@@ -9,7 +9,7 @@ import {
   IconQuestionBank, IconAssessment, IconLiveInterview,
   IconLogout, IconUsers, IconChevronLeft, IconChevronRight,
 } from "@/assets/icons";
-import { getInitials, getAvatarColor } from "@/utils/helpers";
+import { getInitials, getAvatarColor, getFullName } from "@/utils/helpers";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -44,9 +44,8 @@ export function Sidebar() {
     const saved = parseInt(localStorage.getItem(WIDTH_KEY) || '', 10);
     return isNaN(saved) ? DEFAULT_WIDTH : saved;
   });
-  const [hovered, setHovered] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [profileForm, setProfileForm] = useState({ name: '', password: '', workspace_id: '' });
+  const [profileForm, setProfileForm] = useState({ first_name: '', last_name: '', password: '', workspace_id: '' });
   const [saving, setSaving] = useState(false);
 
   const isDragging = useRef(false);
@@ -54,11 +53,8 @@ export function Sidebar() {
   const startWidth = useRef(0);
   const liveWidth = useRef(width);
 
-  // Hover temporarily expands the sidebar and shifts content (no overlay gap)
-  const effectiveWidth = collapsed && !hovered ? COLLAPSED_WIDTH : width;
-  const isVisuallyCollapsed = collapsed && !hovered;
+  const effectiveWidth = collapsed ? COLLAPSED_WIDTH : width;
 
-  // Sync CSS variable before paint to avoid layout flash
   useLayoutEffect(() => {
     document.documentElement.style.setProperty('--sidebar-width', `${effectiveWidth}px`);
   }, [effectiveWidth]);
@@ -102,7 +98,8 @@ export function Sidebar() {
 
   const openProfile = () => {
     setProfileForm({
-      name: user?.name || '',
+      first_name: user?.first_name || '',
+      last_name: user?.last_name || '',
       password: '',
       workspace_id: user?.workspaces?.find((w) => w.is_default)?.id || user?.workspaces?.[0]?.id || '',
     });
@@ -113,7 +110,8 @@ export function Sidebar() {
     setSaving(true);
     try {
       const payload: Record<string, string> = {};
-      if (profileForm.name && profileForm.name !== user?.name) payload.name = profileForm.name;
+      if (profileForm.first_name && profileForm.first_name !== user?.first_name) payload.first_name = profileForm.first_name;
+      if (profileForm.last_name !== (user?.last_name || '')) payload.last_name = profileForm.last_name;
       if (profileForm.password) payload.password = profileForm.password;
       if (!isSuperAdmin && profileForm.workspace_id) payload.workspace_id = profileForm.workspace_id;
       if (Object.keys(payload).length > 0) {
@@ -132,23 +130,22 @@ export function Sidebar() {
     navigate('/admin/login');
   };
 
-  const initials = user ? getInitials(user.name) : 'U';
-  const avatarColor = user ? getAvatarColor(user.name) : '#2563eb';
+  const fullName = user ? getFullName(user) : '';
+  const initials = fullName ? getInitials(fullName) : 'U';
+  const avatarColor = fullName ? getAvatarColor(fullName) : '#2563eb';
 
   return (
     <>
       <aside
-        className={`${styles.sidebar} ${isVisuallyCollapsed ? styles.collapsed : ''}`}
+        className={`${styles.sidebar} ${collapsed ? styles.collapsed : ''}`}
         style={{ width: effectiveWidth }}
-        onMouseEnter={() => { if (collapsed) setHovered(true); }}
-        onMouseLeave={() => setHovered(false)}
       >
         {/* Logo */}
         <div className={styles.logo}>
           <div className={styles.logoIcon}>
             <img src={logoUrl} width="26" height="26" alt="SoftSuave Hire" />
           </div>
-          {!isVisuallyCollapsed && <span className={styles.logoText}>SoftSuave Hire</span>}
+          {!collapsed && <span className={styles.logoText}>SoftSuave Hire</span>}
           <button className={styles.collapseBtn} onClick={toggleCollapse}
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
             {collapsed ? <IconChevronRight size={14} /> : <IconChevronLeft size={14} />}
@@ -156,7 +153,7 @@ export function Sidebar() {
         </div>
 
         {/* Workspace Switcher */}
-        {!isVisuallyCollapsed && (
+        {!collapsed && (
           <div className={styles.workspaceSection}>
             <WorkspaceSwitcher />
           </div>
@@ -166,26 +163,26 @@ export function Sidebar() {
         <div className={styles.navContainer}>
           {activeWorkspace && (
             <div className={styles.navSection}>
-              {!isVisuallyCollapsed && <p className={styles.navSectionLabel}>Workspace</p>}
+              {!collapsed && <p className={styles.navSectionLabel}>Workspace</p>}
               <NavLink
                 to={`/workspaces/${activeWorkspace.id}/assessments`}
                 className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
                 title="Assessments"
               >
                 <IconAssessment size={18} />
-                {!isVisuallyCollapsed && <span>Assessments</span>}
+                {!collapsed && <span>Assessments</span>}
               </NavLink>
             </div>
           )}
           <div className={styles.navSection}>
-            {!isVisuallyCollapsed && <p className={styles.navSectionLabel}>Global</p>}
+            {!collapsed && <p className={styles.navSectionLabel}>Global</p>}
             {adminNav.map((item) => (
               <NavLink key={item.to} to={item.to}
                 className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
                 title={item.label}
               >
                 {item.icon}
-                {!isVisuallyCollapsed && <span>{item.label}</span>}
+                {!collapsed && <span>{item.label}</span>}
               </NavLink>
             ))}
             {isSuperAdmin && (
@@ -194,25 +191,25 @@ export function Sidebar() {
                 title="Users"
               >
                 <IconUsers size={18} />
-                {!isVisuallyCollapsed && <span>Users</span>}
+                {!collapsed && <span>Users</span>}
               </NavLink>
             )}
           </div>
         </div>
 
         {/* Profile trigger */}
-        <button className={styles.profileTrigger} onClick={openProfile} title={isVisuallyCollapsed ? user?.name : undefined}>
+        <button className={styles.profileTrigger} onClick={openProfile} title={collapsed ? fullName : undefined}>
           <div className={styles.avatar} style={{ background: avatarColor }}>{initials}</div>
-          {!isVisuallyCollapsed && (
+          {!collapsed && (
             <div className={styles.userMeta}>
-              <p className={styles.userName}>{user?.name}</p>
+              <p className={styles.userName}>{fullName}</p>
               <p className={styles.userRole}>{user?.role?.replace('_', ' ')}</p>
             </div>
           )}
         </button>
 
         {/* Resize handle */}
-        {!collapsed && !hovered && <div className={styles.resizeHandle} onMouseDown={onResizeMouseDown} />}
+        {!collapsed && <div className={styles.resizeHandle} onMouseDown={onResizeMouseDown} />}
       </aside>
 
       {/* Profile Modal */}
@@ -233,11 +230,19 @@ export function Sidebar() {
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <Input
-            label="Name"
-            value={profileForm.name}
-            onChange={(e) => setProfileForm((p) => ({ ...p, name: e.target.value }))}
-          />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <Input
+              label="First Name"
+              value={profileForm.first_name}
+              onChange={(e) => setProfileForm((p) => ({ ...p, first_name: e.target.value }))}
+            />
+            <Input
+              label="Last Name"
+              placeholder="Optional"
+              value={profileForm.last_name}
+              onChange={(e) => setProfileForm((p) => ({ ...p, last_name: e.target.value }))}
+            />
+          </div>
           <Input
             label="New Password"
             type="password"

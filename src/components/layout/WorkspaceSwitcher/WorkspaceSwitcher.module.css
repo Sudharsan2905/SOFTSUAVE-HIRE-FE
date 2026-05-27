@@ -30,7 +30,7 @@
   flex-shrink: 0;
 }
 
-.wsInfo { overflow: hidden; }
+.wsNameRow { display: flex; align-items: center; gap: 4px; overflow: hidden; flex: 1; min-width: 0; }
 .wsName {
   font-size: 13px;
   font-weight: 600;
@@ -38,9 +38,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: block;
 }
-.wsLabel { font-size: 10px; color: var(--sidebar-text); display: block; }
+.triggerStar { color: var(--warning-500, #f59e0b); flex-shrink: 0; fill: var(--warning-500, #f59e0b); }
 
 .chevron { color: var(--sidebar-text); transition: transform var(--transition-fast); flex-shrink: 0; }
 .chevron.open { transform: rotate(180deg); }
@@ -49,8 +48,9 @@
 .popup {
   position: absolute;
   left: 0;
+  right: 0;
   top: calc(100% + 6px);
-  width: 240px;
+  min-width: 150px;
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
@@ -67,6 +67,7 @@
 
 .popupActions {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   padding: 10px 10px 6px;
   border-bottom: 1px solid var(--border-default);
@@ -120,7 +121,7 @@
 }
 .wsItemName { flex: 1; text-align: left; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wsCheckIcon { color: var(--primary-600); flex-shrink: 0; }
-.defaultStar { color: var(--warning-500, #f59e0b); flex-shrink: 0; }
+.defaultStar { color: var(--warning-500, #f59e0b); flex-shrink: 0; fill: var(--warning-500, #f59e0b); }
 
 .createBtn {
   display: flex;
@@ -137,6 +138,80 @@
 }
 .createBtn:hover { background: var(--bg-muted); }
 
+.settingsBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-default);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.settingsBtn:hover { background: var(--bg-muted); color: var(--text-primary); }
+
+/* Settings view */
+.wsSettingsView { display: flex; flex-direction: column; gap: 16px; }
+
+.wsSettingsHead {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  background: var(--bg-muted);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+}
+
+.wsSettingsField { display: flex; flex-direction: column; gap: 3px; }
+.wsSettingsName { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+.wsSettingsDesc { font-size: 13px; color: var(--text-secondary); }
+
+.wsSettingsSectionLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-tertiary);
+  margin-bottom: 4px;
+}
+.wsSettingsMeta { font-size: 13px; color: var(--text-secondary); }
+
+.wsSettingsActions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.wsSettingsBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+}
+.wsSettingsBtn:hover { background: var(--bg-muted); color: var(--text-primary); }
+
+.wsDefaultBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--warning-700, #b45309);
+  background: var(--warning-50, #fffbeb);
+  border: 1px solid var(--warning-200, #fde68a);
+}
+.wsDefaultBadgeStar { fill: var(--warning-500, #f59e0b); color: var(--warning-500, #f59e0b); }
+
 /* Invite */
 .inviteList { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
 .inviteItem {
@@ -149,8 +224,21 @@
   cursor: pointer;
   transition: all var(--transition-fast);
 }
-.inviteItem:hover { border-color: var(--primary-300); background: var(--bg-active); }
+.inviteItem:not(.inviteItemMember):hover { border-color: var(--primary-300); background: var(--bg-active); }
 .inviteItemSelected { border-color: var(--primary-500); background: var(--bg-active); }
+.inviteItemMember { background: var(--bg-muted); cursor: default; }
+
+.memberBadge {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--primary-700, #1d4ed8);
+  background: var(--primary-50, #eff6ff);
+  border: 1px solid var(--primary-100, #dbeafe);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 
 .inviteAvatar {
   width: 32px;

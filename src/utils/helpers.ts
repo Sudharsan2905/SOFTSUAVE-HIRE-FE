@@ -1,5 +1,9 @@
 import { AVATAR_COLORS } from '@/constants/app';
 
+export function getFullName(user: { first_name: string; last_name?: string }): string {
+  return [user.first_name, user.last_name].filter(Boolean).join(' ');
+}
+
 export function getAvatarColor(name: string): string {
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
