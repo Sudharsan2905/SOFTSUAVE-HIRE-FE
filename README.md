@@ -27,21 +27,21 @@ React + TypeScript frontend for the SoftSuave Hire interview platform.
 
 ## Tech Stack
 
-| Package               | Version  | Purpose                              |
-|-----------------------|----------|--------------------------------------|
-| React                 | 18.x     | UI framework                         |
-| TypeScript            | 5.x      | Static typing                        |
-| Vite                  | 5.x      | Build tool + dev server              |
-| Redux Toolkit         | 2.x      | Global state (auth, workspace, ui)   |
-| React Router DOM      | 6.x      | Client-side routing                  |
-| Axios                 | 1.x      | HTTP client with interceptors        |
-| react-hook-form       | 7.x      | Form state management                |
-| @hookform/resolvers   | 3.x      | Zod integration for forms            |
-| zod                   | 3.x      | Schema validation                    |
-| @dnd-kit/core         | 6.x      | Drag-and-drop (assessment wizard)    |
-| react-hot-toast       | 2.x      | Toast notifications                  |
-| date-fns              | 4.x      | Date formatting utilities            |
-| xlsx                  | 0.18.x   | Excel file parsing (question import) |
+| Package             | Version | Purpose                              |
+| ------------------- | ------- | ------------------------------------ |
+| React               | 18.x    | UI framework                         |
+| TypeScript          | 5.x     | Static typing                        |
+| Vite                | 5.x     | Build tool + dev server              |
+| Redux Toolkit       | 2.x     | Global state (auth, workspace, ui)   |
+| React Router DOM    | 6.x     | Client-side routing                  |
+| Axios               | 1.x     | HTTP client with interceptors        |
+| react-hook-form     | 7.x     | Form state management                |
+| @hookform/resolvers | 3.x     | Zod integration for forms            |
+| zod                 | 3.x     | Schema validation                    |
+| @dnd-kit/core       | 6.x     | Drag-and-drop (assessment wizard)    |
+| react-hot-toast     | 2.x     | Toast notifications                  |
+| date-fns            | 4.x     | Date formatting utilities            |
+| xlsx                | 0.18.x  | Excel file parsing (question import) |
 
 ---
 
@@ -158,10 +158,10 @@ npm run build
 Create a `.env` file in the project root:
 
 ```env
-VITE_API_BASE_URL=http://localhost:8000
+API_BASE_URL=http://localhost:8000
 ```
 
-The Vite proxy in `vite.config.ts` forwards all `/api` requests to `http://localhost:8000` in development, so `VITE_API_BASE_URL` is only needed for production builds.
+The Vite proxy in `vite.config.ts` forwards all `/api` requests to `http://localhost:8000` in development, so `API_BASE_URL` is only needed for production builds.
 
 ---
 
@@ -169,21 +169,21 @@ The Vite proxy in `vite.config.ts` forwards all `/api` requests to `http://local
 
 All routes are defined in `src/App.tsx`. Pages are **lazy-loaded** via `React.lazy` + `Suspense`.
 
-| Path | Component | Auth |
-|------|-----------|------|
-| `/admin/login` | AdminLoginPage | Public |
-| `/candidate/login` | CandidateLoginPage | Public |
-| `/candidate/register` | RegisterPage | Public |
-| `/assessment/:shareLink/instructions` | InstructionsPage | Candidate JWT |
-| `/assessment/:shareLink/interview/:submissionId` | InterviewPage | Candidate JWT |
-| `/assessment/:shareLink/completed` | CompletedPage | Public |
-| `/dashboard` | DashboardPage | Admin JWT |
-| `/question-bank` | CategoriesPage | Admin JWT |
-| `/question-bank/:categoryId` | QuestionsPage | Admin JWT |
-| `/workspaces/:workspaceId/assessments` | AssessmentsPage | Admin JWT |
-| `/workspaces/:workspaceId/assessments/:id` | AssessmentDetailPage | Admin JWT |
-| `/live-interviews` | LiveInterviewsPage | Admin JWT |
-| `/users` | UsersPage | Super Admin JWT |
+| Path                                             | Component            | Auth            |
+| ------------------------------------------------ | -------------------- | --------------- |
+| `/admin/login`                                   | AdminLoginPage       | Public          |
+| `/candidate/login`                               | CandidateLoginPage   | Public          |
+| `/candidate/register`                            | RegisterPage         | Public          |
+| `/assessment/:shareLink/instructions`            | InstructionsPage     | Candidate JWT   |
+| `/assessment/:shareLink/interview/:submissionId` | InterviewPage        | Candidate JWT   |
+| `/assessment/:shareLink/completed`               | CompletedPage        | Public          |
+| `/dashboard`                                     | DashboardPage        | Admin JWT       |
+| `/question-bank`                                 | CategoriesPage       | Admin JWT       |
+| `/question-bank/:categoryId`                     | QuestionsPage        | Admin JWT       |
+| `/workspaces/:workspaceId/assessments`           | AssessmentsPage      | Admin JWT       |
+| `/workspaces/:workspaceId/assessments/:id`       | AssessmentDetailPage | Admin JWT       |
+| `/live-interviews`                               | LiveInterviewsPage   | Admin JWT       |
+| `/users`                                         | UsersPage            | Super Admin JWT |
 
 **Guard:** `AdminLayout` redirects unauthenticated users to `/admin/login`. Candidates attempting admin routes are redirected to `/login`.
 
@@ -194,6 +194,7 @@ All routes are defined in `src/App.tsx`. Pages are **lazy-loaded** via `React.la
 ### Redux Slices
 
 #### `authSlice`
+
 Persists to `localStorage` with keys: `ssh_access`, `ssh_refresh`, `ssh_user`.
 
 ```ts
@@ -209,6 +210,7 @@ updateUser()      // update profile in state + storage
 ```
 
 #### `workspaceSlice`
+
 Active workspace persists to `localStorage` key `ssh_workspace`.
 
 ```ts
@@ -218,12 +220,13 @@ clearWorkspace()                // on logout
 ```
 
 #### `uiSlice`
+
 Theme persists to `localStorage` key `ssh_theme`. Initializes from storage or `prefers-color-scheme`.
 
 ```ts
-toggleTheme()         // light ↔ dark
-setTheme('light' | 'dark')
-toggleSidebar()
+toggleTheme(); // light ↔ dark
+setTheme("light" | "dark");
+toggleSidebar();
 ```
 
 ---
@@ -244,12 +247,13 @@ This prevents multiple simultaneous refresh calls (race condition handled via `i
 The theme is applied as a `data-theme` attribute on `<html>`:
 
 ```html
-<html data-theme="dark">
+<html data-theme="dark"></html>
 ```
 
 All visual tokens are CSS custom properties in `src/styles/variables.css`. Dark overrides are scoped under `[data-theme='dark']`. Components never hardcode colors — they always use `var(--token-name)`.
 
 **Key token groups:**
+
 - `--primary-{50..900}` — Blue scale
 - `--accent-{50..900}` — Purple scale
 - `--success/warning/error-{50..900}` — Semantic colors
@@ -263,6 +267,7 @@ All visual tokens are CSS custom properties in `src/styles/variables.css`. Dark 
 ## Component Library
 
 ### Button
+
 ```tsx
 <Button
   variant="primary | secondary | ghost | danger | success"
@@ -278,6 +283,7 @@ All visual tokens are CSS custom properties in `src/styles/variables.css`. Dark 
 ```
 
 ### Input / Textarea
+
 ```tsx
 <Input
   label="Field Label"
@@ -286,24 +292,31 @@ All visual tokens are CSS custom properties in `src/styles/variables.css`. Dark 
   hint="Helper text"
   leftElement={<Icon />}
   rightElement={<button />}
-  {...register('fieldName')}
+  {...register("fieldName")}
 />
 ```
 
 ### Modal
+
 ```tsx
 <Modal
   isOpen={bool}
   onClose={() => setShow(false)}
   title="Modal Title"
   size="sm | md | lg | xl | full"
-  footer={<><Button>Cancel</Button><Button>Confirm</Button></>}
+  footer={
+    <>
+      <Button>Cancel</Button>
+      <Button>Confirm</Button>
+    </>
+  }
 >
   {/* content */}
 </Modal>
 ```
 
 ### Badge
+
 ```tsx
 <Badge variant="default | primary | success | warning | error | info | accent">
   Text
@@ -314,15 +327,22 @@ All visual tokens are CSS custom properties in `src/styles/variables.css`. Dark 
 ```
 
 ### FilterBar
+
 ```tsx
 <FilterBar
-  search={search} onSearchChange={setSearch}
-  sortBy={sortBy} onSortByChange={setSortBy}
-  sortByOptions={[{ value: 'created_at', label: 'Date' }]}
-  sortOrder={sortOrder} onSortOrderToggle={toggleOrder}
-  viewMode={viewMode} onViewModeChange={setViewMode}
-  showComplexity onComplexityChange={setComplexity}
-  showQuestionType onQuestionTypeChange={setType}
+  search={search}
+  onSearchChange={setSearch}
+  sortBy={sortBy}
+  onSortByChange={setSortBy}
+  sortByOptions={[{ value: "created_at", label: "Date" }]}
+  sortOrder={sortOrder}
+  onSortOrderToggle={toggleOrder}
+  viewMode={viewMode}
+  onViewModeChange={setViewMode}
+  showComplexity
+  onComplexityChange={setComplexity}
+  showQuestionType
+  onQuestionTypeChange={setType}
 >
   {/* custom filters as children */}
 </FilterBar>
@@ -340,10 +360,11 @@ const icon = (paths: string[], viewBox = '0 0 24 24') =>
 ```
 
 Usage:
-```tsx
-import { IconPlus, IconEdit, IconDelete } from '@/assets/icons';
 
-<IconPlus size={16} color="var(--primary-600)" />
+```tsx
+import { IconPlus, IconEdit, IconDelete } from "@/assets/icons";
+
+<IconPlus size={16} color="var(--primary-600)" />;
 ```
 
 Available icons: `IconDashboard`, `IconWorkspace`, `IconQuestionBank`, `IconAssessment`, `IconLiveInterview`, `IconSearch`, `IconFilter`, `IconSort`, `IconSortAsc`, `IconSortDesc`, `IconGrid`, `IconList`, `IconPlus`, `IconEdit`, `IconDelete`, `IconClose`, `IconCheck`, `IconChevronDown/Right/Left/Up`, `IconSettings`, `IconUserPlus`, `IconUsers`, `IconShare`, `IconCopy`, `IconMail`, `IconDownload`, `IconUpload`, `IconEye`, `IconEyeOff`, `IconLock`, `IconLogout`, `IconMoon`, `IconSun`, `IconCamera`, `IconMic`, `IconMonitor`, `IconClone`, `IconRefresh`, `IconExternalLink`, `IconAlertTriangle`, `IconInfo`, `IconDrag`, `IconWhatsApp`, `IconBrain`, `IconFileExcel`, `IconTime`, `IconGlobe`, `IconShield`
@@ -353,6 +374,7 @@ Available icons: `IconDashboard`, `IconWorkspace`, `IconQuestionBank`, `IconAsse
 ## Feature Modules
 
 ### Question Bank
+
 - `CategoriesPage` — CRUD for categories. Each category navigates to its `QuestionsPage`.
 - `QuestionsPage` — CRUD for questions. Three creation modes:
   - **Manual** — form with type (MCQ single / MCQ multi / Essay), complexity, options with correct flag
@@ -360,6 +382,7 @@ Available icons: `IconDashboard`, `IconWorkspace`, `IconQuestionBank`, `IconAsse
   - **Excel Import** — 2-step: upload `.xlsx` → extract column names → map columns to fields (with defaults), import
 
 ### Assessments
+
 - `AssessmentsPage` — Lists assessments for the active workspace. Share via copy/email/WhatsApp. Clone and delete.
 - **Create Wizard** (2 steps):
   - Step 1: Name, description, rounds (add/remove, question count + duration per round), mode toggle, monitoring config
@@ -367,12 +390,14 @@ Available icons: `IconDashboard`, `IconWorkspace`, `IconQuestionBank`, `IconAsse
 - `AssessmentDetailPage` — Submissions table: candidate name/email, status badge, score %, round, start time, view detail, re-access button. Export button downloads `.xlsx`.
 
 ### Live Interviews
+
 - Polls `GET /api/candidate/live-interviews` every 15 seconds.
 - Cards show: live pulse indicator, candidate name/email, assessment name, monitoring badge, current round, screenshot count.
 - Monitoring sessions show a camera icon placeholder; normal sessions show an initials avatar.
 - Click card → detail modal with screenshot timestamps.
 
 ### Users (Super Admin only)
+
 - Lists all admin users (role: admin or super_admin).
 - Create new admin users with name, email, temporary password.
 - Only rendered in sidebar for `super_admin` role.
@@ -414,18 +439,22 @@ Available icons: `IconDashboard`, `IconWorkspace`, `IconQuestionBank`, `IconAsse
 `src/utils/api.ts` exports a configured Axios instance. Always import this, never use raw `axios`:
 
 ```ts
-import { api } from '@/utils/api';
+import { api } from "@/utils/api";
 
-const { data } = await api.get('/api/questions/categories');
-const { data } = await api.post('/api/questions/categories', { name, description });
+const { data } = await api.get("/api/questions/categories");
+const { data } = await api.post("/api/questions/categories", {
+  name,
+  description,
+});
 const { data } = await api.put(`/api/questions/categories/${id}`, form);
 await api.delete(`/api/questions/categories/${id}`);
 
 // File download
-const res = await api.get('/api/...export', { responseType: 'blob' });
+const res = await api.get("/api/...export", { responseType: "blob" });
 ```
 
 All API responses follow the shape:
+
 ```ts
 { success: boolean, message: string, data: T }
 ```
@@ -437,21 +466,27 @@ Error responses additionally include `detail` for debugging.
 ## Hooks
 
 ### `useDebounce<T>(value: T, delay: number): T`
+
 Returns a debounced copy of `value`. Used for search inputs to avoid firing an API call on every keystroke.
 
 ### `usePagination(initialPageSize?)`
+
 ```ts
 const { page, pageSize, goToPage, reset, changePageSize } = usePagination();
 ```
+
 - `goToPage(n)` — navigate to page n
 - `reset()` — go back to page 1 (call when filters change)
 - `changePageSize(n)` — updates page size + resets to page 1
 
 ### `useApi<T>(url, options)`
+
 Generic fetch hook with AbortController. Cancels the previous in-flight request when dependencies change, preventing stale responses from overwriting newer ones.
 
 ```ts
-const { data, isLoading, error, refetch } = useApi<MyType[]>('/api/endpoint', { immediate: true });
+const { data, isLoading, error, refetch } = useApi<MyType[]>("/api/endpoint", {
+  immediate: true,
+});
 ```
 
 ---
@@ -467,6 +502,7 @@ const { data, isLoading, error, refetch } = useApi<MyType[]>('/api/endpoint', { 
   - Desktop: 1024px+
 
 ### CSS Variable Naming Pattern
+
 ```
 --{category}-{scale}
 --primary-600        → main brand blue
@@ -494,9 +530,9 @@ const { data, isLoading, error, refetch } = useApi<MyType[]>('/api/endpoint', { 
 
 ## Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start Vite dev server on port 5173 |
-| `npm run build` | Type-check + build to `dist/` |
-| `npm run preview` | Preview production build locally |
-| `npm run lint` | Run ESLint on all `.ts`/`.tsx` files |
+| Command           | Description                          |
+| ----------------- | ------------------------------------ |
+| `npm run dev`     | Start Vite dev server on port 5173   |
+| `npm run build`   | Type-check + build to `dist/`        |
+| `npm run preview` | Preview production build locally     |
+| `npm run lint`    | Run ESLint on all `.ts`/`.tsx` files |
