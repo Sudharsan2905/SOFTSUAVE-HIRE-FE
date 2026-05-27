@@ -12,7 +12,8 @@
 
 .content {
   padding: 28px 32px;
-  max-width: 1400px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 1024px) {

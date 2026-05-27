@@ -1,5 +1,4 @@
 .sidebar {
-  width: var(--sidebar-width);
   height: 100vh;
   position: fixed;
   left: 0;
@@ -8,17 +7,22 @@
   border-right: 1px solid var(--sidebar-border);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   z-index: var(--z-sidebar);
   flex-shrink: 0;
+  transition: width 0.18s ease;
+  user-select: none;
+  /* No overflow: hidden — lets the workspace popup escape the sidebar bounds */
 }
 
+/* ── Logo ── */
 .logo {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 20px 16px 16px;
+  padding: 18px 12px 14px;
   border-bottom: 1px solid var(--sidebar-border);
+  min-height: 60px;
+  overflow: hidden;
 }
 
 .logoIcon { display: flex; align-items: center; flex-shrink: 0; }
@@ -28,18 +32,39 @@
   font-weight: 700;
   color: var(--sidebar-text-active);
   letter-spacing: -0.02em;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
+.collapseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  color: var(--sidebar-text);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.collapseBtn:hover { background: var(--sidebar-item-hover); color: var(--sidebar-text-active); }
+
+/* Collapsed: center the toggle */
+.collapsed .logo { justify-content: center; gap: 0; }
+.collapsed .collapseBtn { margin-left: 0; margin-top: 2px; }
+
+/* ── Workspace section ── */
 .workspaceSection {
   padding: 12px 10px;
   border-bottom: 1px solid var(--sidebar-border);
 }
 
-.navSection {
-  padding: 8px 10px;
-  flex: 1;
-  overflow-y: auto;
-}
+/* ── Nav ── */
+.navContainer { flex: 1; overflow-y: auto; overflow-x: hidden; }
+
+.navSection { padding: 8px 10px; overflow: hidden; }
 
 .navSectionLabel {
   font-size: 10px;
@@ -49,6 +74,7 @@
   color: var(--sidebar-text);
   padding: 8px 8px 4px;
   opacity: 0.6;
+  white-space: nowrap;
 }
 
 .navItem {
@@ -63,26 +89,32 @@
   transition: all var(--transition-fast);
   text-decoration: none;
   margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 .navItem:hover { background: var(--sidebar-item-hover); color: var(--sidebar-text-active); text-decoration: none; }
 .navItem.active { background: var(--sidebar-item-active); color: var(--primary-400); }
 
-.userArea {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 12px 16px;
-  border-top: 1px solid var(--sidebar-border);
-  gap: 8px;
-}
+/* Collapsed nav: center icons */
+.collapsed .navSection { padding: 8px 6px; }
+.collapsed .navItem { justify-content: center; padding: 10px; gap: 0; }
 
-.userInfo {
+/* ── Profile trigger ── */
+.profileTrigger {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 12px 12px 16px;
+  border-top: 1px solid var(--sidebar-border);
+  width: 100%;
+  text-align: left;
+  transition: background var(--transition-fast);
   overflow: hidden;
-  flex: 1;
+  cursor: pointer;
 }
+.profileTrigger:hover { background: var(--sidebar-item-hover); }
+
+.collapsed .profileTrigger { justify-content: center; padding: 12px 0 16px; }
 
 .avatar {
   width: 34px;
@@ -97,7 +129,7 @@
   flex-shrink: 0;
 }
 
-.userMeta { overflow: hidden; }
+.userMeta { overflow: hidden; flex: 1; min-width: 0; }
 .userName {
   font-size: 13px;
   font-weight: 600;
@@ -112,18 +144,18 @@
   text-transform: capitalize;
 }
 
-.logoutBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-md);
-  color: var(--sidebar-text);
-  transition: all var(--transition-fast);
-  flex-shrink: 0;
+/* ── Resize handle ── */
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+  transition: background 0.15s;
 }
-.logoutBtn:hover { background: rgba(239,68,68,0.15); color: #f87171; }
+.resizeHandle:hover { background: var(--primary-400); opacity: 0.35; }
 
 @media (max-width: 768px) {
   .sidebar { transform: translateX(-100%); }
