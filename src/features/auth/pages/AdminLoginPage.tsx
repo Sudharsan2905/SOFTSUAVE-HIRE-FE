@@ -9,6 +9,7 @@ import { adminLogin } from '@/store/slices/authSlice';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { IconMail, IconLock, IconEye, IconEyeOff } from '@/assets/icons';
+import logoUrl from '@/assets/favicon.svg';
 import { useState } from 'react';
 
 const schema = z.object({
@@ -29,7 +30,7 @@ export default function AdminLoginPage() {
   });
 
   useEffect(() => {
-    if (isAuthenticated) navigate('/dashboard', { replace: true });
+    if (isAuthenticated) navigate('/question-bank', { replace: true });
   }, [isAuthenticated, navigate]);
 
   const onSubmit = (data: FormData) => {
@@ -41,10 +42,7 @@ export default function AdminLoginPage() {
       <div className={styles.card}>
         <div className={styles.logoArea}>
           <div className={styles.logoIcon}>
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-              <rect width="36" height="36" rx="10" fill="#2563EB" />
-              <path d="M10 18h16M18 10l8 8-8 8" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <img src={logoUrl} width="48" height="48" alt="SoftSuave Hire" />
           </div>
           <h1 className={styles.appName}>SoftSuave Hire</h1>
           <p className={styles.tagline}>Admin Portal</p>
@@ -54,7 +52,7 @@ export default function AdminLoginPage() {
           <Input
             label="Email Address"
             type="email"
-            placeholder="admin@softsuave.com"
+            placeholder="Enter email"
             leftElement={<IconMail size={15} />}
             error={errors.email?.message}
             {...register('email')}
