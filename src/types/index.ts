@@ -7,6 +7,8 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  is_active?: boolean;
+  workspaces?: WorkspaceRef[];
   created_at: string;
   updated_at: string;
   profile?: CandidateProfile;
@@ -34,7 +36,14 @@ export interface AuthTokens {
 
 export interface WorkspaceMember {
   user_id: string;
+  email?: string;
   role: UserRole;
+}
+
+export interface WorkspaceRef {
+  id: string;
+  name: string;
+  is_default: boolean;
 }
 
 export interface Workspace {

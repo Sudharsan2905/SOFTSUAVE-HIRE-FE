@@ -1,12 +1,12 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { store } from '@/store';
-import { logout, setTokens } from '@/store/slices/authSlice';
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { store } from "@/store";
+import { logout, setTokens } from "@/store/slices/authSlice";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const BASE_URL = import.meta.env.API_BASE_URL || "http://localhost:8000";
 
 export const api = axios.create({
   baseURL: BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { "Content-Type": "application/json" },
   timeout: 15000,
 });
 
@@ -19,7 +19,10 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 });
 
 let isRefreshing = false;
-let failedQueue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = [];
+let failedQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (err: unknown) => void;
+}> = [];
 
 const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((p) => (error ? p.reject(error) : p.resolve(token!)));
@@ -29,7 +32,9 @@ const processQueue = (error: unknown, token: string | null = null) => {
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const original = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
     if (error.response?.status === 401 && !original._retry) {
       if (isRefreshing) {
@@ -72,5 +77,5 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
