@@ -7,13 +7,13 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input, Textarea } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Toggle } from '@/components/ui/Toggle';
 import { Pagination } from '@/components/ui/Pagination';
 import { Badge } from '@/components/ui/Badge';
 import { ComplexityBadge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
+import { RichText } from '@/components/ui/RichText';
 import {
-  IconPlus, IconEdit, IconDelete, IconBrain, IconFileExcel,
+  IconPlus, IconEdit, IconDelete, IconSparkles, IconFileExcel,
   IconChevronLeft, IconChevronRight,
 } from '@/assets/icons';
 import { api } from '@/utils/api';
@@ -29,7 +29,23 @@ const SORT_OPTIONS = [
   { value: 'complexity', label: 'Complexity' },
 ];
 
-type CreationMode = 'manual' | 'bulk' | 'ai' | 'excel';
+type QuestionForm = {
+  _key: string;
+  question_text: string;
+  question_type: QuestionType;
+  complexity: Complexity;
+  options: { id: string; text: string; is_correct: boolean }[];
+  correct_answer: string;
+};
+
+const newBlankForm = (): QuestionForm => ({
+  _key: crypto.randomUUID(),
+  question_text: '',
+  question_type: 'mcq_single',
+  complexity: 'medium',
+  options: Array.from({ length: 4 }, () => ({ id: crypto.randomUUID(), text: '', is_correct: false })),
+  correct_answer: '',
+});
 
 export default function QuestionsPage() {
   const { categoryId } = useParams<{ categoryId: string }>();
@@ -50,26 +66,12 @@ export default function QuestionsPage() {
   const [showExcel, setShowExcel] = useState(false);
   const [selected, setSelected] = useState<Question | null>(null);
   const [saving, setSaving] = useState(false);
-  const [excelColumns, setExcelColumns] = useState<string[]>([]);
   const [excelFile, setExcelFile] = useState<File | null>(null);
-  const [excelMapping, setExcelMapping] = useState<Record<string, string>>({});
-  const [excelStep, setExcelStep] = useState<'upload' | 'map'>('upload');
   const fileRef = useRef<HTMLInputElement>(null);
   const { page, pageSize, goToPage, reset } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
 
-  const [form, setForm] = useState({
-    question_text: '',
-    question_type: 'mcq_single' as QuestionType,
-    complexity: 'medium' as Complexity,
-    options: [
-      { id: crypto.randomUUID(), text: '', is_correct: false },
-      { id: crypto.randomUUID(), text: '', is_correct: false },
-      { id: crypto.randomUUID(), text: '', is_correct: false },
-      { id: crypto.randomUUID(), text: '', is_correct: false },
-    ],
-    correct_answer: '',
-  });
+  const [forms, setForms] = useState<QuestionForm[]>([newBlankForm()]);
 
   const [aiForm, setAiForm] = useState({
     topic: '',
@@ -111,34 +113,46 @@ export default function QuestionsPage() {
   useEffect(() => { fetchQuestions(); }, [fetchQuestions]);
   useEffect(() => { reset(); }, [debouncedSearch, complexity, questionType, sortBy, sortOrder]);
 
-  const resetForm = () => setForm({
-    question_text: '',
-    question_type: 'mcq_single',
-    complexity: 'medium',
-    options: Array.from({ length: 4 }, () => ({ id: crypto.randomUUID(), text: '', is_correct: false })),
-    correct_answer: '',
-  });
+  const resetForms = () => setForms([newBlankForm()]);
 
-  const handleSaveQuestion = async () => {
+  const updateForm = (idx: number, patch: Partial<QuestionForm>) => {
+    setForms((prev) => prev.map((f, i) => i === idx ? { ...f, ...patch } : f));
+  };
+
+  const updateOption = (formIdx: number, optIdx: number, patch: Partial<{ text: string; is_correct: boolean }>) => {
+    setForms((prev) => prev.map((f, i) => {
+      if (i !== formIdx) return f;
+      return { ...f, options: f.options.map((o, j) => j === optIdx ? { ...o, ...patch } : o) };
+    }));
+  };
+
+  const handleSaveQuestions = async () => {
     setSaving(true);
     try {
-      const payload = {
-        question_text: form.question_text,
-        question_type: form.question_type,
-        complexity: form.complexity,
-        options: form.question_type !== 'essay' ? form.options.filter(o => o.text) : [],
-        correct_answer: form.question_type === 'essay' ? form.correct_answer : undefined,
-      };
-
       if (selected) {
+        const f = forms[0];
+        const payload = {
+          question_text: f.question_text,
+          question_type: f.question_type,
+          complexity: f.complexity,
+          options: f.question_type !== 'essay' ? f.options.filter((o) => o.text) : [],
+          correct_answer: f.question_type === 'essay' ? f.correct_answer : undefined,
+        };
         await api.put(`/api/questions/${selected.id}`, payload);
         toast.success('Question updated');
       } else {
-        await api.post(`/api/questions/categories/${categoryId}/questions`, payload);
-        toast.success('Question created');
+        const questions = forms.map((f) => ({
+          question_text: f.question_text,
+          question_type: f.question_type,
+          complexity: f.complexity,
+          options: f.question_type !== 'essay' ? f.options.filter((o) => o.text) : [],
+          correct_answer: f.question_type === 'essay' ? f.correct_answer : undefined,
+        }));
+        const { data } = await api.post(`/api/questions/categories/${categoryId}/bulk`, { questions });
+        toast.success(`${data.data?.created || 0} question(s) created`);
       }
       setShowCreate(false);
-      resetForm();
+      resetForms();
       setSelected(null);
       fetchQuestions();
     } catch { toast.error('Failed to save question'); }
@@ -168,27 +182,11 @@ export default function QuestionsPage() {
     finally { setSaving(false); }
   };
 
-  const handleExcelUpload = async (file: File) => {
-    setExcelFile(file);
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      const { data } = await api.post(
-        `/api/questions/categories/${categoryId}/excel-columns`,
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
-      setExcelColumns(data.data?.columns || []);
-      setExcelStep('map');
-    } catch { toast.error('Failed to read Excel file'); }
-  };
-
   const handleExcelImport = async () => {
     if (!excelFile) return;
     setSaving(true);
     const formData = new FormData();
     formData.append('file', excelFile);
-    formData.append('mapping', JSON.stringify(excelMapping));
     try {
       const { data } = await api.post(
         `/api/questions/categories/${categoryId}/excel-import`,
@@ -197,9 +195,6 @@ export default function QuestionsPage() {
       );
       toast.success(`${data.data?.created || 0} questions imported`);
       setShowExcel(false);
-      setExcelStep('upload');
-      setExcelColumns([]);
-      setExcelMapping({});
       setExcelFile(null);
       fetchQuestions();
     } catch { toast.error('Import failed'); }
@@ -208,15 +203,20 @@ export default function QuestionsPage() {
 
   const openEdit = (q: Question) => {
     setSelected(q);
-    setForm({
+    setForms([{
+      _key: crypto.randomUUID(),
       question_text: q.question_text,
       question_type: q.question_type,
       complexity: q.complexity,
-      options: q.options.length > 0 ? q.options : Array.from({ length: 4 }, () => ({ id: crypto.randomUUID(), text: '', is_correct: false })),
+      options: q.options.length > 0
+        ? q.options
+        : Array.from({ length: 4 }, () => ({ id: crypto.randomUUID(), text: '', is_correct: false })),
       correct_answer: q.correct_answer || '',
-    });
+    }]);
     setShowCreate(true);
   };
+
+  const canSave = forms.every((f) => f.question_text.trim());
 
   return (
     <div>
@@ -225,14 +225,14 @@ export default function QuestionsPage() {
         subtitle={`${meta?.total ?? 0} questions`}
         actions={
           <div style={{ display: 'flex', gap: 8 }}>
-            <Button variant="secondary" size="sm" leftIcon={<IconBrain size={15} />} onClick={() => setShowAI(true)}>
+            <Button variant="secondary" size="sm" leftIcon={<IconSparkles size={15} />} onClick={() => setShowAI(true)}>
               AI Generate
             </Button>
             <Button variant="secondary" size="sm" leftIcon={<IconFileExcel size={15} />} onClick={() => setShowExcel(true)}>
               Excel Import
             </Button>
-            <Button leftIcon={<IconPlus size={15} />} onClick={() => { resetForm(); setSelected(null); setShowCreate(true); }}>
-              Add Question
+            <Button leftIcon={<IconPlus size={15} />} onClick={() => { resetForms(); setSelected(null); setShowCreate(true); }}>
+              Add Questions
             </Button>
           </div>
         }
@@ -260,8 +260,8 @@ export default function QuestionsPage() {
       ) : questions.length === 0 ? (
         <div className={styles.empty}>
           <p>No questions found</p>
-          <Button leftIcon={<IconPlus size={15} />} onClick={() => { resetForm(); setShowCreate(true); }}>
-            Add Question
+          <Button leftIcon={<IconPlus size={15} />} onClick={() => { resetForms(); setShowCreate(true); }}>
+            Add Questions
           </Button>
         </div>
       ) : (
@@ -281,7 +281,7 @@ export default function QuestionsPage() {
                     <button className={`${styles.iconBtn} ${styles.danger}`} onClick={() => { setSelected(q); setShowDelete(true); }}><IconDelete size={14} /></button>
                   </div>
                 </div>
-                <p className={styles.questionText}>{q.question_text}</p>
+                <div className={styles.questionText}><RichText>{q.question_text}</RichText></div>
                 {q.options.length > 0 && (
                   <div className={styles.options}>
                     {q.options.map((o) => (
@@ -299,76 +299,128 @@ export default function QuestionsPage() {
         </>
       )}
 
-      {/* Create/Edit Question Modal */}
+      {/* Create / Edit Question Modal */}
       <Modal
         isOpen={showCreate}
-        onClose={() => { setShowCreate(false); setSelected(null); resetForm(); }}
-        title={selected ? 'Edit Question' : 'Add Question'}
+        onClose={() => { setShowCreate(false); setSelected(null); resetForms(); }}
+        title={selected ? 'Edit Question' : 'Add Questions'}
         size="lg"
         footer={
           <>
-            <Button variant="secondary" onClick={() => { setShowCreate(false); setSelected(null); }}>Cancel</Button>
-            <Button onClick={handleSaveQuestion} isLoading={saving} disabled={!form.question_text.trim()}>
-              {selected ? 'Save Changes' : 'Create Question'}
+            <Button variant="secondary" onClick={() => { setShowCreate(false); setSelected(null); resetForms(); }}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveQuestions} isLoading={saving} disabled={!canSave}>
+              {selected ? 'Save Changes' : `Save ${forms.length > 1 ? `(${forms.length})` : ''}`}
             </Button>
           </>
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <Textarea label="Question Text" placeholder="Enter the question..." value={form.question_text}
-            onChange={(e) => setForm((p) => ({ ...p, question_text: e.target.value }))} rows={3} />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <Select label="Question Type" options={QUESTION_TYPE_OPTIONS} value={form.question_type}
-              onChange={(v) => setForm((p) => ({ ...p, question_type: v as QuestionType }))} />
-            <Select label="Complexity" options={COMPLEXITY_OPTIONS} value={form.complexity}
-              onChange={(v) => setForm((p) => ({ ...p, complexity: v as Complexity }))} />
-          </div>
-          {form.question_type === 'essay' ? (
-            <Textarea label="Model Answer (optional)" placeholder="Provide a model answer for reference..." value={form.correct_answer}
-              onChange={(e) => setForm((p) => ({ ...p, correct_answer: e.target.value }))} rows={4} />
-          ) : (
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>
-                Options {form.question_type === 'mcq_multi' ? '(check all correct)' : '(check one correct)'}
-              </label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {form.options.map((opt, idx) => (
-                  <div key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <input
-                      type={form.question_type === 'mcq_single' ? 'radio' : 'checkbox'}
-                      checked={opt.is_correct}
-                      onChange={() => {
-                        setForm((p) => ({
-                          ...p,
-                          options: p.options.map((o, i) => ({
-                            ...o,
-                            is_correct: form.question_type === 'mcq_single'
-                              ? i === idx
-                              : i === idx ? !o.is_correct : o.is_correct,
-                          })),
-                        }));
-                      }}
-                      style={{ flexShrink: 0 }}
-                    />
-                    <Input
-                      placeholder={`Option ${idx + 1}`}
-                      value={opt.text}
-                      onChange={(e) => setForm((p) => ({
-                        ...p,
-                        options: p.options.map((o, i) => i === idx ? { ...o, text: e.target.value } : o),
-                      }))}
-                    />
+          {forms.map((f, idx) => (
+            <div key={f._key} className={styles.formCard}>
+              {!selected && (
+                <div className={styles.formCardHeader}>
+                  <span className={styles.formCardTitle}>Question {idx + 1}</span>
+                  {forms.length > 1 && (
+                    <button
+                      className={`${styles.iconBtn} ${styles.danger}`}
+                      onClick={() => setForms((prev) => prev.filter((_, i) => i !== idx))}
+                      title="Remove"
+                    >
+                      <IconDelete size={14} />
+                    </button>
+                  )}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div>
+                  <Textarea
+                    label="Question Text"
+                    placeholder="Enter the question..."
+                    value={f.question_text}
+                    onChange={(e) => updateForm(idx, { question_text: e.target.value })}
+                    rows={3}
+                  />
+                  <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>
+                    Markdown supported — wrap code in ``` code fences ```
+                  </p>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <Select
+                    label="Question Type"
+                    options={QUESTION_TYPE_OPTIONS}
+                    value={f.question_type}
+                    onChange={(v) => updateForm(idx, { question_type: v as QuestionType })}
+                  />
+                  <Select
+                    label="Complexity"
+                    options={COMPLEXITY_OPTIONS}
+                    value={f.complexity}
+                    onChange={(v) => updateForm(idx, { complexity: v as Complexity })}
+                  />
+                </div>
+
+                {f.question_type === 'essay' ? (
+                  <Textarea
+                    label="Model Answer (optional)"
+                    placeholder="Provide a model answer for reference..."
+                    value={f.correct_answer}
+                    onChange={(e) => updateForm(idx, { correct_answer: e.target.value })}
+                    rows={3}
+                  />
+                ) : (
+                  <div>
+                    <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>
+                      Options {f.question_type === 'mcq_multi' ? '(check all correct)' : '(check one correct)'}
+                    </label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {f.options.map((opt, optIdx) => (
+                        <div key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <input
+                            type={f.question_type === 'mcq_single' ? 'radio' : 'checkbox'}
+                            checked={opt.is_correct}
+                            onChange={() => {
+                              const options = f.options.map((o, i) => ({
+                                ...o,
+                                is_correct: f.question_type === 'mcq_single'
+                                  ? i === optIdx
+                                  : i === optIdx ? !o.is_correct : o.is_correct,
+                              }));
+                              updateForm(idx, { options });
+                            }}
+                            style={{ flexShrink: 0 }}
+                          />
+                          <Input
+                            placeholder={`Option ${optIdx + 1}`}
+                            value={opt.text}
+                            onChange={(e) => updateOption(idx, optIdx, { text: e.target.value })}
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                )}
               </div>
             </div>
+          ))}
+
+          {!selected && (
+            <Button
+              variant="secondary"
+              leftIcon={<IconPlus size={15} />}
+              onClick={() => setForms((prev) => [...prev, newBlankForm()])}
+            >
+              Add More
+            </Button>
           )}
         </div>
       </Modal>
 
       {/* AI Generate Modal */}
       <Modal isOpen={showAI} onClose={() => setShowAI(false)} title="AI Question Generator"
-        footer={<><Button variant="secondary" onClick={() => setShowAI(false)}>Cancel</Button><Button onClick={handleAIGenerate} isLoading={saving} leftIcon={<IconBrain size={15} />}>Generate</Button></>}>
+        footer={<><Button variant="secondary" onClick={() => setShowAI(false)}>Cancel</Button><Button onClick={handleAIGenerate} isLoading={saving} leftIcon={<IconSparkles size={15} />}>Generate</Button></>}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Input label="Topic" placeholder="e.g., Python decorators, SQL joins..." value={aiForm.topic}
             onChange={(e) => setAiForm((p) => ({ ...p, topic: e.target.value }))} />
@@ -384,50 +436,32 @@ export default function QuestionsPage() {
       </Modal>
 
       {/* Excel Import Modal */}
-      <Modal isOpen={showExcel} onClose={() => { setShowExcel(false); setExcelStep('upload'); setExcelColumns([]); }} title="Excel Import"
-        size="lg"
-        footer={excelStep === 'map' ? (
-          <><Button variant="secondary" onClick={() => setExcelStep('upload')}>Back</Button><Button onClick={handleExcelImport} isLoading={saving}>Import</Button></>
-        ) : undefined}>
-        {excelStep === 'upload' ? (
-          <div className={styles.uploadArea}>
-            <IconFileExcel size={40} color="var(--text-tertiary)" />
-            <p>Upload an Excel (.xlsx) file</p>
-            <p style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Supported columns: Question, Answer, Complexity, Question Type</p>
-            <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }}
-              onChange={(e) => e.target.files?.[0] && handleExcelUpload(e.target.files[0])} />
-            <Button onClick={() => fileRef.current?.click()} leftIcon={<IconFileExcel size={15} />}>
-              Choose File
-            </Button>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}>
-              Map your Excel columns to the required fields:
-            </p>
-            {[
-              { key: 'question_column', label: 'Question Column', required: true },
-              { key: 'answer_column', label: 'Answer Column (optional)' },
-              { key: 'complexity_column', label: 'Complexity Column' },
-              { key: 'question_type_column', label: 'Question Type Column' },
-            ].map((field) => (
-              <Select
-                key={field.key}
-                label={field.label}
-                options={excelColumns.map((c) => ({ value: c, label: c }))}
-                placeholder="Select column"
-                value={excelMapping[field.key] || ''}
-                onChange={(v) => setExcelMapping((p) => ({ ...p, [field.key]: v }))}
-              />
-            ))}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <Select label="Default Complexity" options={COMPLEXITY_OPTIONS} value={excelMapping.default_complexity || 'medium'}
-                onChange={(v) => setExcelMapping((p) => ({ ...p, default_complexity: v }))} />
-              <Select label="Default Question Type" options={QUESTION_TYPE_OPTIONS} value={excelMapping.default_question_type || 'essay'}
-                onChange={(v) => setExcelMapping((p) => ({ ...p, default_question_type: v }))} />
-            </div>
-          </div>
-        )}
+      <Modal
+        isOpen={showExcel}
+        onClose={() => { setShowExcel(false); setExcelFile(null); }}
+        title="Excel Import"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => { setShowExcel(false); setExcelFile(null); }}>Cancel</Button>
+            <Button onClick={handleExcelImport} isLoading={saving} disabled={!excelFile}>Import</Button>
+          </>
+        }
+      >
+        <div className={styles.uploadArea}>
+          <IconFileExcel size={40} color="var(--text-tertiary)" />
+          <p style={{ fontSize: 14, fontWeight: 500 }}>
+            {excelFile ? excelFile.name : 'Upload an Excel (.xlsx) file'}
+          </p>
+          <p style={{ fontSize: 12, color: 'var(--text-tertiary)', textAlign: 'center' }}>
+            Required column: <strong>Question</strong>. Optional: <strong>Options</strong>, <strong>Answer</strong>, <strong>Complexity</strong>.<br />
+            Question type is auto-detected from Options &amp; Answer.
+          </p>
+          <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }}
+            onChange={(e) => e.target.files?.[0] && setExcelFile(e.target.files[0])} />
+          <Button variant={excelFile ? 'secondary' : 'primary'} onClick={() => fileRef.current?.click()} leftIcon={<IconFileExcel size={15} />}>
+            {excelFile ? 'Change File' : 'Choose File'}
+          </Button>
+        </div>
       </Modal>
 
       {/* Delete Modal */}

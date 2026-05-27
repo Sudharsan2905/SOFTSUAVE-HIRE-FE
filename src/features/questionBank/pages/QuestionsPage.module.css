@@ -39,14 +39,40 @@
   color: var(--text-secondary);
   padding: 5px 8px;
   border-radius: var(--radius-sm);
-  background: var(--bg-muted);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
 }
-.correctOption { background: var(--success-50); color: var(--success-600); font-weight: 500; }
+.correctOption {
+  background: var(--option-correct-bg);
+  color: var(--option-correct-color);
+  border-color: var(--option-correct-border);
+  font-weight: 500;
+}
 .correctDot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
 
 .empty {
   display: flex; flex-direction: column; align-items: center; gap: 12px;
   padding: 60px 24px; color: var(--text-tertiary); font-size: 14px;
+}
+
+.formCard {
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  background: var(--bg-muted);
+}
+
+.formCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.formCardTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
 }
 
 .uploadArea {
