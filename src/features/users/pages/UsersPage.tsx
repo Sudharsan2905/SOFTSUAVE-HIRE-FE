@@ -11,7 +11,7 @@ import { IconPlus, IconUsers, IconEye, IconEyeOff, IconCheck, IconEdit } from '@
 import { api } from '@/utils/api';
 import { useDebounce } from '@/hooks/useDebounce';
 import { User, SortOrder, Workspace } from '@/types';
-import { getAvatarColor, getInitials } from '@/utils/helpers';
+import { getAvatarColor, getInitials, getFullName } from '@/utils/helpers';
 import toast from 'react-hot-toast';
 
 export default function UsersPage() {
@@ -22,7 +22,7 @@ export default function UsersPage() {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'admin' });
+  const [form, setForm] = useState({ first_name: '', last_name: '', email: '', password: '', role: 'admin' });
   const [showPassword, setShowPassword] = useState(false);
 
   // Edit modal state (combined: status toggle + workspace assignment)
@@ -42,7 +42,7 @@ export default function UsersPage() {
       const list: User[] = Array.isArray(data.data) ? data.data : [];
       const filtered = debouncedSearch
         ? list.filter((u) =>
-            u.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+            getFullName(u).toLowerCase().includes(debouncedSearch.toLowerCase()) ||
             u.email.toLowerCase().includes(debouncedSearch.toLowerCase())
           )
         : list;
@@ -63,13 +63,13 @@ export default function UsersPage() {
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
   const handleCreate = async () => {
-    if (!form.name.trim() || !form.email.trim() || !form.password.trim()) return;
+    if (!form.first_name.trim() || !form.email.trim() || !form.password.trim()) return;
     setSaving(true);
     try {
-      await api.post('/api/users', { name: form.name, email: form.email, password: form.password, role: form.role });
+      await api.post('/api/users', { first_name: form.first_name, last_name: form.last_name || undefined, email: form.email, password: form.password, role: form.role });
       toast.success('Admin user created');
       setShowCreate(false);
-      setForm({ name: '', email: '', password: '', role: 'admin' });
+      setForm({ first_name: '', last_name: '', email: '', password: '', role: 'admin' });
       fetchUsers();
     } catch (e: unknown) {
       toast.error((e as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to create user');
@@ -113,7 +113,7 @@ export default function UsersPage() {
         title="Users"
         subtitle="Manage admin users"
         actions={
-          <Button leftIcon={<IconPlus size={16} />} onClick={() => { setForm({ name: '', email: '', password: '', role: 'admin' }); setShowPassword(false); setShowCreate(true); }}>
+          <Button leftIcon={<IconPlus size={16} />} onClick={() => { setForm({ first_name: '', last_name: '', email: '', password: '', role: 'admin' }); setShowPassword(false); setShowCreate(true); }}>
             New Admin
           </Button>
         }
@@ -147,11 +147,11 @@ export default function UsersPage() {
             return (
               <div key={user.id} className={`${styles.card} ${!isActive ? styles.cardInactive : ''}`}>
                 <div className={styles.cardLeft}>
-                  <div className={styles.avatar} style={{ background: getAvatarColor(user.name), opacity: isActive ? 1 : 0.5 }}>
-                    {getInitials(user.name)}
+                  <div className={styles.avatar} style={{ background: getAvatarColor(getFullName(user)), opacity: isActive ? 1 : 0.5 }}>
+                    {getInitials(getFullName(user))}
                   </div>
                   <div className={styles.info}>
-                    <p className={styles.name}>{user.name}</p>
+                    <p className={styles.name}>{getFullName(user)}</p>
                     <p className={styles.email}>{user.email}</p>
                   </div>
                 </div>
@@ -186,19 +186,27 @@ export default function UsersPage() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={handleCreate} isLoading={saving} disabled={!form.name.trim() || !form.email.trim() || !form.password.trim()}>
+            <Button onClick={handleCreate} isLoading={saving} disabled={!form.first_name.trim() || !form.email.trim() || !form.password.trim()}>
               Create
             </Button>
           </>
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <Input
-            label="Full Name"
-            placeholder="Enter full name"
-            value={form.name}
-            onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-          />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <Input
+              label="First Name"
+              placeholder="Enter first name"
+              value={form.first_name}
+              onChange={(e) => setForm((p) => ({ ...p, first_name: e.target.value }))}
+            />
+            <Input
+              label="Last Name"
+              placeholder="Optional"
+              value={form.last_name}
+              onChange={(e) => setForm((p) => ({ ...p, last_name: e.target.value }))}
+            />
+          </div>
           <Input
             label="Email"
             type="email"
@@ -248,7 +256,7 @@ export default function UsersPage() {
       <Modal
         isOpen={showEdit}
         onClose={() => setShowEdit(false)}
-        title={`Edit — ${editTarget?.name ?? ''}`}
+        title={`Edit — ${editTarget ? getFullName(editTarget) : ''}`}
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowEdit(false)}>Cancel</Button>

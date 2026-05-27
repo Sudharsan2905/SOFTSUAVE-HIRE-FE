@@ -4,11 +4,11 @@ import { useAppDispatch, useAppSelector } from '@/store';
 import { setActiveWorkspace, setWorkspaces, clearWorkspace } from '@/store/slices/workspaceSlice';
 import { api } from '@/utils/api';
 import { Workspace, User } from '@/types';
-import { IconChevronDown, IconSettings, IconUserPlus, IconPlus, IconCheck, IconStar } from '@/assets/icons';
+import { IconChevronDown, IconSettings, IconUserPlus, IconPlus, IconCheck, IconStar, IconEdit } from '@/assets/icons';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea } from '@/components/ui/Input';
-import { getInitials, getAvatarColor } from '@/utils/helpers';
+import { getInitials, getAvatarColor, getFullName } from '@/utils/helpers';
 import { updateUser } from '@/store/slices/authSlice';
 import toast from 'react-hot-toast';
 
@@ -20,6 +20,7 @@ export function WorkspaceSwitcher() {
 
   const [isOpen, setIsOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [adminUsers, setAdminUsers] = useState<User[]>([]);
@@ -76,19 +77,17 @@ export function WorkspaceSwitcher() {
 
   const openSettings = () => {
     if (activeWorkspace) setEditForm({ name: activeWorkspace.name, description: activeWorkspace.description });
+    setIsEditing(false);
     setIsOpen(false);
     setShowSettings(true);
   };
 
   const openInvite = async () => {
     setIsOpen(false);
+    setSelectedUsers([]);
     try {
       const { data } = await api.get('/api/workspaces/admin-users');
       setAdminUsers(data.data || []);
-      if (activeWorkspace) {
-        const memberIds = activeWorkspace.members.map((m) => m.user_id);
-        setSelectedUsers(memberIds);
-      }
     } catch {}
     setShowInvite(true);
   };
@@ -139,6 +138,8 @@ export function WorkspaceSwitcher() {
     );
   };
 
+  const isActiveDefault = !isSuperAdmin && !!user?.workspaces?.find((w) => w.id === activeWorkspace?.id)?.is_default;
+
   return (
     <>
       <div ref={ref} className={styles.container}>
@@ -150,11 +151,13 @@ export function WorkspaceSwitcher() {
             >
               {activeWorkspace ? getInitials(activeWorkspace.name) : '?'}
             </div>
-            <div className={styles.wsInfo}>
+            <div className={styles.wsNameRow}>
               <span className={styles.wsName}>
                 {activeWorkspace?.name || 'Select Workspace'}
               </span>
-              <span className={styles.wsLabel}>Workspace</span>
+              {isActiveDefault && (
+                <IconStar size={10} className={styles.triggerStar} />
+              )}
             </div>
           </div>
           <IconChevronDown size={14} className={`${styles.chevron} ${isOpen ? styles.open : ''}`} />
@@ -162,28 +165,6 @@ export function WorkspaceSwitcher() {
 
         {isOpen && (
           <div className={styles.popup}>
-            {/* Actions row */}
-            <div className={styles.popupActions}>
-              {activeWorkspace && (activeWorkspace.name !== 'Common' || isSuperAdmin) && (
-                <button className={styles.actionBtn} onClick={openSettings}>
-                  <IconSettings size={14} />
-                  Settings
-                </button>
-              )}
-              {isSuperAdmin && activeWorkspace && (
-                <button className={styles.actionBtn} onClick={openInvite}>
-                  <IconUserPlus size={14} />
-                  Invite
-                </button>
-              )}
-              {!isSuperAdmin && activeWorkspace && !user?.workspaces?.find((w) => w.id === activeWorkspace.id)?.is_default && (
-                <button className={styles.actionBtn} onClick={setAsDefault}>
-                  <IconStar size={14} />
-                  Set default
-                </button>
-              )}
-            </div>
-
             {/* Workspace list */}
             <div className={styles.wsList}>
               {workspaces.length === 0 ? (
@@ -209,7 +190,7 @@ export function WorkspaceSwitcher() {
               )}
             </div>
 
-            {/* Create button */}
+            {/* New Workspace — super admin only */}
             {isSuperAdmin && (
               <button
                 className={styles.createBtn}
@@ -219,6 +200,14 @@ export function WorkspaceSwitcher() {
                 New Workspace
               </button>
             )}
+
+            {/* Settings — visible to all users */}
+            {activeWorkspace && (
+              <button className={styles.settingsBtn} onClick={openSettings}>
+                <IconSettings size={14} />
+                Settings
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -226,28 +215,83 @@ export function WorkspaceSwitcher() {
       {/* Settings Modal */}
       <Modal
         isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
+        onClose={() => { setShowSettings(false); setIsEditing(false); }}
         title="Workspace Settings"
         footer={
-          <>
-            <Button variant="secondary" onClick={() => setShowSettings(false)}>Cancel</Button>
-            <Button onClick={saveSettings} isLoading={loading}>Save Changes</Button>
-          </>
+          isEditing ? (
+            <>
+              <Button variant="secondary" onClick={() => setIsEditing(false)}>Cancel</Button>
+              <Button onClick={saveSettings} isLoading={loading}>Save Changes</Button>
+            </>
+          ) : (
+            <Button variant="secondary" onClick={() => setShowSettings(false)}>Close</Button>
+          )
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <Input
-            label="Workspace Name"
-            value={editForm.name}
-            onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
-          />
-          <Textarea
-            label="Description"
-            value={editForm.description}
-            onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
-            rows={3}
-          />
-        </div>
+        {isEditing ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <Input
+              label="Workspace Name"
+              value={editForm.name}
+              onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
+            />
+            <Textarea
+              label="Description"
+              value={editForm.description}
+              onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
+              rows={3}
+            />
+          </div>
+        ) : (
+          <div className={styles.wsSettingsView}>
+            <div className={styles.wsSettingsHead}>
+              <div className={styles.wsSettingsField}>
+                <p className={styles.wsSettingsSectionLabel}>Workspace Name</p>
+                <p className={styles.wsSettingsName}>{activeWorkspace?.name}</p>
+              </div>
+              <div className={styles.wsSettingsField}>
+                <p className={styles.wsSettingsSectionLabel}>Description</p>
+                <p className={styles.wsSettingsDesc}>
+                  {activeWorkspace?.description || 'No description'}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <p className={styles.wsSettingsSectionLabel}>Members</p>
+              <p className={styles.wsSettingsMeta}>
+                {activeWorkspace?.members?.length ?? 0} member{(activeWorkspace?.members?.length ?? 0) !== 1 ? 's' : ''}
+              </p>
+            </div>
+
+            {isSuperAdmin ? (
+              <div className={styles.wsSettingsActions}>
+                <button className={styles.wsSettingsBtn} onClick={() => setIsEditing(true)}>
+                  <IconEdit size={14} />
+                  Edit Workspace
+                </button>
+                <button className={styles.wsSettingsBtn} onClick={() => { setShowSettings(false); openInvite(); }}>
+                  <IconUserPlus size={14} />
+                  Invite Members
+                </button>
+              </div>
+            ) : (
+              <div className={styles.wsSettingsActions}>
+                {isActiveDefault ? (
+                  <div className={styles.wsDefaultBadge}>
+                    <IconStar size={13} className={styles.wsDefaultBadgeStar} />
+                    Default Workspace
+                  </div>
+                ) : (
+                  <button className={styles.wsSettingsBtn} onClick={setAsDefault}>
+                    <IconStar size={14} />
+                    Set as Default
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </Modal>
 
       {/* Invite Modal */}
@@ -264,27 +308,31 @@ export function WorkspaceSwitcher() {
       >
         <div className={styles.inviteList}>
           {adminUsers.map((u) => {
-            const selected = selectedUsers.includes(u.id);
-            const isCurrentUser = u.id === user?.id;
+            const isMember = !!activeWorkspace?.members?.some((m) => m.user_id === u.id);
+            const selected = !isMember && selectedUsers.includes(u.id);
             return (
               <div
                 key={u.id}
-                className={`${styles.inviteItem} ${selected ? styles.inviteItemSelected : ''}`}
-                onClick={() => !isCurrentUser && toggleUser(u.id)}
+                className={`${styles.inviteItem} ${isMember ? styles.inviteItemMember : ''} ${selected ? styles.inviteItemSelected : ''}`}
+                onClick={() => !isMember && toggleUser(u.id)}
               >
                 <div
                   className={styles.inviteAvatar}
-                  style={{ background: getAvatarColor(u.name) }}
+                  style={{ background: getAvatarColor(getFullName(u)) }}
                 >
-                  {getInitials(u.name)}
+                  {getInitials(getFullName(u))}
                 </div>
                 <div className={styles.inviteInfo}>
-                  <p className={styles.inviteName}>{u.name} {isCurrentUser && '(you)'}</p>
+                  <p className={styles.inviteName}>{getFullName(u)}</p>
                   <p className={styles.inviteEmail}>{u.email}</p>
                 </div>
-                <div className={`${styles.inviteCheck} ${selected ? styles.inviteCheckSelected : ''}`}>
-                  {selected && <IconCheck size={12} />}
-                </div>
+                {isMember ? (
+                  <span className={styles.memberBadge}>Member</span>
+                ) : (
+                  <div className={`${styles.inviteCheck} ${selected ? styles.inviteCheckSelected : ''}`}>
+                    {selected && <IconCheck size={12} />}
+                  </div>
+                )}
               </div>
             );
           })}

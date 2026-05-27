@@ -11,7 +11,7 @@ import { api } from '@/utils/api';
 import { useDebounce } from '@/hooks/useDebounce';
 import { usePagination } from '@/hooks/usePagination';
 import { PaginationMeta, Submission, ViewMode, SortOrder } from '@/types';
-import { formatDateTime, getInitials, getAvatarColor } from '@/utils/helpers';
+import { formatDateTime, getInitials, getAvatarColor, getFullName } from '@/utils/helpers';
 import toast from 'react-hot-toast';
 
 const MONITORING_OPTIONS = [
@@ -89,9 +89,9 @@ export default function LiveInterviewsPage() {
         <>
           <div className={viewMode === 'grid' ? styles.grid : styles.list}>
             {sessions.map((session) => {
-              const candidate = (session as unknown as { candidate?: { name?: string; email?: string } }).candidate;
+              const candidate = (session as unknown as { candidate?: { first_name?: string; last_name?: string; email?: string } }).candidate;
               const assessment = (session as unknown as { assessment?: { name?: string; accessibility?: string } }).assessment;
-              const name = candidate?.name || 'Unknown';
+              const name = candidate ? getFullName(candidate as { first_name: string; last_name?: string }) : 'Unknown';
               const isMonitoring = assessment?.accessibility === 'monitoring';
 
               return (

@@ -20,13 +20,15 @@ const passwordSchema = z
 
 const schema = z
   .object({
-    name: z.string().min(2, 'Name must be at least 2 characters'),
+    first_name: z.string().min(2, 'First name must be at least 2 characters'),
+    last_name: z.string().optional(),
     email: z.string().email('Invalid email'),
     phone: z.string().min(10, 'Enter a valid phone number'),
     father_name: z.string().min(2, 'Father name required'),
     gender: z.enum(['male', 'female', 'other'], { required_error: 'Select a gender' }),
-    date_of_birth: z.string().optional(),
-    college: z.string().optional(),
+    dob: z.string().optional(),
+    college_name: z.string().optional(),
+    college_city: z.string().optional(),
     password: passwordSchema,
     confirm_password: z.string(),
   })
@@ -72,9 +74,10 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
           <div className={styles.row}>
-            <Input label="Full Name *" placeholder="John Doe" error={errors.name?.message} {...register('name')} />
-            <Input label="Email *" type="email" placeholder="john@email.com" error={errors.email?.message} {...register('email')} />
+            <Input label="First Name *" placeholder="John" error={errors.first_name?.message} {...register('first_name')} />
+            <Input label="Last Name" placeholder="Doe (optional)" error={errors.last_name?.message} {...register('last_name')} />
           </div>
+          <Input label="Email *" type="email" placeholder="john@email.com" error={errors.email?.message} {...register('email')} />
           <div className={styles.row}>
             <Input label="Phone *" placeholder="+91 9876543210" error={errors.phone?.message} {...register('phone')} />
             <Input label="Father's Name *" placeholder="Robert Doe" error={errors.father_name?.message} {...register('father_name')} />
@@ -90,9 +93,12 @@ export default function RegisterPage() {
               </select>
               {errors.gender && <p className={styles.fieldError}>{errors.gender.message}</p>}
             </div>
-            <Input label="Date of Birth" type="date" error={errors.date_of_birth?.message} {...register('date_of_birth')} />
+            <Input label="Date of Birth" type="date" error={errors.dob?.message} {...register('dob')} />
           </div>
-          <Input label="College / Institution" placeholder="University name (optional)" error={errors.college?.message} {...register('college')} />
+          <div className={styles.row}>
+            <Input label="College / Institution" placeholder="University name (optional)" error={errors.college_name?.message} {...register('college_name')} />
+            <Input label="College City" placeholder="City (optional)" error={errors.college_city?.message} {...register('college_city')} />
+          </div>
           <div className={styles.row}>
             <Input
               label="Password *"
