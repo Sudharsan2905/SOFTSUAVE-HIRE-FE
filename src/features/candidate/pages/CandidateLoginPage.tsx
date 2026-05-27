@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { useAppDispatch } from '@/store';
 import { candidateLogin } from '@/store/slices/authSlice';
 import { IconEye, IconEyeOff } from '@/assets/icons';
+import logoUrl from '@/assets/favicon.svg';
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
@@ -41,7 +42,7 @@ export default function CandidateLoginPage() {
     <div className={styles.page}>
       <div className={styles.card}>
         <div className={styles.logo}>
-          <span className={styles.logoMark}>S</span>
+          <img src={logoUrl} width="36" height="36" alt="SoftSuave Hire" />
           <span className={styles.logoText}>SoftSuave Hire</span>
         </div>
         <h1 className={styles.title}>Candidate Sign In</h1>
