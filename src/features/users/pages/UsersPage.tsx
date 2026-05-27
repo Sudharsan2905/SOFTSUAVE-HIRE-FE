@@ -5,61 +5,106 @@ import { FilterBar } from '@/components/shared/FilterBar';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
-import { Pagination } from '@/components/ui/Pagination';
 import { Spinner } from '@/components/ui/Spinner';
 import { Badge } from '@/components/ui/Badge';
-import { IconPlus, IconUsers } from '@/assets/icons';
+import { IconPlus, IconUsers, IconEye, IconEyeOff, IconCheck, IconEdit } from '@/assets/icons';
 import { api } from '@/utils/api';
 import { useDebounce } from '@/hooks/useDebounce';
-import { usePagination } from '@/hooks/usePagination';
-import { User, PaginationMeta, ViewMode, SortOrder } from '@/types';
-import { formatDate, getAvatarColor, getInitials } from '@/utils/helpers';
+import { User, SortOrder, Workspace } from '@/types';
+import { getAvatarColor, getInitials } from '@/utils/helpers';
 import toast from 'react-hot-toast';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
-  const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
-  const { page, pageSize, goToPage, reset } = usePagination();
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'admin' });
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Edit modal state (combined: status toggle + workspace assignment)
+  const [showEdit, setShowEdit] = useState(false);
+  const [editTarget, setEditTarget] = useState<User | null>(null);
+  const [editIsActive, setEditIsActive] = useState(true);
+  const [allWorkspaces, setAllWorkspaces] = useState<Workspace[]>([]);
+  const [selectedWsIds, setSelectedWsIds] = useState<string[]>([]);
+  const [editSaving, setEditSaving] = useState(false);
+
   const debouncedSearch = useDebounce(search, 300);
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     try {
-      const params = new URLSearchParams({
-        page: String(page),
-        page_size: String(pageSize),
-        sort_order: sortOrder,
-        ...(debouncedSearch && { search: debouncedSearch }),
+      const { data } = await api.get(`/api/users`);
+      const list: User[] = Array.isArray(data.data) ? data.data : [];
+      const filtered = debouncedSearch
+        ? list.filter((u) =>
+            u.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+            u.email.toLowerCase().includes(debouncedSearch.toLowerCase())
+          )
+        : list;
+      const sorted = [...filtered].sort((a, b) => {
+        // Super admins first
+        if (a.role === 'super_admin' && b.role !== 'super_admin') return -1;
+        if (a.role !== 'super_admin' && b.role === 'super_admin') return 1;
+        // Then by created_at
+        const da = new Date(a.created_at).getTime();
+        const db2 = new Date(b.created_at).getTime();
+        return sortOrder === 'desc' ? db2 - da : da - db2;
       });
-      const { data } = await api.get(`/api/users?${params}`);
-      setUsers(data.data?.users || []);
-      setMeta(data.data?.pagination || null);
+      setUsers(sorted);
     } catch { toast.error('Failed to load users'); }
     finally { setIsLoading(false); }
-  }, [page, pageSize, sortOrder, debouncedSearch]);
+  }, [debouncedSearch, sortOrder]);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
-  useEffect(() => { reset(); }, [debouncedSearch, sortOrder]);
 
   const handleCreate = async () => {
     if (!form.name.trim() || !form.email.trim() || !form.password.trim()) return;
     setSaving(true);
     try {
-      await api.post('/api/users', form);
+      await api.post('/api/users', { name: form.name, email: form.email, password: form.password, role: form.role });
       toast.success('Admin user created');
       setShowCreate(false);
-      setForm({ name: '', email: '', password: '' });
+      setForm({ name: '', email: '', password: '', role: 'admin' });
       fetchUsers();
     } catch (e: unknown) {
       toast.error((e as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to create user');
     } finally { setSaving(false); }
+  };
+
+  const openEdit = async (user: User) => {
+    setEditTarget(user);
+    setEditIsActive(user.is_active !== false);
+    setSelectedWsIds(user.workspaces?.map((w) => w.id) || []);
+    try {
+      const allRes = await api.get('/api/workspaces?page_size=50');
+      const all: Workspace[] = (allRes.data.data?.workspaces || []).filter((ws: Workspace) => ws.name !== 'Common');
+      setAllWorkspaces(all);
+    } catch { toast.error('Failed to load workspaces'); }
+    setShowEdit(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editTarget) return;
+    setEditSaving(true);
+    try {
+      await api.patch(`/api/users/${editTarget.id}`, {
+        is_active: editIsActive,
+        workspace_ids: selectedWsIds,
+      });
+      toast.success('Changes saved');
+      setShowEdit(false);
+      fetchUsers();
+    } catch { toast.error('Failed to save changes'); }
+    finally { setEditSaving(false); }
+  };
+
+  const toggleWs = (id: string) => {
+    setSelectedWsIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   };
 
   return (
@@ -68,7 +113,7 @@ export default function UsersPage() {
         title="Users"
         subtitle="Manage admin users"
         actions={
-          <Button leftIcon={<IconPlus size={16} />} onClick={() => { setForm({ name: '', email: '', password: '' }); setShowCreate(true); }}>
+          <Button leftIcon={<IconPlus size={16} />} onClick={() => { setForm({ name: '', email: '', password: '', role: 'admin' }); setShowPassword(false); setShowCreate(true); }}>
             New Admin
           </Button>
         }
@@ -95,12 +140,14 @@ export default function UsersPage() {
           </Button>
         </div>
       ) : (
-        <>
-          <div className={viewMode === 'grid' ? styles.grid : styles.list}>
-            {users.map((user) => (
-              <div key={user.id} className={styles.card}>
+        <div className={viewMode === 'grid' ? styles.grid : styles.list}>
+          {users.map((user) => {
+            const isActive = user.is_active !== false;
+            const isSuperAdmin = user.role === 'super_admin';
+            return (
+              <div key={user.id} className={`${styles.card} ${!isActive ? styles.cardInactive : ''}`}>
                 <div className={styles.cardLeft}>
-                  <div className={styles.avatar} style={{ background: getAvatarColor(user.name) }}>
+                  <div className={styles.avatar} style={{ background: getAvatarColor(user.name), opacity: isActive ? 1 : 0.5 }}>
                     {getInitials(user.name)}
                   </div>
                   <div className={styles.info}>
@@ -109,18 +156,29 @@ export default function UsersPage() {
                   </div>
                 </div>
                 <div className={styles.cardRight}>
-                  <Badge variant={user.role === 'super_admin' ? 'accent' : 'primary'}>
-                    {user.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+                  <Badge variant={isSuperAdmin ? 'accent' : 'primary'}>
+                    {isSuperAdmin ? 'Super Admin' : 'Admin'}
                   </Badge>
-                  <span className={styles.date}>{formatDate(user.created_at)}</span>
+                  <Badge variant={isActive ? 'success' : 'default'}>
+                    {isActive ? 'Active' : 'Inactive'}
+                  </Badge>
+                  {!isSuperAdmin && (
+                    <button
+                      className={styles.editBtn}
+                      onClick={() => openEdit(user)}
+                      title="Edit user"
+                    >
+                      <IconEdit size={15} />
+                    </button>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
-          {meta && <Pagination meta={meta} onPageChange={goToPage} />}
-        </>
+            );
+          })}
+        </div>
       )}
 
+      {/* Create Modal */}
       <Modal
         isOpen={showCreate}
         onClose={() => setShowCreate(false)}
@@ -137,24 +195,117 @@ export default function UsersPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Input
             label="Full Name"
-            placeholder="e.g., John Doe"
+            placeholder="Enter full name"
             value={form.name}
             onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
           />
           <Input
             label="Email"
             type="email"
-            placeholder="admin@company.com"
+            placeholder="Enter email"
             value={form.email}
             onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
           />
           <Input
             label="Password"
-            type="password"
-            placeholder="Min 8 characters"
+            type={showPassword ? 'text' : 'password'}
+            placeholder="Enter password"
             value={form.password}
             onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+            rightElement={
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                style={{ display: 'flex', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 0 }}
+              >
+                {showPassword ? <IconEyeOff size={16} /> : <IconEye size={16} />}
+              </button>
+            }
           />
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>Role</p>
+            <div className={styles.statusToggle}>
+              <button
+                className={`${styles.statusOption} ${form.role === 'admin' ? styles.statusActive : ''}`}
+                onClick={() => setForm((p) => ({ ...p, role: 'admin' }))}
+                type="button"
+              >
+                Admin
+              </button>
+              <button
+                className={`${styles.statusOption} ${form.role === 'super_admin' ? styles.statusActive : ''}`}
+                onClick={() => setForm((p) => ({ ...p, role: 'super_admin' }))}
+                type="button"
+              >
+                Super Admin
+              </button>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal
+        isOpen={showEdit}
+        onClose={() => setShowEdit(false)}
+        title={`Edit — ${editTarget?.name ?? ''}`}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowEdit(false)}>Cancel</Button>
+            <Button onClick={handleSaveEdit} isLoading={editSaving}>Save</Button>
+          </>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Status toggle */}
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>Status</p>
+            <div className={styles.statusToggle}>
+              <button
+                className={`${styles.statusOption} ${editIsActive ? styles.statusActive : ''}`}
+                onClick={() => setEditIsActive(true)}
+              >
+                Active
+              </button>
+              <button
+                className={`${styles.statusOption} ${!editIsActive ? styles.statusInactive : ''}`}
+                onClick={() => setEditIsActive(false)}
+              >
+                Inactive
+              </button>
+            </div>
+          </div>
+
+          {/* Workspace assignment */}
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>Workspaces</p>
+            {allWorkspaces.length === 0 ? (
+              <p style={{ fontSize: 13, color: 'var(--text-tertiary)', padding: '12px 0' }}>
+                No workspaces available. Create a workspace first.
+              </p>
+            ) : (
+              <div className={styles.wsList}>
+                {allWorkspaces.map((ws) => {
+                  const checked = selectedWsIds.includes(ws.id);
+                  return (
+                    <div
+                      key={ws.id}
+                      className={`${styles.wsItem} ${checked ? styles.wsItemSelected : ''}`}
+                      onClick={() => toggleWs(ws.id)}
+                    >
+                      <div className={styles.wsInfo}>
+                        <p className={styles.wsName}>{ws.name}</p>
+                        {ws.description && <p className={styles.wsDesc}>{ws.description}</p>}
+                      </div>
+                      <div className={`${styles.wsCheck} ${checked ? styles.wsCheckSelected : ''}`}>
+                        {checked && <IconCheck size={12} />}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </Modal>
     </div>
