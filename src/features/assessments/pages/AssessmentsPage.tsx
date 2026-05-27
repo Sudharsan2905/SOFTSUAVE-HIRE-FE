@@ -23,6 +23,8 @@ import { Assessment, MonitoringConfig, PaginationMeta, ViewMode, SortOrder } fro
 import { formatDate, formatDuration, generateShareUrl, copyToClipboard } from '@/utils/helpers';
 import toast from 'react-hot-toast';
 import { CreateAssessmentWizard } from '../components/CreateWizard/WizardContainer';
+import { useAppSelector } from '@/store';
+import { IconWorkspace } from '@/assets/icons';
 
 const SORT_OPTIONS = [
   { value: 'created_at', label: 'Created Date' },
@@ -33,6 +35,11 @@ const SORT_OPTIONS = [
 export default function AssessmentsPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const navigate = useNavigate();
+  const { activeWorkspace } = useAppSelector((s) => s.workspace);
+  const user = useAppSelector((s) => s.auth.user);
+  const isSuperAdmin = user?.role === 'super_admin';
+  const isCommonWorkspace = activeWorkspace?.name === 'Common';
+
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -91,6 +98,23 @@ export default function AssessmentsPage() {
   };
 
   const shareUrl = selected ? generateShareUrl(selected.share_link) : '';
+
+  if (isCommonWorkspace) {
+    return (
+      <div>
+        <Header title="Assessments" subtitle="" />
+        <div className={styles.empty}>
+          <IconWorkspace size={48} color="var(--text-tertiary)" />
+          <p>Switch workspace to view assessments</p>
+          <p style={{ fontSize: 13, color: 'var(--text-tertiary)', maxWidth: 380, textAlign: 'center', lineHeight: 1.6 }}>
+            {isSuperAdmin
+              ? 'Use the workspace switcher in the sidebar to select a workspace.'
+              : 'Use the workspace switcher in the sidebar to select a workspace, or ask your super admin to grant you access to one.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
