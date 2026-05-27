@@ -12,7 +12,7 @@ interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>
   label?: string;
   error?: string;
   hint?: string;
-  options: SelectOption[];
+  options: readonly SelectOption[];
   placeholder?: string;
   fullWidth?: boolean;
   onChange?: (value: string) => void;
