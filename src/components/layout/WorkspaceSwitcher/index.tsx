@@ -1,14 +1,15 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import styles from './WorkspaceSwitcher.module.css';
 import { useAppDispatch, useAppSelector } from '@/store';
-import { setActiveWorkspace, setWorkspaces } from '@/store/slices/workspaceSlice';
+import { setActiveWorkspace, setWorkspaces, clearWorkspace } from '@/store/slices/workspaceSlice';
 import { api } from '@/utils/api';
 import { Workspace, User } from '@/types';
-import { IconChevronDown, IconSettings, IconUserPlus, IconPlus, IconCheck } from '@/assets/icons';
+import { IconChevronDown, IconSettings, IconUserPlus, IconPlus, IconCheck, IconStar } from '@/assets/icons';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea } from '@/components/ui/Input';
 import { getInitials, getAvatarColor } from '@/utils/helpers';
+import { updateUser } from '@/store/slices/authSlice';
 import toast from 'react-hot-toast';
 
 export function WorkspaceSwitcher() {
@@ -31,13 +32,37 @@ export function WorkspaceSwitcher() {
   const fetchWorkspaces = useCallback(async () => {
     try {
       const { data } = await api.get('/api/workspaces?page_size=50');
-      const list: Workspace[] = data.data?.workspaces || [];
+      const rawList: Workspace[] = data.data?.workspaces || [];
+      const list = rawList;
       dispatch(setWorkspaces(list));
-      if (!activeWorkspace && list.length > 0) {
-        dispatch(setActiveWorkspace(list[0]));
+      if (activeWorkspace) {
+        const stillInList = list.find((ws) => ws.id === activeWorkspace.id);
+        if (!stillInList) {
+          if (list.length > 0) {
+            dispatch(setActiveWorkspace(list[0]));
+          } else {
+            dispatch(clearWorkspace());
+          }
+        }
+      } else if (list.length > 0) {
+        // Activate the workspace marked as default in the user's profile
+        const defaultRef = user?.workspaces?.find((w) => w.is_default);
+        const defaultWs = defaultRef ? list.find((ws) => ws.id === defaultRef.id) : null;
+        dispatch(setActiveWorkspace(defaultWs || list[0]));
       }
     } catch {}
-  }, [dispatch, activeWorkspace]);
+  }, [dispatch, activeWorkspace, user]);
+
+  const setAsDefault = async () => {
+    if (!activeWorkspace) return;
+    try {
+      const { data } = await api.patch('/api/users/me', { workspace_id: activeWorkspace.id });
+      dispatch(updateUser(data.data));
+      toast.success(`"${activeWorkspace.name}" set as default workspace`);
+    } catch {
+      toast.error('Failed to set default workspace');
+    }
+  };
 
   useEffect(() => { fetchWorkspaces(); }, []);
 
@@ -139,7 +164,7 @@ export function WorkspaceSwitcher() {
           <div className={styles.popup}>
             {/* Actions row */}
             <div className={styles.popupActions}>
-              {activeWorkspace && (
+              {activeWorkspace && (activeWorkspace.name !== 'Common' || isSuperAdmin) && (
                 <button className={styles.actionBtn} onClick={openSettings}>
                   <IconSettings size={14} />
                   Settings
@@ -151,6 +176,12 @@ export function WorkspaceSwitcher() {
                   Invite
                 </button>
               )}
+              {!isSuperAdmin && activeWorkspace && !user?.workspaces?.find((w) => w.id === activeWorkspace.id)?.is_default && (
+                <button className={styles.actionBtn} onClick={setAsDefault}>
+                  <IconStar size={14} />
+                  Set default
+                </button>
+              )}
             </div>
 
             {/* Workspace list */}
@@ -158,22 +189,23 @@ export function WorkspaceSwitcher() {
               {workspaces.length === 0 ? (
                 <p className={styles.noWs}>No workspaces yet</p>
               ) : (
-                workspaces.map((ws) => (
-                  <button
-                    key={ws.id}
-                    className={`${styles.wsItem} ${activeWorkspace?.id === ws.id ? styles.wsItemActive : ''}`}
-                    onClick={() => { dispatch(setActiveWorkspace(ws)); setIsOpen(false); }}
-                  >
-                    <div
-                      className={styles.wsItemIcon}
-                      style={{ background: getAvatarColor(ws.name) }}
+                workspaces.map((ws) => {
+                  const isDefault = !isSuperAdmin && user?.workspaces?.find((w) => w.id === ws.id)?.is_default;
+                  return (
+                    <button
+                      key={ws.id}
+                      className={`${styles.wsItem} ${activeWorkspace?.id === ws.id ? styles.wsItemActive : ''}`}
+                      onClick={() => { dispatch(setActiveWorkspace(ws)); setIsOpen(false); }}
                     >
-                      {getInitials(ws.name)}
-                    </div>
-                    <span className={styles.wsItemName}>{ws.name}</span>
-                    {activeWorkspace?.id === ws.id && <IconCheck size={14} className={styles.wsCheckIcon} />}
-                  </button>
-                ))
+                      <div className={styles.wsItemIcon} style={{ background: getAvatarColor(ws.name) }}>
+                        {getInitials(ws.name)}
+                      </div>
+                      <span className={styles.wsItemName}>{ws.name}</span>
+                      {isDefault && <IconStar size={12} className={styles.defaultStar} />}
+                      {activeWorkspace?.id === ws.id && <IconCheck size={14} className={styles.wsCheckIcon} />}
+                    </button>
+                  );
+                })
               )}
             </div>
 

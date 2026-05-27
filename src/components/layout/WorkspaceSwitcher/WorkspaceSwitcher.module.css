@@ -120,6 +120,7 @@
 }
 .wsItemName { flex: 1; text-align: left; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wsCheckIcon { color: var(--primary-600); flex-shrink: 0; }
+.defaultStar { color: var(--warning-500, #f59e0b); flex-shrink: 0; }
 
 .createBtn {
   display: flex;
