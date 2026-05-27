@@ -2,6 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      try {
+        var c = localStorage.getItem('ssh_sidebar_collapsed') === 'true';
+        var w = c ? 64 : (parseInt(localStorage.getItem('ssh_sidebar_width')) || 260);
+        document.documentElement.style.setProperty('--sidebar-width', w + 'px');
+      } catch(e) {}
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="SoftSuave Hire - Enterprise Interview Platform" />
