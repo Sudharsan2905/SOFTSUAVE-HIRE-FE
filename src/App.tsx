@@ -2,6 +2,13 @@ import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Spinner } from '@/components/ui/Spinner';
 import { AdminLayout } from '@/components/layout/AdminLayout';
+import { useAppSelector } from '@/store';
+
+function SuperAdminRoute({ children }: { children: React.ReactNode }) {
+  const user = useAppSelector((s) => s.auth.user);
+  if (user?.role !== 'super_admin') return <Navigate to="/question-bank" replace />;
+  return <>{children}</>;
+}
 
 // Lazy-loaded admin pages
 const AdminLoginPage = lazy(() => import('@/features/auth/pages/AdminLoginPage'));
@@ -44,18 +51,18 @@ export default function App() {
 
         {/* Admin protected routes */}
         <Route element={<AdminLayout />}>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<Navigate to="/question-bank" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/question-bank" element={<CategoriesPage />} />
           <Route path="/question-bank/:categoryId" element={<QuestionsPage />} />
           <Route path="/workspaces/:workspaceId/assessments" element={<AssessmentsPage />} />
           <Route path="/workspaces/:workspaceId/assessments/:id" element={<AssessmentDetailPage />} />
           <Route path="/live-interviews" element={<LiveInterviewsPage />} />
-          <Route path="/users" element={<UsersPage />} />
+          <Route path="/users" element={<SuperAdminRoute><UsersPage /></SuperAdminRoute>} />
         </Route>
 
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/question-bank" replace />} />
       </Routes>
     </Suspense>
   );
