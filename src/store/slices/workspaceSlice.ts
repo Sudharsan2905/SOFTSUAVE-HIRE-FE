@@ -38,6 +38,13 @@ const workspaceSlice = createSlice({
       localStorage.removeItem(WORKSPACE_KEY);
     },
   },
+  extraReducers: (builder) => {
+    builder.addCase('auth/logout', (state) => {
+      state.activeWorkspace = null;
+      state.workspaces = [];
+      localStorage.removeItem(WORKSPACE_KEY);
+    });
+  },
 });
 
 export const { setActiveWorkspace, setWorkspaces, clearWorkspace } = workspaceSlice.actions;
