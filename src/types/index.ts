@@ -10,6 +10,7 @@ export interface User {
   role: UserRole;
   is_active?: boolean;
   workspaces?: WorkspaceRef[];
+  default_workspace_id?: string;
   created_at: string;
   updated_at: string;
   profile?: CandidateProfile;
@@ -44,7 +45,6 @@ export interface WorkspaceMember {
 export interface WorkspaceRef {
   id: string;
   name: string;
-  is_default: boolean;
 }
 
 export interface Workspace {

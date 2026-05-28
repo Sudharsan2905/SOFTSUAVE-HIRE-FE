@@ -2,44 +2,71 @@
 .fullWidth { width: 100%; }
 .label { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
 
-.selectWrapper {
-  position: relative;
+.container { position: relative; }
+
+.trigger {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  background: var(--bg-surface);
   border: 1.5px solid var(--border-default);
   border-radius: var(--radius-md);
-  background: var(--bg-surface);
-  transition: border-color var(--transition-fast);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  gap: 8px;
 }
-.selectWrapper:focus-within {
+.trigger:hover:not(:disabled) { border-color: var(--primary-400); }
+.triggerOpen {
   border-color: var(--primary-500);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
-.hasError { border-color: var(--error-500); }
+.hasError { border-color: var(--error-500) !important; }
+.disabled { opacity: 0.55; cursor: not-allowed; }
 
-.select {
-  width: 100%;
-  height: 38px;
-  padding: 0 36px 0 12px;
-  background: transparent;
-  border: none;
-  outline: none;
-  font-size: 14px;
-  color: var(--text-primary);
-  appearance: none;
-  cursor: pointer;
-  font-family: inherit;
+.triggerValue { font-size: 14px; color: var(--text-primary); font-family: inherit; flex: 1; text-align: left; }
+.triggerPlaceholder { font-size: 14px; color: var(--text-tertiary); font-family: inherit; flex: 1; text-align: left; }
+
+.chevron { color: var(--text-tertiary); flex-shrink: 0; transition: transform var(--transition-fast); }
+.chevronOpen { transform: rotate(180deg); }
+
+/* Dropdown popup — position injected inline via portal */
+.dropdown {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: dropIn 0.12s ease;
 }
-.select option { background: var(--bg-surface); }
 
-.arrow {
-  position: absolute;
-  right: 10px;
-  color: var(--text-tertiary);
-  pointer-events: none;
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.option {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background var(--transition-fast);
+  text-align: left;
 }
+.option:hover { background: var(--bg-muted); }
+.optionActive { color: var(--primary-600); font-weight: 500; background: var(--bg-active); }
+.optionActive:hover { background: var(--bg-active); }
+
+.optionCheck { color: var(--primary-600); flex-shrink: 0; }
 
 .error { font-size: 12px; color: var(--error-500); }
 .hint  { font-size: 12px; color: var(--text-tertiary); }

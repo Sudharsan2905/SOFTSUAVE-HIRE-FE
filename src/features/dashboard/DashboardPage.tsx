@@ -24,7 +24,7 @@ export default function DashboardPage() {
         </svg>
         <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Common Workspace</p>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, maxWidth: 340 }}>
-          Contact your super admin to get access to a workspace.
+          Contact your administrator to get access to a workspace.
         </p>
       </div>
     );
