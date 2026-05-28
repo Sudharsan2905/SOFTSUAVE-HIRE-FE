@@ -127,9 +127,7 @@ export default function QuestionsPage() {
         ...(complexity && { complexity }),
         ...(questionType && { question_type: questionType }),
       });
-      const { data } = await api.get(
-        `/api/questions/categories/${categoryId}/questions?${params}`,
-      );
+      const { data } = await api.get(`/api/questions/categories/${categoryId}/questions?${params}`);
       setQuestions(data.data?.questions || []);
       setMeta(data.data?.pagination || null);
     } catch {
@@ -137,16 +135,7 @@ export default function QuestionsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [
-    categoryId,
-    page,
-    pageSize,
-    sortBy,
-    sortOrder,
-    debouncedSearch,
-    complexity,
-    questionType,
-  ]);
+  }, [categoryId, page, pageSize, sortBy, sortOrder, debouncedSearch, complexity, questionType]);
 
   useEffect(() => {
     fetchCategory();
@@ -161,26 +150,22 @@ export default function QuestionsPage() {
   const resetForms = () => setForms([newBlankForm()]);
 
   const updateForm = (idx: number, patch: Partial<QuestionForm>) => {
-    setForms((prev) =>
-      prev.map((f, i) => (i === idx ? { ...f, ...patch } : f)),
-    );
+    setForms((prev) => prev.map((f, i) => (i === idx ? { ...f, ...patch } : f)));
   };
 
   const updateOption = (
     formIdx: number,
     optIdx: number,
-    patch: Partial<{ text: string; is_correct: boolean }>,
+    patch: Partial<{ text: string; is_correct: boolean }>
   ) => {
     setForms((prev) =>
       prev.map((f, i) => {
         if (i !== formIdx) return f;
         return {
           ...f,
-          options: f.options.map((o, j) =>
-            j === optIdx ? { ...o, ...patch } : o,
-          ),
+          options: f.options.map((o, j) => (j === optIdx ? { ...o, ...patch } : o)),
         };
-      }),
+      })
     );
   };
 
@@ -193,10 +178,8 @@ export default function QuestionsPage() {
           question_text: f.question_text,
           question_type: f.question_type,
           complexity: f.complexity,
-          options:
-            f.question_type !== "essay" ? f.options.filter((o) => o.text) : [],
-          correct_answer:
-            f.question_type === "essay" ? f.correct_answer : undefined,
+          options: f.question_type !== "essay" ? f.options.filter((o) => o.text) : [],
+          correct_answer: f.question_type === "essay" ? f.correct_answer : undefined,
         };
         await api.put(`/api/questions/${selected.id}`, payload);
         toast.success("Question updated");
@@ -205,15 +188,12 @@ export default function QuestionsPage() {
           question_text: f.question_text,
           question_type: f.question_type,
           complexity: f.complexity,
-          options:
-            f.question_type !== "essay" ? f.options.filter((o) => o.text) : [],
-          correct_answer:
-            f.question_type === "essay" ? f.correct_answer : undefined,
+          options: f.question_type !== "essay" ? f.options.filter((o) => o.text) : [],
+          correct_answer: f.question_type === "essay" ? f.correct_answer : undefined,
         }));
-        const { data } = await api.post(
-          `/api/questions/categories/${categoryId}/bulk`,
-          { questions },
-        );
+        const { data } = await api.post(`/api/questions/categories/${categoryId}/bulk`, {
+          questions,
+        });
         toast.success(`${data.data?.created || 0} question(s) created`);
       }
       setShowCreate(false);
@@ -247,7 +227,7 @@ export default function QuestionsPage() {
     try {
       const { data } = await api.post(
         `/api/questions/categories/${categoryId}/ai-generate`,
-        aiForm,
+        aiForm
       );
       toast.success(`${data.data?.created || 0} questions generated`);
       setShowAI(false);
@@ -270,8 +250,7 @@ export default function QuestionsPage() {
       for (const h of headers) {
         const l = h.toLowerCase();
         if (!auto.question && l.includes("question")) auto.question = h;
-        if (!auto.options && (l === "options" || l.includes("option")))
-          auto.options = h;
+        if (!auto.options && (l === "options" || l.includes("option"))) auto.options = h;
         if (!auto.answer && l.includes("answer")) auto.answer = h;
         if (!auto.complexity && l.includes("complex")) auto.complexity = h;
       }
@@ -291,7 +270,7 @@ export default function QuestionsPage() {
       const { data } = await api.post(
         `/api/questions/categories/${categoryId}/excel-import`,
         formData,
-        { headers: { "Content-Type": "multipart/form-data" } },
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
       toast.success(`${data.data?.created || 0} questions imported`);
       setShowColumnMap(false);
@@ -389,9 +368,7 @@ export default function QuestionsPage() {
         onSortByChange={setSortBy}
         sortByOptions={SORT_OPTIONS}
         sortOrder={sortOrder}
-        onSortOrderToggle={() =>
-          setSortOrder((o) => (o === "asc" ? "desc" : "asc"))
-        }
+        onSortOrderToggle={() => setSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         complexity={complexity}
@@ -428,16 +405,12 @@ export default function QuestionsPage() {
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <ComplexityBadge complexity={q.complexity} />
                     <Badge variant="info">
-                      {QUESTION_TYPE_OPTIONS.find(
-                        (o) => o.value === q.question_type,
-                      )?.label || q.question_type}
+                      {QUESTION_TYPE_OPTIONS.find((o) => o.value === q.question_type)?.label ||
+                        q.question_type}
                     </Badge>
                   </div>
                   <div className={styles.cardActions}>
-                    <button
-                      className={styles.iconBtn}
-                      onClick={() => openEdit(q)}
-                    >
+                    <button className={styles.iconBtn} onClick={() => openEdit(q)}>
                       <IconEdit size={14} />
                     </button>
                     <button
@@ -496,14 +469,8 @@ export default function QuestionsPage() {
             >
               Cancel
             </Button>
-            <Button
-              onClick={handleSaveQuestions}
-              isLoading={saving}
-              disabled={!canSave}
-            >
-              {selected
-                ? "Save Changes"
-                : `Save ${forms.length > 1 ? `(${forms.length})` : ""}`}
+            <Button onClick={handleSaveQuestions} isLoading={saving} disabled={!canSave}>
+              {selected ? "Save Changes" : `Save ${forms.length > 1 ? `(${forms.length})` : ""}`}
             </Button>
           </>
         }
@@ -513,15 +480,11 @@ export default function QuestionsPage() {
             <div key={f._key} className={styles.formCard}>
               {!selected && (
                 <div className={styles.formCardHeader}>
-                  <span className={styles.formCardTitle}>
-                    Question {idx + 1}
-                  </span>
+                  <span className={styles.formCardTitle}>Question {idx + 1}</span>
                   {forms.length > 1 && (
                     <button
                       className={`${styles.iconBtn} ${styles.danger}`}
-                      onClick={() =>
-                        setForms((prev) => prev.filter((_, i) => i !== idx))
-                      }
+                      onClick={() => setForms((prev) => prev.filter((_, i) => i !== idx))}
                       title="Remove"
                     >
                       <IconDelete size={14} />
@@ -530,17 +493,13 @@ export default function QuestionsPage() {
                 </div>
               )}
 
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 12 }}
-              >
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div>
                   <Textarea
                     label="Question Text"
                     placeholder="Enter the question..."
                     value={f.question_text}
-                    onChange={(e) =>
-                      updateForm(idx, { question_text: e.target.value })
-                    }
+                    onChange={(e) => updateForm(idx, { question_text: e.target.value })}
                     rows={3}
                   />
                   <p
@@ -564,17 +523,13 @@ export default function QuestionsPage() {
                     label="Question Type"
                     options={QUESTION_TYPE_OPTIONS}
                     value={f.question_type}
-                    onChange={(v) =>
-                      updateForm(idx, { question_type: v as QuestionType })
-                    }
+                    onChange={(v) => updateForm(idx, { question_type: v as QuestionType })}
                   />
                   <Select
                     label="Complexity"
                     options={COMPLEXITY_OPTIONS}
                     value={f.complexity}
-                    onChange={(v) =>
-                      updateForm(idx, { complexity: v as Complexity })
-                    }
+                    onChange={(v) => updateForm(idx, { complexity: v as Complexity })}
                   />
                 </div>
 
@@ -583,9 +538,7 @@ export default function QuestionsPage() {
                     label="Model Answer (optional)"
                     placeholder="Provide a model answer for reference..."
                     value={f.correct_answer}
-                    onChange={(e) =>
-                      updateForm(idx, { correct_answer: e.target.value })
-                    }
+                    onChange={(e) => updateForm(idx, { correct_answer: e.target.value })}
                     rows={3}
                   />
                 ) : (
@@ -621,11 +574,7 @@ export default function QuestionsPage() {
                           }}
                         >
                           <input
-                            type={
-                              f.question_type === "mcq_single"
-                                ? "radio"
-                                : "checkbox"
-                            }
+                            type={f.question_type === "mcq_single" ? "radio" : "checkbox"}
                             checked={opt.is_correct}
                             onChange={() => {
                               const options = f.options.map((o, i) => ({
@@ -696,9 +645,7 @@ export default function QuestionsPage() {
             label="Topic"
             placeholder="e.g., Python decorators, SQL joins..."
             value={aiForm.topic}
-            onChange={(e) =>
-              setAiForm((p) => ({ ...p, topic: e.target.value }))
-            }
+            onChange={(e) => setAiForm((p) => ({ ...p, topic: e.target.value }))}
           />
           <Input
             label="Number of Questions (1-20)"
@@ -706,28 +653,20 @@ export default function QuestionsPage() {
             min={1}
             max={20}
             value={aiForm.count}
-            onChange={(e) =>
-              setAiForm((p) => ({ ...p, count: Number(e.target.value) }))
-            }
+            onChange={(e) => setAiForm((p) => ({ ...p, count: Number(e.target.value) }))}
           />
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-          >
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <Select
               label="Complexity"
               options={COMPLEXITY_OPTIONS}
               value={aiForm.complexity}
-              onChange={(v) =>
-                setAiForm((p) => ({ ...p, complexity: v as Complexity }))
-              }
+              onChange={(v) => setAiForm((p) => ({ ...p, complexity: v as Complexity }))}
             />
             <Select
               label="Question Type"
               options={QUESTION_TYPE_OPTIONS}
               value={aiForm.question_type}
-              onChange={(v) =>
-                setAiForm((p) => ({ ...p, question_type: v as QuestionType }))
-              }
+              onChange={(v) => setAiForm((p) => ({ ...p, question_type: v as QuestionType }))}
             />
           </div>
         </div>
@@ -778,8 +717,7 @@ export default function QuestionsPage() {
               textAlign: "center",
             }}
           >
-            You'll map your columns to Question, Options, Answer, and Complexity
-            in the next step.
+            You'll map your columns to Question, Options, Answer, and Complexity in the next step.
           </p>
           <input
             ref={fileRef}

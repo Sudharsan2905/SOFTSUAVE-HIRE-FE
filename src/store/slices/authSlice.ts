@@ -1,7 +1,7 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { User } from '@/types';
-import { api } from '@/utils/api';
-import toast from 'react-hot-toast';
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { User } from "@/types";
+import { api } from "@/utils/api";
+import toast from "react-hot-toast";
 
 interface AuthState {
   user: User | null;
@@ -11,16 +11,16 @@ interface AuthState {
   isLoading: boolean;
 }
 
-const TOKEN_KEY = 'ssh_access';
-const REFRESH_KEY = 'ssh_refresh';
-const USER_KEY = 'ssh_user';
+const TOKEN_KEY = "ssh_access";
+const REFRESH_KEY = "ssh_refresh";
+const USER_KEY = "ssh_user";
 
 const loadFromStorage = (): Partial<AuthState> => {
   try {
     return {
       accessToken: localStorage.getItem(TOKEN_KEY),
       refreshToken: localStorage.getItem(REFRESH_KEY),
-      user: JSON.parse(localStorage.getItem(USER_KEY) || 'null'),
+      user: JSON.parse(localStorage.getItem(USER_KEY) || "null"),
       isAuthenticated: !!localStorage.getItem(TOKEN_KEY),
     };
   } catch {
@@ -29,39 +29,45 @@ const loadFromStorage = (): Partial<AuthState> => {
 };
 
 export const adminLogin = createAsyncThunk(
-  'auth/adminLogin',
+  "auth/adminLogin",
   async (payload: { email: string; password: string }, { rejectWithValue }) => {
     try {
-      const { data } = await api.post('/api/auth/admin/login', payload);
+      const { data } = await api.post("/api/auth/admin/login", payload);
       return data.data;
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Login failed';
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Login failed";
       return rejectWithValue(msg);
     }
   }
 );
 
 export const candidateLogin = createAsyncThunk(
-  'auth/candidateLogin',
+  "auth/candidateLogin",
   async (payload: { email: string; password: string }, { rejectWithValue }) => {
     try {
-      const { data } = await api.post('/api/auth/login', payload);
+      const { data } = await api.post("/api/auth/login", payload);
       return data.data;
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Login failed';
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Login failed";
       return rejectWithValue(msg);
     }
   }
 );
 
 export const candidateRegister = createAsyncThunk(
-  'auth/candidateRegister',
+  "auth/candidateRegister",
   async (payload: Record<string, unknown>, { rejectWithValue }) => {
     try {
-      const { data } = await api.post('/api/auth/register', payload);
+      const { data } = await api.post("/api/auth/register", payload);
       return data.data;
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Registration failed';
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Registration failed";
       return rejectWithValue(msg);
     }
   }
@@ -77,12 +83,14 @@ const initialState: AuthState = {
 };
 
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState,
   reducers: {
     logout(state) {
       if (state.refreshToken) {
-        api.post('/api/auth/logout', { refresh_token: state.refreshToken }).catch(() => {});
+        api.post("/api/auth/logout", { refresh_token: state.refreshToken }).catch(() => {
+          // best-effort: ignore logout API errors, user is already logged out locally
+        });
       }
       state.user = null;
       state.accessToken = null;
@@ -102,7 +110,10 @@ const authSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    const handleAuthFulfilled = (state: AuthState, action: PayloadAction<{ access_token: string; refresh_token: string; user: User }>) => {
+    const handleAuthFulfilled = (
+      state: AuthState,
+      action: PayloadAction<{ access_token: string; refresh_token: string; user: User }>
+    ) => {
       state.isLoading = false;
       state.accessToken = action.payload.access_token;
       state.refreshToken = action.payload.refresh_token;
@@ -114,19 +125,25 @@ const authSlice = createSlice({
     };
 
     builder
-      .addCase(adminLogin.pending, (state) => { state.isLoading = true; })
+      .addCase(adminLogin.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(adminLogin.fulfilled, handleAuthFulfilled)
       .addCase(adminLogin.rejected, (state, action) => {
         state.isLoading = false;
         toast.error(action.payload as string);
       })
-      .addCase(candidateLogin.pending, (state) => { state.isLoading = true; })
+      .addCase(candidateLogin.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(candidateLogin.fulfilled, handleAuthFulfilled)
       .addCase(candidateLogin.rejected, (state, action) => {
         state.isLoading = false;
         toast.error(action.payload as string);
       })
-      .addCase(candidateRegister.pending, (state) => { state.isLoading = true; })
+      .addCase(candidateRegister.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(candidateRegister.fulfilled, handleAuthFulfilled)
       .addCase(candidateRegister.rejected, (state, action) => {
         state.isLoading = false;

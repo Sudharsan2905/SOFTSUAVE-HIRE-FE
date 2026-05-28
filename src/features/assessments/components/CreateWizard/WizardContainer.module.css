@@ -1,4 +1,8 @@
-.wizard { display: flex; flex-direction: column; gap: 0; }
+.wizard {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
 
 .steps {
   display: flex;
@@ -16,7 +20,9 @@
   font-weight: 500;
   color: var(--text-tertiary);
 }
-.stepActive { color: var(--primary-600); }
+.stepActive {
+  color: var(--primary-600);
+}
 
 .stepDot {
   width: 26px;

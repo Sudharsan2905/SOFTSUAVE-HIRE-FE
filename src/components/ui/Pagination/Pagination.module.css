@@ -6,8 +6,15 @@
   gap: 12px;
   padding-top: 16px;
 }
-.info { font-size: 13px; color: var(--text-tertiary); }
-.controls { display: flex; align-items: center; gap: 4px; }
+.info {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 
 .navBtn,
 .pageBtn {
@@ -31,7 +38,10 @@
   border-color: var(--primary-500);
   color: var(--primary-600);
 }
-.navBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.navBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 .pageBtn.active {
   background: var(--primary-600);
   border-color: var(--primary-600);

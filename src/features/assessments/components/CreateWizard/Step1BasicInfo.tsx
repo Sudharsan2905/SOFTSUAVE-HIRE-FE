@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import styles from './Step1BasicInfo.module.css';
-import { Input, Textarea } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Toggle } from '@/components/ui/Toggle';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { IconPlus, IconDelete, IconMonitor, IconShield } from '@/assets/icons';
-import { AssessmentDraft, RoundSetup } from './WizardContainer';
-import { AssessmentAccessibility, MonitoringConfig } from '@/types';
+import React, { useState } from "react";
+import styles from "./Step1BasicInfo.module.css";
+import { Input, Textarea } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { Toggle } from "@/components/ui/Toggle";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { IconPlus, IconDelete, IconMonitor, IconShield } from "@/assets/icons";
+import { AssessmentDraft, RoundSetup } from "./WizardContainer";
+import { AssessmentAccessibility, MonitoringConfig } from "@/types";
 
 interface Props {
   draft: AssessmentDraft;
@@ -24,7 +24,7 @@ export function Step1BasicInfo({ draft, onNext }: Props) {
       tab_monitoring: true,
       voice_monitoring: true,
       camera_enabled: true,
-      screenshot_mode: 'time_interval',
+      screenshot_mode: "time_interval",
       screenshot_interval_minutes: 5,
     }
   );
@@ -32,35 +32,59 @@ export function Step1BasicInfo({ draft, onNext }: Props) {
   const addRound = () => {
     setRounds((prev) => [
       ...prev,
-      { round_number: prev.length + 1, question_count: 10, max_duration_minutes: 30, question_ids: [] },
+      {
+        round_number: prev.length + 1,
+        question_count: 10,
+        max_duration_minutes: 30,
+        question_ids: [],
+      },
     ]);
   };
 
   const removeRound = (idx: number) => {
-    setRounds((prev) => prev.filter((_, i) => i !== idx).map((r, i) => ({ ...r, round_number: i + 1 })));
+    setRounds((prev) =>
+      prev.filter((_, i) => i !== idx).map((r, i) => ({ ...r, round_number: i + 1 }))
+    );
   };
 
   const updateRound = (idx: number, field: keyof RoundSetup, value: number) => {
-    setRounds((prev) => prev.map((r, i) => i === idx ? { ...r, [field]: value } : r));
+    setRounds((prev) => prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r)));
   };
 
-  const canProceed = name.trim() && rounds.length > 0 && rounds.every((r) => r.question_count > 0 && r.max_duration_minutes > 0);
+  const canProceed =
+    name.trim() &&
+    rounds.length > 0 &&
+    rounds.every((r) => r.question_count > 0 && r.max_duration_minutes > 0);
 
   return (
     <div className={styles.container}>
       {/* Basic Info */}
       <div className={styles.section}>
-        <Input label="Assessment Name *" placeholder="e.g., Frontend Developer Assessment" value={name}
-          onChange={(e) => setName(e.target.value)} />
-        <Textarea label="Description (optional)" placeholder="What is this assessment for?" value={description}
-          onChange={(e) => setDescription(e.target.value)} rows={2} />
+        <Input
+          label="Assessment Name *"
+          placeholder="e.g., Frontend Developer Assessment"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <Textarea
+          label="Description (optional)"
+          placeholder="What is this assessment for?"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={2}
+        />
       </div>
 
       {/* Rounds Config */}
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
           <h3 className={styles.sectionTitle}>Rounds Configuration</h3>
-          <Button variant="secondary" size="sm" leftIcon={<IconPlus size={14} />} onClick={addRound}>
+          <Button
+            variant="secondary"
+            size="sm"
+            leftIcon={<IconPlus size={14} />}
+            onClick={addRound}
+          >
             Add Round
           </Button>
         </div>
@@ -81,7 +105,7 @@ export function Step1BasicInfo({ draft, onNext }: Props) {
                   type="number"
                   min={1}
                   value={round.question_count}
-                  onChange={(e) => updateRound(idx, 'question_count', Number(e.target.value))}
+                  onChange={(e) => updateRound(idx, "question_count", Number(e.target.value))}
                   hint="You can select more for randomization"
                 />
                 <Input
@@ -89,7 +113,7 @@ export function Step1BasicInfo({ draft, onNext }: Props) {
                   type="number"
                   min={1}
                   value={round.max_duration_minutes}
-                  onChange={(e) => updateRound(idx, 'max_duration_minutes', Number(e.target.value))}
+                  onChange={(e) => updateRound(idx, "max_duration_minutes", Number(e.target.value))}
                 />
               </div>
             </div>
@@ -102,16 +126,16 @@ export function Step1BasicInfo({ draft, onNext }: Props) {
         <h3 className={styles.sectionTitle}>Assessment Mode</h3>
         <div className={styles.modeToggle}>
           <button
-            className={`${styles.modeBtn} ${accessibility === 'normal' ? styles.modeActive : ''}`}
-            onClick={() => setAccessibility('normal')}
+            className={`${styles.modeBtn} ${accessibility === "normal" ? styles.modeActive : ""}`}
+            onClick={() => setAccessibility("normal")}
           >
             <IconMonitor size={20} />
             <span>Normal</span>
             <p>Standard assessment without monitoring</p>
           </button>
           <button
-            className={`${styles.modeBtn} ${accessibility === 'monitoring' ? styles.modeActive : ''}`}
-            onClick={() => setAccessibility('monitoring')}
+            className={`${styles.modeBtn} ${accessibility === "monitoring" ? styles.modeActive : ""}`}
+            onClick={() => setAccessibility("monitoring")}
           >
             <IconShield size={20} />
             <span>Monitoring</span>
@@ -119,9 +143,16 @@ export function Step1BasicInfo({ draft, onNext }: Props) {
           </button>
         </div>
 
-        {accessibility === 'monitoring' && (
+        {accessibility === "monitoring" && (
           <div className={styles.monitoringConfig}>
-            <h4 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12 }}>
+            <h4
+              style={{
+                fontSize: 14,
+                fontWeight: 600,
+                color: "var(--text-primary)",
+                marginBottom: 12,
+              }}
+            >
               Monitoring Options
             </h4>
             <div className={styles.toggleList}>
@@ -145,19 +176,26 @@ export function Step1BasicInfo({ draft, onNext }: Props) {
               <Select
                 label="Screenshot mode"
                 options={[
-                  { value: 'time_interval', label: 'Time interval' },
-                  { value: 'count', label: 'Total count' },
+                  { value: "time_interval", label: "Time interval" },
+                  { value: "count", label: "Total count" },
                 ]}
                 value={monitoring.screenshot_mode}
-                onChange={(v) => setMonitoring((p) => ({ ...p, screenshot_mode: v as 'time_interval' | 'count' }))}
+                onChange={(v) =>
+                  setMonitoring((p) => ({ ...p, screenshot_mode: v as "time_interval" | "count" }))
+                }
               />
-              {monitoring.screenshot_mode === 'time_interval' ? (
+              {monitoring.screenshot_mode === "time_interval" ? (
                 <Input
                   label="Interval (minutes)"
                   type="number"
                   min={1}
                   value={monitoring.screenshot_interval_minutes || 5}
-                  onChange={(e) => setMonitoring((p) => ({ ...p, screenshot_interval_minutes: Number(e.target.value) }))}
+                  onChange={(e) =>
+                    setMonitoring((p) => ({
+                      ...p,
+                      screenshot_interval_minutes: Number(e.target.value),
+                    }))
+                  }
                   style={{ marginTop: 10 }}
                 />
               ) : (
@@ -166,7 +204,9 @@ export function Step1BasicInfo({ draft, onNext }: Props) {
                   type="number"
                   min={1}
                   value={monitoring.screenshot_count || 10}
-                  onChange={(e) => setMonitoring((p) => ({ ...p, screenshot_count: Number(e.target.value) }))}
+                  onChange={(e) =>
+                    setMonitoring((p) => ({ ...p, screenshot_count: Number(e.target.value) }))
+                  }
                   style={{ marginTop: 10 }}
                 />
               )}
@@ -175,10 +215,12 @@ export function Step1BasicInfo({ draft, onNext }: Props) {
         )}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
         <Button
           disabled={!canProceed}
-          onClick={() => onNext({ name, description, accessibility, rounds, monitoring_config: monitoring })}
+          onClick={() =>
+            onNext({ name, description, accessibility, rounds, monitoring_config: monitoring })
+          }
           size="lg"
         >
           Next: Select Questions

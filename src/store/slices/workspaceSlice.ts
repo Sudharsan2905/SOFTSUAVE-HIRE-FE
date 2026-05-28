@@ -1,16 +1,16 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Workspace } from '@/types';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { Workspace } from "@/types";
 
 interface WorkspaceState {
   activeWorkspace: Workspace | null;
   workspaces: Workspace[];
 }
 
-const WORKSPACE_KEY = 'ssh_workspace';
+const WORKSPACE_KEY = "ssh_workspace";
 
 const savedWorkspace = (): Workspace | null => {
   try {
-    return JSON.parse(localStorage.getItem(WORKSPACE_KEY) || 'null');
+    return JSON.parse(localStorage.getItem(WORKSPACE_KEY) || "null");
   } catch {
     return null;
   }
@@ -22,7 +22,7 @@ const initialState: WorkspaceState = {
 };
 
 const workspaceSlice = createSlice({
-  name: 'workspace',
+  name: "workspace",
   initialState,
   reducers: {
     setActiveWorkspace(state, action: PayloadAction<Workspace>) {
@@ -39,7 +39,7 @@ const workspaceSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase('auth/logout', (state) => {
+    builder.addCase("auth/logout", (state) => {
       state.activeWorkspace = null;
       state.workspaces = [];
       localStorage.removeItem(WORKSPACE_KEY);

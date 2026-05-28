@@ -1,43 +1,47 @@
-import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate, useParams } from 'react-router-dom';
-import { Spinner } from '@/components/ui/Spinner';
-import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useAppSelector } from '@/store';
+import React, { Suspense, lazy } from "react";
+import { Routes, Route, Navigate, useParams } from "react-router-dom";
+import { Spinner } from "@/components/ui/Spinner";
+import { AdminLayout } from "@/components/layout/AdminLayout";
+import { useAppSelector } from "@/store";
 
 function SuperAdminRoute({ children }: { children: React.ReactNode }) {
   const user = useAppSelector((s) => s.auth.user);
-  if (user?.role !== 'super_admin') return <Navigate to="/question-bank" replace />;
+  if (user?.role !== "super_admin") return <Navigate to="/question-bank" replace />;
   return <>{children}</>;
 }
 
 function AssessmentEntry() {
   const { shareLink } = useParams<{ shareLink: string }>();
   const { isAuthenticated, user } = useAppSelector((s) => s.auth);
-  const isCandidate = isAuthenticated && user?.role !== 'admin' && user?.role !== 'super_admin';
+  const isCandidate = isAuthenticated && user?.role !== "admin" && user?.role !== "super_admin";
 
   if (isCandidate) return <Navigate to={`/assessment/${shareLink}/instructions`} replace />;
   return <Navigate to={`/candidate/login?share=${shareLink}`} replace />;
 }
 
 // Lazy-loaded admin pages
-const AdminLoginPage = lazy(() => import('@/features/auth/pages/AdminLoginPage'));
-const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
-const CategoriesPage = lazy(() => import('@/features/questionBank/pages/CategoriesPage'));
-const QuestionsPage = lazy(() => import('@/features/questionBank/pages/QuestionsPage'));
-const AssessmentsPage = lazy(() => import('@/features/assessments/pages/AssessmentsPage'));
-const AssessmentDetailPage = lazy(() => import('@/features/assessments/pages/AssessmentDetailPage'));
-const LiveInterviewsPage = lazy(() => import('@/features/liveInterviews/pages/LiveInterviewsPage'));
-const UsersPage = lazy(() => import('@/features/users/pages/UsersPage'));
+const AdminLoginPage = lazy(() => import("@/features/auth/pages/AdminLoginPage"));
+const DashboardPage = lazy(() => import("@/features/dashboard/DashboardPage"));
+const CategoriesPage = lazy(() => import("@/features/questionBank/pages/CategoriesPage"));
+const QuestionsPage = lazy(() => import("@/features/questionBank/pages/QuestionsPage"));
+const AssessmentsPage = lazy(() => import("@/features/assessments/pages/AssessmentsPage"));
+const AssessmentDetailPage = lazy(
+  () => import("@/features/assessments/pages/AssessmentDetailPage")
+);
+const LiveInterviewsPage = lazy(() => import("@/features/liveInterviews/pages/LiveInterviewsPage"));
+const UsersPage = lazy(() => import("@/features/users/pages/UsersPage"));
 
 // Lazy-loaded candidate pages
-const CandidateLoginPage = lazy(() => import('@/features/candidate/pages/CandidateLoginPage'));
-const RegisterPage = lazy(() => import('@/features/candidate/pages/RegisterPage'));
-const InstructionsPage = lazy(() => import('@/features/candidate/pages/InstructionsPage'));
-const InterviewPage = lazy(() => import('@/features/candidate/pages/InterviewPage'));
-const CompletedPage = lazy(() => import('@/features/candidate/pages/CompletedPage'));
+const CandidateLoginPage = lazy(() => import("@/features/candidate/pages/CandidateLoginPage"));
+const RegisterPage = lazy(() => import("@/features/candidate/pages/RegisterPage"));
+const InstructionsPage = lazy(() => import("@/features/candidate/pages/InstructionsPage"));
+const InterviewPage = lazy(() => import("@/features/candidate/pages/InterviewPage"));
+const CompletedPage = lazy(() => import("@/features/candidate/pages/CompletedPage"));
 
 const Loading = () => (
-  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+  <div
+    style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}
+  >
     <Spinner size="lg" />
   </div>
 );
@@ -66,9 +70,19 @@ export default function App() {
           <Route path="/question-bank" element={<CategoriesPage />} />
           <Route path="/question-bank/:categoryId" element={<QuestionsPage />} />
           <Route path="/workspaces/:workspaceId/assessments" element={<AssessmentsPage />} />
-          <Route path="/workspaces/:workspaceId/assessments/:id" element={<AssessmentDetailPage />} />
+          <Route
+            path="/workspaces/:workspaceId/assessments/:id"
+            element={<AssessmentDetailPage />}
+          />
           <Route path="/live-interviews" element={<LiveInterviewsPage />} />
-          <Route path="/users" element={<SuperAdminRoute><UsersPage /></SuperAdminRoute>} />
+          <Route
+            path="/users"
+            element={
+              <SuperAdminRoute>
+                <UsersPage />
+              </SuperAdminRoute>
+            }
+          />
         </Route>
 
         {/* Fallback */}

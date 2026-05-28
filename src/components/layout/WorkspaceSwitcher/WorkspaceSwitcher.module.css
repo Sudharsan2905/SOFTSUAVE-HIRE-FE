@@ -1,4 +1,6 @@
-.container { position: relative; }
+.container {
+  position: relative;
+}
 
 .collapsedTrigger {
   display: flex;
@@ -12,7 +14,9 @@
   border-radius: var(--radius-md);
   transition: background var(--transition-fast);
 }
-.collapsedTrigger:hover { background: rgba(255,255,255,0.06); }
+.collapsedTrigger:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
 
 /* No-workspace inline prompt (super admin first login) */
 .noWsPrompt {
@@ -21,8 +25,8 @@
   gap: 8px;
   padding: 10px;
   border-radius: var(--radius-md);
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
 }
 .noWsText {
@@ -38,15 +42,22 @@
   width: 100%;
   padding: 8px 10px;
   border-radius: var(--radius-md);
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
   transition: all var(--transition-fast);
   gap: 8px;
 }
-.trigger:hover { background: rgba(255,255,255,0.08); }
+.trigger:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
 
-.triggerLeft { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+.triggerLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
 
 .wsIcon {
   width: 28px;
@@ -61,7 +72,14 @@
   flex-shrink: 0;
 }
 
-.wsNameRow { display: flex; align-items: center; gap: 4px; overflow: hidden; flex: 1; min-width: 0; }
+.wsNameRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+}
 .wsName {
   font-size: 13px;
   font-weight: 600;
@@ -70,10 +88,20 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.triggerStar { color: var(--warning-500, #f59e0b); flex-shrink: 0; fill: var(--warning-500, #f59e0b); }
+.triggerStar {
+  color: var(--warning-500, #f59e0b);
+  flex-shrink: 0;
+  fill: var(--warning-500, #f59e0b);
+}
 
-.chevron { color: var(--sidebar-text); transition: transform var(--transition-fast); flex-shrink: 0; }
-.chevron.open { transform: rotate(180deg); }
+.chevron {
+  color: var(--sidebar-text);
+  transition: transform var(--transition-fast);
+  flex-shrink: 0;
+}
+.chevron.open {
+  transform: rotate(180deg);
+}
 
 /* Popup */
 .popup {
@@ -92,8 +120,14 @@
 }
 
 @keyframes popIn {
-  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .popupActions {
@@ -118,10 +152,23 @@
   cursor: pointer;
   transition: all var(--transition-fast);
 }
-.actionBtn:hover { background: var(--primary-50); color: var(--primary-700); border-color: var(--primary-200); }
+.actionBtn:hover {
+  background: var(--primary-50);
+  color: var(--primary-700);
+  border-color: var(--primary-200);
+}
 
-.wsList { max-height: 200px; overflow-y: auto; padding: 6px; }
-.noWs { font-size: 13px; color: var(--text-tertiary); text-align: center; padding: 16px; }
+.wsList {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 6px;
+}
+.noWs {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: 16px;
+}
 
 .wsItem {
   display: flex;
@@ -135,8 +182,13 @@
   font-size: 13px;
   color: var(--text-primary);
 }
-.wsItem:hover { background: var(--bg-muted); }
-.wsItemActive { background: var(--bg-active); color: var(--primary-700); }
+.wsItem:hover {
+  background: var(--bg-muted);
+}
+.wsItemActive {
+  background: var(--bg-active);
+  color: var(--primary-700);
+}
 
 .wsItemIcon {
   width: 24px;
@@ -150,9 +202,23 @@
   color: #fff;
   flex-shrink: 0;
 }
-.wsItemName { flex: 1; text-align: left; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wsCheckIcon { color: var(--primary-600); flex-shrink: 0; }
-.defaultStar { color: var(--warning-500, #f59e0b); flex-shrink: 0; fill: var(--warning-500, #f59e0b); }
+.wsItemName {
+  flex: 1;
+  text-align: left;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wsCheckIcon {
+  color: var(--primary-600);
+  flex-shrink: 0;
+}
+.defaultStar {
+  color: var(--warning-500, #f59e0b);
+  flex-shrink: 0;
+  fill: var(--warning-500, #f59e0b);
+}
 
 .createBtn {
   display: flex;
@@ -168,7 +234,9 @@
   cursor: pointer;
   transition: background var(--transition-fast);
 }
-.createBtn:hover { background: var(--bg-muted); }
+.createBtn:hover {
+  background: var(--bg-muted);
+}
 
 .settingsBtn {
   display: flex;
@@ -183,10 +251,17 @@
   cursor: pointer;
   transition: background var(--transition-fast);
 }
-.settingsBtn:hover { background: var(--bg-muted); color: var(--text-primary); }
+.settingsBtn:hover {
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
 
 /* Settings view */
-.wsSettingsView { display: flex; flex-direction: column; gap: 16px; }
+.wsSettingsView {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
 .wsSettingsHead {
   display: flex;
@@ -194,9 +269,20 @@
   gap: 12px;
 }
 
-.wsSettingsField { display: flex; flex-direction: column; gap: 3px; }
-.wsSettingsName { font-size: 14px; font-weight: 500; color: var(--text-primary); }
-.wsSettingsDesc { font-size: 13px; color: var(--text-secondary); }
+.wsSettingsField {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.wsSettingsName {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.wsSettingsDesc {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
 
 .wsSettingsSectionLabel {
   font-size: 11px;
@@ -206,7 +292,10 @@
   color: var(--text-tertiary);
   margin-bottom: 4px;
 }
-.wsSettingsMeta { font-size: 13px; color: var(--text-secondary); }
+.wsSettingsMeta {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
 
 .memberAvatarStack {
   display: flex;
@@ -231,8 +320,13 @@
   flex-shrink: 0;
   transition: transform var(--transition-fast);
 }
-.memberAvatar:first-child { margin-left: 0; }
-.memberAvatar:hover { transform: translateY(-2px); z-index: 20 !important; }
+.memberAvatar:first-child {
+  margin-left: 0;
+}
+.memberAvatar:hover {
+  transform: translateY(-2px);
+  z-index: 20 !important;
+}
 
 .memberAvatarMore {
   width: 28px;
@@ -250,7 +344,11 @@
   flex-shrink: 0;
 }
 
-.wsSettingsActions { display: flex; gap: 8px; flex-wrap: wrap; }
+.wsSettingsActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
 .wsSettingsBtn {
   display: flex;
@@ -266,9 +364,18 @@
   background: var(--bg-surface);
   color: var(--text-secondary);
 }
-.wsSettingsBtn:hover { background: var(--bg-muted); color: var(--text-primary); }
-.wsSettingsBtnDanger { color: var(--error-600, #dc2626); }
-.wsSettingsBtnDanger:hover { background: var(--error-50, #fef2f2); color: var(--error-700, #b91c1c); border-color: var(--error-200, #fecaca); }
+.wsSettingsBtn:hover {
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+.wsSettingsBtnDanger {
+  color: var(--error-600, #dc2626);
+}
+.wsSettingsBtnDanger:hover {
+  background: var(--error-50, #fef2f2);
+  color: var(--error-700, #b91c1c);
+  border-color: var(--error-200, #fecaca);
+}
 
 .wsDefaultBadge {
   display: inline-flex;
@@ -282,10 +389,19 @@
   background: var(--warning-50, #fffbeb);
   border: 1px solid var(--warning-200, #fde68a);
 }
-.wsDefaultBadgeStar { fill: var(--warning-500, #f59e0b); color: var(--warning-500, #f59e0b); }
+.wsDefaultBadgeStar {
+  fill: var(--warning-500, #f59e0b);
+  color: var(--warning-500, #f59e0b);
+}
 
 /* Invite */
-.inviteList { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
+.inviteList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+}
 .inviteItem {
   display: flex;
   align-items: center;
@@ -296,9 +412,18 @@
   cursor: pointer;
   transition: all var(--transition-fast);
 }
-.inviteItem:not(.inviteItemMember):hover { border-color: var(--primary-300); background: var(--bg-active); }
-.inviteItemSelected { border-color: var(--primary-500); background: var(--bg-active); }
-.inviteItemMember { background: var(--bg-muted); cursor: default; }
+.inviteItem:not(.inviteItemMember):hover {
+  border-color: var(--primary-300);
+  background: var(--bg-active);
+}
+.inviteItemSelected {
+  border-color: var(--primary-500);
+  background: var(--bg-active);
+}
+.inviteItemMember {
+  background: var(--bg-muted);
+  cursor: default;
+}
 
 .memberBadge {
   font-size: 11px;
@@ -324,9 +449,22 @@
   color: #fff;
   flex-shrink: 0;
 }
-.inviteInfo { flex: 1; overflow: hidden; }
-.inviteName { font-size: 13px; font-weight: 500; color: var(--text-primary); }
-.inviteEmail { font-size: 12px; color: var(--text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inviteInfo {
+  flex: 1;
+  overflow: hidden;
+}
+.inviteName {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.inviteEmail {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 .inviteCheck {
   width: 20px;
@@ -338,4 +476,8 @@
   justify-content: center;
   flex-shrink: 0;
 }
-.inviteCheckSelected { background: var(--primary-600); border-color: var(--primary-600); color: #fff; }
+.inviteCheckSelected {
+  background: var(--primary-600);
+  border-color: var(--primary-600);
+  color: #fff;
+}

@@ -90,7 +90,7 @@
   --z-tooltip: 250;
 }
 
-[data-theme='dark'] {
+[data-theme="dark"] {
   --bg-page: #0f172a;
   --bg-surface: #1e293b;
   --bg-elevated: #293548;

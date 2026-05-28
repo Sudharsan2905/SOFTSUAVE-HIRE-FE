@@ -23,8 +23,15 @@
   background: var(--bg-muted);
   flex-shrink: 0;
 }
-.paneTitle { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-.paneCount { font-size: 12px; color: var(--text-tertiary); }
+.paneTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.paneCount {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
 
 .selectedList,
 .questionList {
@@ -46,7 +53,13 @@
   border: 1px solid var(--primary-200);
   border-radius: var(--radius-md);
 }
-.selectedInfo { flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 4; }
+.selectedInfo {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 4;
+}
 
 .questionItem {
   display: flex;
@@ -60,8 +73,17 @@
   transition: all var(--transition-fast);
   background: var(--bg-surface);
 }
-.questionItem:hover { border-color: var(--primary-400); background: var(--bg-active); }
-.questionItemLeft { display: flex; align-items: flex-start; gap: 8px; flex: 1; overflow: hidden; }
+.questionItem:hover {
+  border-color: var(--primary-400);
+  background: var(--bg-active);
+}
+.questionItemLeft {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1;
+  overflow: hidden;
+}
 
 .qText {
   font-size: 12.5px;
@@ -74,21 +96,38 @@
 }
 
 .addBtn {
-  display: flex; align-items: center; justify-content: center;
-  width: 24px; height: 24px; border-radius: 50%;
-  background: var(--primary-600); color: #fff;
-  flex-shrink: 0; cursor: pointer; transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary-600);
+  color: #fff;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all var(--transition-fast);
   opacity: 0;
 }
-.questionItem:hover .addBtn { opacity: 1; }
+.questionItem:hover .addBtn {
+  opacity: 1;
+}
 
 .removeBtn {
-  display: flex; align-items: center; justify-content: center;
-  width: 22px; height: 22px; border-radius: 50%;
-  color: var(--error-500); flex-shrink: 0; cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: var(--error-500);
+  flex-shrink: 0;
+  cursor: pointer;
   transition: all var(--transition-fast);
 }
-.removeBtn:hover { background: var(--error-50); }
+.removeBtn:hover {
+  background: var(--error-50);
+}
 
 .filters {
   display: flex;
@@ -110,5 +149,7 @@
 }
 
 @media (max-width: 768px) {
-  .container { grid-template-columns: 1fr; }
+  .container {
+    grid-template-columns: 1fr;
+  }
 }

@@ -23,11 +23,21 @@
   animation: slideUp 0.2s ease;
 }
 
-.sm  { max-width: 420px; }
-.md  { max-width: 560px; }
-.lg  { max-width: 720px; }
-.xl  { max-width: 960px; }
-.full { max-width: calc(100vw - 32px); }
+.sm {
+  max-width: 420px;
+}
+.md {
+  max-width: 560px;
+}
+.lg {
+  max-width: 720px;
+}
+.xl {
+  max-width: 960px;
+}
+.full {
+  max-width: calc(100vw - 32px);
+}
 
 .header {
   display: flex;
@@ -76,11 +86,21 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { transform: translateY(12px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }

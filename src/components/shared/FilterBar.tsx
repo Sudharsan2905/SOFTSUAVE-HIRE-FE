@@ -1,14 +1,18 @@
-import React from 'react';
-import styles from './FilterBar.module.css';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Button } from '@/components/ui/Button';
+import React from "react";
+import styles from "./FilterBar.module.css";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { Button } from "@/components/ui/Button";
 import {
-  IconSearch, IconSortAsc, IconSortDesc, IconGrid, IconList,
-  IconFilter, IconDownload,
-} from '@/assets/icons';
-import { COMPLEXITY_OPTIONS, QUESTION_TYPE_OPTIONS } from '@/constants/app';
-import type { ViewMode, SortOrder } from '@/types';
+  IconSearch,
+  IconSortAsc,
+  IconSortDesc,
+  IconGrid,
+  IconList,
+  IconDownload,
+} from "@/assets/icons";
+import { COMPLEXITY_OPTIONS, QUESTION_TYPE_OPTIONS } from "@/constants/app";
+import type { ViewMode, SortOrder } from "@/types";
 
 interface FilterBarProps {
   search: string;
@@ -31,12 +35,19 @@ interface FilterBarProps {
 }
 
 export function FilterBar({
-  search, onSearchChange,
-  sortBy, onSortByChange, sortByOptions,
-  sortOrder, onSortOrderToggle,
-  viewMode, onViewModeChange,
-  complexity, onComplexityChange,
-  questionType, onQuestionTypeChange,
+  search,
+  onSearchChange,
+  sortBy,
+  onSortByChange,
+  sortByOptions,
+  sortOrder,
+  onSortOrderToggle,
+  viewMode,
+  onViewModeChange,
+  complexity,
+  onComplexityChange,
+  questionType,
+  onQuestionTypeChange,
   onExport,
   showComplexity = false,
   showQuestionType = false,
@@ -85,23 +96,26 @@ export function FilterBar({
         {children}
       </div>
       <div className={styles.right}>
-        <Button variant="secondary" size="sm" onClick={onSortOrderToggle}
-          leftIcon={sortOrder === 'asc' ? <IconSortAsc size={15} /> : <IconSortDesc size={15} />}
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={onSortOrderToggle}
+          leftIcon={sortOrder === "asc" ? <IconSortAsc size={15} /> : <IconSortDesc size={15} />}
         >
-          {sortOrder === 'asc' ? 'ASC' : 'DESC'}
+          {sortOrder === "asc" ? "ASC" : "DESC"}
         </Button>
         {onViewModeChange && viewMode && (
           <div className={styles.viewToggle}>
             <button
-              className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewActive : ''}`}
-              onClick={() => onViewModeChange('list')}
+              className={`${styles.viewBtn} ${viewMode === "list" ? styles.viewActive : ""}`}
+              onClick={() => onViewModeChange("list")}
               title="List view"
             >
               <IconList size={15} />
             </button>
             <button
-              className={`${styles.viewBtn} ${viewMode === 'grid' ? styles.viewActive : ''}`}
-              onClick={() => onViewModeChange('grid')}
+              className={`${styles.viewBtn} ${viewMode === "grid" ? styles.viewActive : ""}`}
+              onClick={() => onViewModeChange("grid")}
               title="Grid view"
             >
               <IconGrid size={15} />
@@ -109,7 +123,12 @@ export function FilterBar({
           </div>
         )}
         {onExport && (
-          <Button variant="secondary" size="sm" leftIcon={<IconDownload size={15} />} onClick={onExport}>
+          <Button
+            variant="secondary"
+            size="sm"
+            leftIcon={<IconDownload size={15} />}
+            onClick={onExport}
+          >
             Export
           </Button>
         )}

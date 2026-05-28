@@ -40,10 +40,23 @@
   align-items: center;
   justify-content: center;
 }
-.logoText { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.logoText {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
 
-.title { font-size: 24px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
-.desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+.desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
 
 .statsRow {
   display: grid;
@@ -62,8 +75,15 @@
   gap: 6px;
   text-align: center;
 }
-.statValue { font-size: 18px; font-weight: 700; color: var(--text-primary); }
-.statLabel { font-size: 12px; color: var(--text-tertiary); }
+.statValue {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.statLabel {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
 
 .section {
   background: var(--bg-surface);
@@ -72,7 +92,12 @@
   padding: 24px 32px;
 }
 
-.sectionTitle { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 14px; }
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+}
 
 .list {
   display: flex;
@@ -80,7 +105,11 @@
   gap: 10px;
   padding-left: 20px;
 }
-.list li { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+.list li {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
 
 .monitoringSection {
   background: var(--bg-surface);
@@ -92,7 +121,11 @@
   gap: 16px;
 }
 
-.monitoringCards { display: flex; flex-direction: column; gap: 10px; }
+.monitoringCards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
 .monitorCard {
   display: flex;
@@ -102,8 +135,16 @@
   background: var(--bg-muted);
   border-radius: var(--radius-md);
 }
-.monitorTitle { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
-.monitorDesc { font-size: 13px; color: var(--text-secondary); }
+.monitorTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.monitorDesc {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
 
 .cameraSetup {
   display: flex;
@@ -111,8 +152,18 @@
   gap: 16px;
   padding-top: 4px;
 }
-.cameraLabel { font-size: 14px; font-weight: 500; color: var(--text-secondary); flex: 1; }
-.granted { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.cameraLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  flex: 1;
+}
+.granted {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
 
 .footer {
   background: var(--bg-surface);
@@ -122,6 +173,13 @@
 }
 
 @media (max-width: 560px) {
-  .statsRow { grid-template-columns: repeat(2, 1fr); }
-  .header, .section, .monitoringSection, .footer { padding: 20px; }
+  .statsRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .header,
+  .section,
+  .monitoringSection,
+  .footer {
+    padding: 20px;
+  }
 }

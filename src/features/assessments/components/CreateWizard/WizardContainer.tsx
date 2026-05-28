@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import styles from './WizardContainer.module.css';
-import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
-import { Step1BasicInfo } from './Step1BasicInfo';
-import { Step2Questions } from './Step2Questions';
-import { api } from '@/utils/api';
-import { AssessmentAccessibility, MonitoringConfig } from '@/types';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import styles from "./WizardContainer.module.css";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { Step1BasicInfo } from "./Step1BasicInfo";
+import { Step2Questions } from "./Step2Questions";
+import { api } from "@/utils/api";
+import { AssessmentAccessibility, MonitoringConfig } from "@/types";
+import toast from "react-hot-toast";
 
 export interface RoundSetup {
   round_number: number;
@@ -34,7 +34,7 @@ const defaultMonitoring: MonitoringConfig = {
   tab_monitoring: true,
   voice_monitoring: true,
   camera_enabled: true,
-  screenshot_mode: 'time_interval',
+  screenshot_mode: "time_interval",
   screenshot_interval_minutes: 5,
 };
 
@@ -44,10 +44,12 @@ export function CreateAssessmentWizard({ workspaceId, onClose, onSuccess, initia
   const [saving, setSaving] = useState(false);
 
   const [draft, setDraft] = useState<AssessmentDraft>({
-    name: initialData?.name || '',
-    description: initialData?.description || '',
-    rounds: initialData?.rounds || [{ round_number: 1, question_count: 10, max_duration_minutes: 30, question_ids: [] }],
-    accessibility: initialData?.accessibility || 'normal',
+    name: initialData?.name || "",
+    description: initialData?.description || "",
+    rounds: initialData?.rounds || [
+      { round_number: 1, question_count: 10, max_duration_minutes: 30, question_ids: [] },
+    ],
+    accessibility: initialData?.accessibility || "normal",
     monitoring_config: initialData?.monitoring_config || defaultMonitoring,
   });
 
@@ -75,7 +77,7 @@ export function CreateAssessmentWizard({ workspaceId, onClose, onSuccess, initia
   const updateRoundQuestions = (roundIdx: number, questionIds: string[]) => {
     setDraft((prev) => ({
       ...prev,
-      rounds: prev.rounds.map((r, i) => i === roundIdx ? { ...r, question_ids: questionIds } : r),
+      rounds: prev.rounds.map((r, i) => (i === roundIdx ? { ...r, question_ids: questionIds } : r)),
     }));
   };
 
@@ -85,11 +87,16 @@ export function CreateAssessmentWizard({ workspaceId, onClose, onSuccess, initia
     setSaving(true);
     try {
       await api.post(`/api/workspaces/${workspaceId}/assessments`, draft);
-      toast.success('Assessment created successfully');
+      toast.success("Assessment created successfully");
       onSuccess();
     } catch (e: unknown) {
-      toast.error((e as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to create assessment');
-    } finally { setSaving(false); }
+      toast.error(
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          "Failed to create assessment"
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   const roundRequired = draft.rounds[currentRound]?.question_count || 0;
@@ -99,19 +106,44 @@ export function CreateAssessmentWizard({ workspaceId, onClose, onSuccess, initia
     <Modal
       isOpen
       onClose={onClose}
-      title={step === 1 ? 'Create Assessment' : `Select Questions — Round ${currentRound + 1} of ${draft.rounds.length}`}
+      title={
+        step === 1
+          ? "Create Assessment"
+          : `Select Questions — Round ${currentRound + 1} of ${draft.rounds.length}`
+      }
       size="xl"
       footer={
         step === 1 ? undefined : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-              Selected: <strong style={{ color: roundSelected >= roundRequired ? 'var(--success-600)' : 'var(--primary-600)' }}>{roundSelected}</strong>
-              {' '}/{' '}<strong>{roundRequired}</strong> required (can select more for randomization)
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              width: "100%",
+            }}
+          >
+            <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+              Selected:{" "}
+              <strong
+                style={{
+                  color:
+                    roundSelected >= roundRequired ? "var(--success-600)" : "var(--primary-600)",
+                }}
+              >
+                {roundSelected}
+              </strong>{" "}
+              / <strong>{roundRequired}</strong> required (can select more for randomization)
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <Button variant="secondary" onClick={handleRoundPrev}>Back</Button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <Button variant="secondary" onClick={handleRoundPrev}>
+                Back
+              </Button>
               {isLastRound ? (
-                <Button onClick={handleFinish} isLoading={saving} disabled={roundSelected < roundRequired}>
+                <Button
+                  onClick={handleFinish}
+                  isLoading={saving}
+                  disabled={roundSelected < roundRequired}
+                >
                   Finish & Create
                 </Button>
               ) : (
@@ -127,12 +159,12 @@ export function CreateAssessmentWizard({ workspaceId, onClose, onSuccess, initia
       <div className={styles.wizard}>
         {/* Step indicator */}
         <div className={styles.steps}>
-          <div className={`${styles.step} ${step >= 1 ? styles.stepActive : ''}`}>
+          <div className={`${styles.step} ${step >= 1 ? styles.stepActive : ""}`}>
             <div className={styles.stepDot}>1</div>
             <span>Basic Info</span>
           </div>
           <div className={styles.stepLine} />
-          <div className={`${styles.step} ${step >= 2 ? styles.stepActive : ''}`}>
+          <div className={`${styles.step} ${step >= 2 ? styles.stepActive : ""}`}>
             <div className={styles.stepDot}>2</div>
             <span>Select Questions</span>
           </div>

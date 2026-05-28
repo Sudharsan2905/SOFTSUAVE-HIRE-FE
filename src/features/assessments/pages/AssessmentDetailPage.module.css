@@ -29,10 +29,18 @@
   vertical-align: middle;
 }
 
-.table tbody tr:last-child td { border-bottom: none; }
-.table tbody tr:hover { background: var(--bg-muted); }
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+.table tbody tr:hover {
+  background: var(--bg-muted);
+}
 
-.candidateCell { display: flex; align-items: center; gap: 10px; }
+.candidateCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .avatar {
   width: 34px;
   height: 34px;
@@ -45,8 +53,16 @@
   color: #fff;
   flex-shrink: 0;
 }
-.candidateName { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-.candidateEmail { font-size: 12px; color: var(--text-tertiary); margin-top: 1px; }
+.candidateName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.candidateEmail {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+}
 
 .actionBtn {
   display: flex;
@@ -61,8 +77,14 @@
   background: none;
   border: none;
 }
-.actionBtn:hover { background: var(--bg-muted); color: var(--text-primary); }
-.reaccess:hover { background: var(--primary-50); color: var(--primary-600); }
+.actionBtn:hover {
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+.reaccess:hover {
+  background: var(--primary-50);
+  color: var(--primary-600);
+}
 
 .empty {
   display: flex;
@@ -75,7 +97,11 @@
   text-align: center;
 }
 
-.detailContent { display: flex; flex-direction: column; gap: 20px; }
+.detailContent {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
 .detailHeader {
   display: flex;
@@ -99,7 +125,8 @@
   padding: 3px 0;
 }
 
-.roundSection { }
+.roundSection {
+}
 .answerItem {
   padding: 8px 12px;
   background: var(--bg-muted);

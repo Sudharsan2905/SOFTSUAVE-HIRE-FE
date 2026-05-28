@@ -1,7 +1,7 @@
-import React from 'react';
-import styles from './Pagination.module.css';
-import { IconChevronLeft, IconChevronRight } from '@/assets/icons';
-import { PaginationMeta } from '@/types';
+import React from "react";
+import styles from "./Pagination.module.css";
+import { IconChevronLeft, IconChevronRight } from "@/assets/icons";
+import { PaginationMeta } from "@/types";
 
 interface PaginationProps {
   meta: PaginationMeta;
@@ -17,7 +17,7 @@ export function Pagination({ meta, onPageChange, className }: PaginationProps) {
   const to = Math.min(page * page_size, total);
 
   return (
-    <div className={`${styles.wrapper} ${className ?? ''}`}>
+    <div className={`${styles.wrapper} ${className ?? ""}`}>
       <span className={styles.info}>
         Showing {from}–{to} of {total}
       </span>
@@ -31,12 +31,14 @@ export function Pagination({ meta, onPageChange, className }: PaginationProps) {
           <IconChevronLeft size={16} />
         </button>
         {pages.map((p, i) =>
-          p === '...' ? (
-            <span key={`ellipsis-${i}`} className={styles.ellipsis}>…</span>
+          p === "..." ? (
+            <span key={`ellipsis-${i}`} className={styles.ellipsis}>
+              …
+            </span>
           ) : (
             <button
               key={p}
-              className={`${styles.pageBtn} ${p === page ? styles.active : ''}`}
+              className={`${styles.pageBtn} ${p === page ? styles.active : ""}`}
               onClick={() => onPageChange(p as number)}
             >
               {p}
@@ -56,9 +58,9 @@ export function Pagination({ meta, onPageChange, className }: PaginationProps) {
   );
 }
 
-function getPageNumbers(current: number, total: number): (number | '...')[] {
+function getPageNumbers(current: number, total: number): (number | "...")[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-  if (current <= 4) return [1, 2, 3, 4, 5, '...', total];
-  if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
-  return [1, '...', current - 1, current, current + 1, '...', total];
+  if (current <= 4) return [1, 2, 3, 4, 5, "...", total];
+  if (current >= total - 3) return [1, "...", total - 4, total - 3, total - 2, total - 1, total];
+  return [1, "...", current - 1, current, current + 1, "...", total];
 }

@@ -5,7 +5,10 @@
   cursor: pointer;
   user-select: none;
 }
-.disabled { opacity: 0.5; cursor: not-allowed; }
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .track {
   position: relative;
@@ -15,12 +18,22 @@
   cursor: pointer;
   outline: none;
 }
-.track:focus-visible { box-shadow: 0 0 0 3px rgba(37,99,235,0.3); }
+.track:focus-visible {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
 
-.sm  { width: 36px; height: 20px; }
-.md  { width: 44px; height: 24px; }
+.sm {
+  width: 36px;
+  height: 20px;
+}
+.md {
+  width: 44px;
+  height: 24px;
+}
 
-.on { background: var(--primary-600); }
+.on {
+  background: var(--primary-600);
+}
 
 .thumb {
   position: absolute;
@@ -31,9 +44,22 @@
   box-shadow: var(--shadow-sm);
   transition: transform var(--transition-fast);
 }
-.sm  .thumb { width: 16px; height: 16px; }
-.md  .thumb { width: 20px; height: 20px; }
-.on.sm  .thumb { transform: translateX(16px); }
-.on.md  .thumb { transform: translateX(20px); }
+.sm .thumb {
+  width: 16px;
+  height: 16px;
+}
+.md .thumb {
+  width: 20px;
+  height: 20px;
+}
+.on.sm .thumb {
+  transform: translateX(16px);
+}
+.on.md .thumb {
+  transform: translateX(20px);
+}
 
-.label { font-size: 14px; color: var(--text-secondary); }
+.label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}

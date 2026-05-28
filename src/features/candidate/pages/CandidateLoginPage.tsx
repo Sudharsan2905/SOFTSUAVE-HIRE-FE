@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import styles from './CandidateLoginPage.module.css';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { useAppDispatch } from '@/store';
-import { candidateLogin } from '@/store/slices/authSlice';
-import { IconEye, IconEyeOff } from '@/assets/icons';
-import logoUrl from '@/assets/favicon.svg';
+import React, { useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import styles from "./CandidateLoginPage.module.css";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { useAppDispatch } from "@/store";
+import { candidateLogin } from "@/store/slices/authSlice";
+import { IconEye, IconEyeOff } from "@/assets/icons";
+import logoUrl from "@/assets/favicon.svg";
 
 const schema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(1, 'Password is required'),
+  email: z.string().email("Invalid email"),
+  password: z.string().min(1, "Password is required"),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -22,9 +22,14 @@ export default function CandidateLoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [showPass, setShowPass] = useState(false);
-  const shareLink = searchParams.get('share');
+  const shareLink = searchParams.get("share");
 
-  const { register, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm<FormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+  } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
@@ -32,9 +37,9 @@ export default function CandidateLoginPage() {
     try {
       await dispatch(candidateLogin(values)).unwrap();
       if (shareLink) navigate(`/assessment/${shareLink}/instructions`);
-      else navigate('/candidate/dashboard');
+      else navigate("/candidate/dashboard");
     } catch (e: unknown) {
-      setError('root', { message: (e as { message?: string })?.message || 'Invalid credentials' });
+      setError("root", { message: (e as { message?: string })?.message || "Invalid credentials" });
     }
   };
 
@@ -54,27 +59,43 @@ export default function CandidateLoginPage() {
             type="email"
             placeholder="your@email.com"
             error={errors.email?.message}
-            {...register('email')}
+            {...register("email")}
           />
           <Input
             label="Password"
-            type={showPass ? 'text' : 'password'}
+            type={showPass ? "text" : "password"}
             placeholder="Enter your password"
             error={errors.password?.message}
             rightElement={
-              <button type="button" onClick={() => setShowPass((p) => !p)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={() => setShowPass((p) => !p)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "var(--text-tertiary)",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
                 {showPass ? <IconEyeOff size={16} /> : <IconEye size={16} />}
               </button>
             }
-            {...register('password')}
+            {...register("password")}
           />
           {errors.root && <p className={styles.error}>{errors.root.message}</p>}
-          <Button type="submit" fullWidth isLoading={isSubmitting}>Sign In</Button>
+          <Button type="submit" fullWidth isLoading={isSubmitting}>
+            Sign In
+          </Button>
         </form>
 
         <p className={styles.footer}>
-          Don't have an account?{' '}
-          <Link to={shareLink ? `/candidate/register?share=${shareLink}` : '/candidate/register'} className={styles.link}>
+          Don't have an account?{" "}
+          <Link
+            to={shareLink ? `/candidate/register?share=${shareLink}` : "/candidate/register"}
+            className={styles.link}
+          >
             Register here
           </Link>
         </p>
