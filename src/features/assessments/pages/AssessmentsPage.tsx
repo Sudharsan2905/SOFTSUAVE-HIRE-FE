@@ -38,7 +38,6 @@ export default function AssessmentsPage() {
   const { activeWorkspace } = useAppSelector((s) => s.workspace);
   const user = useAppSelector((s) => s.auth.user);
   const isSuperAdmin = user?.role === 'super_admin';
-  const isCommonWorkspace = activeWorkspace?.name === 'Common';
 
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
@@ -99,17 +98,17 @@ export default function AssessmentsPage() {
 
   const shareUrl = selected ? generateShareUrl(selected.share_link) : '';
 
-  if (isCommonWorkspace) {
+  if (!activeWorkspace) {
     return (
       <div>
         <Header title="Assessments" subtitle="" />
         <div className={styles.empty}>
           <IconWorkspace size={48} color="var(--text-tertiary)" />
-          <p>Switch workspace to view assessments</p>
+          <p>{isSuperAdmin ? 'Create a workspace to get started' : 'No workspace access'}</p>
           <p style={{ fontSize: 13, color: 'var(--text-tertiary)', maxWidth: 380, textAlign: 'center', lineHeight: 1.6 }}>
             {isSuperAdmin
-              ? 'Use the workspace switcher in the sidebar to select a workspace.'
-              : 'Use the workspace switcher in the sidebar to select a workspace, or ask your super admin to grant you access to one.'}
+              ? 'Use the workspace switcher in the sidebar to create your first workspace.'
+              : 'You have no workspace assigned. Please contact your administrator to get access.'}
           </p>
         </div>
       </div>
