@@ -251,6 +251,7 @@ export default function UsersPage() {
             value={form.email}
             onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
             showRequired
+            autoComplete="off"
           />
           <Input
             label="Password"
@@ -259,6 +260,7 @@ export default function UsersPage() {
             value={form.password}
             onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
             showRequired
+            autoComplete="new-password"
             rightElement={
               <button
                 type="button"

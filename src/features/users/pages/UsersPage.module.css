@@ -61,6 +61,21 @@
   font-size: 14px;
 }
 
+/* Grid view: vertical card layout */
+.grid .card {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 20px 16px;
+  gap: 12px;
+}
+.grid .cardLeft { flex-direction: column; align-items: center; gap: 8px; width: 100%; }
+.grid .avatar { width: 48px; height: 48px; font-size: 15px; }
+.grid .info { text-align: center; }
+.grid .name { white-space: normal; overflow: visible; text-overflow: unset; }
+.grid .email { white-space: normal; overflow: visible; text-overflow: unset; word-break: break-all; }
+.grid .cardRight { width: 100%; justify-content: center; flex-wrap: wrap; }
+
 /* Status toggle */
 .statusToggle {
   display: flex;
