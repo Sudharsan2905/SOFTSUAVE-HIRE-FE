@@ -80,10 +80,15 @@ ol {
   background: var(--text-tertiary);
 }
 
-/* Focus outline */
+/* Focus outline — buttons, links, etc. keep a visible ring; form controls use custom :focus-within styles instead */
 :focus-visible {
   outline: 2px solid var(--primary-500);
   outline-offset: 2px;
+}
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
 }
 
 /* Utility classes */

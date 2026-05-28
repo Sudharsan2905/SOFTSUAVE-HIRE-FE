@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { Spinner } from '@/components/ui/Spinner';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useAppSelector } from '@/store';
@@ -8,6 +8,15 @@ function SuperAdminRoute({ children }: { children: React.ReactNode }) {
   const user = useAppSelector((s) => s.auth.user);
   if (user?.role !== 'super_admin') return <Navigate to="/question-bank" replace />;
   return <>{children}</>;
+}
+
+function AssessmentEntry() {
+  const { shareLink } = useParams<{ shareLink: string }>();
+  const { isAuthenticated, user } = useAppSelector((s) => s.auth);
+  const isCandidate = isAuthenticated && user?.role !== 'admin' && user?.role !== 'super_admin';
+
+  if (isCandidate) return <Navigate to={`/assessment/${shareLink}/instructions`} replace />;
+  return <Navigate to={`/candidate/login?share=${shareLink}`} replace />;
 }
 
 // Lazy-loaded admin pages
@@ -42,6 +51,7 @@ export default function App() {
         <Route path="/candidate/register" element={<RegisterPage />} />
 
         {/* Assessment flow */}
+        <Route path="/assessment/:shareLink" element={<AssessmentEntry />} />
         <Route path="/assessment/:shareLink/instructions" element={<InstructionsPage />} />
         <Route path="/assessment/:shareLink/interview/:submissionId" element={<InterviewPage />} />
         <Route path="/assessment/:shareLink/completed" element={<CompletedPage />} />
