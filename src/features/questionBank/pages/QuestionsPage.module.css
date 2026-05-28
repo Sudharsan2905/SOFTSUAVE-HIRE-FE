@@ -1,5 +1,13 @@
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
-.list { display: flex; flex-direction: column; gap: 10px; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
 .questionCard {
   background: var(--bg-surface);
@@ -8,20 +16,48 @@
   padding: 16px;
   transition: all var(--transition-fast);
 }
-.questionCard:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
+.questionCard:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
 
-.questionTop { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 8px; }
+.questionTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 8px;
+}
 
-.cardActions { display: flex; gap: 4px; opacity: 0; transition: opacity var(--transition-fast); }
-.questionCard:hover .cardActions { opacity: 1; }
+.cardActions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+.questionCard:hover .cardActions {
+  opacity: 1;
+}
 
 .iconBtn {
-  display: flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px; border-radius: var(--radius-sm);
-  color: var(--text-tertiary); cursor: pointer; transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
-.iconBtn:hover { background: var(--bg-muted); color: var(--text-primary); }
-.danger:hover { background: var(--error-50); color: var(--error-600); }
+.iconBtn:hover {
+  background: var(--bg-muted);
+  color: var(--text-primary);
+}
+.danger:hover {
+  background: var(--error-50);
+  color: var(--error-600);
+}
 
 .questionText {
   font-size: 14px;
@@ -30,7 +66,11 @@
   margin-bottom: 10px;
 }
 
-.options { display: flex; flex-direction: column; gap: 5px; }
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
 .option {
   display: flex;
   align-items: center;
@@ -48,11 +88,22 @@
   border-color: var(--option-correct-border);
   font-weight: 500;
 }
-.correctDot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.correctDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
 
 .empty {
-  display: flex; flex-direction: column; align-items: center; gap: 12px;
-  padding: 60px 24px; color: var(--text-tertiary); font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 24px;
+  color: var(--text-tertiary);
+  font-size: 14px;
 }
 
 .formCard {
@@ -87,8 +138,14 @@
 /* List view uses the default vertical card layout — no overrides needed */
 
 .uploadArea {
-  display: flex; flex-direction: column; align-items: center; gap: 12px;
-  padding: 40px 24px; border: 2px dashed var(--border-default);
-  border-radius: var(--radius-lg); text-align: center;
-  color: var(--text-secondary); font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 24px;
+  border: 2px dashed var(--border-default);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
 }

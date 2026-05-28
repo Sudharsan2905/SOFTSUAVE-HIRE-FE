@@ -1,26 +1,26 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import styles from './CategoriesPage.module.css';
-import { Header } from '@/components/layout/Header';
-import { FilterBar } from '@/components/shared/FilterBar';
-import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
-import { Input, Textarea } from '@/components/ui/Input';
-import { Pagination } from '@/components/ui/Pagination';
-import { Spinner } from '@/components/ui/Spinner';
-import { Badge } from '@/components/ui/Badge';
-import { IconPlus, IconEdit, IconDelete, IconQuestionBank } from '@/assets/icons';
-import { api } from '@/utils/api';
-import { useDebounce } from '@/hooks/useDebounce';
-import { usePagination } from '@/hooks/usePagination';
-import { QuestionCategory, PaginationMeta, ViewMode, SortOrder } from '@/types';
-import { formatDate, getAvatarColor, getInitials } from '@/utils/helpers';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import styles from "./CategoriesPage.module.css";
+import { Header } from "@/components/layout/Header";
+import { FilterBar } from "@/components/shared/FilterBar";
+import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { Input, Textarea } from "@/components/ui/Input";
+import { Pagination } from "@/components/ui/Pagination";
+import { Spinner } from "@/components/ui/Spinner";
+import { Badge } from "@/components/ui/Badge";
+import { IconPlus, IconEdit, IconDelete, IconQuestionBank } from "@/assets/icons";
+import { api } from "@/utils/api";
+import { useDebounce } from "@/hooks/useDebounce";
+import { usePagination } from "@/hooks/usePagination";
+import { QuestionCategory, PaginationMeta, ViewMode, SortOrder } from "@/types";
+import { formatDate, getAvatarColor, getInitials } from "@/utils/helpers";
+import toast from "react-hot-toast";
 
 const SORT_OPTIONS = [
-  { value: 'created_at', label: 'Created Date' },
-  { value: 'name', label: 'Name' },
-  { value: 'question_count', label: 'Questions' },
+  { value: "created_at", label: "Created Date" },
+  { value: "name", label: "Name" },
+  { value: "question_count", label: "Questions" },
 ];
 
 export default function CategoriesPage() {
@@ -28,15 +28,15 @@ export default function CategoriesPage() {
   const [categories, setCategories] = useState<QuestionCategory[]>([]);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("created_at");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [showCreate, setShowCreate] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [selected, setSelected] = useState<QuestionCategory | null>(null);
-  const [form, setForm] = useState({ name: '', description: '' });
+  const [form, setForm] = useState({ name: "", description: "" });
   const [saving, setSaving] = useState(false);
   const { page, pageSize, goToPage, reset } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
@@ -54,32 +54,46 @@ export default function CategoriesPage() {
       const { data } = await api.get(`/api/questions/categories?${params}`);
       setCategories(data.data?.categories || []);
       setMeta(data.data?.pagination || null);
-    } catch { toast.error('Failed to load categories'); }
-    finally { setIsLoading(false); }
+    } catch {
+      toast.error("Failed to load categories");
+    } finally {
+      setIsLoading(false);
+    }
   }, [page, pageSize, sortBy, sortOrder, debouncedSearch]);
 
-  useEffect(() => { fetchCategories(); }, [fetchCategories]);
-  useEffect(() => { reset(); }, [debouncedSearch, sortBy, sortOrder]);
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+  useEffect(() => {
+    reset();
+  }, [debouncedSearch, sortBy, sortOrder]);
 
   const openEdit = (cat: QuestionCategory) => {
     setSelected(cat);
     setForm({ name: cat.name, description: cat.description });
     setShowEdit(true);
   };
-  const openDelete = (cat: QuestionCategory) => { setSelected(cat); setShowDelete(true); };
+  const openDelete = (cat: QuestionCategory) => {
+    setSelected(cat);
+    setShowDelete(true);
+  };
 
   const handleCreate = async () => {
     if (!form.name.trim()) return;
     setSaving(true);
     try {
-      await api.post('/api/questions/categories', form);
-      toast.success('Category created');
+      await api.post("/api/questions/categories", form);
+      toast.success("Category created");
       setShowCreate(false);
-      setForm({ name: '', description: '' });
+      setForm({ name: "", description: "" });
       fetchCategories();
     } catch (e: unknown) {
-      toast.error((e as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed');
-    } finally { setSaving(false); }
+      toast.error(
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed"
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleEdit = async () => {
@@ -87,11 +101,14 @@ export default function CategoriesPage() {
     setSaving(true);
     try {
       await api.put(`/api/questions/categories/${selected.id}`, form);
-      toast.success('Category updated');
+      toast.success("Category updated");
       setShowEdit(false);
       fetchCategories();
-    } catch { toast.error('Failed to update'); }
-    finally { setSaving(false); }
+    } catch {
+      toast.error("Failed to update");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -99,11 +116,14 @@ export default function CategoriesPage() {
     setSaving(true);
     try {
       await api.delete(`/api/questions/categories/${selected.id}`);
-      toast.success('Category deleted');
+      toast.success("Category deleted");
       setShowDelete(false);
       fetchCategories();
-    } catch { toast.error('Failed to delete'); }
-    finally { setSaving(false); }
+    } catch {
+      toast.error("Failed to delete");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -112,7 +132,13 @@ export default function CategoriesPage() {
         title="Question Bank"
         subtitle="Manage question categories and questions"
         actions={
-          <Button leftIcon={<IconPlus size={16} />} onClick={() => { setForm({ name: '', description: '' }); setShowCreate(true); }}>
+          <Button
+            leftIcon={<IconPlus size={16} />}
+            onClick={() => {
+              setForm({ name: "", description: "" });
+              setShowCreate(true);
+            }}
+          >
             New Category
           </Button>
         }
@@ -125,13 +151,15 @@ export default function CategoriesPage() {
         onSortByChange={setSortBy}
         sortByOptions={SORT_OPTIONS}
         sortOrder={sortOrder}
-        onSortOrderToggle={() => setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
+        onSortOrderToggle={() => setSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
       />
 
       {isLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner size="lg" /></div>
+        <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
+          <Spinner size="lg" />
+        </div>
       ) : categories.length === 0 ? (
         <div className={styles.empty}>
           <IconQuestionBank size={48} color="var(--text-tertiary)" />
@@ -142,7 +170,7 @@ export default function CategoriesPage() {
         </div>
       ) : (
         <>
-          <div className={viewMode === 'grid' ? styles.grid : styles.list}>
+          <div className={viewMode === "grid" ? styles.grid : styles.list}>
             {categories.map((cat) => (
               <div
                 key={cat.id}
@@ -155,12 +183,20 @@ export default function CategoriesPage() {
                     {getInitials(cat.name)}
                   </div>
                   <div className={styles.cardActions} onClick={(e) => e.stopPropagation()}>
-                    <button className={styles.iconBtn} onClick={() => openEdit(cat)} title="Edit"><IconEdit size={14} /></button>
-                    <button className={`${styles.iconBtn} ${styles.danger}`} onClick={() => openDelete(cat)} title="Delete"><IconDelete size={14} /></button>
+                    <button className={styles.iconBtn} onClick={() => openEdit(cat)} title="Edit">
+                      <IconEdit size={14} />
+                    </button>
+                    <button
+                      className={`${styles.iconBtn} ${styles.danger}`}
+                      onClick={() => openDelete(cat)}
+                      title="Delete"
+                    >
+                      <IconDelete size={14} />
+                    </button>
                   </div>
                 </div>
                 <h3 className={styles.catName}>{cat.name}</h3>
-                <p className={styles.catDesc}>{cat.description || ' '}</p>
+                <p className={styles.catDesc}>{cat.description || " "}</p>
                 <div className={styles.cardFooter}>
                   <Badge variant="primary">{cat.question_count} questions</Badge>
                   <span className={styles.dateText}>{formatDate(cat.created_at)}</span>
@@ -178,8 +214,16 @@ export default function CategoriesPage() {
                     <span className={styles.listDate}>{formatDate(cat.created_at)}</span>
                   </div>
                   <div className={styles.listActions} onClick={(e) => e.stopPropagation()}>
-                    <button className={styles.iconBtn} onClick={() => openEdit(cat)} title="Edit"><IconEdit size={14} /></button>
-                    <button className={`${styles.iconBtn} ${styles.danger}`} onClick={() => openDelete(cat)} title="Delete"><IconDelete size={14} /></button>
+                    <button className={styles.iconBtn} onClick={() => openEdit(cat)} title="Edit">
+                      <IconEdit size={14} />
+                    </button>
+                    <button
+                      className={`${styles.iconBtn} ${styles.danger}`}
+                      onClick={() => openDelete(cat)}
+                      title="Delete"
+                    >
+                      <IconDelete size={14} />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -196,33 +240,82 @@ export default function CategoriesPage() {
         title="Create Category"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={handleCreate} isLoading={saving} disabled={!form.name.trim()}>Create</Button>
+            <Button variant="secondary" onClick={() => setShowCreate(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreate} isLoading={saving} disabled={!form.name.trim()}>
+              Create
+            </Button>
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <Input label="Category Name" placeholder="e.g., Python, React, SQL" value={form.name}
-            onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
-          <Textarea label="Description (optional)" placeholder="Brief description..." value={form.description}
-            onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} rows={3} />
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <Input
+            label="Category Name"
+            placeholder="e.g., Python, React, SQL"
+            value={form.name}
+            onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+          />
+          <Textarea
+            label="Description (optional)"
+            placeholder="Brief description..."
+            value={form.description}
+            onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+            rows={3}
+          />
         </div>
       </Modal>
 
       {/* Edit Modal */}
-      <Modal isOpen={showEdit} onClose={() => setShowEdit(false)} title="Edit Category"
-        footer={<><Button variant="secondary" onClick={() => setShowEdit(false)}>Cancel</Button><Button onClick={handleEdit} isLoading={saving}>Save</Button></>}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <Input label="Category Name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
-          <Textarea label="Description" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} rows={3} />
+      <Modal
+        isOpen={showEdit}
+        onClose={() => setShowEdit(false)}
+        title="Edit Category"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowEdit(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEdit} isLoading={saving}>
+              Save
+            </Button>
+          </>
+        }
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <Input
+            label="Category Name"
+            value={form.name}
+            onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+          />
+          <Textarea
+            label="Description"
+            value={form.description}
+            onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
+            rows={3}
+          />
         </div>
       </Modal>
 
       {/* Delete Modal */}
-      <Modal isOpen={showDelete} onClose={() => setShowDelete(false)} title="Delete Category"
-        footer={<><Button variant="secondary" onClick={() => setShowDelete(false)}>Cancel</Button><Button variant="danger" onClick={handleDelete} isLoading={saving}>Delete</Button></>}>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
-          Are you sure you want to delete <strong>{selected?.name}</strong>? This will also delete all {selected?.question_count} question(s) in this category. This action cannot be undone.
+      <Modal
+        isOpen={showDelete}
+        onClose={() => setShowDelete(false)}
+        title="Delete Category"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowDelete(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleDelete} isLoading={saving}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>
+          Are you sure you want to delete <strong>{selected?.name}</strong>? This will also delete
+          all {selected?.question_count} question(s) in this category. This action cannot be undone.
         </p>
       </Modal>
     </div>

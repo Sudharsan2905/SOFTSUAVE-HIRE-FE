@@ -25,7 +25,11 @@
   overflow: hidden;
 }
 
-.logoIcon { display: flex; align-items: center; flex-shrink: 0; }
+.logoIcon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
 
 .logoText {
   font-size: 15px;
@@ -49,11 +53,20 @@
   flex-shrink: 0;
   margin-left: auto;
 }
-.collapseBtn:hover { background: var(--sidebar-item-hover); color: var(--sidebar-text-active); }
+.collapseBtn:hover {
+  background: var(--sidebar-item-hover);
+  color: var(--sidebar-text-active);
+}
 
 /* Collapsed: center the toggle */
-.collapsed .logo { justify-content: center; gap: 0; }
-.collapsed .collapseBtn { margin-left: 0; margin-top: 2px; }
+.collapsed .logo {
+  justify-content: center;
+  gap: 0;
+}
+.collapsed .collapseBtn {
+  margin-left: 0;
+  margin-top: 2px;
+}
 
 /* ── Workspace section ── */
 .workspaceSection {
@@ -65,9 +78,16 @@
 }
 
 /* ── Nav ── */
-.navContainer { flex: 1; overflow-y: auto; overflow-x: hidden; }
+.navContainer {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
 
-.navSection { padding: 8px 10px; overflow: hidden; }
+.navSection {
+  padding: 8px 10px;
+  overflow: hidden;
+}
 
 .navSectionLabel {
   font-size: 10px;
@@ -95,12 +115,25 @@
   white-space: nowrap;
   overflow: hidden;
 }
-.navItem:hover { background: var(--sidebar-item-hover); color: var(--sidebar-text-active); text-decoration: none; }
-.navItem.active { background: var(--sidebar-item-active); color: var(--primary-400); }
+.navItem:hover {
+  background: var(--sidebar-item-hover);
+  color: var(--sidebar-text-active);
+  text-decoration: none;
+}
+.navItem.active {
+  background: var(--sidebar-item-active);
+  color: var(--primary-400);
+}
 
 /* Collapsed nav: center icons */
-.collapsed .navSection { padding: 8px 6px; }
-.collapsed .navItem { justify-content: center; padding: 10px; gap: 0; }
+.collapsed .navSection {
+  padding: 8px 6px;
+}
+.collapsed .navItem {
+  justify-content: center;
+  padding: 10px;
+  gap: 0;
+}
 
 /* ── Profile trigger ── */
 .profileTrigger {
@@ -115,9 +148,14 @@
   overflow: hidden;
   cursor: pointer;
 }
-.profileTrigger:hover { background: var(--sidebar-item-hover); }
+.profileTrigger:hover {
+  background: var(--sidebar-item-hover);
+}
 
-.collapsed .profileTrigger { justify-content: center; padding: 12px 0 16px; }
+.collapsed .profileTrigger {
+  justify-content: center;
+  padding: 12px 0 16px;
+}
 
 .avatar {
   width: 34px;
@@ -132,7 +170,11 @@
   flex-shrink: 0;
 }
 
-.userMeta { overflow: hidden; flex: 1; min-width: 0; }
+.userMeta {
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+}
 .userName {
   font-size: 13px;
   font-weight: 600;
@@ -148,8 +190,12 @@
 }
 
 @media (max-width: 768px) {
-  .sidebar { transform: translateX(-100%); }
-  .sidebar.open { transform: translateX(0); }
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
 }
 
 /* ── Profile Popup ─────────────────────────────────────────── */
@@ -168,8 +214,12 @@
 }
 
 @keyframes ppFadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .ppCard {
@@ -186,8 +236,14 @@
 }
 
 @keyframes ppSlideUp {
-  from { transform: translateY(10px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Header */
@@ -242,7 +298,9 @@
   border-radius: var(--radius-md);
   color: var(--text-tertiary);
   cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
 }
 .ppIconBtn:hover {
   background: var(--bg-muted);
@@ -312,7 +370,10 @@
   flex: 1;
   min-width: 0;
   max-width: 220px;
-  transition: border-color var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 .ppFieldInput:hover {
   border-color: var(--border-strong);
@@ -322,7 +383,6 @@
   background-color: var(--bg-surface);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
-
 
 .ppRoleTag {
   font-size: 12px;
@@ -345,19 +405,22 @@
   padding: 5px 12px;
   cursor: pointer;
   white-space: nowrap;
-  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
 }
 .ppChangeBtn:hover {
   background: var(--primary-50);
   border-color: var(--primary-300);
 }
 
-[data-theme='dark'] .ppChangeBtn {
+[data-theme="dark"] .ppChangeBtn {
   color: var(--primary-400);
   background: var(--bg-elevated);
   border-color: var(--border-strong);
 }
-[data-theme='dark'] .ppChangeBtn:hover {
+[data-theme="dark"] .ppChangeBtn:hover {
   background: rgba(37, 99, 235, 0.15);
   border-color: rgba(37, 99, 235, 0.4);
 }
@@ -389,7 +452,9 @@
   background: transparent;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background var(--transition-fast), border-color var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
 }
 .ppLogoutBtn:hover {
   background: rgba(239, 68, 68, 0.08);
@@ -409,7 +474,9 @@
   max-width: 0;
   overflow: hidden;
   opacity: 0;
-  transition: max-width 0.25s ease, opacity 0.2s ease 0.05s;
+  transition:
+    max-width 0.25s ease,
+    opacity 0.2s ease 0.05s;
 }
 .ppLogoutBtn:hover .ppLogoutLabel {
   max-width: 80px;

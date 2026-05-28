@@ -1,6 +1,6 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { api } from '@/utils/api';
-import { AxiosRequestConfig } from 'axios';
+import { useState, useCallback, useRef, useEffect } from "react";
+import { api } from "@/utils/api";
+import { AxiosRequestConfig } from "axios";
 
 interface UseApiOptions<T> {
   onSuccess?: (data: T) => void;
@@ -41,8 +41,8 @@ export function useApi<T>(
         const msg =
           (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
           (err as Error).message ||
-          'Request failed';
-        if (msg !== 'canceled') {
+          "Request failed";
+        if (msg !== "canceled") {
           setError(msg);
           options.onError?.(msg);
         }

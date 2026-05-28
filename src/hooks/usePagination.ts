@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { DEFAULT_PAGE_SIZE } from '@/constants/app';
+import { useState, useCallback } from "react";
+import { DEFAULT_PAGE_SIZE } from "@/constants/app";
 
 export function usePagination(initialPageSize = DEFAULT_PAGE_SIZE) {
   const [page, setPage] = useState(1);

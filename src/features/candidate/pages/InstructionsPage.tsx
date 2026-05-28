@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import styles from './InstructionsPage.module.css';
-import { Button } from '@/components/ui/Button';
-import { Spinner } from '@/components/ui/Spinner';
-import { api } from '@/utils/api';
-import { Assessment } from '@/types';
-import { IconCamera, IconMonitor, IconTime, IconShield, IconInfo } from '@/assets/icons';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import styles from "./InstructionsPage.module.css";
+import { Button } from "@/components/ui/Button";
+import { Spinner } from "@/components/ui/Spinner";
+import { api } from "@/utils/api";
+import { Assessment } from "@/types";
+import { IconCamera, IconMonitor, IconTime, IconShield, IconInfo } from "@/assets/icons";
+import toast from "react-hot-toast";
 
 export default function InstructionsPage() {
   const { shareLink } = useParams<{ shareLink: string }>();
@@ -22,8 +22,11 @@ export default function InstructionsPage() {
       try {
         const { data } = await api.get(`/api/candidate/assessment/${shareLink}`);
         setAssessment(data.data?.assessment || null);
-      } catch { toast.error('Assessment not found'); }
-      finally { setIsLoading(false); }
+      } catch {
+        toast.error("Assessment not found");
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetch();
   }, [shareLink]);
@@ -33,17 +36,19 @@ export default function InstructionsPage() {
     try {
       await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       setCameraGranted(true);
-      toast.success('Camera and microphone access granted');
+      toast.success("Camera and microphone access granted");
     } catch {
-      toast.error('Please allow camera and microphone access to proceed');
-    } finally { setCheckingCamera(false); }
+      toast.error("Please allow camera and microphone access to proceed");
+    } finally {
+      setCheckingCamera(false);
+    }
   };
 
   const handleStart = async () => {
     if (!assessment) return;
-    const isMonitoring = assessment.accessibility === 'monitoring';
+    const isMonitoring = assessment.accessibility === "monitoring";
     if (isMonitoring && !cameraGranted) {
-      toast.error('Please grant camera access first');
+      toast.error("Please grant camera access first");
       return;
     }
     setStarting(true);
@@ -52,25 +57,48 @@ export default function InstructionsPage() {
       const submissionId = data.data?.submission_id;
       navigate(`/assessment/${shareLink}/interview/${submissionId}`);
     } catch (e: unknown) {
-      toast.error((e as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to start assessment');
-    } finally { setStarting(false); }
+      toast.error(
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          "Failed to start assessment"
+      );
+    } finally {
+      setStarting(false);
+    }
   };
 
-  if (isLoading) return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-      <Spinner size="lg" />
-    </div>
-  );
+  if (isLoading)
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+        }}
+      >
+        <Spinner size="lg" />
+      </div>
+    );
 
-  if (!assessment) return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', color: 'var(--text-tertiary)' }}>
-      Assessment not found or link is invalid.
-    </div>
-  );
+  if (!assessment)
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+          color: "var(--text-tertiary)",
+        }}
+      >
+        Assessment not found or link is invalid.
+      </div>
+    );
 
-  const isMonitoring = assessment.accessibility === 'monitoring';
+  const isMonitoring = assessment.accessibility === "monitoring";
   const totalQuestions = assessment.rounds?.reduce((s, r) => s + (r.question_count || 0), 0) || 0;
-  const totalMinutes = assessment.rounds?.reduce((s, r) => s + (r.max_duration_minutes || 0), 0) || 0;
+  const totalMinutes =
+    assessment.rounds?.reduce((s, r) => s + (r.max_duration_minutes || 0), 0) || 0;
 
   return (
     <div className={styles.page}>
@@ -96,8 +124,11 @@ export default function InstructionsPage() {
             <span className={styles.statLabel}>Questions</span>
           </div>
           <div className={styles.stat}>
-            <IconShield size={20} color={isMonitoring ? 'var(--accent-600, #7c3aed)' : 'var(--success-600)'} />
-            <span className={styles.statValue}>{isMonitoring ? 'Monitored' : 'Normal'}</span>
+            <IconShield
+              size={20}
+              color={isMonitoring ? "var(--accent-600, #7c3aed)" : "var(--success-600)"}
+            />
+            <span className={styles.statValue}>{isMonitoring ? "Monitored" : "Normal"}</span>
             <span className={styles.statLabel}>Mode</span>
           </div>
           <div className={styles.stat}>
@@ -127,7 +158,9 @@ export default function InstructionsPage() {
                   <IconMonitor size={24} color="var(--accent-600, #7c3aed)" />
                   <div>
                     <p className={styles.monitorTitle}>Tab Monitoring Active</p>
-                    <p className={styles.monitorDesc}>Switching tabs or windows will be flagged as malpractice.</p>
+                    <p className={styles.monitorDesc}>
+                      Switching tabs or windows will be flagged as malpractice.
+                    </p>
                   </div>
                 </div>
               )}
@@ -136,7 +169,9 @@ export default function InstructionsPage() {
                   <IconCamera size={24} color="var(--accent-600, #7c3aed)" />
                   <div>
                     <p className={styles.monitorTitle}>Camera Required</p>
-                    <p className={styles.monitorDesc}>Your camera must remain on throughout the assessment.</p>
+                    <p className={styles.monitorDesc}>
+                      Your camera must remain on throughout the assessment.
+                    </p>
                   </div>
                 </div>
               )}
@@ -146,7 +181,9 @@ export default function InstructionsPage() {
               <p className={styles.cameraLabel}>Step 1: Grant Camera & Microphone Access</p>
               {cameraGranted ? (
                 <div className={styles.granted}>
-                  <span style={{ color: 'var(--success-600)', fontWeight: 600 }}>✓ Access granted</span>
+                  <span style={{ color: "var(--success-600)", fontWeight: 600 }}>
+                    ✓ Access granted
+                  </span>
                 </div>
               ) : (
                 <Button variant="secondary" onClick={requestCamera} isLoading={checkingCamera}>
@@ -166,7 +203,9 @@ export default function InstructionsPage() {
             isLoading={starting}
             disabled={isMonitoring && !cameraGranted}
           >
-            {isMonitoring && !cameraGranted ? 'Grant Camera Access to Continue' : 'Start Assessment'}
+            {isMonitoring && !cameraGranted
+              ? "Grant Camera Access to Continue"
+              : "Start Assessment"}
           </Button>
         </div>
       </div>

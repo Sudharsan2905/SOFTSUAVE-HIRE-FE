@@ -22,6 +22,7 @@ React + TypeScript frontend for the SoftSuave Hire interview platform.
 14. [Hooks](#hooks)
 15. [CSS Conventions](#css-conventions)
 16. [Adding a New Feature](#adding-a-new-feature)
+17. [Code Quality & Linting](#code-quality--linting)
 
 ---
 
@@ -31,7 +32,7 @@ React + TypeScript frontend for the SoftSuave Hire interview platform.
 | ------------------- | ------- | ------------------------------------ |
 | React               | 18.x    | UI framework                         |
 | TypeScript          | 5.x     | Static typing                        |
-| Vite                | 5.x     | Build tool + dev server              |
+| Vite                | 7.x     | Build tool + dev server              |
 | Redux Toolkit       | 2.x     | Global state (auth, workspace, ui)   |
 | React Router DOM    | 6.x     | Client-side routing                  |
 | Axios               | 1.x     | HTTP client with interceptors        |
@@ -41,7 +42,7 @@ React + TypeScript frontend for the SoftSuave Hire interview platform.
 | @dnd-kit/core       | 6.x     | Drag-and-drop (assessment wizard)    |
 | react-hot-toast     | 2.x     | Toast notifications                  |
 | date-fns            | 4.x     | Date formatting utilities            |
-| xlsx                | 0.18.x  | Excel file parsing (question import) |
+| read-excel-file     | 9.x     | Excel file parsing (question import) |
 
 ---
 
@@ -378,7 +379,7 @@ Available icons: `IconDashboard`, `IconWorkspace`, `IconQuestionBank`, `IconAsse
 - `CategoriesPage` — CRUD for categories. Each category navigates to its `QuestionsPage`.
 - `QuestionsPage` — CRUD for questions. Three creation modes:
   - **Manual** — form with type (MCQ single / MCQ multi / Essay), complexity, options with correct flag
-  - **AI Generate** — sends topic + count to backend (Anthropic API), displays parsed results for confirmation
+  - **AI Generate** — sends topic + count to backend (OpenAI API), displays parsed results for confirmation
   - **Excel Import** — 2-step: upload `.xlsx` → extract column names → map columns to fields (with defaults), import
 
 ### Assessments
@@ -530,9 +531,50 @@ const { data, isLoading, error, refetch } = useApi<MyType[]>("/api/endpoint", {
 
 ## Scripts
 
-| Command           | Description                          |
-| ----------------- | ------------------------------------ |
-| `npm run dev`     | Start Vite dev server on port 5173   |
-| `npm run build`   | Type-check + build to `dist/`        |
-| `npm run preview` | Preview production build locally     |
-| `npm run lint`    | Run ESLint on all `.ts`/`.tsx` files |
+| Command                  | Description                                       |
+| ------------------------ | ------------------------------------------------- |
+| `npm run dev`            | Start Vite dev server on port 5173                |
+| `npm run build`          | Type-check + build to `dist/`                     |
+| `npm run preview`        | Preview production build locally                  |
+| `npm run lint`           | Run ESLint on all `.ts`/`.tsx` files (0 warnings) |
+| `npm run format`         | Prettier format all `src/**/*.{ts,tsx,css}`       |
+| `npm run format:check`   | Prettier check without writing (CI use)           |
+
+---
+
+## Code Quality & Linting
+
+### Prettier — Format
+
+Config: `.prettierrc` — 100-char line limit, double quotes, 2-space indentation, LF line endings.
+
+```bash
+npm run format          # format all src files in-place
+npm run format:check    # check only — exits non-zero if any file differs (use in CI)
+```
+
+### ESLint — Lint
+
+Config: `eslint.config.mjs` (ESLint 9 flat config with `@typescript-eslint`).
+
+```bash
+npm run lint            # must pass with 0 warnings (--max-warnings 0)
+```
+
+Key rules:
+
+| Rule | Behaviour |
+| ---- | --------- |
+| `no-unused-vars` | Error — prefix intentionally unused vars/args with `_` |
+| `no-explicit-any` | Warning — document why if unavoidable |
+| `no-console` | Warn for `console.log`; `console.warn`/`console.error` are allowed |
+| `eqeqeq` | Error — always use `===` |
+| `no-empty-function` | Warning — add a comment if intentionally empty |
+
+### Type Check
+
+TypeScript errors are caught by the build step:
+
+```bash
+npm run build    # runs tsc before Vite — all type errors must resolve before merging
+```

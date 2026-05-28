@@ -1,8 +1,8 @@
-import React from 'react';
-import styles from './Header.module.css';
-import { useAppDispatch, useAppSelector } from '@/store';
-import { toggleTheme } from '@/store/slices/uiSlice';
-import { IconSun, IconMoon } from '@/assets/icons';
+import React from "react";
+import styles from "./Header.module.css";
+import { useAppDispatch, useAppSelector } from "@/store";
+import { toggleTheme } from "@/store/slices/uiSlice";
+import { IconSun, IconMoon } from "@/assets/icons";
 
 interface HeaderProps {
   title: string;
@@ -25,9 +25,9 @@ export function Header({ title, subtitle, actions }: HeaderProps) {
         <button
           className={styles.themeBtn}
           onClick={() => dispatch(toggleTheme())}
-          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
         >
-          {theme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
+          {theme === "dark" ? <IconSun size={18} /> : <IconMoon size={18} />}
         </button>
       </div>
     </header>

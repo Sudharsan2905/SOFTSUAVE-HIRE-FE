@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import styles from './InterviewPage.module.css';
-import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
-import { Spinner } from '@/components/ui/Spinner';
-import { api } from '@/utils/api';
-import { CandidateQuestion } from '@/types';
-import { IconTime, IconAlertTriangle } from '@/assets/icons';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import styles from "./InterviewPage.module.css";
+import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { Spinner } from "@/components/ui/Spinner";
+import { api } from "@/utils/api";
+import { CandidateQuestion } from "@/types";
+import { IconTime, IconAlertTriangle } from "@/assets/icons";
+import toast from "react-hot-toast";
 
 interface RoundData {
   round_number: number;
@@ -44,11 +44,16 @@ export default function InterviewPage() {
       setRoundData(rd);
       setTimeLeft((rd.max_duration_minutes || 30) * 60);
       setTabMonitoringEnabled(data.data?.tab_monitoring ?? false);
-    } catch { toast.error('Failed to load questions'); }
-    finally { setIsLoading(false); }
+    } catch {
+      toast.error("Failed to load questions");
+    } finally {
+      setIsLoading(false);
+    }
   }, [submissionId]);
 
-  useEffect(() => { fetchRound(); }, [fetchRound]);
+  useEffect(() => {
+    fetchRound();
+  }, [fetchRound]);
 
   // Camera stream
   useEffect(() => {
@@ -57,10 +62,14 @@ export default function InterviewPage() {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: true });
         if (videoRef.current) videoRef.current.srcObject = stream;
-      } catch { /* camera optional if already granted */ }
+      } catch {
+        /* camera optional if already granted */
+      }
     };
     startCamera();
-    return () => { stream?.getTracks().forEach((t) => t.stop()); };
+    return () => {
+      stream?.getTracks().forEach((t) => t.stop());
+    };
   }, []);
 
   // Countdown timer
@@ -76,7 +85,9 @@ export default function InterviewPage() {
         return t - 1;
       });
     }, 1000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   }, [roundData]);
 
   // Screenshot capture
@@ -84,23 +95,31 @@ export default function InterviewPage() {
     screenshotIntervalRef.current = setInterval(async () => {
       if (!videoRef.current || !submissionId) return;
       try {
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         canvas.width = videoRef.current.videoWidth || 320;
         canvas.height = videoRef.current.videoHeight || 240;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext("2d");
         if (!ctx || !videoRef.current.videoWidth) return;
         ctx.drawImage(videoRef.current, 0, 0);
-        canvas.toBlob(async (blob) => {
-          if (!blob) return;
-          const fd = new FormData();
-          fd.append('file', blob, 'screenshot.jpg');
-          await api.post(`/api/candidate/submission/${submissionId}/screenshot`, fd, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
-        }, 'image/jpeg', 0.7);
-      } catch { /* silent */ }
+        canvas.toBlob(
+          async (blob) => {
+            if (!blob) return;
+            const fd = new FormData();
+            fd.append("file", blob, "screenshot.jpg");
+            await api.post(`/api/candidate/submission/${submissionId}/screenshot`, fd, {
+              headers: { "Content-Type": "multipart/form-data" },
+            });
+          },
+          "image/jpeg",
+          0.7
+        );
+      } catch {
+        /* silent */
+      }
     }, 30000);
-    return () => { if (screenshotIntervalRef.current) clearInterval(screenshotIntervalRef.current); };
+    return () => {
+      if (screenshotIntervalRef.current) clearInterval(screenshotIntervalRef.current);
+    };
   }, [submissionId]);
 
   // Tab visibility detection
@@ -111,29 +130,41 @@ export default function InterviewPage() {
         setMalpracticeCount((c) => c + 1);
         setShowMalpractice(true);
         try {
-          await api.post(`/api/candidate/submission/${submissionId}/malpractice`, { type: 'tab_switch' });
-        } catch { /* silent */ }
+          await api.post(`/api/candidate/submission/${submissionId}/malpractice`, {
+            type: "tab_switch",
+          });
+        } catch {
+          /* silent */
+        }
       }
     };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [tabMonitoringEnabled, submissionId]);
 
-  const syncAnswer = useCallback(async (questionId: string, answer: string | string[]) => {
-    if (answerSyncRef.current) clearTimeout(answerSyncRef.current);
-    answerSyncRef.current = setTimeout(async () => {
-      try {
-        await api.post(`/api/candidate/submission/${submissionId}/answer`, { question_id: questionId, answer });
-      } catch { /* silent */ }
-    }, 500);
-  }, [submissionId]);
+  const syncAnswer = useCallback(
+    async (questionId: string, answer: string | string[]) => {
+      if (answerSyncRef.current) clearTimeout(answerSyncRef.current);
+      answerSyncRef.current = setTimeout(async () => {
+        try {
+          await api.post(`/api/candidate/submission/${submissionId}/answer`, {
+            question_id: questionId,
+            answer,
+          });
+        } catch {
+          /* silent */
+        }
+      }, 500);
+    },
+    [submissionId]
+  );
 
   const setAnswer = (questionId: string, answer: string | string[]) => {
     setAnswers((prev) => ({ ...prev, [questionId]: answer }));
     syncAnswer(questionId, answer);
   };
 
-  const handleFinishRound = async (autoSubmit = false) => {
+  const handleFinishRound = async (_autoSubmit = false) => {
     if (submitting) return;
     setSubmitting(true);
     setShowSubmitConfirm(false);
@@ -149,22 +180,32 @@ export default function InterviewPage() {
         await fetchRound();
       }
     } catch {
-      toast.error('Failed to submit round');
+      toast.error("Failed to submit round");
       setSubmitting(false);
     }
   };
 
   const formatTime = (secs: number) => {
-    const m = Math.floor(secs / 60).toString().padStart(2, '0');
-    const s = (secs % 60).toString().padStart(2, '0');
+    const m = Math.floor(secs / 60)
+      .toString()
+      .padStart(2, "0");
+    const s = (secs % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
   };
 
-  if (isLoading) return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-      <Spinner size="lg" />
-    </div>
-  );
+  if (isLoading)
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+        }}
+      >
+        <Spinner size="lg" />
+      </div>
+    );
 
   if (!roundData) return null;
 
@@ -185,12 +226,17 @@ export default function InterviewPage() {
           <span className={styles.roundBadge}>Round {roundData.round_number}</span>
         </div>
         <div className={styles.progress}>
-          <span className={styles.progressText}>{answered}/{questions.length} answered</span>
+          <span className={styles.progressText}>
+            {answered}/{questions.length} answered
+          </span>
           <div className={styles.progressBar}>
-            <div className={styles.progressFill} style={{ width: `${(answered / questions.length) * 100}%` }} />
+            <div
+              className={styles.progressFill}
+              style={{ width: `${(answered / questions.length) * 100}%` }}
+            />
           </div>
         </div>
-        <div className={`${styles.timer} ${isLowTime ? styles.timerLow : ''}`}>
+        <div className={`${styles.timer} ${isLowTime ? styles.timerLow : ""}`}>
           <IconTime size={14} />
           <span>{formatTime(timeLeft)}</span>
         </div>
@@ -205,7 +251,7 @@ export default function InterviewPage() {
             {questions.map((q, i) => (
               <button
                 key={q.id}
-                className={`${styles.qBtn} ${currentIdx === i ? styles.qBtnActive : ''} ${answers[q.id] !== undefined ? styles.qBtnAnswered : ''}`}
+                className={`${styles.qBtn} ${currentIdx === i ? styles.qBtnActive : ""} ${answers[q.id] !== undefined ? styles.qBtnAnswered : ""}`}
                 onClick={() => setCurrentIdx(i)}
               >
                 {i + 1}
@@ -213,9 +259,15 @@ export default function InterviewPage() {
             ))}
           </div>
           <div className={styles.legend}>
-            <div className={styles.legendItem}><div className={`${styles.legendDot} ${styles.legendAnswered}`} /> Answered</div>
-            <div className={styles.legendItem}><div className={`${styles.legendDot} ${styles.legendCurrent}`} /> Current</div>
-            <div className={styles.legendItem}><div className={styles.legendDot} /> Not answered</div>
+            <div className={styles.legendItem}>
+              <div className={`${styles.legendDot} ${styles.legendAnswered}`} /> Answered
+            </div>
+            <div className={styles.legendItem}>
+              <div className={`${styles.legendDot} ${styles.legendCurrent}`} /> Current
+            </div>
+            <div className={styles.legendItem}>
+              <div className={styles.legendDot} /> Not answered
+            </div>
           </div>
         </div>
 
@@ -223,32 +275,47 @@ export default function InterviewPage() {
         <div className={styles.main}>
           <div className={styles.questionCard}>
             <div className={styles.questionHeader}>
-              <span className={styles.qNumber}>Q{currentIdx + 1} of {questions.length}</span>
-              <span className={styles.qType}>{currentQuestion.type === 'essay' ? 'Essay' : currentQuestion.type === 'mcq_multiple' ? 'Multiple Choice' : 'Single Choice'}</span>
+              <span className={styles.qNumber}>
+                Q{currentIdx + 1} of {questions.length}
+              </span>
+              <span className={styles.qType}>
+                {currentQuestion.type === "essay"
+                  ? "Essay"
+                  : currentQuestion.type === "mcq_multiple"
+                    ? "Multiple Choice"
+                    : "Single Choice"}
+              </span>
             </div>
             <p className={styles.questionText}>{currentQuestion.text}</p>
 
-            {currentQuestion.type === 'essay' ? (
+            {currentQuestion.type === "essay" ? (
               <textarea
                 className={styles.essayBox}
                 placeholder="Write your answer here..."
-                value={(answers[currentQuestion.id] as string) || ''}
+                value={(answers[currentQuestion.id] as string) || ""}
                 onChange={(e) => setAnswer(currentQuestion.id, e.target.value)}
                 rows={8}
               />
-            ) : currentQuestion.type === 'mcq_multiple' ? (
+            ) : currentQuestion.type === "mcq_multiple" ? (
               <div className={styles.options}>
                 {currentQuestion.options?.map((opt, oi) => {
-                  const selected = ((answers[currentQuestion.id] as string[]) || []).includes(opt.text);
+                  const selected = ((answers[currentQuestion.id] as string[]) || []).includes(
+                    opt.text
+                  );
                   return (
-                    <label key={oi} className={`${styles.option} ${selected ? styles.optionSelected : ''}`}>
+                    <label
+                      key={oi}
+                      className={`${styles.option} ${selected ? styles.optionSelected : ""}`}
+                    >
                       <input
                         type="checkbox"
                         className={styles.optionInput}
                         checked={selected}
                         onChange={() => {
-                          const current = ((answers[currentQuestion.id] as string[]) || []);
-                          const updated = selected ? current.filter((v) => v !== opt.text) : [...current, opt.text];
+                          const current = (answers[currentQuestion.id] as string[]) || [];
+                          const updated = selected
+                            ? current.filter((v) => v !== opt.text)
+                            : [...current, opt.text];
                           setAnswer(currentQuestion.id, updated);
                         }}
                       />
@@ -262,7 +329,10 @@ export default function InterviewPage() {
                 {currentQuestion.options?.map((opt, oi) => {
                   const selected = answers[currentQuestion.id] === opt.text;
                   return (
-                    <label key={oi} className={`${styles.option} ${selected ? styles.optionSelected : ''}`}>
+                    <label
+                      key={oi}
+                      className={`${styles.option} ${selected ? styles.optionSelected : ""}`}
+                    >
                       <input
                         type="radio"
                         className={styles.optionInput}
@@ -279,7 +349,11 @@ export default function InterviewPage() {
           </div>
 
           <div className={styles.navRow}>
-            <Button variant="secondary" onClick={() => setCurrentIdx((i) => Math.max(0, i - 1))} disabled={currentIdx === 0}>
+            <Button
+              variant="secondary"
+              onClick={() => setCurrentIdx((i) => Math.max(0, i - 1))}
+              disabled={currentIdx === 0}
+            >
               Previous
             </Button>
             {currentIdx < questions.length - 1 ? (
@@ -301,13 +375,18 @@ export default function InterviewPage() {
         size="sm"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setShowSubmitConfirm(false)}>Review Answers</Button>
-            <Button onClick={() => handleFinishRound()} isLoading={submitting}>Submit</Button>
+            <Button variant="secondary" onClick={() => setShowSubmitConfirm(false)}>
+              Review Answers
+            </Button>
+            <Button onClick={() => handleFinishRound()} isLoading={submitting}>
+              Submit
+            </Button>
           </>
         }
       >
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-          You've answered {answered} of {questions.length} questions. Once submitted, you cannot change your answers.
+        <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+          You've answered {answered} of {questions.length} questions. Once submitted, you cannot
+          change your answers.
         </p>
       </Modal>
 
@@ -319,10 +398,19 @@ export default function InterviewPage() {
         size="sm"
         footer={<Button onClick={() => setShowMalpractice(false)}>I Understand</Button>}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 12,
+            textAlign: "center",
+          }}
+        >
           <IconAlertTriangle size={40} color="var(--error-500)" />
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-            Leaving the assessment tab has been flagged as malpractice ({malpracticeCount} time{malpracticeCount > 1 ? 's' : ''}). Please stay on this page.
+          <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+            Leaving the assessment tab has been flagged as malpractice ({malpracticeCount} time
+            {malpracticeCount > 1 ? "s" : ""}). Please stay on this page.
           </p>
         </div>
       </Modal>

@@ -51,14 +51,10 @@ export function Sidebar() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
-  const { activeWorkspace, workspaces: allWorkspaces } = useAppSelector(
-    (s) => s.workspace,
-  );
+  const { activeWorkspace, workspaces: allWorkspaces } = useAppSelector((s) => s.workspace);
   const isSuperAdmin = user?.role === "super_admin";
 
-  const [collapsed, setCollapsed] = useState(
-    () => localStorage.getItem(COLLAPSED_KEY) === "true",
-  );
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSED_KEY) === "true");
 
   const [showProfile, setShowProfile] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -82,10 +78,7 @@ export function Sidebar() {
   const effectiveWidth = collapsed ? COLLAPSED_WIDTH : DEFAULT_WIDTH;
 
   useLayoutEffect(() => {
-    document.documentElement.style.setProperty(
-      "--sidebar-width",
-      `${effectiveWidth}px`,
-    );
+    document.documentElement.style.setProperty("--sidebar-width", `${effectiveWidth}px`);
   }, [effectiveWidth]);
 
   const toggleCollapse = () => {
@@ -102,8 +95,7 @@ export function Sidebar() {
     setProfileForm({
       first_name: user?.first_name || "",
       last_name: user?.last_name || "",
-      default_workspace_id:
-        user?.default_workspace_id || wsOptions[0]?.id || "",
+      default_workspace_id: user?.default_workspace_id || wsOptions[0]?.id || "",
     });
     setIsEditing(false);
     setShowProfile(true);
@@ -119,8 +111,7 @@ export function Sidebar() {
       setProfileForm({
         first_name: user?.first_name || "",
         last_name: user?.last_name || "",
-        default_workspace_id:
-          user?.default_workspace_id || wsOptions[0]?.id || "",
+        default_workspace_id: user?.default_workspace_id || wsOptions[0]?.id || "",
       });
     }
     setIsEditing((prev) => !prev);
@@ -200,8 +191,7 @@ export function Sidebar() {
   const initials = fullName ? getInitials(fullName) : "U";
   const avatarColor = fullName ? getAvatarColor(fullName) : "#2563eb";
   const roleLabel = user?.role === "super_admin" ? "Super Admin" : "Admin";
-  const defaultWsName =
-    wsOptions.find((ws) => ws.id === user?.default_workspace_id)?.name || "—";
+  const defaultWsName = wsOptions.find((ws) => ws.id === user?.default_workspace_id)?.name || "—";
 
   return (
     <>
@@ -214,19 +204,13 @@ export function Sidebar() {
           <div className={styles.logoIcon}>
             <img src={logoUrl} width="26" height="26" alt="SoftSuave Hire" />
           </div>
-          {!collapsed && (
-            <span className={styles.logoText}>SoftSuave Hire</span>
-          )}
+          {!collapsed && <span className={styles.logoText}>SoftSuave Hire</span>}
           <button
             className={styles.collapseBtn}
             onClick={toggleCollapse}
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {collapsed ? (
-              <IconChevronRight size={14} />
-            ) : (
-              <IconChevronLeft size={14} />
-            )}
+            {collapsed ? <IconChevronRight size={14} /> : <IconChevronLeft size={14} />}
           </button>
         </div>
 
@@ -239,14 +223,10 @@ export function Sidebar() {
         <div className={styles.navContainer}>
           {activeWorkspace && (
             <div className={styles.navSection}>
-              {!collapsed && (
-                <p className={styles.navSectionLabel}>Workspace</p>
-              )}
+              {!collapsed && <p className={styles.navSectionLabel}>Workspace</p>}
               <NavLink
                 to={`/workspaces/${activeWorkspace.id}/assessments`}
-                className={({ isActive }) =>
-                  `${styles.navItem} ${isActive ? styles.active : ""}`
-                }
+                className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ""}`}
                 title="Assessments"
               >
                 <IconAssessment size={18} />
@@ -260,9 +240,7 @@ export function Sidebar() {
               <NavLink
                 key={item.to}
                 to={item.to}
-                className={({ isActive }) =>
-                  `${styles.navItem} ${isActive ? styles.active : ""}`
-                }
+                className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ""}`}
                 title={item.label}
               >
                 {item.icon}
@@ -272,9 +250,7 @@ export function Sidebar() {
             {isSuperAdmin && (
               <NavLink
                 to="/users"
-                className={({ isActive }) =>
-                  `${styles.navItem} ${isActive ? styles.active : ""}`
-                }
+                className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ""}`}
                 title="Users"
               >
                 <IconUsers size={18} />
@@ -310,10 +286,7 @@ export function Sidebar() {
               {/* Header */}
               <div className={styles.ppHeader}>
                 <div className={styles.ppHeaderLeft}>
-                  <div
-                    className={styles.ppAvatar}
-                    style={{ background: avatarColor }}
-                  >
+                  <div className={styles.ppAvatar} style={{ background: avatarColor }}>
                     {initials}
                   </div>
                   <p className={styles.ppTitle}>My Profile</p>
@@ -347,9 +320,7 @@ export function Sidebar() {
                       autoComplete="off"
                     />
                   ) : (
-                    <span className={styles.ppFieldValue}>
-                      {user?.first_name || "—"}
-                    </span>
+                    <span className={styles.ppFieldValue}>{user?.first_name || "—"}</span>
                   )}
                 </div>
 
@@ -369,17 +340,13 @@ export function Sidebar() {
                       autoComplete="off"
                     />
                   ) : (
-                    <span className={styles.ppFieldValue}>
-                      {user?.last_name || "—"}
-                    </span>
+                    <span className={styles.ppFieldValue}>{user?.last_name || "—"}</span>
                   )}
                 </div>
 
                 <div className={styles.ppFieldRow}>
                   <span className={styles.ppFieldLabel}>Email</span>
-                  <span
-                    className={`${styles.ppFieldValue} ${styles.ppFieldMuted}`}
-                  >
+                  <span className={`${styles.ppFieldValue} ${styles.ppFieldMuted}`}>
                     {user?.email}
                   </span>
                 </div>
@@ -391,9 +358,7 @@ export function Sidebar() {
 
                 {wsOptions.length > 0 && (
                   <div className={styles.ppFieldRow}>
-                    <span className={styles.ppFieldLabel}>
-                      Default Workspace
-                    </span>
+                    <span className={styles.ppFieldLabel}>Default Workspace</span>
                     {isEditing ? (
                       <div style={{ flex: 1, maxWidth: 220, minWidth: 0 }}>
                         <Select
@@ -411,9 +376,7 @@ export function Sidebar() {
                         />
                       </div>
                     ) : (
-                      <span className={styles.ppFieldValue}>
-                        {defaultWsName}
-                      </span>
+                      <span className={styles.ppFieldValue}>{defaultWsName}</span>
                     )}
                   </div>
                 )}
@@ -428,9 +391,7 @@ export function Sidebar() {
                       Change
                     </button>
                   ) : (
-                    <span
-                      className={`${styles.ppFieldValue} ${styles.ppFieldMuted}`}
-                    >
+                    <span className={`${styles.ppFieldValue} ${styles.ppFieldMuted}`}>
                       ••••••••
                     </span>
                   )}
@@ -452,27 +413,15 @@ export function Sidebar() {
                 <div className={styles.ppFooterRight}>
                   {isEditing ? (
                     <>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={toggleEdit}
-                      >
+                      <Button size="sm" variant="secondary" onClick={toggleEdit}>
                         Cancel
                       </Button>
-                      <Button
-                        size="sm"
-                        onClick={saveProfile}
-                        isLoading={saving}
-                      >
+                      <Button size="sm" onClick={saveProfile} isLoading={saving}>
                         Save
                       </Button>
                     </>
                   ) : (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={closeProfile}
-                    >
+                    <Button size="sm" variant="secondary" onClick={closeProfile}>
                       Close
                     </Button>
                   )}
@@ -480,7 +429,7 @@ export function Sidebar() {
               </div>
             </div>
           </div>,
-          document.body,
+          document.body
         )}
 
       {/* Logout Confirmation Modal */}
@@ -492,10 +441,7 @@ export function Sidebar() {
         showClose={false}
         footer={
           <>
-            <Button
-              variant="secondary"
-              onClick={() => setShowLogoutConfirm(false)}
-            >
+            <Button variant="secondary" onClick={() => setShowLogoutConfirm(false)}>
               Cancel
             </Button>
             <Button variant="danger" onClick={handleLogout}>
@@ -539,9 +485,7 @@ export function Sidebar() {
             type="password"
             placeholder="Enter current password"
             value={passwordForm.old_password}
-            onChange={(e) =>
-              setPasswordForm((p) => ({ ...p, old_password: e.target.value }))
-            }
+            onChange={(e) => setPasswordForm((p) => ({ ...p, old_password: e.target.value }))}
             autoComplete="current-password"
           />
           <Input
@@ -549,9 +493,7 @@ export function Sidebar() {
             type="password"
             placeholder="Enter new password"
             value={passwordForm.new_password}
-            onChange={(e) =>
-              setPasswordForm((p) => ({ ...p, new_password: e.target.value }))
-            }
+            onChange={(e) => setPasswordForm((p) => ({ ...p, new_password: e.target.value }))}
             autoComplete="new-password"
           />
           <Input

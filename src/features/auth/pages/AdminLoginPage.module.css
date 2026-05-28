@@ -25,7 +25,9 @@
   margin-bottom: 32px;
 }
 
-.logoIcon { display: flex; }
+.logoIcon {
+  display: flex;
+}
 
 .appName {
   font-size: 22px;

@@ -1,9 +1,9 @@
-import React from 'react';
-import styles from './Button.module.css';
-import { clsx } from '@/utils/helpers';
+import React from "react";
+import styles from "./Button.module.css";
+import { clsx } from "@/utils/helpers";
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
-type Size = 'sm' | 'md' | 'lg';
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "success";
+type Size = "sm" | "md" | "lg";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
@@ -18,8 +18,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       children,
-      variant = 'primary',
-      size = 'md',
+      variant = "primary",
+      size = "md",
       isLoading = false,
       leftIcon,
       rightIcon,
@@ -53,4 +53,4 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     </button>
   )
 );
-Button.displayName = 'Button';
+Button.displayName = "Button";

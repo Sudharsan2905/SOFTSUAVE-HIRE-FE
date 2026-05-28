@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   font-weight: 500;
   border-radius: var(--radius-md);
   border: 1.5px solid transparent;
@@ -25,9 +25,21 @@
 }
 
 /* Sizes */
-.sm { height: 32px; padding: 0 12px; font-size: 13px; }
-.md { height: 38px; padding: 0 16px; font-size: 14px; }
-.lg { height: 44px; padding: 0 22px; font-size: 15px; }
+.sm {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+.md {
+  height: 38px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+.lg {
+  height: 44px;
+  padding: 0 22px;
+  font-size: 15px;
+}
 
 /* Variants */
 .primary {
@@ -78,7 +90,9 @@
   background: #15803d;
 }
 
-.fullWidth { width: 100%; }
+.fullWidth {
+  width: 100%;
+}
 
 .icon {
   display: flex;
@@ -86,12 +100,14 @@
   flex-shrink: 0;
 }
 
-.loading .icon { display: none; }
+.loading .icon {
+  display: none;
+}
 
 .spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255,255,255,0.3);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: currentColor;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
@@ -99,5 +115,7 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }

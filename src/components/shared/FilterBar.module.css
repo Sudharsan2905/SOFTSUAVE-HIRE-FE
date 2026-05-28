@@ -6,8 +6,19 @@
   flex-wrap: wrap;
   margin-bottom: 20px;
 }
-.left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1; }
-.right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
 
 .viewToggle {
   display: flex;
@@ -26,11 +37,18 @@
   color: var(--text-tertiary);
   background: transparent;
   cursor: pointer;
-  transition: color var(--transition-fast), background var(--transition-fast);
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
   border-right: 1px solid var(--border-default);
 }
-.viewBtn:last-child { border-right: none; }
-.viewBtn:hover { color: var(--text-primary); background: var(--bg-muted); }
+.viewBtn:last-child {
+  border-right: none;
+}
+.viewBtn:hover {
+  color: var(--text-primary);
+  background: var(--bg-muted);
+}
 .viewActive {
   color: var(--primary-600);
   background: var(--primary-50);
@@ -40,11 +58,11 @@
   background: var(--primary-50);
 }
 
-[data-theme='dark'] .viewActive {
+[data-theme="dark"] .viewActive {
   color: var(--primary-400);
   background: rgba(37, 99, 235, 0.15);
 }
-[data-theme='dark'] .viewActive:hover {
+[data-theme="dark"] .viewActive:hover {
   color: var(--primary-300);
   background: rgba(37, 99, 235, 0.2);
 }

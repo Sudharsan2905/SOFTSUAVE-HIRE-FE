@@ -1,23 +1,32 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import styles from './WorkspaceSwitcher.module.css';
-import { useAppDispatch, useAppSelector } from '@/store';
-import { setActiveWorkspace, setWorkspaces, clearWorkspace } from '@/store/slices/workspaceSlice';
-import { api } from '@/utils/api';
-import { Workspace, User } from '@/types';
-import { IconChevronDown, IconSettings, IconUserPlus, IconPlus, IconCheck, IconStar, IconEdit, IconDelete } from '@/assets/icons';
-import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
-import { Input, Textarea } from '@/components/ui/Input';
-import { getInitials, getAvatarColor, getFullName } from '@/utils/helpers';
-import { updateUser } from '@/store/slices/authSlice';
-import toast from 'react-hot-toast';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
+import styles from "./WorkspaceSwitcher.module.css";
+import { useAppDispatch, useAppSelector } from "@/store";
+import { setActiveWorkspace, setWorkspaces, clearWorkspace } from "@/store/slices/workspaceSlice";
+import { api } from "@/utils/api";
+import { Workspace, User } from "@/types";
+import {
+  IconChevronDown,
+  IconSettings,
+  IconUserPlus,
+  IconPlus,
+  IconCheck,
+  IconStar,
+  IconEdit,
+  IconDelete,
+} from "@/assets/icons";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { Input, Textarea } from "@/components/ui/Input";
+import { getInitials, getAvatarColor, getFullName } from "@/utils/helpers";
+import { updateUser } from "@/store/slices/authSlice";
+import toast from "react-hot-toast";
 
 export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
   const dispatch = useAppDispatch();
   const { activeWorkspace, workspaces } = useAppSelector((s) => s.workspace);
   const user = useAppSelector((s) => s.auth.user);
-  const isSuperAdmin = user?.role === 'super_admin';
+  const isSuperAdmin = user?.role === "super_admin";
 
   const [isOpen, setIsOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -26,12 +35,14 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
   const [showCreate, setShowCreate] = useState(false);
   const [adminUsers, setAdminUsers] = useState<User[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [editForm, setEditForm] = useState({ name: '', description: '' });
-  const [createForm, setCreateForm] = useState({ name: '', description: '' });
+  const [editForm, setEditForm] = useState({ name: "", description: "" });
+  const [createForm, setCreateForm] = useState({ name: "", description: "" });
   const [loading, setLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [memberDetails, setMemberDetails] = useState<User[]>([]);
-  const [memberTooltip, setMemberTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
+  const [memberTooltip, setMemberTooltip] = useState<{ text: string; x: number; y: number } | null>(
+    null
+  );
   const ref = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -40,8 +51,8 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
   const fetchWorkspaces = useCallback(async () => {
     try {
       const [wsRes, meRes] = await Promise.all([
-        api.get('/api/workspaces?page_size=50'),
-        api.get('/api/auth/me'),
+        api.get("/api/workspaces?page_size=50"),
+        api.get("/api/auth/me"),
       ]);
       const freshUser: User = meRes.data.data;
       dispatch(updateUser(freshUser));
@@ -64,7 +75,9 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
     } catch {}
   }, [dispatch, activeWorkspace]);
 
-  useEffect(() => { fetchWorkspaces(); }, []);
+  useEffect(() => {
+    fetchWorkspaces();
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -74,12 +87,13 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
       const inPopup = popupRef.current?.contains(target);
       if (!inContainer && !inPopup) setIsOpen(false);
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, [isOpen]);
 
   const openSettings = async () => {
-    if (activeWorkspace) setEditForm({ name: activeWorkspace.name, description: activeWorkspace.description });
+    if (activeWorkspace)
+      setEditForm({ name: activeWorkspace.name, description: activeWorkspace.description });
     setIsEditing(false);
     setIsOpen(false);
     setShowSettings(true);
@@ -98,7 +112,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
     try {
       const [, usersRes] = await Promise.all([
         fetchWorkspaces(),
-        api.get('/api/workspaces/admin-users'),
+        api.get("/api/workspaces/admin-users"),
       ]);
       setAdminUsers(usersRes.data.data || []);
     } catch {}
@@ -111,11 +125,13 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
       const { data } = await api.put(`/api/workspaces/${activeWorkspace.id}`, editForm);
       dispatch(setActiveWorkspace(data.data));
       await fetchWorkspaces();
-      toast.success('Workspace updated');
+      toast.success("Workspace updated");
       setIsEditing(false);
     } catch {
-      toast.error('Failed to update workspace');
-    } finally { setLoading(false); }
+      toast.error("Failed to update workspace");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const saveInvite = async () => {
@@ -123,26 +139,30 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
     setLoading(true);
     try {
       await api.post(`/api/workspaces/${activeWorkspace.id}/invite`, { user_ids: selectedUsers });
-      toast.success('Members updated');
+      toast.success("Members updated");
       setShowInvite(false);
       setShowSettings(true);
     } catch {
-      toast.error('Failed to update members');
-    } finally { setLoading(false); }
+      toast.error("Failed to update members");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const createWorkspace = async () => {
     setLoading(true);
     try {
-      const { data } = await api.post('/api/workspaces', createForm);
+      const { data } = await api.post("/api/workspaces", createForm);
       dispatch(setActiveWorkspace(data.data));
       await fetchWorkspaces();
-      toast.success('Workspace created');
+      toast.success("Workspace created");
       setShowCreate(false);
-      setCreateForm({ name: '', description: '' });
+      setCreateForm({ name: "", description: "" });
     } catch {
-      toast.error('Failed to create workspace');
-    } finally { setLoading(false); }
+      toast.error("Failed to create workspace");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const deleteWorkspace = async () => {
@@ -155,8 +175,10 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
       setShowSettings(false);
       await fetchWorkspaces();
     } catch {
-      toast.error('Failed to delete workspace');
-    } finally { setLoading(false); }
+      toast.error("Failed to delete workspace");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleUser = (userId: string) => {
@@ -171,15 +193,19 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
   if (!isSuperAdmin && workspaces.length === 0) {
     if (collapsed) {
       return (
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <div className={styles.wsIcon} style={{ background: '#334155', opacity: 0.5 }}>?</div>
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <div className={styles.wsIcon} style={{ background: "#334155", opacity: 0.5 }}>
+            ?
+          </div>
         </div>
       );
     }
     return (
       <div className={styles.noWsPrompt}>
         <p className={styles.noWsText}>No workspace access</p>
-        <p className={styles.noWsText} style={{ opacity: 0.7 }}>Contact your administrator</p>
+        <p className={styles.noWsText} style={{ opacity: 0.7 }}>
+          Contact your administrator
+        </p>
       </div>
     );
   }
@@ -189,13 +215,13 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
     if (collapsed) {
       return (
         <>
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div style={{ display: "flex", justifyContent: "center" }}>
             <button
               className={styles.collapsedTrigger}
               onClick={() => setShowCreate(true)}
               title="Create Workspace"
             >
-              <div className={styles.wsIcon} style={{ background: '#334155' }}>
+              <div className={styles.wsIcon} style={{ background: "#334155" }}>
                 <IconPlus size={13} color="#fff" />
               </div>
             </button>
@@ -207,14 +233,29 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
             showClose={false}
             footer={
               <>
-                <Button variant="secondary" onClick={() => setShowCreate(false)}>Cancel</Button>
-                <Button onClick={createWorkspace} isLoading={loading} disabled={!createForm.name}>Create</Button>
+                <Button variant="secondary" onClick={() => setShowCreate(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={createWorkspace} isLoading={loading} disabled={!createForm.name}>
+                  Create
+                </Button>
               </>
             }
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <Input label="Workspace Name" placeholder="e.g., Engineering Hiring" value={createForm.name} onChange={(e) => setCreateForm((p) => ({ ...p, name: e.target.value }))} />
-              <Textarea label="Description (optional)" placeholder="What is this workspace for?" value={createForm.description} onChange={(e) => setCreateForm((p) => ({ ...p, description: e.target.value }))} rows={3} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <Input
+                label="Workspace Name"
+                placeholder="e.g., Engineering Hiring"
+                value={createForm.name}
+                onChange={(e) => setCreateForm((p) => ({ ...p, name: e.target.value }))}
+              />
+              <Textarea
+                label="Description (optional)"
+                placeholder="What is this workspace for?"
+                value={createForm.description}
+                onChange={(e) => setCreateForm((p) => ({ ...p, description: e.target.value }))}
+                rows={3}
+              />
             </div>
           </Modal>
         </>
@@ -237,14 +278,16 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
           showClose={false}
           footer={
             <>
-              <Button variant="secondary" onClick={() => setShowCreate(false)}>Cancel</Button>
+              <Button variant="secondary" onClick={() => setShowCreate(false)}>
+                Cancel
+              </Button>
               <Button onClick={createWorkspace} isLoading={loading} disabled={!createForm.name}>
                 Create
               </Button>
             </>
           }
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <Input
               label="Workspace Name"
               placeholder="e.g., Engineering Hiring"
@@ -264,8 +307,8 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
     );
   }
 
-  const wsColor = activeWorkspace ? getAvatarColor(activeWorkspace.name) : '#334155';
-  const wsInitials = activeWorkspace ? getInitials(activeWorkspace.name) : '?';
+  const wsColor = activeWorkspace ? getAvatarColor(activeWorkspace.name) : "#334155";
+  const wsInitials = activeWorkspace ? getInitials(activeWorkspace.name) : "?";
 
   const popupContent = (
     <>
@@ -275,21 +318,32 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
           return (
             <button
               key={ws.id}
-              className={`${styles.wsItem} ${activeWorkspace?.id === ws.id ? styles.wsItemActive : ''}`}
-              onClick={() => { dispatch(setActiveWorkspace(ws)); setIsOpen(false); }}
+              className={`${styles.wsItem} ${activeWorkspace?.id === ws.id ? styles.wsItemActive : ""}`}
+              onClick={() => {
+                dispatch(setActiveWorkspace(ws));
+                setIsOpen(false);
+              }}
             >
               <div className={styles.wsItemIcon} style={{ background: getAvatarColor(ws.name) }}>
                 {getInitials(ws.name)}
               </div>
               <span className={styles.wsItemName}>{ws.name}</span>
               {isDefault && <IconStar size={12} className={styles.defaultStar} />}
-              {activeWorkspace?.id === ws.id && <IconCheck size={14} className={styles.wsCheckIcon} />}
+              {activeWorkspace?.id === ws.id && (
+                <IconCheck size={14} className={styles.wsCheckIcon} />
+              )}
             </button>
           );
         })}
       </div>
       {isSuperAdmin && (
-        <button className={styles.createBtn} onClick={() => { setIsOpen(false); setShowCreate(true); }}>
+        <button
+          className={styles.createBtn}
+          onClick={() => {
+            setIsOpen(false);
+            setShowCreate(true);
+          }}
+        >
           <IconPlus size={14} />
           New Workspace
         </button>
@@ -310,7 +364,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
           <button
             ref={triggerRef}
             className={styles.collapsedTrigger}
-            title={activeWorkspace?.name || 'Select Workspace'}
+            title={activeWorkspace?.name || "Select Workspace"}
             onClick={() => {
               if (!isOpen && triggerRef.current) {
                 const rect = triggerRef.current.getBoundingClientRect();
@@ -319,52 +373,78 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
               setIsOpen((v) => !v);
             }}
           >
-            <div className={styles.wsIcon} style={{ background: wsColor }}>{wsInitials}</div>
+            <div className={styles.wsIcon} style={{ background: wsColor }}>
+              {wsInitials}
+            </div>
           </button>
         ) : (
           <button className={styles.trigger} onClick={() => setIsOpen(!isOpen)}>
             <div className={styles.triggerLeft}>
-              <div className={styles.wsIcon} style={{ background: wsColor }}>{wsInitials}</div>
+              <div className={styles.wsIcon} style={{ background: wsColor }}>
+                {wsInitials}
+              </div>
               <div className={styles.wsNameRow}>
-                <span className={styles.wsName}>{activeWorkspace?.name || 'Select Workspace'}</span>
+                <span className={styles.wsName}>{activeWorkspace?.name || "Select Workspace"}</span>
                 {isActiveDefault && <IconStar size={10} className={styles.triggerStar} />}
               </div>
             </div>
-            <IconChevronDown size={14} className={`${styles.chevron} ${isOpen ? styles.open : ''}`} />
+            <IconChevronDown
+              size={14}
+              className={`${styles.chevron} ${isOpen ? styles.open : ""}`}
+            />
           </button>
         )}
 
-        {!collapsed && isOpen && (
-          <div className={styles.popup}>{popupContent}</div>
-        )}
+        {!collapsed && isOpen && <div className={styles.popup}>{popupContent}</div>}
       </div>
 
-      {collapsed && isOpen && createPortal(
-        <div ref={popupRef} className={styles.popup} style={{ position: 'fixed', top: popupPos.top, left: popupPos.left, right: 'auto', minWidth: 220 }}>
-          {popupContent}
-        </div>,
-        document.body
-      )}
+      {collapsed &&
+        isOpen &&
+        createPortal(
+          <div
+            ref={popupRef}
+            className={styles.popup}
+            style={{
+              position: "fixed",
+              top: popupPos.top,
+              left: popupPos.left,
+              right: "auto",
+              minWidth: 220,
+            }}
+          >
+            {popupContent}
+          </div>,
+          document.body
+        )}
 
       {/* Settings Modal */}
       <Modal
         isOpen={showSettings}
-        onClose={() => { setShowSettings(false); setIsEditing(false); }}
+        onClose={() => {
+          setShowSettings(false);
+          setIsEditing(false);
+        }}
         title="Workspace Settings"
         showClose={false}
         footer={
           isEditing ? (
             <>
-              <Button variant="secondary" onClick={() => setIsEditing(false)}>Cancel</Button>
-              <Button onClick={saveSettings} isLoading={loading}>Save Changes</Button>
+              <Button variant="secondary" onClick={() => setIsEditing(false)}>
+                Cancel
+              </Button>
+              <Button onClick={saveSettings} isLoading={loading}>
+                Save Changes
+              </Button>
             </>
           ) : (
-            <Button variant="secondary" onClick={() => setShowSettings(false)}>Close</Button>
+            <Button variant="secondary" onClick={() => setShowSettings(false)}>
+              Close
+            </Button>
           )
         }
       >
         {isEditing ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <Input
               label="Workspace Name"
               value={editForm.name}
@@ -387,7 +467,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
               <div className={styles.wsSettingsField}>
                 <p className={styles.wsSettingsSectionLabel}>Description</p>
                 <p className={styles.wsSettingsDesc}>
-                  {activeWorkspace?.description || 'No description'}
+                  {activeWorkspace?.description || "No description"}
                 </p>
               </div>
             </div>
@@ -401,8 +481,12 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
                   <div className={styles.memberAvatarStack}>
                     {(activeWorkspace?.members || []).slice(0, 6).map((m, i) => {
                       const detail = memberDetails.find((u) => u.id === m.user_id);
-                      const displayName = detail ? getFullName(detail) : (m.email || m.user_id);
-                      const initials = detail ? getInitials(displayName) : (m.email ? m.email[0].toUpperCase() : '?');
+                      const displayName = detail ? getFullName(detail) : m.email || m.user_id;
+                      const initials = detail
+                        ? getInitials(displayName)
+                        : m.email
+                          ? m.email[0].toUpperCase()
+                          : "?";
                       const color = getAvatarColor(displayName);
                       return (
                         <div
@@ -411,7 +495,11 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
                           style={{ background: color, zIndex: 6 - i }}
                           onMouseEnter={(e) => {
                             const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                            setMemberTooltip({ text: m.email || m.user_id, x: rect.left + rect.width / 2, y: rect.top - 6 });
+                            setMemberTooltip({
+                              text: m.email || m.user_id,
+                              x: rect.left + rect.width / 2,
+                              y: rect.top - 6,
+                            });
                           }}
                           onMouseLeave={() => setMemberTooltip(null)}
                         >
@@ -431,7 +519,13 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
 
             {isSuperAdmin ? (
               <div className={styles.wsSettingsActions}>
-                <button className={styles.wsSettingsBtn} onClick={() => { setShowSettings(false); openInvite(); }}>
+                <button
+                  className={styles.wsSettingsBtn}
+                  onClick={() => {
+                    setShowSettings(false);
+                    openInvite();
+                  }}
+                >
                   <IconUserPlus size={14} />
                   Invite Members
                 </button>
@@ -439,7 +533,10 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
                   <IconEdit size={14} />
                   Edit
                 </button>
-                <button className={`${styles.wsSettingsBtn} ${styles.wsSettingsBtnDanger}`} onClick={() => setShowDeleteConfirm(true)}>
+                <button
+                  className={`${styles.wsSettingsBtn} ${styles.wsSettingsBtnDanger}`}
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
                   <IconDelete size={14} />
                   Delete
                 </button>
@@ -452,13 +549,26 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
       {/* Invite Modal */}
       <Modal
         isOpen={showInvite}
-        onClose={() => { setShowInvite(false); setShowSettings(true); }}
+        onClose={() => {
+          setShowInvite(false);
+          setShowSettings(true);
+        }}
         title="Invite Members"
         showClose={false}
         footer={
           <>
-            <Button variant="secondary" onClick={() => { setShowInvite(false); setShowSettings(true); }}>Cancel</Button>
-            <Button onClick={saveInvite} isLoading={loading}>Save</Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowInvite(false);
+                setShowSettings(true);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={saveInvite} isLoading={loading}>
+              Save
+            </Button>
           </>
         }
       >
@@ -469,7 +579,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
             return (
               <div
                 key={u.id}
-                className={`${styles.inviteItem} ${isMember ? styles.inviteItemMember : ''} ${selected ? styles.inviteItemSelected : ''}`}
+                className={`${styles.inviteItem} ${isMember ? styles.inviteItemMember : ""} ${selected ? styles.inviteItemSelected : ""}`}
                 onClick={() => !isMember && toggleUser(u.id)}
               >
                 <div
@@ -485,7 +595,9 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
                 {isMember ? (
                   <span className={styles.memberBadge}>Member</span>
                 ) : (
-                  <div className={`${styles.inviteCheck} ${selected ? styles.inviteCheckSelected : ''}`}>
+                  <div
+                    className={`${styles.inviteCheck} ${selected ? styles.inviteCheckSelected : ""}`}
+                  >
                     {selected && <IconCheck size={12} />}
                   </div>
                 )}
@@ -503,14 +615,16 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
         showClose={false}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button variant="secondary" onClick={() => setShowCreate(false)}>
+              Cancel
+            </Button>
             <Button onClick={createWorkspace} isLoading={loading} disabled={!createForm.name}>
               Create
             </Button>
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <Input
             label="Workspace Name"
             placeholder="e.g., Engineering Hiring"
@@ -535,39 +649,46 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
         showClose={false}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
-            <Button variant="danger" onClick={deleteWorkspace} isLoading={loading}>Delete</Button>
+            <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={deleteWorkspace} isLoading={loading}>
+              Delete
+            </Button>
           </>
         }
       >
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-          Delete <strong>{activeWorkspace?.name}</strong>? This will remove all members from this workspace.
-          Any user whose default workspace is this one will be reassigned automatically.
+        <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6 }}>
+          Delete <strong>{activeWorkspace?.name}</strong>? This will remove all members from this
+          workspace. Any user whose default workspace is this one will be reassigned automatically.
           This action cannot be undone.
         </p>
       </Modal>
 
-      {memberTooltip && createPortal(
-        <div style={{
-          position: 'fixed',
-          top: memberTooltip.y,
-          left: memberTooltip.x,
-          transform: 'translate(-50%, -100%)',
-          background: '#1e293b',
-          color: '#fff',
-          fontSize: 11,
-          fontWeight: 400,
-          padding: '4px 8px',
-          borderRadius: 4,
-          whiteSpace: 'nowrap',
-          zIndex: 99999,
-          pointerEvents: 'none',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
-        }}>
-          {memberTooltip.text}
-        </div>,
-        document.body
-      )}
+      {memberTooltip &&
+        createPortal(
+          <div
+            style={{
+              position: "fixed",
+              top: memberTooltip.y,
+              left: memberTooltip.x,
+              transform: "translate(-50%, -100%)",
+              background: "#1e293b",
+              color: "#fff",
+              fontSize: 11,
+              fontWeight: 400,
+              padding: "4px 8px",
+              borderRadius: 4,
+              whiteSpace: "nowrap",
+              zIndex: 99999,
+              pointerEvents: "none",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+            }}
+          >
+            {memberTooltip.text}
+          </div>,
+          document.body
+        )}
     </>
   );
 }

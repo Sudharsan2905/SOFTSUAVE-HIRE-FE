@@ -1,5 +1,11 @@
-.wrapper { display: flex; flex-direction: column; gap: 6px; }
-.fullWidth { width: 100%; }
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fullWidth {
+  width: 100%;
+}
 
 .label {
   font-size: 13px;
@@ -14,14 +20,20 @@
   border: 1.5px solid var(--border-default);
   border-radius: var(--radius-md);
   background: var(--bg-surface);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 .inputWrapper:focus-within {
   border-color: var(--primary-500);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
-.hasError { border-color: var(--error-500); }
-.hasError:focus-within { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12); }
+.hasError {
+  border-color: var(--error-500);
+}
+.hasError:focus-within {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
 
 .input {
   width: 100%;
@@ -33,10 +45,19 @@
   font-size: 14px;
   color: var(--text-primary);
 }
-.input::placeholder { color: var(--text-tertiary); }
-.input:disabled { opacity: 0.55; cursor: not-allowed; }
-.hasLeft { padding-left: 8px; }
-.hasRight { padding-right: 8px; }
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+.input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.hasLeft {
+  padding-left: 8px;
+}
+.hasRight {
+  padding-right: 8px;
+}
 
 .leftEl,
 .rightEl {
@@ -59,14 +80,26 @@
   color: var(--text-primary);
   resize: vertical;
   font-family: inherit;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 .textarea:focus {
   border-color: var(--primary-500);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
-.textareaError { border-color: var(--error-500); }
-.textarea::placeholder { color: var(--text-tertiary); }
+.textareaError {
+  border-color: var(--error-500);
+}
+.textarea::placeholder {
+  color: var(--text-tertiary);
+}
 
-.error { font-size: 12px; color: var(--error-500); }
-.hint { font-size: 12px; color: var(--text-tertiary); }
+.error {
+  font-size: 12px;
+  color: var(--error-500);
+}
+.hint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}

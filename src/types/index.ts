@@ -1,6 +1,6 @@
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
-export type UserRole = 'super_admin' | 'admin' | 'candidate';
+export type UserRole = "super_admin" | "admin" | "candidate";
 
 export interface User {
   id: string;
@@ -21,7 +21,7 @@ export interface CandidateProfile {
   user_id: string;
   phone: string;
   father_name: string;
-  gender: 'male' | 'female' | 'other';
+  gender: "male" | "female" | "other";
   dob?: string;
   college_name?: string;
   college_city?: string;
@@ -59,8 +59,8 @@ export interface Workspace {
 
 // ─── Question Bank ───────────────────────────────────────────────────────────
 
-export type Complexity = 'low' | 'medium' | 'high';
-export type QuestionType = 'mcq_single' | 'mcq_multi' | 'essay';
+export type Complexity = "low" | "medium" | "high";
+export type QuestionType = "mcq_single" | "mcq_multi" | "essay";
 
 export interface QuestionCategory {
   id: string;
@@ -93,13 +93,13 @@ export interface Question {
 
 // ─── Assessment ──────────────────────────────────────────────────────────────
 
-export type AssessmentAccessibility = 'normal' | 'monitoring';
+export type AssessmentAccessibility = "normal" | "monitoring";
 
 export interface MonitoringConfig {
   tab_monitoring: boolean;
   voice_monitoring: boolean;
   camera: boolean;
-  screenshot_mode: 'time_interval' | 'count';
+  screenshot_mode: "time_interval" | "count";
   screenshot_interval_minutes?: number;
   screenshot_count?: number;
 }
@@ -135,13 +135,13 @@ export interface CandidateQuestionOption {
 export interface CandidateQuestion {
   id: string;
   text: string;
-  type: 'mcq_single' | 'mcq_multiple' | 'essay';
+  type: "mcq_single" | "mcq_multiple" | "essay";
   options?: CandidateQuestionOption[];
 }
 
 // ─── Submission ──────────────────────────────────────────────────────────────
 
-export type SubmissionStatus = 'pending' | 'in_progress' | 'completed' | 'malpractice';
+export type SubmissionStatus = "pending" | "in_progress" | "completed" | "malpractice";
 
 export interface MalpracticeFlag {
   type: string;
@@ -214,8 +214,8 @@ export interface ApiResponse<T = unknown> {
 
 // ─── UI State ─────────────────────────────────────────────────────────────────
 
-export type ViewMode = 'list' | 'grid';
-export type SortOrder = 'asc' | 'desc';
+export type ViewMode = "list" | "grid";
+export type SortOrder = "asc" | "desc";
 
 export interface FilterState {
   search: string;

@@ -1,17 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import styles from './Step2Questions.module.css';
-import { useDraggable, useDroppable, DndContext, DragEndEvent } from '@dnd-kit/core';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Badge } from '@/components/ui/Badge';
-import { ComplexityBadge } from '@/components/ui/Badge';
-import { Spinner } from '@/components/ui/Spinner';
-import { IconSearch, IconDrag, IconCheck, IconDelete } from '@/assets/icons';
-import { api } from '@/utils/api';
-import { useDebounce } from '@/hooks/useDebounce';
-import { Question, QuestionCategory } from '@/types';
-import { COMPLEXITY_OPTIONS, QUESTION_TYPE_OPTIONS } from '@/constants/app';
-import { AssessmentDraft } from './WizardContainer';
+import React, { useState, useEffect, useCallback } from "react";
+import styles from "./Step2Questions.module.css";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { ComplexityBadge } from "@/components/ui/Badge";
+import { Spinner } from "@/components/ui/Spinner";
+import { IconSearch, IconDrag, IconCheck, IconDelete } from "@/assets/icons";
+import { api } from "@/utils/api";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Question, QuestionCategory } from "@/types";
+import { COMPLEXITY_OPTIONS, QUESTION_TYPE_OPTIONS } from "@/constants/app";
+import { AssessmentDraft } from "./WizardContainer";
 
 interface Props {
   draft: AssessmentDraft;
@@ -25,10 +23,10 @@ export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Props
 
   const [categories, setCategories] = useState<QuestionCategory[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [search, setSearch] = useState('');
-  const [complexity, setComplexity] = useState('');
-  const [questionType, setQuestionType] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [search, setSearch] = useState("");
+  const [complexity, setComplexity] = useState("");
+  const [questionType, setQuestionType] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const debouncedSearch = useDebounce(search, 300);
 
@@ -36,7 +34,7 @@ export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Props
   const availableQuestions = questions.filter((q) => !selectedIds.includes(q.id));
 
   const fetchCategories = async () => {
-    const { data } = await api.get('/api/questions/categories?page_size=100');
+    const { data } = await api.get("/api/questions/categories?page_size=100");
     setCategories(data.data?.categories || []);
     if (data.data?.categories?.[0]) setSelectedCategory(data.data.categories[0].id);
   };
@@ -46,18 +44,27 @@ export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Props
     setIsLoading(true);
     try {
       const params = new URLSearchParams({
-        page_size: '100',
+        page_size: "100",
         ...(debouncedSearch && { search: debouncedSearch }),
         ...(complexity && { complexity }),
         ...(questionType && { question_type: questionType }),
       });
-      const { data } = await api.get(`/api/questions/categories/${selectedCategory}/questions?${params}`);
+      const { data } = await api.get(
+        `/api/questions/categories/${selectedCategory}/questions?${params}`
+      );
       setQuestions(data.data?.questions || []);
-    } catch {} finally { setIsLoading(false); }
+    } catch {
+    } finally {
+      setIsLoading(false);
+    }
   }, [selectedCategory, debouncedSearch, complexity, questionType]);
 
-  useEffect(() => { fetchCategories(); }, []);
-  useEffect(() => { fetchQuestions(); }, [fetchQuestions]);
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+  useEffect(() => {
+    fetchQuestions();
+  }, [fetchQuestions]);
 
   const toggle = (q: Question) => {
     if (selectedIds.includes(q.id)) {
@@ -124,28 +131,40 @@ export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Props
             fullWidth={false}
             style={{ flex: 1 }}
           />
-          <Select options={COMPLEXITY_OPTIONS} value={complexity} onChange={setComplexity}
-            placeholder="Complexity" fullWidth={false} style={{ minWidth: 110 }} />
-          <Select options={QUESTION_TYPE_OPTIONS} value={questionType} onChange={setQuestionType}
-            placeholder="Type" fullWidth={false} style={{ minWidth: 110 }} />
+          <Select
+            options={COMPLEXITY_OPTIONS}
+            value={complexity}
+            onChange={setComplexity}
+            placeholder="Complexity"
+            fullWidth={false}
+            style={{ minWidth: 110 }}
+          />
+          <Select
+            options={QUESTION_TYPE_OPTIONS}
+            value={questionType}
+            onChange={setQuestionType}
+            placeholder="Type"
+            fullWidth={false}
+            style={{ minWidth: 110 }}
+          />
         </div>
 
         {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}><Spinner /></div>
+          <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
+            <Spinner />
+          </div>
         ) : availableQuestions.length === 0 ? (
-          <div className={styles.dropHint}><p>No questions available</p></div>
+          <div className={styles.dropHint}>
+            <p>No questions available</p>
+          </div>
         ) : (
           <div className={styles.questionList}>
             {availableQuestions.map((q) => (
-              <div
-                key={q.id}
-                className={styles.questionItem}
-                onClick={() => toggle(q)}
-              >
+              <div key={q.id} className={styles.questionItem} onClick={() => toggle(q)}>
                 <div className={styles.questionItemLeft}>
                   <IconDrag size={16} color="var(--text-tertiary)" />
                   <div>
-                    <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
+                    <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
                       <ComplexityBadge complexity={q.complexity} />
                     </div>
                     <p className={styles.qText}>{q.question_text}</p>

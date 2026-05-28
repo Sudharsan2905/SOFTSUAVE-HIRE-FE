@@ -1,7 +1,7 @@
-import { AVATAR_COLORS } from '@/constants/app';
+import { AVATAR_COLORS } from "@/constants/app";
 
 export function getFullName(user: { first_name: string; last_name?: string }): string {
-  return [user.first_name, user.last_name].filter(Boolean).join(' ');
+  return [user.first_name, user.last_name].filter(Boolean).join(" ");
 }
 
 export function getAvatarColor(name: string): string {
@@ -14,28 +14,28 @@ export function getAvatarColor(name: string): string {
 
 export function getInitials(name: string): string {
   return name
-    .split(' ')
+    .split(" ")
     .map((n) => n[0])
-    .join('')
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 }
 
 export function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
 }
 
 export function formatDateTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  return new Date(dateStr).toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -47,7 +47,7 @@ export function formatDuration(minutes: number): string {
 }
 
 export function clsx(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(' ');
+  return classes.filter(Boolean).join(" ");
 }
 
 export function generateShareUrl(shareLink: string): string {
@@ -60,7 +60,7 @@ export function copyToClipboard(text: string): Promise<void> {
 
 export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = filename;
   a.click();
@@ -68,9 +68,9 @@ export function downloadBlob(blob: Blob, filename: string): void {
 }
 
 export function percentageBadgeColor(pct: number): string {
-  if (pct >= 75) return 'success';
-  if (pct >= 50) return 'warning';
-  return 'error';
+  if (pct >= 75) return "success";
+  if (pct >= 50) return "warning";
+  return "error";
 }
 
 export function debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number): T {

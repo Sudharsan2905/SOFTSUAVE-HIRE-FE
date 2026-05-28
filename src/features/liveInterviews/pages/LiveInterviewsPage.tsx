@@ -1,33 +1,32 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import styles from './LiveInterviewsPage.module.css';
-import { Header } from '@/components/layout/Header';
-import { FilterBar } from '@/components/shared/FilterBar';
-import { Badge } from '@/components/ui/Badge';
-import { Pagination } from '@/components/ui/Pagination';
-import { Spinner } from '@/components/ui/Spinner';
-import { Modal } from '@/components/ui/Modal';
-import { Select } from '@/components/ui/Select';
-import { IconLiveInterview, IconCamera, IconMonitor, IconEye, IconTime } from '@/assets/icons';
-import { api } from '@/utils/api';
-import { useDebounce } from '@/hooks/useDebounce';
-import { usePagination } from '@/hooks/usePagination';
-import { PaginationMeta, Submission, ViewMode, SortOrder } from '@/types';
-import { formatDateTime, getInitials, getAvatarColor, getFullName } from '@/utils/helpers';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import styles from "./LiveInterviewsPage.module.css";
+import { Header } from "@/components/layout/Header";
+import { FilterBar } from "@/components/shared/FilterBar";
+import { Badge } from "@/components/ui/Badge";
+import { Pagination } from "@/components/ui/Pagination";
+import { Spinner } from "@/components/ui/Spinner";
+import { Modal } from "@/components/ui/Modal";
+import { Select } from "@/components/ui/Select";
+import { IconLiveInterview, IconCamera, IconEye, IconTime } from "@/assets/icons";
+import { api } from "@/utils/api";
+import { useDebounce } from "@/hooks/useDebounce";
+import { usePagination } from "@/hooks/usePagination";
+import { PaginationMeta, Submission, ViewMode, SortOrder } from "@/types";
+import { formatDateTime, getInitials, getAvatarColor, getFullName } from "@/utils/helpers";
 
 const MONITORING_OPTIONS = [
-  { value: 'monitoring', label: 'Monitoring Mode' },
-  { value: 'normal', label: 'Normal Mode' },
+  { value: "monitoring", label: "Monitoring Mode" },
+  { value: "normal", label: "Normal Mode" },
 ];
 
 export default function LiveInterviewsPage() {
   const [sessions, setSessions] = useState<Submission[]>([]);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [monitoringType, setMonitoringType] = useState('');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [search, setSearch] = useState("");
+  const [monitoringType, setMonitoringType] = useState("");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [showDetail, setShowDetail] = useState(false);
   const [selectedSession, setSelectedSession] = useState<Submission | null>(null);
   const { page, pageSize, goToPage } = usePagination();
@@ -46,13 +45,18 @@ export default function LiveInterviewsPage() {
       const { data } = await api.get(`/api/candidate/live-interviews?${params}`);
       setSessions(data.data?.live_interviews || []);
       setMeta(data.data?.pagination || null);
-    } catch { } finally { setIsLoading(false); }
+    } catch {
+    } finally {
+      setIsLoading(false);
+    }
   }, [page, pageSize, sortOrder, debouncedSearch, monitoringType]);
 
   useEffect(() => {
     fetchSessions();
     pollRef.current = setInterval(fetchSessions, 15000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, [fetchSessions]);
 
   return (
@@ -63,23 +67,28 @@ export default function LiveInterviewsPage() {
       />
 
       <FilterBar
-        search={search} onSearchChange={setSearch}
-        sortBy="started_at" sortOrder={sortOrder}
-        onSortOrderToggle={() => setSortOrder((o) => o === 'asc' ? 'desc' : 'asc')}
-        viewMode={viewMode} onViewModeChange={setViewMode}
+        search={search}
+        onSearchChange={setSearch}
+        sortBy="started_at"
+        sortOrder={sortOrder}
+        onSortOrderToggle={() => setSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       >
         <div style={{ width: 180 }}>
           <Select
             value={monitoringType}
             onChange={setMonitoringType}
             placeholder="All Modes"
-            options={[{ value: '', label: 'All Modes' }, ...MONITORING_OPTIONS]}
+            options={[{ value: "", label: "All Modes" }, ...MONITORING_OPTIONS]}
           />
         </div>
       </FilterBar>
 
       {isLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner size="lg" /></div>
+        <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
+          <Spinner size="lg" />
+        </div>
       ) : sessions.length === 0 ? (
         <div className={styles.empty}>
           <IconLiveInterview size={48} color="var(--text-tertiary)" />
@@ -88,15 +97,30 @@ export default function LiveInterviewsPage() {
         </div>
       ) : (
         <>
-          <div className={viewMode === 'grid' ? styles.grid : styles.list}>
+          <div className={viewMode === "grid" ? styles.grid : styles.list}>
             {sessions.map((session) => {
-              const candidate = (session as unknown as { candidate?: { first_name?: string; last_name?: string; email?: string } }).candidate;
-              const assessment = (session as unknown as { assessment?: { name?: string; accessibility?: string } }).assessment;
-              const name = candidate ? getFullName(candidate as { first_name: string; last_name?: string }) : 'Unknown';
-              const isMonitoring = assessment?.accessibility === 'monitoring';
+              const candidate = (
+                session as unknown as {
+                  candidate?: { first_name?: string; last_name?: string; email?: string };
+                }
+              ).candidate;
+              const assessment = (
+                session as unknown as { assessment?: { name?: string; accessibility?: string } }
+              ).assessment;
+              const name = candidate
+                ? getFullName(candidate as { first_name: string; last_name?: string })
+                : "Unknown";
+              const isMonitoring = assessment?.accessibility === "monitoring";
 
               return (
-                <div key={session.id} className={styles.card} onClick={() => { setSelectedSession(session); setShowDetail(true); }}>
+                <div
+                  key={session.id}
+                  className={styles.card}
+                  onClick={() => {
+                    setSelectedSession(session);
+                    setShowDetail(true);
+                  }}
+                >
                   <div className={styles.cardTop}>
                     <div className={styles.avatarArea}>
                       {isMonitoring ? (
@@ -114,14 +138,18 @@ export default function LiveInterviewsPage() {
                       <p className={styles.candidateName}>{name}</p>
                       <p className={styles.candidateEmail}>{candidate?.email}</p>
                     </div>
-                    <Badge variant={isMonitoring ? 'accent' : 'default'}>
-                      {isMonitoring ? 'Monitored' : 'Normal'}
+                    <Badge variant={isMonitoring ? "accent" : "default"}>
+                      {isMonitoring ? "Monitored" : "Normal"}
                     </Badge>
                   </div>
                   <div className={styles.assessmentName}>{assessment?.name}</div>
                   <div className={styles.metaRow}>
-                    <span><IconTime size={12} /> Round {session.current_round}</span>
-                    <span><IconEye size={12} /> {session.screenshots?.length || 0} screenshots</span>
+                    <span>
+                      <IconTime size={12} /> Round {session.current_round}
+                    </span>
+                    <span>
+                      <IconEye size={12} /> {session.screenshots?.length || 0} screenshots
+                    </span>
                     <span>Started {formatDateTime(session.started_at)}</span>
                   </div>
                 </div>
@@ -140,20 +168,27 @@ export default function LiveInterviewsPage() {
       >
         {selectedSession && (
           <div>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 16 }}>
+            <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 16 }}>
               Screenshots taken: {selectedSession.screenshots?.length || 0}
             </p>
             <div className={styles.screenshotGrid}>
               {(selectedSession.screenshots || []).map((s, i) => (
                 <div key={i} className={styles.screenshot}>
                   <div className={styles.screenshotPlaceholder}>Screenshot {i + 1}</div>
-                  <p style={{ fontSize: 11, color: 'var(--text-tertiary)', textAlign: 'center', marginTop: 4 }}>
+                  <p
+                    style={{
+                      fontSize: 11,
+                      color: "var(--text-tertiary)",
+                      textAlign: "center",
+                      marginTop: 4,
+                    }}
+                  >
                     {formatDateTime(s.taken_at)}
                   </p>
                 </div>
               ))}
               {(!selectedSession.screenshots || selectedSession.screenshots.length === 0) && (
-                <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>No screenshots yet</p>
+                <p style={{ fontSize: 13, color: "var(--text-tertiary)" }}>No screenshots yet</p>
               )}
             </div>
           </div>

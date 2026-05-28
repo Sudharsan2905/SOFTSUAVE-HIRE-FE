@@ -1,7 +1,7 @@
-import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import React from "react";
+import ReactMarkdown from "react-markdown";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 interface RichTextProps {
   children: string;
@@ -15,17 +15,17 @@ export function RichText({ children, className }: RichTextProps) {
         components={{
           code(props) {
             const { className: cls, children: codeChildren } = props;
-            const match = /language-(\w+)/.exec(cls || '');
-            const codeStr = String(codeChildren).replace(/\n$/, '');
-            const isBlock = !!match || codeStr.includes('\n');
+            const match = /language-(\w+)/.exec(cls || "");
+            const codeStr = String(codeChildren).replace(/\n$/, "");
+            const isBlock = !!match || codeStr.includes("\n");
 
             if (isBlock) {
               return (
                 <SyntaxHighlighter
                   style={oneDark}
-                  language={match?.[1] || 'text'}
+                  language={match?.[1] || "text"}
                   PreTag="div"
-                  customStyle={{ borderRadius: 6, fontSize: 13, margin: '8px 0' }}
+                  customStyle={{ borderRadius: 6, fontSize: 13, margin: "8px 0" }}
                 >
                   {codeStr}
                 </SyntaxHighlighter>
@@ -35,12 +35,12 @@ export function RichText({ children, className }: RichTextProps) {
             return (
               <code
                 style={{
-                  background: 'var(--code-inline-bg)',
-                  color: 'var(--code-inline-color)',
-                  padding: '2px 6px',
+                  background: "var(--code-inline-bg)",
+                  color: "var(--code-inline-color)",
+                  padding: "2px 6px",
                   borderRadius: 4,
-                  fontFamily: 'monospace',
-                  fontSize: '0.875em',
+                  fontFamily: "monospace",
+                  fontSize: "0.875em",
                 }}
               >
                 {codeChildren}

@@ -1,16 +1,15 @@
-import React, { useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import styles from './Modal.module.css';
-import { clsx } from '@/utils/helpers';
-import { IconClose } from '@/assets/icons';
-import { Button } from '../Button';
+import React, { useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
+import styles from "./Modal.module.css";
+import { clsx } from "@/utils/helpers";
+import { IconClose } from "@/assets/icons";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  size?: "sm" | "md" | "lg" | "xl" | "full";
   showClose?: boolean;
   footer?: React.ReactNode;
   className?: string;
@@ -21,26 +20,26 @@ export function Modal({
   onClose,
   title,
   children,
-  size = 'md',
+  size = "md",
   showClose = true,
   footer,
   className,
 }: ModalProps) {
   const handleEsc = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     },
     [onClose]
   );
 
   useEffect(() => {
     if (isOpen) {
-      document.addEventListener('keydown', handleEsc);
-      document.body.style.overflow = 'hidden';
+      document.addEventListener("keydown", handleEsc);
+      document.body.style.overflow = "hidden";
     }
     return () => {
-      document.removeEventListener('keydown', handleEsc);
-      document.body.style.overflow = '';
+      document.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = "";
     };
   }, [isOpen, handleEsc]);
 
