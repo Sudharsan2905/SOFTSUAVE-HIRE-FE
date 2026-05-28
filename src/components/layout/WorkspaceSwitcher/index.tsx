@@ -30,6 +30,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
   const [createForm, setCreateForm] = useState({ name: '', description: '' });
   const [loading, setLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [memberDetails, setMemberDetails] = useState<User[]>([]);
   const [memberTooltip, setMemberTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -77,11 +78,17 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
     return () => document.removeEventListener('mousedown', handler);
   }, [isOpen]);
 
-  const openSettings = () => {
+  const openSettings = async () => {
     if (activeWorkspace) setEditForm({ name: activeWorkspace.name, description: activeWorkspace.description });
     setIsEditing(false);
     setIsOpen(false);
     setShowSettings(true);
+    if (isSuperAdmin && activeWorkspace) {
+      try {
+        const { data } = await api.get(`/api/workspaces/${activeWorkspace.id}/members`);
+        setMemberDetails(data.data || []);
+      } catch {}
+    }
   };
 
   const openInvite = async () => {
@@ -197,6 +204,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
             isOpen={showCreate}
             onClose={() => setShowCreate(false)}
             title="Create Workspace"
+            showClose={false}
             footer={
               <>
                 <Button variant="secondary" onClick={() => setShowCreate(false)}>Cancel</Button>
@@ -226,6 +234,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
           isOpen={showCreate}
           onClose={() => setShowCreate(false)}
           title="Create Workspace"
+          showClose={false}
           footer={
             <>
               <Button variant="secondary" onClick={() => setShowCreate(false)}>Cancel</Button>
@@ -342,6 +351,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
         isOpen={showSettings}
         onClose={() => { setShowSettings(false); setIsEditing(false); }}
         title="Workspace Settings"
+        showClose={false}
         footer={
           isEditing ? (
             <>
@@ -389,20 +399,26 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
                   <p className={styles.wsSettingsMeta}>No members yet</p>
                 ) : (
                   <div className={styles.memberAvatarStack}>
-                    {(activeWorkspace?.members || []).slice(0, 6).map((m, i) => (
-                      <div
-                        key={m.user_id}
-                        className={styles.memberAvatar}
-                        style={{ background: getAvatarColor(m.email || m.user_id), zIndex: 6 - i }}
-                        onMouseEnter={(e) => {
-                          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                          setMemberTooltip({ text: m.email || m.user_id, x: rect.left + rect.width / 2, y: rect.top - 6 });
-                        }}
-                        onMouseLeave={() => setMemberTooltip(null)}
-                      >
-                        {(m.email ? m.email[0] : '?').toUpperCase()}
-                      </div>
-                    ))}
+                    {(activeWorkspace?.members || []).slice(0, 6).map((m, i) => {
+                      const detail = memberDetails.find((u) => u.id === m.user_id);
+                      const displayName = detail ? getFullName(detail) : (m.email || m.user_id);
+                      const initials = detail ? getInitials(displayName) : (m.email ? m.email[0].toUpperCase() : '?');
+                      const color = getAvatarColor(displayName);
+                      return (
+                        <div
+                          key={m.user_id}
+                          className={styles.memberAvatar}
+                          style={{ background: color, zIndex: 6 - i }}
+                          onMouseEnter={(e) => {
+                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                            setMemberTooltip({ text: m.email || m.user_id, x: rect.left + rect.width / 2, y: rect.top - 6 });
+                          }}
+                          onMouseLeave={() => setMemberTooltip(null)}
+                        >
+                          {initials}
+                        </div>
+                      );
+                    })}
                     {(activeWorkspace?.members?.length ?? 0) > 6 && (
                       <div className={styles.memberAvatarMore}>
                         +{(activeWorkspace?.members?.length ?? 0) - 6}
@@ -415,17 +431,17 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
 
             {isSuperAdmin ? (
               <div className={styles.wsSettingsActions}>
-                <button className={styles.wsSettingsBtn} onClick={() => setIsEditing(true)}>
-                  <IconEdit size={14} />
-                  Edit Workspace
-                </button>
                 <button className={styles.wsSettingsBtn} onClick={() => { setShowSettings(false); openInvite(); }}>
                   <IconUserPlus size={14} />
                   Invite Members
                 </button>
+                <button className={styles.wsSettingsBtn} onClick={() => setIsEditing(true)}>
+                  <IconEdit size={14} />
+                  Edit
+                </button>
                 <button className={`${styles.wsSettingsBtn} ${styles.wsSettingsBtnDanger}`} onClick={() => setShowDeleteConfirm(true)}>
                   <IconDelete size={14} />
-                  Delete Workspace
+                  Delete
                 </button>
               </div>
             ) : null}
@@ -438,6 +454,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
         isOpen={showInvite}
         onClose={() => { setShowInvite(false); setShowSettings(true); }}
         title="Invite Members"
+        showClose={false}
         footer={
           <>
             <Button variant="secondary" onClick={() => { setShowInvite(false); setShowSettings(true); }}>Cancel</Button>
@@ -483,6 +500,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
         isOpen={showCreate}
         onClose={() => setShowCreate(false)}
         title="Create Workspace"
+        showClose={false}
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowCreate(false)}>Cancel</Button>
@@ -514,6 +532,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         title="Delete Workspace"
+        showClose={false}
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>

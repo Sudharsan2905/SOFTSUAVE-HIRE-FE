@@ -75,6 +75,47 @@
   color: var(--text-secondary);
 }
 
+/* Grid view: clamp question text to keep cards uniform */
+.grid .questionText {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-height: 72px;
+}
+
+/* List view: compact horizontal row */
+.list .questionCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  padding: 10px 14px;
+}
+.list .questionTop {
+  flex-shrink: 0;
+  width: 150px;
+  margin-bottom: 0;
+  margin-right: 14px;
+  padding-right: 14px;
+  border-right: 1px solid var(--border-default);
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 6px;
+}
+.list .cardActions { opacity: 1; }
+.list .questionText {
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.list .options { display: none; }
+
 .uploadArea {
   display: flex; flex-direction: column; align-items: center; gap: 12px;
   padding: 40px 24px; border: 2px dashed var(--border-default);
