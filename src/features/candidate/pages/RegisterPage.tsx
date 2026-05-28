@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import styles from './RegisterPage.module.css';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { useAppDispatch } from '@/store';
 import { candidateRegister } from '@/store/slices/authSlice';
 import { IconEye, IconEyeOff } from '@/assets/icons';
@@ -47,7 +48,7 @@ export default function RegisterPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const shareLink = searchParams.get('share');
 
-  const { register, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm<FormData>({
+  const { register, control, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
@@ -83,16 +84,24 @@ export default function RegisterPage() {
             <Input label="Father's Name *" placeholder="Robert Doe" error={errors.father_name?.message} {...register('father_name')} />
           </div>
           <div className={styles.row}>
-            <div className={styles.field}>
-              <label className={styles.label}>Gender *</label>
-              <select className={`${styles.select} ${errors.gender ? styles.selectError : ''}`} {...register('gender')}>
-                <option value="">Select gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-              {errors.gender && <p className={styles.fieldError}>{errors.gender.message}</p>}
-            </div>
+            <Controller
+              name="gender"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  label="Gender *"
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select gender"
+                  options={[
+                    { value: 'male', label: 'Male' },
+                    { value: 'female', label: 'Female' },
+                    { value: 'other', label: 'Other' },
+                  ]}
+                  error={errors.gender?.message}
+                />
+              )}
+            />
             <Input label="Date of Birth" type="date" error={errors.dob?.message} {...register('dob')} />
           </div>
           <div className={styles.row}>
