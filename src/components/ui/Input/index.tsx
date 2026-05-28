@@ -9,16 +9,17 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   leftElement?: React.ReactNode;
   rightElement?: React.ReactNode;
   fullWidth?: boolean;
+  showRequired?: boolean;
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, hint, leftElement, rightElement, fullWidth = true, className, id, ...rest }, ref) => {
+  ({ label, error, hint, leftElement, rightElement, fullWidth = true, className, id, showRequired, ...rest }, ref) => {
     const inputId = id || label?.toLowerCase().replace(/\s/g, '-');
     return (
       <div className={clsx(styles.wrapper, fullWidth && styles.fullWidth)}>
         {label && (
           <label className={styles.label} htmlFor={inputId}>
-            {label}
+            {label}{showRequired && <span style={{ color: 'var(--error-500)', marginLeft: 2 }}>*</span>}
           </label>
         )}
         <div className={clsx(styles.inputWrapper, error && styles.hasError)}>

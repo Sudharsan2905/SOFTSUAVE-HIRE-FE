@@ -30,7 +30,7 @@ const icon = (paths: React.ReactNode, viewBox = '0 0 24 24') =>
 
 export const IconDashboard = icon(<><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></>);
 export const IconWorkspace = icon(<><path d="M2 6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6z"/><path d="M8 6v14M16 6v14"/></>);
-export const IconQuestionBank = icon(<><path d="M12 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/><path d="M12 8v4m0 4h.01"/><rect x="3" y="20" width="18" height="2" rx="1"/></>);
+export const IconQuestionBank = icon(<><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></>);
 export const IconAssessment = icon(<><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></>);
 export const IconLiveInterview = icon(<><circle cx="12" cy="12" r="3"/><path d="M5.27 5.27A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 7.07-2.93"/><path d="M18.73 18.73A10 10 0 0 0 22 12 10 10 0 0 0 12 2a10 10 0 0 0-6.36 2.27"/></>);
 export const IconSearch = icon(<><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></>);
