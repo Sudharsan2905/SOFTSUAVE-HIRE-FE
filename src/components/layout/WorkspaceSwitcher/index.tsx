@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './WorkspaceSwitcher.module.css';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { setActiveWorkspace, setWorkspaces, clearWorkspace } from '@/store/slices/workspaceSlice';
 import { api } from '@/utils/api';
 import { Workspace, User } from '@/types';
-import { IconChevronDown, IconSettings, IconUserPlus, IconPlus, IconCheck, IconStar, IconEdit } from '@/assets/icons';
+import { IconChevronDown, IconSettings, IconUserPlus, IconPlus, IconCheck, IconStar, IconEdit, IconDelete } from '@/assets/icons';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea } from '@/components/ui/Input';
@@ -12,7 +13,7 @@ import { getInitials, getAvatarColor, getFullName } from '@/utils/helpers';
 import { updateUser } from '@/store/slices/authSlice';
 import toast from 'react-hot-toast';
 
-export function WorkspaceSwitcher() {
+export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
   const dispatch = useAppDispatch();
   const { activeWorkspace, workspaces } = useAppSelector((s) => s.workspace);
   const user = useAppSelector((s) => s.auth.user);
@@ -28,52 +29,53 @@ export function WorkspaceSwitcher() {
   const [editForm, setEditForm] = useState({ name: '', description: '' });
   const [createForm, setCreateForm] = useState({ name: '', description: '' });
   const [loading, setLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [memberTooltip, setMemberTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
 
   const fetchWorkspaces = useCallback(async () => {
     try {
-      const { data } = await api.get('/api/workspaces?page_size=50');
-      const rawList: Workspace[] = data.data?.workspaces || [];
-      const list = rawList;
-      dispatch(setWorkspaces(list));
+      const [wsRes, meRes] = await Promise.all([
+        api.get('/api/workspaces?page_size=50'),
+        api.get('/api/auth/me'),
+      ]);
+      const freshUser: User = meRes.data.data;
+      dispatch(updateUser(freshUser));
+      const rawList: Workspace[] = wsRes.data.data?.workspaces || [];
+      dispatch(setWorkspaces(rawList));
       if (activeWorkspace) {
-        const stillInList = list.find((ws) => ws.id === activeWorkspace.id);
-        if (!stillInList) {
-          if (list.length > 0) {
-            dispatch(setActiveWorkspace(list[0]));
-          } else {
-            dispatch(clearWorkspace());
-          }
+        const stillInList = rawList.find((ws) => ws.id === activeWorkspace.id);
+        if (stillInList) {
+          dispatch(setActiveWorkspace(stillInList));
+        } else if (rawList.length > 0) {
+          dispatch(setActiveWorkspace(rawList[0]));
+        } else {
+          dispatch(clearWorkspace());
         }
-      } else if (list.length > 0) {
-        // Activate the workspace marked as default in the user's profile
-        const defaultRef = user?.workspaces?.find((w) => w.is_default);
-        const defaultWs = defaultRef ? list.find((ws) => ws.id === defaultRef.id) : null;
-        dispatch(setActiveWorkspace(defaultWs || list[0]));
+      } else if (rawList.length > 0) {
+        const defaultId = freshUser.default_workspace_id;
+        const defaultWs = defaultId ? rawList.find((ws) => ws.id === defaultId) : null;
+        dispatch(setActiveWorkspace(defaultWs || rawList[0]));
       }
     } catch {}
-  }, [dispatch, activeWorkspace, user]);
-
-  const setAsDefault = async () => {
-    if (!activeWorkspace) return;
-    try {
-      const { data } = await api.patch('/api/users/me', { workspace_id: activeWorkspace.id });
-      dispatch(updateUser(data.data));
-      toast.success(`"${activeWorkspace.name}" set as default workspace`);
-    } catch {
-      toast.error('Failed to set default workspace');
-    }
-  };
+  }, [dispatch, activeWorkspace]);
 
   useEffect(() => { fetchWorkspaces(); }, []);
 
   useEffect(() => {
+    if (!isOpen) return;
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setIsOpen(false);
+      const target = e.target as Node;
+      const inContainer = ref.current?.contains(target);
+      const inPopup = popupRef.current?.contains(target);
+      if (!inContainer && !inPopup) setIsOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, []);
+  }, [isOpen]);
 
   const openSettings = () => {
     if (activeWorkspace) setEditForm({ name: activeWorkspace.name, description: activeWorkspace.description });
@@ -85,11 +87,14 @@ export function WorkspaceSwitcher() {
   const openInvite = async () => {
     setIsOpen(false);
     setSelectedUsers([]);
-    try {
-      const { data } = await api.get('/api/workspaces/admin-users');
-      setAdminUsers(data.data || []);
-    } catch {}
     setShowInvite(true);
+    try {
+      const [, usersRes] = await Promise.all([
+        fetchWorkspaces(),
+        api.get('/api/workspaces/admin-users'),
+      ]);
+      setAdminUsers(usersRes.data.data || []);
+    } catch {}
   };
 
   const saveSettings = async () => {
@@ -100,7 +105,7 @@ export function WorkspaceSwitcher() {
       dispatch(setActiveWorkspace(data.data));
       await fetchWorkspaces();
       toast.success('Workspace updated');
-      setShowSettings(false);
+      setIsEditing(false);
     } catch {
       toast.error('Failed to update workspace');
     } finally { setLoading(false); }
@@ -113,6 +118,7 @@ export function WorkspaceSwitcher() {
       await api.post(`/api/workspaces/${activeWorkspace.id}/invite`, { user_ids: selectedUsers });
       toast.success('Members updated');
       setShowInvite(false);
+      setShowSettings(true);
     } catch {
       toast.error('Failed to update members');
     } finally { setLoading(false); }
@@ -132,85 +138,204 @@ export function WorkspaceSwitcher() {
     } finally { setLoading(false); }
   };
 
+  const deleteWorkspace = async () => {
+    if (!activeWorkspace) return;
+    setLoading(true);
+    try {
+      await api.delete(`/api/workspaces/${activeWorkspace.id}`);
+      toast.success(`"${activeWorkspace.name}" deleted`);
+      setShowDeleteConfirm(false);
+      setShowSettings(false);
+      await fetchWorkspaces();
+    } catch {
+      toast.error('Failed to delete workspace');
+    } finally { setLoading(false); }
+  };
+
   const toggleUser = (userId: string) => {
     setSelectedUsers((prev) =>
       prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
     );
   };
 
-  const isActiveDefault = !isSuperAdmin && !!user?.workspaces?.find((w) => w.id === activeWorkspace?.id)?.is_default;
+  const isActiveDefault = activeWorkspace?.id === user?.default_workspace_id;
+
+  // Admin with no workspace access
+  if (!isSuperAdmin && workspaces.length === 0) {
+    if (collapsed) {
+      return (
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div className={styles.wsIcon} style={{ background: '#334155', opacity: 0.5 }}>?</div>
+        </div>
+      );
+    }
+    return (
+      <div className={styles.noWsPrompt}>
+        <p className={styles.noWsText}>No workspace access</p>
+        <p className={styles.noWsText} style={{ opacity: 0.7 }}>Contact your administrator</p>
+      </div>
+    );
+  }
+
+  // Super admin with no workspaces yet — show inline create prompt
+  if (isSuperAdmin && workspaces.length === 0) {
+    if (collapsed) {
+      return (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <button
+              className={styles.collapsedTrigger}
+              onClick={() => setShowCreate(true)}
+              title="Create Workspace"
+            >
+              <div className={styles.wsIcon} style={{ background: '#334155' }}>
+                <IconPlus size={13} color="#fff" />
+              </div>
+            </button>
+          </div>
+          <Modal
+            isOpen={showCreate}
+            onClose={() => setShowCreate(false)}
+            title="Create Workspace"
+            footer={
+              <>
+                <Button variant="secondary" onClick={() => setShowCreate(false)}>Cancel</Button>
+                <Button onClick={createWorkspace} isLoading={loading} disabled={!createForm.name}>Create</Button>
+              </>
+            }
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <Input label="Workspace Name" placeholder="e.g., Engineering Hiring" value={createForm.name} onChange={(e) => setCreateForm((p) => ({ ...p, name: e.target.value }))} />
+              <Textarea label="Description (optional)" placeholder="What is this workspace for?" value={createForm.description} onChange={(e) => setCreateForm((p) => ({ ...p, description: e.target.value }))} rows={3} />
+            </div>
+          </Modal>
+        </>
+      );
+    }
+    return (
+      <>
+        <div className={styles.noWsPrompt}>
+          <p className={styles.noWsText}>No workspaces yet</p>
+          <button className={styles.createBtn} onClick={() => setShowCreate(true)}>
+            <IconPlus size={14} />
+            Create Workspace
+          </button>
+        </div>
+
+        <Modal
+          isOpen={showCreate}
+          onClose={() => setShowCreate(false)}
+          title="Create Workspace"
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setShowCreate(false)}>Cancel</Button>
+              <Button onClick={createWorkspace} isLoading={loading} disabled={!createForm.name}>
+                Create
+              </Button>
+            </>
+          }
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <Input
+              label="Workspace Name"
+              placeholder="e.g., Engineering Hiring"
+              value={createForm.name}
+              onChange={(e) => setCreateForm((p) => ({ ...p, name: e.target.value }))}
+            />
+            <Textarea
+              label="Description (optional)"
+              placeholder="What is this workspace for?"
+              value={createForm.description}
+              onChange={(e) => setCreateForm((p) => ({ ...p, description: e.target.value }))}
+              rows={3}
+            />
+          </div>
+        </Modal>
+      </>
+    );
+  }
+
+  const wsColor = activeWorkspace ? getAvatarColor(activeWorkspace.name) : '#334155';
+  const wsInitials = activeWorkspace ? getInitials(activeWorkspace.name) : '?';
+
+  const popupContent = (
+    <>
+      <div className={styles.wsList}>
+        {workspaces.map((ws) => {
+          const isDefault = ws.id === user?.default_workspace_id;
+          return (
+            <button
+              key={ws.id}
+              className={`${styles.wsItem} ${activeWorkspace?.id === ws.id ? styles.wsItemActive : ''}`}
+              onClick={() => { dispatch(setActiveWorkspace(ws)); setIsOpen(false); }}
+            >
+              <div className={styles.wsItemIcon} style={{ background: getAvatarColor(ws.name) }}>
+                {getInitials(ws.name)}
+              </div>
+              <span className={styles.wsItemName}>{ws.name}</span>
+              {isDefault && <IconStar size={12} className={styles.defaultStar} />}
+              {activeWorkspace?.id === ws.id && <IconCheck size={14} className={styles.wsCheckIcon} />}
+            </button>
+          );
+        })}
+      </div>
+      {isSuperAdmin && (
+        <button className={styles.createBtn} onClick={() => { setIsOpen(false); setShowCreate(true); }}>
+          <IconPlus size={14} />
+          New Workspace
+        </button>
+      )}
+      {activeWorkspace && (
+        <button className={styles.settingsBtn} onClick={openSettings}>
+          <IconSettings size={14} />
+          Settings
+        </button>
+      )}
+    </>
+  );
 
   return (
     <>
       <div ref={ref} className={styles.container}>
-        <button className={styles.trigger} onClick={() => setIsOpen(!isOpen)}>
-          <div className={styles.triggerLeft}>
-            <div
-              className={styles.wsIcon}
-              style={{ background: activeWorkspace ? getAvatarColor(activeWorkspace.name) : '#334155' }}
-            >
-              {activeWorkspace ? getInitials(activeWorkspace.name) : '?'}
+        {collapsed ? (
+          <button
+            ref={triggerRef}
+            className={styles.collapsedTrigger}
+            title={activeWorkspace?.name || 'Select Workspace'}
+            onClick={() => {
+              if (!isOpen && triggerRef.current) {
+                const rect = triggerRef.current.getBoundingClientRect();
+                setPopupPos({ top: rect.top, left: rect.right + 8 });
+              }
+              setIsOpen((v) => !v);
+            }}
+          >
+            <div className={styles.wsIcon} style={{ background: wsColor }}>{wsInitials}</div>
+          </button>
+        ) : (
+          <button className={styles.trigger} onClick={() => setIsOpen(!isOpen)}>
+            <div className={styles.triggerLeft}>
+              <div className={styles.wsIcon} style={{ background: wsColor }}>{wsInitials}</div>
+              <div className={styles.wsNameRow}>
+                <span className={styles.wsName}>{activeWorkspace?.name || 'Select Workspace'}</span>
+                {isActiveDefault && <IconStar size={10} className={styles.triggerStar} />}
+              </div>
             </div>
-            <div className={styles.wsNameRow}>
-              <span className={styles.wsName}>
-                {activeWorkspace?.name || 'Select Workspace'}
-              </span>
-              {isActiveDefault && (
-                <IconStar size={10} className={styles.triggerStar} />
-              )}
-            </div>
-          </div>
-          <IconChevronDown size={14} className={`${styles.chevron} ${isOpen ? styles.open : ''}`} />
-        </button>
+            <IconChevronDown size={14} className={`${styles.chevron} ${isOpen ? styles.open : ''}`} />
+          </button>
+        )}
 
-        {isOpen && (
-          <div className={styles.popup}>
-            {/* Workspace list */}
-            <div className={styles.wsList}>
-              {workspaces.length === 0 ? (
-                <p className={styles.noWs}>No workspaces yet</p>
-              ) : (
-                workspaces.map((ws) => {
-                  const isDefault = !isSuperAdmin && user?.workspaces?.find((w) => w.id === ws.id)?.is_default;
-                  return (
-                    <button
-                      key={ws.id}
-                      className={`${styles.wsItem} ${activeWorkspace?.id === ws.id ? styles.wsItemActive : ''}`}
-                      onClick={() => { dispatch(setActiveWorkspace(ws)); setIsOpen(false); }}
-                    >
-                      <div className={styles.wsItemIcon} style={{ background: getAvatarColor(ws.name) }}>
-                        {getInitials(ws.name)}
-                      </div>
-                      <span className={styles.wsItemName}>{ws.name}</span>
-                      {isDefault && <IconStar size={12} className={styles.defaultStar} />}
-                      {activeWorkspace?.id === ws.id && <IconCheck size={14} className={styles.wsCheckIcon} />}
-                    </button>
-                  );
-                })
-              )}
-            </div>
-
-            {/* New Workspace — super admin only */}
-            {isSuperAdmin && (
-              <button
-                className={styles.createBtn}
-                onClick={() => { setIsOpen(false); setShowCreate(true); }}
-              >
-                <IconPlus size={14} />
-                New Workspace
-              </button>
-            )}
-
-            {/* Settings — visible to all users */}
-            {activeWorkspace && (
-              <button className={styles.settingsBtn} onClick={openSettings}>
-                <IconSettings size={14} />
-                Settings
-              </button>
-            )}
-          </div>
+        {!collapsed && isOpen && (
+          <div className={styles.popup}>{popupContent}</div>
         )}
       </div>
+
+      {collapsed && isOpen && createPortal(
+        <div ref={popupRef} className={styles.popup} style={{ position: 'fixed', top: popupPos.top, left: popupPos.left, right: 'auto', minWidth: 220 }}>
+          {popupContent}
+        </div>,
+        document.body
+      )}
 
       {/* Settings Modal */}
       <Modal
@@ -257,12 +382,36 @@ export function WorkspaceSwitcher() {
               </div>
             </div>
 
-            <div>
-              <p className={styles.wsSettingsSectionLabel}>Members</p>
-              <p className={styles.wsSettingsMeta}>
-                {activeWorkspace?.members?.length ?? 0} member{(activeWorkspace?.members?.length ?? 0) !== 1 ? 's' : ''}
-              </p>
-            </div>
+            {isSuperAdmin && (
+              <div>
+                <p className={styles.wsSettingsSectionLabel}>Members</p>
+                {(activeWorkspace?.members?.length ?? 0) === 0 ? (
+                  <p className={styles.wsSettingsMeta}>No members yet</p>
+                ) : (
+                  <div className={styles.memberAvatarStack}>
+                    {(activeWorkspace?.members || []).slice(0, 6).map((m, i) => (
+                      <div
+                        key={m.user_id}
+                        className={styles.memberAvatar}
+                        style={{ background: getAvatarColor(m.email || m.user_id), zIndex: 6 - i }}
+                        onMouseEnter={(e) => {
+                          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                          setMemberTooltip({ text: m.email || m.user_id, x: rect.left + rect.width / 2, y: rect.top - 6 });
+                        }}
+                        onMouseLeave={() => setMemberTooltip(null)}
+                      >
+                        {(m.email ? m.email[0] : '?').toUpperCase()}
+                      </div>
+                    ))}
+                    {(activeWorkspace?.members?.length ?? 0) > 6 && (
+                      <div className={styles.memberAvatarMore}>
+                        +{(activeWorkspace?.members?.length ?? 0) - 6}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {isSuperAdmin ? (
               <div className={styles.wsSettingsActions}>
@@ -274,22 +423,12 @@ export function WorkspaceSwitcher() {
                   <IconUserPlus size={14} />
                   Invite Members
                 </button>
+                <button className={`${styles.wsSettingsBtn} ${styles.wsSettingsBtnDanger}`} onClick={() => setShowDeleteConfirm(true)}>
+                  <IconDelete size={14} />
+                  Delete Workspace
+                </button>
               </div>
-            ) : (
-              <div className={styles.wsSettingsActions}>
-                {isActiveDefault ? (
-                  <div className={styles.wsDefaultBadge}>
-                    <IconStar size={13} className={styles.wsDefaultBadgeStar} />
-                    Default Workspace
-                  </div>
-                ) : (
-                  <button className={styles.wsSettingsBtn} onClick={setAsDefault}>
-                    <IconStar size={14} />
-                    Set as Default
-                  </button>
-                )}
-              </div>
-            )}
+            ) : null}
           </div>
         )}
       </Modal>
@@ -297,11 +436,11 @@ export function WorkspaceSwitcher() {
       {/* Invite Modal */}
       <Modal
         isOpen={showInvite}
-        onClose={() => setShowInvite(false)}
+        onClose={() => { setShowInvite(false); setShowSettings(true); }}
         title="Invite Members"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setShowInvite(false)}>Cancel</Button>
+            <Button variant="secondary" onClick={() => { setShowInvite(false); setShowSettings(true); }}>Cancel</Button>
             <Button onClick={saveInvite} isLoading={loading}>Save</Button>
           </>
         }
@@ -369,6 +508,47 @@ export function WorkspaceSwitcher() {
           />
         </div>
       </Modal>
+
+      {/* Delete Confirm Modal */}
+      <Modal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        title="Delete Workspace"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+            <Button variant="danger" onClick={deleteWorkspace} isLoading={loading}>Delete</Button>
+          </>
+        }
+      >
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+          Delete <strong>{activeWorkspace?.name}</strong>? This will remove all members from this workspace.
+          Any user whose default workspace is this one will be reassigned automatically.
+          This action cannot be undone.
+        </p>
+      </Modal>
+
+      {memberTooltip && createPortal(
+        <div style={{
+          position: 'fixed',
+          top: memberTooltip.y,
+          left: memberTooltip.x,
+          transform: 'translate(-50%, -100%)',
+          background: '#1e293b',
+          color: '#fff',
+          fontSize: 11,
+          fontWeight: 400,
+          padding: '4px 8px',
+          borderRadius: 4,
+          whiteSpace: 'nowrap',
+          zIndex: 99999,
+          pointerEvents: 'none',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+        }}>
+          {memberTooltip.text}
+        </div>,
+        document.body
+      )}
     </>
   );
 }
