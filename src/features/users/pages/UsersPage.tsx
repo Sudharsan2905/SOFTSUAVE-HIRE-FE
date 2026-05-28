@@ -5,16 +5,19 @@ import { FilterBar } from '@/components/shared/FilterBar';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { Spinner } from '@/components/ui/Spinner';
 import { Badge } from '@/components/ui/Badge';
-import { IconPlus, IconUsers, IconEye, IconEyeOff, IconCheck, IconEdit } from '@/assets/icons';
+import { IconPlus, IconUsers, IconEye, IconEyeOff, IconCheck, IconEdit, IconWorkspace } from '@/assets/icons';
 import { api } from '@/utils/api';
 import { useDebounce } from '@/hooks/useDebounce';
-import { User, SortOrder, Workspace } from '@/types';
+import { useAppSelector } from '@/store';
+import { User, SortOrder } from '@/types';
 import { getAvatarColor, getInitials, getFullName } from '@/utils/helpers';
 import toast from 'react-hot-toast';
 
 export default function UsersPage() {
+  const allWorkspaces = useAppSelector((s) => s.workspace.workspaces);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -25,11 +28,12 @@ export default function UsersPage() {
   const [form, setForm] = useState({ first_name: '', last_name: '', email: '', password: '', role: 'admin' });
   const [showPassword, setShowPassword] = useState(false);
 
-  // Edit modal state (combined: status toggle + workspace assignment)
+  const [createWsIds, setCreateWsIds] = useState<string[]>([]);
+
+  // Edit modal state
   const [showEdit, setShowEdit] = useState(false);
   const [editTarget, setEditTarget] = useState<User | null>(null);
   const [editIsActive, setEditIsActive] = useState(true);
-  const [allWorkspaces, setAllWorkspaces] = useState<Workspace[]>([]);
   const [selectedWsIds, setSelectedWsIds] = useState<string[]>([]);
   const [editSaving, setEditSaving] = useState(false);
 
@@ -47,10 +51,8 @@ export default function UsersPage() {
           )
         : list;
       const sorted = [...filtered].sort((a, b) => {
-        // Super admins first
         if (a.role === 'super_admin' && b.role !== 'super_admin') return -1;
         if (a.role !== 'super_admin' && b.role === 'super_admin') return 1;
-        // Then by created_at
         const da = new Date(a.created_at).getTime();
         const db2 = new Date(b.created_at).getTime();
         return sortOrder === 'desc' ? db2 - da : da - db2;
@@ -60,16 +62,32 @@ export default function UsersPage() {
     finally { setIsLoading(false); }
   }, [debouncedSearch, sortOrder]);
 
-  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const openCreate = () => {
+    setForm({ first_name: '', last_name: '', email: '', password: '', role: 'admin' });
+    setCreateWsIds([]);
+    setShowPassword(false);
+    setShowCreate(true);
+  };
 
   const handleCreate = async () => {
-    if (!form.first_name.trim() || !form.email.trim() || !form.password.trim()) return;
+    const needsWorkspace = form.role !== 'super_admin';
+    if (!form.first_name.trim() || !form.email.trim() || !form.password.trim() || (needsWorkspace && createWsIds.length === 0)) return;
     setSaving(true);
     try {
-      await api.post('/api/users', { first_name: form.first_name, last_name: form.last_name || undefined, email: form.email, password: form.password, role: form.role });
+      await api.post('/api/users', {
+        first_name: form.first_name,
+        last_name: form.last_name || undefined,
+        email: form.email,
+        password: form.password,
+        role: form.role,
+        workspace_ids: createWsIds,
+      });
       toast.success('Admin user created');
       setShowCreate(false);
-      setForm({ first_name: '', last_name: '', email: '', password: '', role: 'admin' });
       fetchUsers();
     } catch (e: unknown) {
       toast.error((e as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to create user');
@@ -80,11 +98,6 @@ export default function UsersPage() {
     setEditTarget(user);
     setEditIsActive(user.is_active !== false);
     setSelectedWsIds(user.workspaces?.map((w) => w.id) || []);
-    try {
-      const allRes = await api.get('/api/workspaces?page_size=50');
-      const all: Workspace[] = (allRes.data.data?.workspaces || []).filter((ws: Workspace) => ws.name !== 'Common');
-      setAllWorkspaces(all);
-    } catch { toast.error('Failed to load workspaces'); }
     setShowEdit(true);
   };
 
@@ -103,9 +116,13 @@ export default function UsersPage() {
     finally { setEditSaving(false); }
   };
 
-  const toggleWs = (id: string) => {
+  const toggleCreateWs = (id: string) =>
+    setCreateWsIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+
+  const toggleWs = (id: string) =>
     setSelectedWsIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
-  };
+
+  const noWorkspaces = allWorkspaces.length === 0;
 
   return (
     <div>
@@ -113,69 +130,84 @@ export default function UsersPage() {
         title="Users"
         subtitle="Manage admin users"
         actions={
-          <Button leftIcon={<IconPlus size={16} />} onClick={() => { setForm({ first_name: '', last_name: '', email: '', password: '', role: 'admin' }); setShowPassword(false); setShowCreate(true); }}>
+          <Button
+            leftIcon={<IconPlus size={16} />}
+            onClick={openCreate}
+            disabled={noWorkspaces}
+            title={noWorkspaces ? 'Create a workspace first before adding admin users' : undefined}
+          >
             New Admin
           </Button>
         }
       />
 
-      <FilterBar
-        search={search}
-        onSearchChange={setSearch}
-        sortBy="created_at"
-        sortOrder={sortOrder}
-        onSortOrderToggle={() => setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-      />
-
-      {isLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner size="lg" /></div>
-      ) : users.length === 0 ? (
+      {noWorkspaces && (
         <div className={styles.empty}>
-          <IconUsers size={48} color="var(--text-tertiary)" />
-          <p>No admin users yet</p>
-          <Button leftIcon={<IconPlus size={15} />} onClick={() => setShowCreate(true)}>
-            Create first admin
-          </Button>
+          <IconWorkspace size={48} color="var(--text-tertiary)" />
+          <p>Create a workspace first</p>
+          <p style={{ fontSize: 13, color: 'var(--text-tertiary)', maxWidth: 360, textAlign: 'center', lineHeight: 1.6 }}>
+            You need at least one workspace before you can create admin users.
+          </p>
         </div>
-      ) : (
-        <div className={viewMode === 'grid' ? styles.grid : styles.list}>
-          {users.map((user) => {
-            const isActive = user.is_active !== false;
-            const isSuperAdmin = user.role === 'super_admin';
-            return (
-              <div key={user.id} className={`${styles.card} ${!isActive ? styles.cardInactive : ''}`}>
-                <div className={styles.cardLeft}>
-                  <div className={styles.avatar} style={{ background: getAvatarColor(getFullName(user)), opacity: isActive ? 1 : 0.5 }}>
-                    {getInitials(getFullName(user))}
+      )}
+
+      {!noWorkspaces && (
+        <>
+          <FilterBar
+            search={search}
+            onSearchChange={setSearch}
+            sortBy="created_at"
+            sortOrder={sortOrder}
+            onSortOrderToggle={() => setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
+
+          {isLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner size="lg" /></div>
+          ) : users.length === 0 ? (
+            <div className={styles.empty}>
+              <IconUsers size={48} color="var(--text-tertiary)" />
+              <p>No admin users yet</p>
+              <Button leftIcon={<IconPlus size={15} />} onClick={openCreate}>
+                Create first admin
+              </Button>
+            </div>
+          ) : (
+            <div className={viewMode === 'grid' ? styles.grid : styles.list}>
+              {users.map((user) => {
+                const isActive = user.is_active !== false;
+                const isSuperAdmin = user.role === 'super_admin';
+                return (
+                  <div key={user.id} className={`${styles.card} ${!isActive ? styles.cardInactive : ''}`}>
+                    <div className={styles.cardLeft}>
+                      <div className={styles.avatar} style={{ background: getAvatarColor(getFullName(user)), opacity: isActive ? 1 : 0.5 }}>
+                        {getInitials(getFullName(user))}
+                      </div>
+                      <div className={styles.info}>
+                        <p className={styles.name}>{getFullName(user)}</p>
+                        <p className={styles.email}>{user.email}</p>
+                      </div>
+                    </div>
+                    <div className={styles.cardRight}>
+                      <Badge variant={isSuperAdmin ? 'accent' : 'primary'}>
+                        {isSuperAdmin ? 'Super Admin' : 'Admin'}
+                      </Badge>
+                      <Badge variant={isActive ? 'success' : 'default'}>
+                        {isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                      {!isSuperAdmin && (
+                        <button className={styles.editBtn} onClick={() => openEdit(user)} title="Edit user">
+                          <IconEdit size={15} />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div className={styles.info}>
-                    <p className={styles.name}>{getFullName(user)}</p>
-                    <p className={styles.email}>{user.email}</p>
-                  </div>
-                </div>
-                <div className={styles.cardRight}>
-                  <Badge variant={isSuperAdmin ? 'accent' : 'primary'}>
-                    {isSuperAdmin ? 'Super Admin' : 'Admin'}
-                  </Badge>
-                  <Badge variant={isActive ? 'success' : 'default'}>
-                    {isActive ? 'Active' : 'Inactive'}
-                  </Badge>
-                  {!isSuperAdmin && (
-                    <button
-                      className={styles.editBtn}
-                      onClick={() => openEdit(user)}
-                      title="Edit user"
-                    >
-                      <IconEdit size={15} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
 
       {/* Create Modal */}
@@ -186,7 +218,11 @@ export default function UsersPage() {
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowCreate(false)}>Cancel</Button>
-            <Button onClick={handleCreate} isLoading={saving} disabled={!form.first_name.trim() || !form.email.trim() || !form.password.trim()}>
+            <Button
+              onClick={handleCreate}
+              isLoading={saving}
+              disabled={!form.first_name.trim() || !form.email.trim() || !form.password.trim() || (form.role !== 'super_admin' && createWsIds.length === 0)}
+            >
               Create
             </Button>
           </>
@@ -199,10 +235,11 @@ export default function UsersPage() {
               placeholder="Enter first name"
               value={form.first_name}
               onChange={(e) => setForm((p) => ({ ...p, first_name: e.target.value }))}
+              showRequired
             />
             <Input
               label="Last Name"
-              placeholder="Optional"
+              placeholder="Enter last name (optional)"
               value={form.last_name}
               onChange={(e) => setForm((p) => ({ ...p, last_name: e.target.value }))}
             />
@@ -213,6 +250,7 @@ export default function UsersPage() {
             placeholder="Enter email"
             value={form.email}
             onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+            showRequired
           />
           <Input
             label="Password"
@@ -220,6 +258,7 @@ export default function UsersPage() {
             placeholder="Enter password"
             value={form.password}
             onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+            showRequired
             rightElement={
               <button
                 type="button"
@@ -230,25 +269,44 @@ export default function UsersPage() {
               </button>
             }
           />
-          <div>
-            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>Role</p>
-            <div className={styles.statusToggle}>
-              <button
-                className={`${styles.statusOption} ${form.role === 'admin' ? styles.statusActive : ''}`}
-                onClick={() => setForm((p) => ({ ...p, role: 'admin' }))}
-                type="button"
-              >
-                Admin
-              </button>
-              <button
-                className={`${styles.statusOption} ${form.role === 'super_admin' ? styles.statusActive : ''}`}
-                onClick={() => setForm((p) => ({ ...p, role: 'super_admin' }))}
-                type="button"
-              >
-                Super Admin
-              </button>
+          <Select
+            label="Role"
+            value={form.role}
+            onChange={(v) => setForm((p) => ({ ...p, role: v }))}
+            options={[
+              { value: 'admin', label: 'Admin' },
+              { value: 'super_admin', label: 'Super Admin' },
+            ]}
+            showRequired
+          />
+          {form.role !== 'super_admin' && (
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                Workspaces <span style={{ color: 'var(--error-500)' }}>*</span>
+              </p>
+              <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 8 }}>Select at least one workspace to assign</p>
+              <div className={styles.wsList}>
+                {allWorkspaces.map((ws) => {
+                  const checked = createWsIds.includes(ws.id);
+                  return (
+                    <div
+                      key={ws.id}
+                      className={`${styles.wsItem} ${checked ? styles.wsItemSelected : ''}`}
+                      onClick={() => toggleCreateWs(ws.id)}
+                    >
+                      <div className={styles.wsInfo}>
+                        <p className={styles.wsName}>{ws.name}</p>
+                        {ws.description && <p className={styles.wsDesc}>{ws.description}</p>}
+                      </div>
+                      <div className={`${styles.wsCheck} ${checked ? styles.wsCheckSelected : ''}`}>
+                        {checked && <IconCheck size={12} />}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </Modal>
 
@@ -265,7 +323,6 @@ export default function UsersPage() {
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {/* Status toggle */}
           <div>
             <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>Status</p>
             <div className={styles.statusToggle}>
@@ -284,12 +341,11 @@ export default function UsersPage() {
             </div>
           </div>
 
-          {/* Workspace assignment */}
           <div>
             <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>Workspaces</p>
             {allWorkspaces.length === 0 ? (
               <p style={{ fontSize: 13, color: 'var(--text-tertiary)', padding: '12px 0' }}>
-                No workspaces available. Create a workspace first.
+                No workspaces available.
               </p>
             ) : (
               <div className={styles.wsList}>
