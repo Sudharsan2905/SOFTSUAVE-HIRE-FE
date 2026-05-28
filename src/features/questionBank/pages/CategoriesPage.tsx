@@ -149,24 +149,38 @@ export default function CategoriesPage() {
                 className={styles.card}
                 onClick={() => navigate(`/question-bank/${cat.id}`)}
               >
+                {/* Grid layout */}
                 <div className={styles.cardTop}>
                   <div className={styles.catIcon} style={{ background: getAvatarColor(cat.name) }}>
                     {getInitials(cat.name)}
                   </div>
                   <div className={styles.cardActions} onClick={(e) => e.stopPropagation()}>
-                    <button className={styles.iconBtn} onClick={() => openEdit(cat)} title="Edit">
-                      <IconEdit size={14} />
-                    </button>
-                    <button className={`${styles.iconBtn} ${styles.danger}`} onClick={() => openDelete(cat)} title="Delete">
-                      <IconDelete size={14} />
-                    </button>
+                    <button className={styles.iconBtn} onClick={() => openEdit(cat)} title="Edit"><IconEdit size={14} /></button>
+                    <button className={`${styles.iconBtn} ${styles.danger}`} onClick={() => openDelete(cat)} title="Delete"><IconDelete size={14} /></button>
                   </div>
                 </div>
                 <h3 className={styles.catName}>{cat.name}</h3>
-                {cat.description && <p className={styles.catDesc}>{cat.description}</p>}
+                <p className={styles.catDesc}>{cat.description || ' '}</p>
                 <div className={styles.cardFooter}>
                   <Badge variant="primary">{cat.question_count} questions</Badge>
                   <span className={styles.dateText}>{formatDate(cat.created_at)}</span>
+                </div>
+
+                {/* List layout */}
+                <div className={styles.listRow}>
+                  <div className={styles.listIcon} style={{ background: getAvatarColor(cat.name) }}>
+                    {getInitials(cat.name)}
+                  </div>
+                  <span className={styles.listName}>{cat.name}</span>
+                  <span className={styles.listDesc}>{cat.description}</span>
+                  <div className={styles.listMeta}>
+                    <Badge variant="primary">{cat.question_count} questions</Badge>
+                    <span className={styles.listDate}>{formatDate(cat.created_at)}</span>
+                  </div>
+                  <div className={styles.listActions} onClick={(e) => e.stopPropagation()}>
+                    <button className={styles.iconBtn} onClick={() => openEdit(cat)} title="Edit"><IconEdit size={14} /></button>
+                    <button className={`${styles.iconBtn} ${styles.danger}`} onClick={() => openDelete(cat)} title="Delete"><IconDelete size={14} /></button>
+                  </div>
                 </div>
               </div>
             ))}
