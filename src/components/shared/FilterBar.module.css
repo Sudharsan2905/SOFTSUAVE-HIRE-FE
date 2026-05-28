@@ -11,9 +11,11 @@
 
 .viewToggle {
   display: flex;
+  align-items: center;
   border: 1.5px solid var(--border-default);
   border-radius: var(--radius-md);
   overflow: hidden;
+  background: var(--bg-surface);
 }
 .viewBtn {
   display: flex;
@@ -22,9 +24,27 @@
   width: 32px;
   height: 32px;
   color: var(--text-tertiary);
-  background: var(--bg-surface);
+  background: transparent;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background var(--transition-fast);
+  border-right: 1px solid var(--border-default);
 }
+.viewBtn:last-child { border-right: none; }
 .viewBtn:hover { color: var(--text-primary); background: var(--bg-muted); }
-.viewActive { color: var(--primary-600); background: var(--primary-50); }
+.viewActive {
+  color: var(--primary-600);
+  background: var(--primary-50);
+}
+.viewActive:hover {
+  color: var(--primary-700);
+  background: var(--primary-50);
+}
+
+[data-theme='dark'] .viewActive {
+  color: var(--primary-400);
+  background: rgba(37, 99, 235, 0.15);
+}
+[data-theme='dark'] .viewActive:hover {
+  color: var(--primary-300);
+  background: rgba(37, 99, 235, 0.2);
+}
