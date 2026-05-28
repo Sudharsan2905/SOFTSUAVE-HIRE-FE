@@ -60,6 +60,9 @@
   padding: 12px 10px;
   border-bottom: 1px solid var(--sidebar-border);
 }
+.collapsed .workspaceSection {
+  padding: 10px 6px;
+}
 
 /* ── Nav ── */
 .navContainer { flex: 1; overflow-y: auto; overflow-x: hidden; }
@@ -143,19 +146,6 @@
   color: var(--sidebar-text);
   text-transform: capitalize;
 }
-
-/* ── Resize handle ── */
-.resizeHandle {
-  position: absolute;
-  top: 0;
-  right: -3px;
-  width: 6px;
-  height: 100%;
-  cursor: col-resize;
-  z-index: 10;
-  transition: background 0.15s;
-}
-.resizeHandle:hover { background: var(--primary-400); opacity: 0.35; }
 
 @media (max-width: 768px) {
   .sidebar { transform: translateX(-100%); }

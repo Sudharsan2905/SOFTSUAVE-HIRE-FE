@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect, useLayoutEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import logoUrl from "@/assets/favicon.svg";
 import styles from "./Sidebar.module.css";
@@ -17,11 +17,8 @@ import { api } from "@/utils/api";
 import toast from "react-hot-toast";
 
 const COLLAPSED_KEY = 'ssh_sidebar_collapsed';
-const WIDTH_KEY = 'ssh_sidebar_width';
-const COLLAPSED_WIDTH = 64;
-const DEFAULT_WIDTH = 260;
-const MIN_WIDTH = 200;
-const MAX_WIDTH = 420;
+const COLLAPSED_WIDTH = 65;
+const DEFAULT_WIDTH = 225;
 
 interface NavItem { to: string; label: string; icon: React.ReactNode; }
 
@@ -34,34 +31,21 @@ export function Sidebar() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
-  const { activeWorkspace } = useAppSelector((s) => s.workspace);
+  const { activeWorkspace, workspaces: allWorkspaces } = useAppSelector((s) => s.workspace);
   const isSuperAdmin = user?.role === 'super_admin';
 
   const [collapsed, setCollapsed] = useState(() =>
     localStorage.getItem(COLLAPSED_KEY) === 'true'
   );
-  const [width, setWidth] = useState(() => {
-    const saved = parseInt(localStorage.getItem(WIDTH_KEY) || '', 10);
-    return isNaN(saved) ? DEFAULT_WIDTH : saved;
-  });
   const [showProfile, setShowProfile] = useState(false);
-  const [profileForm, setProfileForm] = useState({ first_name: '', last_name: '', password: '', workspace_id: '' });
+  const [profileForm, setProfileForm] = useState({ first_name: '', last_name: '', password: '', default_workspace_id: '' });
   const [saving, setSaving] = useState(false);
 
-  const isDragging = useRef(false);
-  const startX = useRef(0);
-  const startWidth = useRef(0);
-  const liveWidth = useRef(width);
-
-  const effectiveWidth = collapsed ? COLLAPSED_WIDTH : width;
+  const effectiveWidth = collapsed ? COLLAPSED_WIDTH : DEFAULT_WIDTH;
 
   useLayoutEffect(() => {
     document.documentElement.style.setProperty('--sidebar-width', `${effectiveWidth}px`);
   }, [effectiveWidth]);
-
-  useEffect(() => {
-    if (!collapsed) localStorage.setItem(WIDTH_KEY, String(width));
-  }, [width, collapsed]);
 
   const toggleCollapse = () => {
     setCollapsed((prev) => {
@@ -71,37 +55,13 @@ export function Sidebar() {
     });
   };
 
-  const onResizeMouseDown = useCallback((e: React.MouseEvent) => {
-    isDragging.current = true;
-    startX.current = e.clientX;
-    startWidth.current = width;
-    e.preventDefault();
-  }, [width]);
-
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      if (!isDragging.current) return;
-      const next = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth.current + e.clientX - startX.current));
-      liveWidth.current = next;
-      setWidth(next);
-      // Drive CSS variable directly during drag for zero-lag resizing
-      document.documentElement.style.setProperty('--sidebar-width', `${next}px`);
-    };
-    const onUp = () => { isDragging.current = false; };
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-    return () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-    };
-  }, []);
-
   const openProfile = () => {
+    const wsOptions = isSuperAdmin ? allWorkspaces : (user?.workspaces || []);
     setProfileForm({
       first_name: user?.first_name || '',
       last_name: user?.last_name || '',
       password: '',
-      workspace_id: user?.workspaces?.find((w) => w.is_default)?.id || user?.workspaces?.[0]?.id || '',
+      default_workspace_id: user?.default_workspace_id || wsOptions[0]?.id || '',
     });
     setShowProfile(true);
   };
@@ -113,7 +73,7 @@ export function Sidebar() {
       if (profileForm.first_name && profileForm.first_name !== user?.first_name) payload.first_name = profileForm.first_name;
       if (profileForm.last_name !== (user?.last_name || '')) payload.last_name = profileForm.last_name;
       if (profileForm.password) payload.password = profileForm.password;
-      if (!isSuperAdmin && profileForm.workspace_id) payload.workspace_id = profileForm.workspace_id;
+      if (profileForm.default_workspace_id) payload.default_workspace_id = profileForm.default_workspace_id;
       if (Object.keys(payload).length > 0) {
         const { data } = await api.patch('/api/users/me', payload);
         dispatch(updateUser(data.data));
@@ -153,11 +113,9 @@ export function Sidebar() {
         </div>
 
         {/* Workspace Switcher */}
-        {!collapsed && (
-          <div className={styles.workspaceSection}>
-            <WorkspaceSwitcher />
-          </div>
-        )}
+        <div className={styles.workspaceSection}>
+          <WorkspaceSwitcher collapsed={collapsed} />
+        </div>
 
         {/* Nav */}
         <div className={styles.navContainer}>
@@ -203,13 +161,11 @@ export function Sidebar() {
           {!collapsed && (
             <div className={styles.userMeta}>
               <p className={styles.userName}>{fullName}</p>
-              <p className={styles.userRole}>{user?.role?.replace('_', ' ')}</p>
+              <p className={styles.userRole}>{user?.role === 'super_admin' ? 'Super Admin' : 'Admin'}</p>
             </div>
           )}
         </button>
 
-        {/* Resize handle */}
-        {!collapsed && <div className={styles.resizeHandle} onMouseDown={onResizeMouseDown} />}
       </aside>
 
       {/* Profile Modal */}
@@ -250,21 +206,21 @@ export function Sidebar() {
             value={profileForm.password}
             onChange={(e) => setProfileForm((p) => ({ ...p, password: e.target.value }))}
           />
-          {!isSuperAdmin && user?.workspaces && user.workspaces.length > 0 && (
+          {((isSuperAdmin ? allWorkspaces : user?.workspaces) || []).length > 0 && (
             <div>
               <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
                 Default Workspace
               </label>
               <select
-                value={profileForm.workspace_id}
-                onChange={(e) => setProfileForm((p) => ({ ...p, workspace_id: e.target.value }))}
+                value={profileForm.default_workspace_id}
+                onChange={(e) => setProfileForm((p) => ({ ...p, default_workspace_id: e.target.value }))}
                 style={{
                   width: '100%', padding: '9px 12px', borderRadius: 'var(--radius-md)',
                   border: '1px solid var(--border-default)', background: 'var(--bg-surface)',
                   color: 'var(--text-primary)', fontSize: 13, outline: 'none',
                 }}
               >
-                {user.workspaces.map((ws) => (
+                {(isSuperAdmin ? allWorkspaces : (user?.workspaces || [])).map((ws) => (
                   <option key={ws.id} value={ws.id}>{ws.name}</option>
                 ))}
               </select>
