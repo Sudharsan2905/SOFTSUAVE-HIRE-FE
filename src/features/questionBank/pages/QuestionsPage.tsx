@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 import styles from './QuestionsPage.module.css';
 import { Header } from '@/components/layout/Header';
 import { FilterBar } from '@/components/shared/FilterBar';
@@ -64,9 +65,12 @@ export default function QuestionsPage() {
   const [showDelete, setShowDelete] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [showExcel, setShowExcel] = useState(false);
+  const [showColumnMap, setShowColumnMap] = useState(false);
   const [selected, setSelected] = useState<Question | null>(null);
   const [saving, setSaving] = useState(false);
   const [excelFile, setExcelFile] = useState<File | null>(null);
+  const [excelHeaders, setExcelHeaders] = useState<string[]>([]);
+  const [columnMap, setColumnMap] = useState({ question: '', options: '', answer: '', complexity: '' });
   const fileRef = useRef<HTMLInputElement>(null);
   const { page, pageSize, goToPage, reset } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
@@ -182,11 +186,36 @@ export default function QuestionsPage() {
     finally { setSaving(false); }
   };
 
+  const handleFileSelect = async (file: File) => {
+    setExcelFile(file);
+    try {
+      const buffer = await file.arrayBuffer();
+      const wb = XLSX.read(buffer, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1 });
+      const headers = ((rows[0] as unknown[]) || []).filter(Boolean).map(String);
+      setExcelHeaders(headers);
+      // Auto-map columns by name similarity
+      const auto = { question: '', options: '', answer: '', complexity: '' };
+      for (const h of headers) {
+        const l = h.toLowerCase();
+        if (!auto.question && l.includes('question')) auto.question = h;
+        if (!auto.options && (l === 'options' || l.includes('option'))) auto.options = h;
+        if (!auto.answer && l.includes('answer')) auto.answer = h;
+        if (!auto.complexity && l.includes('complex')) auto.complexity = h;
+      }
+      setColumnMap(auto);
+    } catch {
+      toast.error('Failed to read Excel headers');
+    }
+  };
+
   const handleExcelImport = async () => {
-    if (!excelFile) return;
+    if (!excelFile || !columnMap.question || !columnMap.answer) return;
     setSaving(true);
     const formData = new FormData();
     formData.append('file', excelFile);
+    formData.append('column_map', JSON.stringify(columnMap));
     try {
       const { data } = await api.post(
         `/api/questions/categories/${categoryId}/excel-import`,
@@ -194,8 +223,10 @@ export default function QuestionsPage() {
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
       toast.success(`${data.data?.created || 0} questions imported`);
-      setShowExcel(false);
+      setShowColumnMap(false);
       setExcelFile(null);
+      setExcelHeaders([]);
+      setColumnMap({ question: '', options: '', answer: '', complexity: '' });
       fetchQuestions();
     } catch { toast.error('Import failed'); }
     finally { setSaving(false); }
@@ -435,15 +466,20 @@ export default function QuestionsPage() {
         </div>
       </Modal>
 
-      {/* Excel Import Modal */}
+      {/* Excel Import — Step 1: File Upload */}
       <Modal
         isOpen={showExcel}
-        onClose={() => { setShowExcel(false); setExcelFile(null); }}
+        onClose={() => { setShowExcel(false); setExcelFile(null); setExcelHeaders([]); }}
         title="Excel Import"
         footer={
           <>
-            <Button variant="secondary" onClick={() => { setShowExcel(false); setExcelFile(null); }}>Cancel</Button>
-            <Button onClick={handleExcelImport} isLoading={saving} disabled={!excelFile}>Import</Button>
+            <Button variant="secondary" onClick={() => { setShowExcel(false); setExcelFile(null); setExcelHeaders([]); }}>Cancel</Button>
+            <Button
+              disabled={!excelFile}
+              onClick={() => { setShowExcel(false); setShowColumnMap(true); }}
+            >
+              Next: Map Columns
+            </Button>
           </>
         }
       >
@@ -453,14 +489,50 @@ export default function QuestionsPage() {
             {excelFile ? excelFile.name : 'Upload an Excel (.xlsx) file'}
           </p>
           <p style={{ fontSize: 12, color: 'var(--text-tertiary)', textAlign: 'center' }}>
-            Required column: <strong>Question</strong>. Optional: <strong>Options</strong>, <strong>Answer</strong>, <strong>Complexity</strong>.<br />
-            Question type is auto-detected from Options &amp; Answer.
+            You'll map your columns to Question, Options, Answer, and Complexity in the next step.
           </p>
           <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }}
-            onChange={(e) => e.target.files?.[0] && setExcelFile(e.target.files[0])} />
+            onChange={(e) => { if (e.target.files?.[0]) handleFileSelect(e.target.files[0]); }} />
           <Button variant={excelFile ? 'secondary' : 'primary'} onClick={() => fileRef.current?.click()} leftIcon={<IconFileExcel size={15} />}>
             {excelFile ? 'Change File' : 'Choose File'}
           </Button>
+        </div>
+      </Modal>
+
+      {/* Excel Import — Step 2: Column Mapping */}
+      <Modal
+        isOpen={showColumnMap}
+        onClose={() => { setShowColumnMap(false); setExcelFile(null); setExcelHeaders([]); }}
+        title="Map Columns"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => { setShowColumnMap(false); setShowExcel(true); }}>Back</Button>
+            <Button onClick={handleExcelImport} isLoading={saving} disabled={!columnMap.question || !columnMap.answer}>Import</Button>
+          </>
+        }
+      >
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
+          Map your Excel columns to the required fields. 
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {([
+            { field: 'question', label: 'Question', required: true },
+            { field: 'options', label: 'Options', required: false },
+            { field: 'answer', label: 'Answer (1-based index, e.g. 2 or 1,3)', required: true },
+            { field: 'complexity', label: 'Complexity (defaults to medium)', required: false },
+          ] as { field: keyof typeof columnMap; label: string; required: boolean }[]).map(({ field, label, required }) => (
+            <Select
+              key={field}
+              label={label}
+              showRequired={required}
+              value={columnMap[field]}
+              onChange={(v) => setColumnMap((p) => ({ ...p, [field]: v }))}
+              options={[
+                { value: '', label: required ? '— Select column —' : '— None —' },
+                ...excelHeaders.map((h) => ({ value: h, label: h })),
+              ]}
+            />
+          ))}
         </div>
       </Modal>
 
