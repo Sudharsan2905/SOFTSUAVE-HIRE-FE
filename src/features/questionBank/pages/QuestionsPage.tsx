@@ -1,33 +1,45 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import * as XLSX from 'xlsx';
-import styles from './QuestionsPage.module.css';
-import { Header } from '@/components/layout/Header';
-import { FilterBar } from '@/components/shared/FilterBar';
-import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
-import { Input, Textarea } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Pagination } from '@/components/ui/Pagination';
-import { Badge } from '@/components/ui/Badge';
-import { ComplexityBadge } from '@/components/ui/Badge';
-import { Spinner } from '@/components/ui/Spinner';
-import { RichText } from '@/components/ui/RichText';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import readXlsxFile from "read-excel-file/browser";
+import styles from "./QuestionsPage.module.css";
+import { Header } from "@/components/layout/Header";
+import { FilterBar } from "@/components/shared/FilterBar";
+import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { Input, Textarea } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { Pagination } from "@/components/ui/Pagination";
+import { Badge } from "@/components/ui/Badge";
+import { ComplexityBadge } from "@/components/ui/Badge";
+import { Spinner } from "@/components/ui/Spinner";
+import { RichText } from "@/components/ui/RichText";
 import {
-  IconPlus, IconEdit, IconDelete, IconSparkles, IconFileExcel,
-  IconChevronLeft, IconChevronRight,
-} from '@/assets/icons';
-import { api } from '@/utils/api';
-import { useDebounce } from '@/hooks/useDebounce';
-import { usePagination } from '@/hooks/usePagination';
-import { Question, QuestionCategory, PaginationMeta, Complexity, QuestionType, ViewMode, SortOrder } from '@/types';
-import { COMPLEXITY_OPTIONS, QUESTION_TYPE_OPTIONS } from '@/constants/app';
-import toast from 'react-hot-toast';
+  IconPlus,
+  IconEdit,
+  IconDelete,
+  IconSparkles,
+  IconFileExcel,
+  IconChevronLeft,
+} from "@/assets/icons";
+import { api } from "@/utils/api";
+import { useDebounce } from "@/hooks/useDebounce";
+import { usePagination } from "@/hooks/usePagination";
+import {
+  Question,
+  QuestionCategory,
+  PaginationMeta,
+  Complexity,
+  QuestionType,
+  ViewMode,
+  SortOrder,
+} from "@/types";
+import { COMPLEXITY_OPTIONS, QUESTION_TYPE_OPTIONS } from "@/constants/app";
+import toast from "react-hot-toast";
 
 const SORT_OPTIONS = [
-  { value: 'created_at', label: 'Created Date' },
-  { value: 'updated_at', label: 'Updated Date' },
-  { value: 'complexity', label: 'Complexity' },
+  { value: "created_at", label: "Created Date" },
+  { value: "updated_at", label: "Updated Date" },
+  { value: "complexity", label: "Complexity" },
 ];
 
 type QuestionForm = {
@@ -41,11 +53,15 @@ type QuestionForm = {
 
 const newBlankForm = (): QuestionForm => ({
   _key: crypto.randomUUID(),
-  question_text: '',
-  question_type: 'mcq_single',
-  complexity: 'medium',
-  options: Array.from({ length: 4 }, () => ({ id: crypto.randomUUID(), text: '', is_correct: false })),
-  correct_answer: '',
+  question_text: "",
+  question_type: "mcq_single",
+  complexity: "medium",
+  options: Array.from({ length: 4 }, () => ({
+    id: crypto.randomUUID(),
+    text: "",
+    is_correct: false,
+  })),
+  correct_answer: "",
 });
 
 export default function QuestionsPage() {
@@ -55,12 +71,12 @@ export default function QuestionsPage() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [complexity, setComplexity] = useState('');
-  const [questionType, setQuestionType] = useState('');
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [search, setSearch] = useState("");
+  const [complexity, setComplexity] = useState("");
+  const [questionType, setQuestionType] = useState("");
+  const [sortBy, setSortBy] = useState("created_at");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [showCreate, setShowCreate] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [showAI, setShowAI] = useState(false);
@@ -70,7 +86,12 @@ export default function QuestionsPage() {
   const [saving, setSaving] = useState(false);
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [excelHeaders, setExcelHeaders] = useState<string[]>([]);
-  const [columnMap, setColumnMap] = useState({ question: '', options: '', answer: '', complexity: '' });
+  const [columnMap, setColumnMap] = useState({
+    question: "",
+    options: "",
+    answer: "",
+    complexity: "",
+  });
   const fileRef = useRef<HTMLInputElement>(null);
   const { page, pageSize, goToPage, reset } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
@@ -78,10 +99,10 @@ export default function QuestionsPage() {
   const [forms, setForms] = useState<QuestionForm[]>([newBlankForm()]);
 
   const [aiForm, setAiForm] = useState({
-    topic: '',
+    topic: "",
     count: 5,
-    complexity: 'medium' as Complexity,
-    question_type: 'mcq_single' as QuestionType,
+    complexity: "medium" as Complexity,
+    question_type: "mcq_single" as QuestionType,
   });
 
   const fetchCategory = useCallback(async () => {
@@ -106,28 +127,61 @@ export default function QuestionsPage() {
         ...(complexity && { complexity }),
         ...(questionType && { question_type: questionType }),
       });
-      const { data } = await api.get(`/api/questions/categories/${categoryId}/questions?${params}`);
+      const { data } = await api.get(
+        `/api/questions/categories/${categoryId}/questions?${params}`,
+      );
       setQuestions(data.data?.questions || []);
       setMeta(data.data?.pagination || null);
-    } catch { toast.error('Failed to load questions'); }
-    finally { setIsLoading(false); }
-  }, [categoryId, page, pageSize, sortBy, sortOrder, debouncedSearch, complexity, questionType]);
+    } catch {
+      toast.error("Failed to load questions");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [
+    categoryId,
+    page,
+    pageSize,
+    sortBy,
+    sortOrder,
+    debouncedSearch,
+    complexity,
+    questionType,
+  ]);
 
-  useEffect(() => { fetchCategory(); }, [fetchCategory]);
-  useEffect(() => { fetchQuestions(); }, [fetchQuestions]);
-  useEffect(() => { reset(); }, [debouncedSearch, complexity, questionType, sortBy, sortOrder]);
+  useEffect(() => {
+    fetchCategory();
+  }, [fetchCategory]);
+  useEffect(() => {
+    fetchQuestions();
+  }, [fetchQuestions]);
+  useEffect(() => {
+    reset();
+  }, [debouncedSearch, complexity, questionType, sortBy, sortOrder]);
 
   const resetForms = () => setForms([newBlankForm()]);
 
   const updateForm = (idx: number, patch: Partial<QuestionForm>) => {
-    setForms((prev) => prev.map((f, i) => i === idx ? { ...f, ...patch } : f));
+    setForms((prev) =>
+      prev.map((f, i) => (i === idx ? { ...f, ...patch } : f)),
+    );
   };
 
-  const updateOption = (formIdx: number, optIdx: number, patch: Partial<{ text: string; is_correct: boolean }>) => {
-    setForms((prev) => prev.map((f, i) => {
-      if (i !== formIdx) return f;
-      return { ...f, options: f.options.map((o, j) => j === optIdx ? { ...o, ...patch } : o) };
-    }));
+  const updateOption = (
+    formIdx: number,
+    optIdx: number,
+    patch: Partial<{ text: string; is_correct: boolean }>,
+  ) => {
+    setForms((prev) =>
+      prev.map((f, i) => {
+        if (i !== formIdx) return f;
+        return {
+          ...f,
+          options: f.options.map((o, j) =>
+            j === optIdx ? { ...o, ...patch } : o,
+          ),
+        };
+      }),
+    );
   };
 
   const handleSaveQuestions = async () => {
@@ -139,28 +193,38 @@ export default function QuestionsPage() {
           question_text: f.question_text,
           question_type: f.question_type,
           complexity: f.complexity,
-          options: f.question_type !== 'essay' ? f.options.filter((o) => o.text) : [],
-          correct_answer: f.question_type === 'essay' ? f.correct_answer : undefined,
+          options:
+            f.question_type !== "essay" ? f.options.filter((o) => o.text) : [],
+          correct_answer:
+            f.question_type === "essay" ? f.correct_answer : undefined,
         };
         await api.put(`/api/questions/${selected.id}`, payload);
-        toast.success('Question updated');
+        toast.success("Question updated");
       } else {
         const questions = forms.map((f) => ({
           question_text: f.question_text,
           question_type: f.question_type,
           complexity: f.complexity,
-          options: f.question_type !== 'essay' ? f.options.filter((o) => o.text) : [],
-          correct_answer: f.question_type === 'essay' ? f.correct_answer : undefined,
+          options:
+            f.question_type !== "essay" ? f.options.filter((o) => o.text) : [],
+          correct_answer:
+            f.question_type === "essay" ? f.correct_answer : undefined,
         }));
-        const { data } = await api.post(`/api/questions/categories/${categoryId}/bulk`, { questions });
+        const { data } = await api.post(
+          `/api/questions/categories/${categoryId}/bulk`,
+          { questions },
+        );
         toast.success(`${data.data?.created || 0} question(s) created`);
       }
       setShowCreate(false);
       resetForms();
       setSelected(null);
       fetchQuestions();
-    } catch { toast.error('Failed to save question'); }
-    finally { setSaving(false); }
+    } catch {
+      toast.error("Failed to save question");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -168,45 +232,52 @@ export default function QuestionsPage() {
     setSaving(true);
     try {
       await api.delete(`/api/questions/${selected.id}`);
-      toast.success('Question deleted');
+      toast.success("Question deleted");
       setShowDelete(false);
       fetchQuestions();
-    } catch { toast.error('Failed to delete'); }
-    finally { setSaving(false); }
+    } catch {
+      toast.error("Failed to delete");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleAIGenerate = async () => {
     setSaving(true);
     try {
-      const { data } = await api.post(`/api/questions/categories/${categoryId}/ai-generate`, aiForm);
+      const { data } = await api.post(
+        `/api/questions/categories/${categoryId}/ai-generate`,
+        aiForm,
+      );
       toast.success(`${data.data?.created || 0} questions generated`);
       setShowAI(false);
       fetchQuestions();
-    } catch { toast.error('AI generation failed'); }
-    finally { setSaving(false); }
+    } catch {
+      toast.error("AI generation failed");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleFileSelect = async (file: File) => {
     setExcelFile(file);
     try {
-      const buffer = await file.arrayBuffer();
-      const wb = XLSX.read(buffer, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json<string[]>(ws, { header: 1 });
-      const headers = ((rows[0] as unknown[]) || []).filter(Boolean).map(String);
+      const rows = await readXlsxFile(file);
+      const headers = (rows[0].data[0] || []).filter(Boolean).map(String);
       setExcelHeaders(headers);
       // Auto-map columns by name similarity
-      const auto = { question: '', options: '', answer: '', complexity: '' };
+      const auto = { question: "", options: "", answer: "", complexity: "" };
       for (const h of headers) {
         const l = h.toLowerCase();
-        if (!auto.question && l.includes('question')) auto.question = h;
-        if (!auto.options && (l === 'options' || l.includes('option'))) auto.options = h;
-        if (!auto.answer && l.includes('answer')) auto.answer = h;
-        if (!auto.complexity && l.includes('complex')) auto.complexity = h;
+        if (!auto.question && l.includes("question")) auto.question = h;
+        if (!auto.options && (l === "options" || l.includes("option")))
+          auto.options = h;
+        if (!auto.answer && l.includes("answer")) auto.answer = h;
+        if (!auto.complexity && l.includes("complex")) auto.complexity = h;
       }
       setColumnMap(auto);
     } catch {
-      toast.error('Failed to read Excel headers');
+      toast.error("Failed to read Excel headers");
     }
   };
 
@@ -214,36 +285,46 @@ export default function QuestionsPage() {
     if (!excelFile || !columnMap.question || !columnMap.answer) return;
     setSaving(true);
     const formData = new FormData();
-    formData.append('file', excelFile);
-    formData.append('column_map', JSON.stringify(columnMap));
+    formData.append("file", excelFile);
+    formData.append("column_map", JSON.stringify(columnMap));
     try {
       const { data } = await api.post(
         `/api/questions/categories/${categoryId}/excel-import`,
         formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
       toast.success(`${data.data?.created || 0} questions imported`);
       setShowColumnMap(false);
       setExcelFile(null);
       setExcelHeaders([]);
-      setColumnMap({ question: '', options: '', answer: '', complexity: '' });
+      setColumnMap({ question: "", options: "", answer: "", complexity: "" });
       fetchQuestions();
-    } catch { toast.error('Import failed'); }
-    finally { setSaving(false); }
+    } catch {
+      toast.error("Import failed");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const openEdit = (q: Question) => {
     setSelected(q);
-    setForms([{
-      _key: crypto.randomUUID(),
-      question_text: q.question_text,
-      question_type: q.question_type,
-      complexity: q.complexity,
-      options: q.options.length > 0
-        ? q.options
-        : Array.from({ length: 4 }, () => ({ id: crypto.randomUUID(), text: '', is_correct: false })),
-      correct_answer: q.correct_answer || '',
-    }]);
+    setForms([
+      {
+        _key: crypto.randomUUID(),
+        question_text: q.question_text,
+        question_type: q.question_type,
+        complexity: q.complexity,
+        options:
+          q.options.length > 0
+            ? q.options
+            : Array.from({ length: 4 }, () => ({
+                id: crypto.randomUUID(),
+                text: "",
+                is_correct: false,
+              })),
+        correct_answer: q.correct_answer || "",
+      },
+    ]);
     setShowCreate(true);
   };
 
@@ -252,17 +333,34 @@ export default function QuestionsPage() {
   return (
     <div>
       <Header
-        title={category?.name || 'Questions'}
+        title={category?.name || "Questions"}
         subtitle={`${meta?.total ?? 0} questions`}
         actions={
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Button variant="secondary" size="sm" leftIcon={<IconSparkles size={15} />} onClick={() => setShowAI(true)}>
+          <div style={{ display: "flex", gap: 8 }}>
+            <Button
+              variant="secondary"
+              size="sm"
+              leftIcon={<IconSparkles size={15} />}
+              onClick={() => setShowAI(true)}
+            >
               AI Generate
             </Button>
-            <Button variant="secondary" size="sm" leftIcon={<IconFileExcel size={15} />} onClick={() => setShowExcel(true)}>
+            <Button
+              variant="secondary"
+              size="sm"
+              leftIcon={<IconFileExcel size={15} />}
+              onClick={() => setShowExcel(true)}
+            >
               Excel Import
             </Button>
-            <Button leftIcon={<IconPlus size={15} />} onClick={() => { resetForms(); setSelected(null); setShowCreate(true); }}>
+            <Button
+              leftIcon={<IconPlus size={15} />}
+              onClick={() => {
+                resetForms();
+                setSelected(null);
+                setShowCreate(true);
+              }}
+            >
               Add Questions
             </Button>
           </div>
@@ -270,53 +368,99 @@ export default function QuestionsPage() {
       />
 
       <button
-        onClick={() => navigate('/question-bank')}
-        style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-secondary)', fontSize: 13, marginBottom: 16, cursor: 'pointer' }}
+        onClick={() => navigate("/question-bank")}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+          color: "var(--text-secondary)",
+          fontSize: 13,
+          marginBottom: 16,
+          cursor: "pointer",
+        }}
       >
         <IconChevronLeft size={14} /> Back to Categories
       </button>
 
       <FilterBar
-        search={search} onSearchChange={setSearch}
-        sortBy={sortBy} onSortByChange={setSortBy} sortByOptions={SORT_OPTIONS}
-        sortOrder={sortOrder} onSortOrderToggle={() => setSortOrder((o) => o === 'asc' ? 'desc' : 'asc')}
-        viewMode={viewMode} onViewModeChange={setViewMode}
-        complexity={complexity} onComplexityChange={setComplexity}
-        questionType={questionType} onQuestionTypeChange={setQuestionType}
-        showComplexity showQuestionType
+        search={search}
+        onSearchChange={setSearch}
+        sortBy={sortBy}
+        onSortByChange={setSortBy}
+        sortByOptions={SORT_OPTIONS}
+        sortOrder={sortOrder}
+        onSortOrderToggle={() =>
+          setSortOrder((o) => (o === "asc" ? "desc" : "asc"))
+        }
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        complexity={complexity}
+        onComplexityChange={setComplexity}
+        questionType={questionType}
+        onQuestionTypeChange={setQuestionType}
+        showComplexity
+        showQuestionType
       />
 
       {isLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><Spinner size="lg" /></div>
+        <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
+          <Spinner size="lg" />
+        </div>
       ) : questions.length === 0 ? (
         <div className={styles.empty}>
           <p>No questions found</p>
-          <Button leftIcon={<IconPlus size={15} />} onClick={() => { resetForms(); setShowCreate(true); }}>
+          <Button
+            leftIcon={<IconPlus size={15} />}
+            onClick={() => {
+              resetForms();
+              setShowCreate(true);
+            }}
+          >
             Add Questions
           </Button>
         </div>
       ) : (
         <>
-          <div className={viewMode === 'grid' ? styles.grid : styles.list}>
+          <div className={viewMode === "grid" ? styles.grid : styles.list}>
             {questions.map((q) => (
               <div key={q.id} className={styles.questionCard}>
                 <div className={styles.questionTop}>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <ComplexityBadge complexity={q.complexity} />
                     <Badge variant="info">
-                      {QUESTION_TYPE_OPTIONS.find(o => o.value === q.question_type)?.label || q.question_type}
+                      {QUESTION_TYPE_OPTIONS.find(
+                        (o) => o.value === q.question_type,
+                      )?.label || q.question_type}
                     </Badge>
                   </div>
                   <div className={styles.cardActions}>
-                    <button className={styles.iconBtn} onClick={() => openEdit(q)}><IconEdit size={14} /></button>
-                    <button className={`${styles.iconBtn} ${styles.danger}`} onClick={() => { setSelected(q); setShowDelete(true); }}><IconDelete size={14} /></button>
+                    <button
+                      className={styles.iconBtn}
+                      onClick={() => openEdit(q)}
+                    >
+                      <IconEdit size={14} />
+                    </button>
+                    <button
+                      className={`${styles.iconBtn} ${styles.danger}`}
+                      onClick={() => {
+                        setSelected(q);
+                        setShowDelete(true);
+                      }}
+                    >
+                      <IconDelete size={14} />
+                    </button>
                   </div>
                 </div>
-                <div className={styles.questionText}><RichText>{q.question_text}</RichText></div>
+                <div className={styles.questionText}>
+                  <RichText>{q.question_text}</RichText>
+                </div>
                 {q.options.length > 0 && (
                   <div className={styles.options}>
                     {q.options.map((o) => (
-                      <div key={o.id} className={`${styles.option} ${o.is_correct ? styles.correctOption : ''}`}>
+                      <div
+                        key={o.id}
+                        className={`${styles.option} ${o.is_correct ? styles.correctOption : ""}`}
+                      >
                         {o.is_correct && <span className={styles.correctDot} />}
                         <span>{o.text}</span>
                       </div>
@@ -333,30 +477,51 @@ export default function QuestionsPage() {
       {/* Create / Edit Question Modal */}
       <Modal
         isOpen={showCreate}
-        onClose={() => { setShowCreate(false); setSelected(null); resetForms(); }}
-        title={selected ? 'Edit Question' : 'Add Questions'}
+        onClose={() => {
+          setShowCreate(false);
+          setSelected(null);
+          resetForms();
+        }}
+        title={selected ? "Edit Question" : "Add Questions"}
         size="lg"
         footer={
           <>
-            <Button variant="secondary" onClick={() => { setShowCreate(false); setSelected(null); resetForms(); }}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowCreate(false);
+                setSelected(null);
+                resetForms();
+              }}
+            >
               Cancel
             </Button>
-            <Button onClick={handleSaveQuestions} isLoading={saving} disabled={!canSave}>
-              {selected ? 'Save Changes' : `Save ${forms.length > 1 ? `(${forms.length})` : ''}`}
+            <Button
+              onClick={handleSaveQuestions}
+              isLoading={saving}
+              disabled={!canSave}
+            >
+              {selected
+                ? "Save Changes"
+                : `Save ${forms.length > 1 ? `(${forms.length})` : ""}`}
             </Button>
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {forms.map((f, idx) => (
             <div key={f._key} className={styles.formCard}>
               {!selected && (
                 <div className={styles.formCardHeader}>
-                  <span className={styles.formCardTitle}>Question {idx + 1}</span>
+                  <span className={styles.formCardTitle}>
+                    Question {idx + 1}
+                  </span>
                   {forms.length > 1 && (
                     <button
                       className={`${styles.iconBtn} ${styles.danger}`}
-                      onClick={() => setForms((prev) => prev.filter((_, i) => i !== idx))}
+                      onClick={() =>
+                        setForms((prev) => prev.filter((_, i) => i !== idx))
+                      }
                       title="Remove"
                     >
                       <IconDelete size={14} />
@@ -365,59 +530,112 @@ export default function QuestionsPage() {
                 </div>
               )}
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 12 }}
+              >
                 <div>
                   <Textarea
                     label="Question Text"
                     placeholder="Enter the question..."
                     value={f.question_text}
-                    onChange={(e) => updateForm(idx, { question_text: e.target.value })}
+                    onChange={(e) =>
+                      updateForm(idx, { question_text: e.target.value })
+                    }
                     rows={3}
                   />
-                  <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>
+                  <p
+                    style={{
+                      fontSize: 11,
+                      color: "var(--text-tertiary)",
+                      marginTop: 4,
+                    }}
+                  >
                     Markdown supported — wrap code in ``` code fences ```
                   </p>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 12,
+                  }}
+                >
                   <Select
                     label="Question Type"
                     options={QUESTION_TYPE_OPTIONS}
                     value={f.question_type}
-                    onChange={(v) => updateForm(idx, { question_type: v as QuestionType })}
+                    onChange={(v) =>
+                      updateForm(idx, { question_type: v as QuestionType })
+                    }
                   />
                   <Select
                     label="Complexity"
                     options={COMPLEXITY_OPTIONS}
                     value={f.complexity}
-                    onChange={(v) => updateForm(idx, { complexity: v as Complexity })}
+                    onChange={(v) =>
+                      updateForm(idx, { complexity: v as Complexity })
+                    }
                   />
                 </div>
 
-                {f.question_type === 'essay' ? (
+                {f.question_type === "essay" ? (
                   <Textarea
                     label="Model Answer (optional)"
                     placeholder="Provide a model answer for reference..."
                     value={f.correct_answer}
-                    onChange={(e) => updateForm(idx, { correct_answer: e.target.value })}
+                    onChange={(e) =>
+                      updateForm(idx, { correct_answer: e.target.value })
+                    }
                     rows={3}
                   />
                 ) : (
                   <div>
-                    <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>
-                      Options {f.question_type === 'mcq_multi' ? '(check all correct)' : '(check one correct)'}
+                    <label
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: "var(--text-secondary)",
+                        display: "block",
+                        marginBottom: 8,
+                      }}
+                    >
+                      Options{" "}
+                      {f.question_type === "mcq_multi"
+                        ? "(check all correct)"
+                        : "(check one correct)"}
                     </label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 8,
+                      }}
+                    >
                       {f.options.map((opt, optIdx) => (
-                        <div key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div
+                          key={opt.id}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
+                        >
                           <input
-                            type={f.question_type === 'mcq_single' ? 'radio' : 'checkbox'}
+                            type={
+                              f.question_type === "mcq_single"
+                                ? "radio"
+                                : "checkbox"
+                            }
                             checked={opt.is_correct}
                             onChange={() => {
                               const options = f.options.map((o, i) => ({
                                 ...o,
-                                is_correct: f.question_type === 'mcq_single'
-                                  ? i === optIdx
-                                  : i === optIdx ? !o.is_correct : o.is_correct,
+                                is_correct:
+                                  f.question_type === "mcq_single"
+                                    ? i === optIdx
+                                    : i === optIdx
+                                      ? !o.is_correct
+                                      : o.is_correct,
                               }));
                               updateForm(idx, { options });
                             }}
@@ -426,7 +644,11 @@ export default function QuestionsPage() {
                           <Input
                             placeholder={`Option ${optIdx + 1}`}
                             value={opt.text}
-                            onChange={(e) => updateOption(idx, optIdx, { text: e.target.value })}
+                            onChange={(e) =>
+                              updateOption(idx, optIdx, {
+                                text: e.target.value,
+                              })
+                            }
                           />
                         </div>
                       ))}
@@ -450,18 +672,63 @@ export default function QuestionsPage() {
       </Modal>
 
       {/* AI Generate Modal */}
-      <Modal isOpen={showAI} onClose={() => setShowAI(false)} title="AI Question Generator"
-        footer={<><Button variant="secondary" onClick={() => setShowAI(false)}>Cancel</Button><Button onClick={handleAIGenerate} isLoading={saving} leftIcon={<IconSparkles size={15} />}>Generate</Button></>}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <Input label="Topic" placeholder="e.g., Python decorators, SQL joins..." value={aiForm.topic}
-            onChange={(e) => setAiForm((p) => ({ ...p, topic: e.target.value }))} />
-          <Input label="Number of Questions (1-20)" type="number" min={1} max={20} value={aiForm.count}
-            onChange={(e) => setAiForm((p) => ({ ...p, count: Number(e.target.value) }))} />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <Select label="Complexity" options={COMPLEXITY_OPTIONS} value={aiForm.complexity}
-              onChange={(v) => setAiForm((p) => ({ ...p, complexity: v as Complexity }))} />
-            <Select label="Question Type" options={QUESTION_TYPE_OPTIONS} value={aiForm.question_type}
-              onChange={(v) => setAiForm((p) => ({ ...p, question_type: v as QuestionType }))} />
+      <Modal
+        isOpen={showAI}
+        onClose={() => setShowAI(false)}
+        title="AI Question Generator"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowAI(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAIGenerate}
+              isLoading={saving}
+              leftIcon={<IconSparkles size={15} />}
+            >
+              Generate
+            </Button>
+          </>
+        }
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <Input
+            label="Topic"
+            placeholder="e.g., Python decorators, SQL joins..."
+            value={aiForm.topic}
+            onChange={(e) =>
+              setAiForm((p) => ({ ...p, topic: e.target.value }))
+            }
+          />
+          <Input
+            label="Number of Questions (1-20)"
+            type="number"
+            min={1}
+            max={20}
+            value={aiForm.count}
+            onChange={(e) =>
+              setAiForm((p) => ({ ...p, count: Number(e.target.value) }))
+            }
+          />
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
+          >
+            <Select
+              label="Complexity"
+              options={COMPLEXITY_OPTIONS}
+              value={aiForm.complexity}
+              onChange={(v) =>
+                setAiForm((p) => ({ ...p, complexity: v as Complexity }))
+              }
+            />
+            <Select
+              label="Question Type"
+              options={QUESTION_TYPE_OPTIONS}
+              value={aiForm.question_type}
+              onChange={(v) =>
+                setAiForm((p) => ({ ...p, question_type: v as QuestionType }))
+              }
+            />
           </div>
         </div>
       </Modal>
@@ -469,14 +736,30 @@ export default function QuestionsPage() {
       {/* Excel Import — Step 1: File Upload */}
       <Modal
         isOpen={showExcel}
-        onClose={() => { setShowExcel(false); setExcelFile(null); setExcelHeaders([]); }}
+        onClose={() => {
+          setShowExcel(false);
+          setExcelFile(null);
+          setExcelHeaders([]);
+        }}
         title="Excel Import"
         footer={
           <>
-            <Button variant="secondary" onClick={() => { setShowExcel(false); setExcelFile(null); setExcelHeaders([]); }}>Cancel</Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowExcel(false);
+                setExcelFile(null);
+                setExcelHeaders([]);
+              }}
+            >
+              Cancel
+            </Button>
             <Button
               disabled={!excelFile}
-              onClick={() => { setShowExcel(false); setShowColumnMap(true); }}
+              onClick={() => {
+                setShowExcel(false);
+                setShowColumnMap(true);
+              }}
             >
               Next: Map Columns
             </Button>
@@ -486,15 +769,33 @@ export default function QuestionsPage() {
         <div className={styles.uploadArea}>
           <IconFileExcel size={40} color="var(--text-tertiary)" />
           <p style={{ fontSize: 14, fontWeight: 500 }}>
-            {excelFile ? excelFile.name : 'Upload an Excel (.xlsx) file'}
+            {excelFile ? excelFile.name : "Upload an Excel (.xlsx) file"}
           </p>
-          <p style={{ fontSize: 12, color: 'var(--text-tertiary)', textAlign: 'center' }}>
-            You'll map your columns to Question, Options, Answer, and Complexity in the next step.
+          <p
+            style={{
+              fontSize: 12,
+              color: "var(--text-tertiary)",
+              textAlign: "center",
+            }}
+          >
+            You'll map your columns to Question, Options, Answer, and Complexity
+            in the next step.
           </p>
-          <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }}
-            onChange={(e) => { if (e.target.files?.[0]) handleFileSelect(e.target.files[0]); }} />
-          <Button variant={excelFile ? 'secondary' : 'primary'} onClick={() => fileRef.current?.click()} leftIcon={<IconFileExcel size={15} />}>
-            {excelFile ? 'Change File' : 'Choose File'}
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".xlsx,.xls"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              if (e.target.files?.[0]) handleFileSelect(e.target.files[0]);
+            }}
+          />
+          <Button
+            variant={excelFile ? "secondary" : "primary"}
+            onClick={() => fileRef.current?.click()}
+            leftIcon={<IconFileExcel size={15} />}
+          >
+            {excelFile ? "Change File" : "Choose File"}
           </Button>
         </div>
       </Modal>
@@ -502,25 +803,63 @@ export default function QuestionsPage() {
       {/* Excel Import — Step 2: Column Mapping */}
       <Modal
         isOpen={showColumnMap}
-        onClose={() => { setShowColumnMap(false); setExcelFile(null); setExcelHeaders([]); }}
+        onClose={() => {
+          setShowColumnMap(false);
+          setExcelFile(null);
+          setExcelHeaders([]);
+        }}
         title="Map Columns"
         footer={
           <>
-            <Button variant="secondary" onClick={() => { setShowColumnMap(false); setShowExcel(true); }}>Back</Button>
-            <Button onClick={handleExcelImport} isLoading={saving} disabled={!columnMap.question || !columnMap.answer}>Import</Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowColumnMap(false);
+                setShowExcel(true);
+              }}
+            >
+              Back
+            </Button>
+            <Button
+              onClick={handleExcelImport}
+              isLoading={saving}
+              disabled={!columnMap.question || !columnMap.answer}
+            >
+              Import
+            </Button>
           </>
         }
       >
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
-          Map your Excel columns to the required fields. 
+        <p
+          style={{
+            fontSize: 13,
+            color: "var(--text-secondary)",
+            marginBottom: 16,
+          }}
+        >
+          Map your Excel columns to the required fields.
         </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {([
-            { field: 'question', label: 'Question', required: true },
-            { field: 'options', label: 'Options', required: false },
-            { field: 'answer', label: 'Answer (1-based index, e.g. 2 or 1,3)', required: true },
-            { field: 'complexity', label: 'Complexity (defaults to medium)', required: false },
-          ] as { field: keyof typeof columnMap; label: string; required: boolean }[]).map(({ field, label, required }) => (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {(
+            [
+              { field: "question", label: "Question", required: true },
+              { field: "options", label: "Options", required: false },
+              {
+                field: "answer",
+                label: "Answer (1-based index, e.g. 2 or 1,3)",
+                required: true,
+              },
+              {
+                field: "complexity",
+                label: "Complexity (defaults to medium)",
+                required: false,
+              },
+            ] as {
+              field: keyof typeof columnMap;
+              label: string;
+              required: boolean;
+            }[]
+          ).map(({ field, label, required }) => (
             <Select
               key={field}
               label={label}
@@ -528,7 +867,10 @@ export default function QuestionsPage() {
               value={columnMap[field]}
               onChange={(v) => setColumnMap((p) => ({ ...p, [field]: v }))}
               options={[
-                { value: '', label: required ? '— Select column —' : '— None —' },
+                {
+                  value: "",
+                  label: required ? "— Select column —" : "— None —",
+                },
                 ...excelHeaders.map((h) => ({ value: h, label: h })),
               ]}
             />
@@ -537,9 +879,22 @@ export default function QuestionsPage() {
       </Modal>
 
       {/* Delete Modal */}
-      <Modal isOpen={showDelete} onClose={() => setShowDelete(false)} title="Delete Question"
-        footer={<><Button variant="secondary" onClick={() => setShowDelete(false)}>Cancel</Button><Button variant="danger" onClick={handleDelete} isLoading={saving}>Delete</Button></>}>
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+      <Modal
+        isOpen={showDelete}
+        onClose={() => setShowDelete(false)}
+        title="Delete Question"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowDelete(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleDelete} isLoading={saving}>
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
           Are you sure you want to delete this question? This cannot be undone.
         </p>
       </Modal>
