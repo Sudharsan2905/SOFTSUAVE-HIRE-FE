@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Pagination } from '@/components/ui/Pagination';
 import { Spinner } from '@/components/ui/Spinner';
 import { Modal } from '@/components/ui/Modal';
+import { Select } from '@/components/ui/Select';
 import { IconLiveInterview, IconCamera, IconMonitor, IconEye, IconTime } from '@/assets/icons';
 import { api } from '@/utils/api';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -67,14 +68,14 @@ export default function LiveInterviewsPage() {
         onSortOrderToggle={() => setSortOrder((o) => o === 'asc' ? 'desc' : 'asc')}
         viewMode={viewMode} onViewModeChange={setViewMode}
       >
-        <select
-          value={monitoringType}
-          onChange={(e) => setMonitoringType(e.target.value)}
-          style={{ height: 38, padding: '0 12px', border: '1.5px solid var(--border-default)', borderRadius: 8, fontSize: 14, color: 'var(--text-primary)', background: 'var(--bg-surface)', cursor: 'pointer' }}
-        >
-          <option value="">All Modes</option>
-          {MONITORING_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
+        <div style={{ width: 180 }}>
+          <Select
+            value={monitoringType}
+            onChange={setMonitoringType}
+            placeholder="All Modes"
+            options={[{ value: '', label: 'All Modes' }, ...MONITORING_OPTIONS]}
+          />
+        </div>
       </FilterBar>
 
       {isLoading ? (
