@@ -10,6 +10,25 @@ function SuperAdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function CandidateDashboard() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh",
+        flexDirection: "column",
+        gap: 12,
+        color: "var(--text-secondary)",
+      }}
+    >
+      <h2 style={{ color: "var(--text-primary)" }}>No Assessment Linked</h2>
+      <p>Please use your assessment link to access your assessment.</p>
+    </div>
+  );
+}
+
 function AssessmentEntry() {
   const { shareLink } = useParams<{ shareLink: string }>();
   const { isAuthenticated, user } = useAppSelector((s) => s.auth);
@@ -53,6 +72,7 @@ export default function App() {
         {/* Public candidate routes */}
         <Route path="/candidate/login" element={<CandidateLoginPage />} />
         <Route path="/candidate/register" element={<RegisterPage />} />
+        <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
 
         {/* Assessment flow */}
         <Route path="/assessment/:shareLink" element={<AssessmentEntry />} />

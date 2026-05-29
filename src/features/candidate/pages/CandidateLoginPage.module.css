@@ -68,6 +68,28 @@
   padding: 8px 12px;
 }
 
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 16px;
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border-default);
+}
+
+.googleBtn {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
 .footer {
   margin-top: 20px;
   text-align: center;

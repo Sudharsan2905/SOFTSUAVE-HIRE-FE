@@ -139,16 +139,8 @@ export const IconSearch = icon(
     <path d="m21 21-4.35-4.35" />
   </>
 );
-export const IconFilter = icon(
-  <>
-    <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />
-  </>
-);
-export const IconSort = icon(
-  <>
-    <path d="M3 6h18M7 12h10M11 18h2" />
-  </>
-);
+export const IconFilter = icon(<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" />);
+export const IconSort = icon(<path d="M3 6h18M7 12h10M11 18h2" />);
 export const IconSortAsc = icon(
   <>
     <path d="M3 6h18" />
@@ -173,16 +165,8 @@ export const IconGrid = icon(
     <rect x="3" y="14" width="7" height="7" rx="1" />
   </>
 );
-export const IconList = icon(
-  <>
-    <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
-  </>
-);
-export const IconPlus = icon(
-  <>
-    <path d="M12 5v14M5 12h14" />
-  </>
-);
+export const IconList = icon(<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />);
+export const IconPlus = icon(<path d="M12 5v14M5 12h14" />);
 export const IconEdit = icon(
   <>
     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -197,31 +181,11 @@ export const IconDelete = icon(
     <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
   </>
 );
-export const IconClose = icon(
-  <>
-    <path d="M18 6 6 18M6 6l12 12" />
-  </>
-);
-export const IconCheck = icon(
-  <>
-    <polyline points="20 6 9 17 4 12" />
-  </>
-);
-export const IconChevronDown = icon(
-  <>
-    <polyline points="6 9 12 15 18 9" />
-  </>
-);
-export const IconChevronRight = icon(
-  <>
-    <polyline points="9 18 15 12 9 6" />
-  </>
-);
-export const IconChevronLeft = icon(
-  <>
-    <polyline points="15 18 9 12 15 6" />
-  </>
-);
+export const IconClose = icon(<path d="M18 6 6 18M6 6l12 12" />);
+export const IconCheck = icon(<polyline points="20 6 9 17 4 12" />);
+export const IconChevronDown = icon(<polyline points="6 9 12 15 18 9" />);
+export const IconChevronRight = icon(<polyline points="9 18 15 12 9 6" />);
+export const IconChevronLeft = icon(<polyline points="15 18 9 12 15 6" />);
 export const IconSettings = icon(
   <>
     <circle cx="12" cy="12" r="3" />
@@ -303,11 +267,7 @@ export const IconLogout = icon(
     <line x1="21" y1="12" x2="9" y2="12" />
   </>
 );
-export const IconMoon = icon(
-  <>
-    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-  </>
-);
+export const IconMoon = icon(<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />);
 export const IconSun = icon(
   <>
     <circle cx="12" cy="12" r="5" />
@@ -343,10 +303,12 @@ export const IconMonitor = icon(
   </>
 );
 export const IconClone = icon(
-  <>
-    <rect x="8" y="8" width="13" height="13" rx="2" />
-    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-  </>
+  <path
+    fill="currentColor"
+    stroke="none"
+    d="M176 168C189.3 168 200 157.3 200 144C200 130.7 189.3 120 176 120C162.7 120 152 130.7 152 144C152 157.3 162.7 168 176 168zM256 144C256 176.8 236.3 205 208 217.3L208 240C208 266.5 229.5 288 256 288L384 288C410.5 288 432 266.5 432 240L432 217.3C403.7 205 384 176.8 384 144C384 99.8 419.8 64 464 64C508.2 64 544 99.8 544 144C544 176.8 524.3 205 496 217.3L496 240C496 301.9 445.9 352 384 352L352 352L352 422.7C380.3 435 400 463.2 400 496C400 540.2 364.2 576 320 576C275.8 576 240 540.2 240 496C240 463.2 259.7 435 288 422.7L288 352L256 352C194.1 352 144 301.9 144 240L144 217.3C115.7 205 96 176.8 96 144C96 99.8 131.8 64 176 64C220.2 64 256 99.8 256 144zM464 168C477.3 168 488 157.3 488 144C488 130.7 477.3 120 464 120C450.7 120 440 130.7 440 144C440 157.3 450.7 168 464 168zM344 496C344 482.7 333.3 472 320 472C306.7 472 296 482.7 296 496C296 509.3 306.7 520 320 520C333.3 520 344 509.3 344 496z"
+  />,
+  "0 0 640 640"
 );
 export const IconRefresh = icon(
   <>
@@ -426,11 +388,7 @@ export const IconTime = icon(
     <polyline points="12 6 12 12 16 14" />
   </>
 );
-export const IconChevronUp = icon(
-  <>
-    <polyline points="18 15 12 9 6 15" />
-  </>
-);
+export const IconChevronUp = icon(<polyline points="18 15 12 9 6 15" />);
 export const IconGlobe = icon(
   <>
     <circle cx="12" cy="12" r="10" />
@@ -438,8 +396,4 @@ export const IconGlobe = icon(
     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
   </>
 );
-export const IconShield = icon(
-  <>
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-  </>
-);
+export const IconShield = icon(<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />);

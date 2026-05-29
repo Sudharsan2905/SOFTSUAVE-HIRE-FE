@@ -21,7 +21,7 @@ export default function InstructionsPage() {
     const fetch = async () => {
       try {
         const { data } = await api.get(`/api/candidate/assessment/${shareLink}`);
-        setAssessment(data.data?.assessment || null);
+        setAssessment(data?.data || null);
       } catch {
         toast.error("Assessment not found");
       } finally {
@@ -54,7 +54,7 @@ export default function InstructionsPage() {
     setStarting(true);
     try {
       const { data } = await api.post(`/api/candidate/assessment/${shareLink}/start`);
-      const submissionId = data.data?.submission_id;
+      const submissionId = data.data?.id;
       navigate(`/assessment/${shareLink}/interview/${submissionId}`);
     } catch (e: unknown) {
       toast.error(
