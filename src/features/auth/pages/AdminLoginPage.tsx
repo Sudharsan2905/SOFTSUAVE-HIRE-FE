@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,11 +6,9 @@ import { z } from "zod";
 import styles from "./AdminLoginPage.module.css";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { adminLogin } from "@/store/slices/authSlice";
-import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { IconMail, IconLock, IconEye, IconEyeOff } from "@/assets/icons";
 import logoUrl from "@/assets/favicon.svg";
-import { useState } from "react";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -56,31 +54,41 @@ export default function AdminLoginPage() {
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-              <Input
-                label="Email Address"
-                type="email"
-                placeholder="Enter email"
-                leftElement={<IconMail size={15} />}
-                error={errors.email?.message}
-                {...register("email")}
-              />
-              <Input
-                label="Password"
-                type={showPass ? "text" : "password"}
-                placeholder="Enter password"
-                leftElement={<IconLock size={15} />}
-                rightElement={
-                  <button
-                    type="button"
-                    onClick={() => setShowPass(!showPass)}
-                    style={{ cursor: "pointer", color: "var(--text-tertiary)", display: "flex" }}
-                  >
-                    {showPass ? <IconEyeOff size={15} /> : <IconEye size={15} />}
-                  </button>
-                }
-                error={errors.password?.message}
-                {...register("password")}
-              />
+              <div className={styles.field}>
+                <span className={styles.fieldIcon}>
+                  <IconMail size={15} />
+                </span>
+                <input
+                  className={styles.fieldInput}
+                  type="email"
+                  placeholder="Enter email"
+                  {...register("email")}
+                />
+              </div>
+              {errors.email && <p className={styles.error}>{errors.email.message}</p>}
+
+              <div className={styles.field}>
+                <span className={styles.fieldIcon}>
+                  <IconLock size={15} />
+                </span>
+                <input
+                  className={styles.fieldInput}
+                  type={showPass ? "text" : "password"}
+                  placeholder="Enter password"
+                  {...register("password")}
+                />
+                <button
+                  type="button"
+                  className={styles.fieldIconBtn}
+                  onClick={() => setShowPass(!showPass)}
+                  aria-label={showPass ? "Hide password" : "Show password"}
+                  title={showPass ? "Hide password" : "Show password"}
+                >
+                  {showPass ? <IconEyeOff size={15} /> : <IconEye size={15} />}
+                </button>
+              </div>
+              {errors.password && <p className={styles.error}>{errors.password.message}</p>}
+
               <Button
                 type="submit"
                 fullWidth

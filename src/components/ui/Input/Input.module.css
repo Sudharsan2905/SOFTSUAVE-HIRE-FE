@@ -25,8 +25,8 @@
     box-shadow var(--transition-fast);
 }
 .inputWrapper:focus-within {
-  border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px rgba(37, 99, 255, 0.12);
+  border-color: #fb4d3d;
+  box-shadow: 0 0 0 2px rgba(251, 77, 61, 0.45);
 }
 .hasError {
   border-color: var(--error-500);
@@ -85,8 +85,8 @@
     box-shadow var(--transition-fast);
 }
 .textarea:focus {
-  border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px rgba(37, 99, 255, 0.12);
+  border-color: #fb4d3d;
+  box-shadow: 0 0 0 2px rgba(251, 77, 61, 0.45);
 }
 .textareaError {
   border-color: var(--error-500);

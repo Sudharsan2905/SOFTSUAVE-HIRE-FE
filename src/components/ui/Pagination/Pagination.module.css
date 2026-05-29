@@ -6,6 +6,11 @@
   gap: 12px;
   padding-top: 16px;
 }
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .info {
   font-size: 13px;
   color: var(--text-tertiary);

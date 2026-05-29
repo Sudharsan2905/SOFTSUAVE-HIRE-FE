@@ -2,25 +2,42 @@ import React from "react";
 import styles from "./Pagination.module.css";
 import { IconChevronLeft, IconChevronRight } from "@/assets/icons";
 import { PaginationMeta } from "@/types";
+import { PAGE_SIZE_OPTIONS } from "@/constants/app";
+import { Select } from "@/components/ui/Select";
 
 interface PaginationProps {
   meta: PaginationMeta;
   onPageChange: (page: number) => void;
+  pageSize?: number;
+  onPageSizeChange?: (size: number) => void;
   className?: string;
 }
 
-export function Pagination({ meta, onPageChange, className }: PaginationProps) {
-  const { page, total_pages, total, page_size, has_prev, has_next } = meta;
+export function Pagination({
+  meta,
+  onPageChange,
+  pageSize,
+  onPageSizeChange,
+  className,
+}: Readonly<PaginationProps>) {
+  const { page, total_pages, page_size, has_prev, has_next } = meta;
 
   const pages = getPageNumbers(page, total_pages);
-  const from = (page - 1) * page_size + 1;
-  const to = Math.min(page * page_size, total);
 
   return (
     <div className={`${styles.wrapper} ${className ?? ""}`}>
-      <span className={styles.info}>
-        Showing {from}–{to} of {total}
-      </span>
+      <div className={styles.meta}>
+        <span className={styles.info}>Showing</span>
+        {onPageSizeChange && (
+          <Select
+            options={PAGE_SIZE_OPTIONS.map((s) => ({ value: String(s), label: String(s) }))}
+            value={String(pageSize ?? page_size)}
+            onChange={(v) => onPageSizeChange(Number(v))}
+            fullWidth={false}
+            style={{ minWidth: 70 }}
+          />
+        )}
+      </div>
       <div className={styles.controls}>
         <button
           className={styles.navBtn}
@@ -32,14 +49,14 @@ export function Pagination({ meta, onPageChange, className }: PaginationProps) {
         </button>
         {pages.map((p, i) =>
           p === "..." ? (
-            <span key={`ellipsis-${i}`} className={styles.ellipsis}>
+            <span key={`ellipsis-before-${pages[i + 1]}`} className={styles.ellipsis}>
               …
             </span>
           ) : (
             <button
               key={p}
               className={`${styles.pageBtn} ${p === page ? styles.active : ""}`}
-              onClick={() => onPageChange(p as number)}
+              onClick={() => onPageChange(p)}
             >
               {p}
             </button>

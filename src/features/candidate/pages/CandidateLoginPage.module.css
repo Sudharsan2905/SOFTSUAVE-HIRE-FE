@@ -160,14 +160,14 @@
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 12px 22px rgba(243, 30, 70, 0.45);
+  box-shadow: 0 8px 20px rgba(243, 30, 70, 0.45);
   transition:
     transform var(--transition-fast),
     box-shadow var(--transition-fast);
 }
 .loginBtn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 16px 28px rgba(243, 30, 70, 0.55);
+  box-shadow: 0 12px 28px rgba(243, 30, 70, 0.55);
 }
 .loginBtn:disabled {
   opacity: 0.7;
@@ -254,9 +254,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 22px;
-  padding: 44px 36px;
+  justify-content: flex-end;
+  gap: 0;
+  padding: 44px 36px 40px;
   border-radius: 0 28px 28px 0;
   background: linear-gradient(135deg, #ff7a33 0%, #fb4d3d 50%, #f31e46 100%);
   opacity: 80%;
@@ -282,6 +282,7 @@
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 22px 44px rgba(0, 0, 0, 0.22);
+  margin-bottom: -28px;
 }
 .heroImg {
   display: block;
@@ -294,6 +295,7 @@
   z-index: 1;
   text-align: center;
   color: #ffffff;
+  padding-top: 36px;
 }
 .welcomeTitle {
   font-size: 30px;
