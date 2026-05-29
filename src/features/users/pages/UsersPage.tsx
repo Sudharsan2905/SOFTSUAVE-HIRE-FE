@@ -199,6 +199,7 @@ export default function UsersPage() {
             sortBy="created_at"
             sortOrder={sortOrder}
             onSortOrderToggle={() => setSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
+            onRefresh={fetchUsers}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
           />

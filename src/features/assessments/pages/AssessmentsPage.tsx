@@ -60,7 +60,7 @@ export default function AssessmentsPage() {
   const [wizardPrefill, setWizardPrefill] = useState<Partial<AssessmentDraft> | null>(null);
   const [selected, setSelected] = useState<Assessment | null>(null);
   const [saving, setSaving] = useState(false);
-  const { page, pageSize, goToPage, reset } = usePagination();
+  const { page, pageSize, goToPage, reset, changePageSize } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
 
   const fetchAssessments = useCallback(async () => {
@@ -177,6 +177,7 @@ export default function AssessmentsPage() {
         onSortOrderToggle={() => setSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        onRefresh={fetchAssessments}
       />
 
       {isLoading ? (
@@ -268,7 +269,7 @@ export default function AssessmentsPage() {
               </div>
             ))}
           </div>
-          {meta && <Pagination meta={meta} onPageChange={goToPage} />}
+          {meta && <Pagination meta={meta} onPageChange={goToPage} pageSize={pageSize} onPageSizeChange={changePageSize} />}
         </>
       )}
 

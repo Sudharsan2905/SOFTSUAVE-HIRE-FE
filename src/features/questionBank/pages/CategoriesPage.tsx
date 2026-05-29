@@ -38,7 +38,7 @@ export default function CategoriesPage() {
   const [selected, setSelected] = useState<QuestionCategory | null>(null);
   const [form, setForm] = useState({ name: "", description: "" });
   const [saving, setSaving] = useState(false);
-  const { page, pageSize, goToPage, reset } = usePagination();
+  const { page, pageSize, goToPage, reset, changePageSize } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
 
   const fetchCategories = useCallback(async () => {
@@ -154,6 +154,7 @@ export default function CategoriesPage() {
         onSortOrderToggle={() => setSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        onRefresh={fetchCategories}
       />
 
       {isLoading ? (
@@ -229,7 +230,7 @@ export default function CategoriesPage() {
               </div>
             ))}
           </div>
-          {meta && <Pagination meta={meta} onPageChange={goToPage} />}
+          {meta && <Pagination meta={meta} onPageChange={goToPage} pageSize={pageSize} onPageSizeChange={changePageSize} />}
         </>
       )}
 

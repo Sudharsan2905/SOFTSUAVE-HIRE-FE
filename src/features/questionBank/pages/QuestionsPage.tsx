@@ -93,7 +93,7 @@ export default function QuestionsPage() {
     complexity: "",
   });
   const fileRef = useRef<HTMLInputElement>(null);
-  const { page, pageSize, goToPage, reset } = usePagination();
+  const { page, pageSize, goToPage, reset, changePageSize } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
 
   const [forms, setForms] = useState<QuestionForm[]>([newBlankForm()]);
@@ -377,6 +377,7 @@ export default function QuestionsPage() {
         onQuestionTypeChange={setQuestionType}
         showComplexity
         showQuestionType
+        onRefresh={fetchQuestions}
       />
 
       {isLoading ? (
@@ -443,7 +444,7 @@ export default function QuestionsPage() {
               </div>
             ))}
           </div>
-          {meta && <Pagination meta={meta} onPageChange={goToPage} />}
+          {meta && <Pagination meta={meta} onPageChange={goToPage} pageSize={pageSize} onPageSizeChange={changePageSize} />}
         </>
       )}
 

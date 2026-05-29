@@ -93,7 +93,57 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 16px;
+  border-radius: 10px;
+  background: #f1eff9;
+  transition: box-shadow var(--transition-fast);
+}
+.field:focus-within {
+  box-shadow: 0 0 0 2px rgba(251, 77, 61, 0.45);
+}
+.fieldIcon {
+  display: flex;
+  color: #8a8a9e;
+  flex-shrink: 0;
+}
+.fieldIconBtn {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #8a8a9e;
+  flex-shrink: 0;
+  transition: color var(--transition-fast);
+}
+.fieldIconBtn:hover {
+  color: #f4452e;
+}
+.fieldInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: #1c1c2e;
+  height: 100%;
+}
+.fieldInput::placeholder {
+  color: #9a9aae;
+}
+.error {
+  font-size: 12px;
+  color: var(--error-600);
+  margin-top: -6px;
 }
 
 /* Gradient submit button to match the candidate login */
@@ -103,11 +153,11 @@
   border-color: transparent !important;
   color: #ffffff !important;
   font-weight: 700;
-  box-shadow: 0 12px 22px rgba(243, 30, 70, 0.45);
+  box-shadow: 0 8px 20px rgba(243, 30, 70, 0.45);
 }
 .submitBtn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 16px 28px rgba(243, 30, 70, 0.55);
+  box-shadow: 0 12px 28px rgba(243, 30, 70, 0.55);
 }
 
 .footer {
@@ -127,9 +177,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 22px;
-  padding: 44px 36px;
+  justify-content: flex-end;
+  gap: 0;
+  padding: 44px 36px 40px;
   border-radius: 0 28px 28px 0;
   background: linear-gradient(135deg, #ff7a33 0%, #fb4d3d 50%, #f31e46 100%);
   opacity: 80%;
@@ -155,6 +205,7 @@
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 22px 44px rgba(0, 0, 0, 0.22);
+  margin-bottom: -28px;
 }
 .heroImg {
   display: block;
@@ -167,6 +218,7 @@
   z-index: 1;
   text-align: center;
   color: #ffffff;
+  padding-top: 36px;
 }
 .welcomeTitle {
   font-size: 30px;

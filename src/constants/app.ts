@@ -17,8 +17,15 @@ export const SORT_ORDER_OPTIONS = [
   { value: "desc", label: "Descending" },
 ] as const;
 
-export const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
+export const PAGE_SIZE_OPTIONS = [20, 50, 100, 200] as const;
 export const DEFAULT_PAGE_SIZE = 20;
+
+export const SUBMISSION_STATUS_OPTIONS = [
+  { value: "pending", label: "Pending" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "completed", label: "Completed" },
+  { value: "malpractice", label: "Malpractice" },
+] as const;
 
 export const AVATAR_COLORS = [
   "#2563eb",

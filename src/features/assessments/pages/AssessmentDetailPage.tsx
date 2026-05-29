@@ -14,6 +14,7 @@ import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
 import { Submission, PaginationMeta, SortOrder } from "@/types";
+import { SUBMISSION_STATUS_OPTIONS } from "@/constants/app";
 import {
   formatDateTime,
   getAvatarColor,
@@ -22,6 +23,12 @@ import {
   percentageBadgeColor,
 } from "@/utils/helpers";
 import toast from "react-hot-toast";
+
+const SORT_OPTIONS = [
+  { value: "started_at", label: "Started Time" },
+  { value: "candidate_name", label: "Name" },
+  { value: "candidate_email", label: "Email" },
+];
 
 interface SubmissionWithCandidate extends Omit<Submission, "candidate"> {
   candidate?: { first_name?: string; last_name?: string; email?: string };
@@ -45,12 +52,14 @@ export default function AssessmentDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [assessmentName, setAssessmentName] = useState("");
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("started_at");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [status, setStatus] = useState("");
   const [selected, setSelected] = useState<SubmissionWithCandidate | null>(null);
   const [showDetail, setShowDetail] = useState(false);
   const [regranting, setRegranting] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
-  const { page, pageSize, goToPage, reset } = usePagination();
+  const { page, pageSize, goToPage, reset, changePageSize } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
 
   const fetchSubmissions = useCallback(async () => {
@@ -59,8 +68,10 @@ export default function AssessmentDetailPage() {
       const params = new URLSearchParams({
         page: String(page),
         page_size: String(pageSize),
+        sort_by: sortBy,
         sort_order: sortOrder,
         ...(debouncedSearch && { search: debouncedSearch }),
+        ...(status && { status }),
       });
       const { data } = await api.get(
         `/api/workspaces/${workspaceId}/assessments/${id}/submissions?${params}`
@@ -73,14 +84,14 @@ export default function AssessmentDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [id, page, pageSize, sortOrder, debouncedSearch]);
+  }, [id, workspaceId, page, pageSize, sortBy, sortOrder, debouncedSearch, status]);
 
   useEffect(() => {
     fetchSubmissions();
   }, [fetchSubmissions]);
   useEffect(() => {
     reset();
-  }, [debouncedSearch, sortOrder]);
+  }, [debouncedSearch, sortBy, sortOrder, status]);
 
   const handleReaccess = async (submissionId: string) => {
     setRegranting(submissionId);
@@ -227,7 +238,7 @@ export default function AssessmentDetailPage() {
             </tbody>
           </table>
         </div>
-        {meta && <Pagination meta={meta} onPageChange={goToPage} />}
+        {meta && <Pagination meta={meta} onPageChange={goToPage} pageSize={pageSize} onPageSizeChange={changePageSize} />}
       </>
     );
   }
@@ -261,9 +272,15 @@ export default function AssessmentDetailPage() {
       <FilterBar
         search={search}
         onSearchChange={setSearch}
-        sortBy="submitted_at"
+        sortBy={sortBy}
+        onSortByChange={setSortBy}
+        sortByOptions={SORT_OPTIONS}
         sortOrder={sortOrder}
         onSortOrderToggle={() => setSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
+        status={status}
+        onStatusChange={setStatus}
+        statusOptions={SUBMISSION_STATUS_OPTIONS}
+        onRefresh={fetchSubmissions}
       />
 
       {content}

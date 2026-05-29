@@ -26,7 +26,6 @@ const schema = z
     last_name: z.string().optional(),
     email: z.string().email("Invalid email"),
     phone: z.string().min(10, "Enter a valid phone number"),
-    father_name: z.string().min(2, "Father name required"),
     gender: z.enum(["male", "female", "other"], { required_error: "Select a gender" }),
     dob: z.string().optional(),
     college_name: z.string().optional(),
@@ -104,20 +103,12 @@ export default function RegisterPage() {
             error={errors.email?.message}
             {...register("email")}
           />
-          <div className={styles.row}>
-            <Input
-              label="Phone *"
-              placeholder="+91 9876543210"
-              error={errors.phone?.message}
-              {...register("phone")}
-            />
-            <Input
-              label="Father's Name *"
-              placeholder="Robert Doe"
-              error={errors.father_name?.message}
-              {...register("father_name")}
-            />
-          </div>
+          <Input
+            label="Phone *"
+            placeholder="+91 9876543210"
+            error={errors.phone?.message}
+            {...register("phone")}
+          />
           <div className={styles.row}>
             <Controller
               name="gender"

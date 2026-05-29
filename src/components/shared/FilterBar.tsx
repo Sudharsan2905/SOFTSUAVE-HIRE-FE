@@ -10,6 +10,7 @@ import {
   IconGrid,
   IconList,
   IconDownload,
+  IconRefresh,
 } from "@/assets/icons";
 import { COMPLEXITY_OPTIONS, QUESTION_TYPE_OPTIONS } from "@/constants/app";
 import type { ViewMode, SortOrder } from "@/types";
@@ -28,7 +29,11 @@ interface FilterBarProps {
   onComplexityChange?: (v: string) => void;
   questionType?: string;
   onQuestionTypeChange?: (v: string) => void;
+  status?: string;
+  onStatusChange?: (v: string) => void;
+  statusOptions?: readonly { value: string; label: string }[];
   onExport?: () => void;
+  onRefresh?: () => void;
   showComplexity?: boolean;
   showQuestionType?: boolean;
   children?: React.ReactNode;
@@ -48,11 +53,15 @@ export function FilterBar({
   onComplexityChange,
   questionType,
   onQuestionTypeChange,
+  status,
+  onStatusChange,
+  statusOptions,
   onExport,
+  onRefresh,
   showComplexity = false,
   showQuestionType = false,
   children,
-}: FilterBarProps) {
+}: Readonly<FilterBarProps>) {
   return (
     <div className={styles.filterBar}>
       <div className={styles.left}>
@@ -84,6 +93,16 @@ export function FilterBar({
             style={{ minWidth: 160 }}
           />
         )}
+        {statusOptions && onStatusChange && (
+          <Select
+            options={[{ value: "", label: "All Statuses" }, ...statusOptions]}
+            placeholder="Status"
+            value={status}
+            onChange={onStatusChange}
+            fullWidth={false}
+            style={{ minWidth: 145 }}
+          />
+        )}
         {sortByOptions && onSortByChange && (
           <Select
             options={sortByOptions}
@@ -96,6 +115,17 @@ export function FilterBar({
         {children}
       </div>
       <div className={styles.right}>
+        {onRefresh && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onRefresh}
+            leftIcon={<IconRefresh size={15} />}
+            title="Refresh"
+          >
+            Refresh
+          </Button>
+        )}
         <Button
           variant="secondary"
           size="sm"

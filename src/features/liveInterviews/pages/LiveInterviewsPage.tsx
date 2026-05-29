@@ -29,7 +29,7 @@ export default function LiveInterviewsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [showDetail, setShowDetail] = useState(false);
   const [selectedSession, setSelectedSession] = useState<Submission | null>(null);
-  const { page, pageSize, goToPage } = usePagination();
+  const { page, pageSize, goToPage, changePageSize } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -74,6 +74,7 @@ export default function LiveInterviewsPage() {
         onSortOrderToggle={() => setSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        onRefresh={fetchSessions}
       >
         <div style={{ width: 180 }}>
           <Select
@@ -156,7 +157,7 @@ export default function LiveInterviewsPage() {
               );
             })}
           </div>
-          {meta && <Pagination meta={meta} onPageChange={goToPage} />}
+          {meta && <Pagination meta={meta} onPageChange={goToPage} pageSize={pageSize} onPageSizeChange={changePageSize} />}
         </>
       )}
 
