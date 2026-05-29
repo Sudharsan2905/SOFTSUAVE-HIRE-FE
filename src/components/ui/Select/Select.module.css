@@ -1,4 +1,4 @@
-.wrapper {
+﻿.wrapper {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -37,7 +37,7 @@
 }
 .triggerOpen {
   border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 0 3px rgba(37, 99, 255, 0.12);
 }
 .hasError {
   border-color: var(--error-500) !important;
@@ -71,7 +71,7 @@
   transform: rotate(180deg);
 }
 
-/* Dropdown popup — position injected inline via portal */
+/* Dropdown popup â€” position injected inline via portal */
 .dropdown {
   background: var(--bg-surface);
   border: 1px solid var(--border-default);

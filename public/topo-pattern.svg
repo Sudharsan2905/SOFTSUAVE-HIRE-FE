@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 700" preserveAspectRatio="xMidYMid slice">
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.16" stroke-width="2">
+    <!-- Ripple source: upper-right -->
+    <circle cx="560" cy="70" r="120" />
+    <circle cx="560" cy="70" r="185" />
+    <circle cx="560" cy="70" r="250" />
+    <circle cx="560" cy="70" r="320" />
+    <circle cx="560" cy="70" r="395" />
+    <circle cx="560" cy="70" r="470" />
+    <circle cx="560" cy="70" r="550" />
+
+    <!-- Ripple source: lower-left -->
+    <circle cx="40" cy="640" r="110" />
+    <circle cx="40" cy="640" r="180" />
+    <circle cx="40" cy="640" r="255" />
+    <circle cx="40" cy="640" r="330" />
+    <circle cx="40" cy="640" r="410" />
+    <circle cx="40" cy="640" r="490" />
+    <circle cx="40" cy="640" r="575" />
+  </g>
+</svg>

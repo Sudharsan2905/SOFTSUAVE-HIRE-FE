@@ -3,104 +3,334 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-default);
-  padding: 24px;
+  padding: 40px 24px;
+  background: #fbe9e3;
 }
 
+/* ---------- Floating card ---------- */
 .card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
   width: 100%;
-  max-width: 420px;
-  background: var(--bg-surface);
-  border: 1.5px solid var(--border-default);
-  border-radius: var(--radius-xl);
-  padding: 40px;
-  box-shadow: var(--shadow-lg);
+  max-width: 1000px;
+  min-height: 560px;
+  border-radius: 28px;
+  background: #ffffff;
+  box-shadow: 0 40px 90px rgba(243, 30, 70, 0.18);
 }
 
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 28px;
+/* Decorative accent circle (peeks out from behind the left edge) */
+.card::before {
+  content: "";
+  position: absolute;
+  top: -28px;
+  left: -28px;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff7a33, #f31e46);
+  z-index: -1;
+  pointer-events: none;
 }
-.logoMark {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--primary-600);
-  color: #fff;
-  font-size: 18px;
-  font-weight: 800;
+
+/* Decorative light circle (bottom-right, peeking out) */
+.card::after {
+  content: "";
+  position: absolute;
+  bottom: -34px;
+  right: -34px;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ---------- Left: form ---------- */
+.left {
+  flex: 1;
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 48px 40px;
+  border-radius: 28px 0 0 28px;
+  background: #ffffff;
 }
-.logoText {
-  font-size: 18px;
-  font-weight: 700;
+
+.formWrap {
+  width: 100%;
+  max-width: 300px;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.brandName {
+  font-size: 20px;
+  font-weight: 800;
   color: var(--text-primary);
+  letter-spacing: -0.03em;
+}
+.portalPill {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  background: var(--bg-muted);
+  padding: 2px 12px;
+  border-radius: var(--radius-full);
 }
 
 .title {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 6px;
-}
-.subtitle {
-  font-size: 14px;
-  color: var(--text-tertiary);
-  margin-bottom: 28px;
+  font-size: 30px;
+  font-weight: 800;
+  text-align: center;
+  color: #1c1c2e;
+  margin-bottom: 30px;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 16px;
+  border-radius: 10px;
+  background: #f1eff9;
+  transition: box-shadow var(--transition-fast);
+}
+.field:focus-within {
+  box-shadow: 0 0 0 2px rgba(251, 77, 61, 0.45);
+}
+.fieldIcon {
+  display: flex;
+  color: #8a8a9e;
+}
+.fieldIconBtn {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #8a8a9e;
+  transition: color var(--transition-fast);
+}
+.fieldIconBtn:hover {
+  color: #f4452e;
+}
+.input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: #1c1c2e;
+}
+.input::placeholder {
+  color: #9a9aae;
 }
 
 .error {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--error-600);
-  background: var(--error-50);
-  border: 1px solid var(--error-200, #fecaca);
-  border-radius: var(--radius-sm);
-  padding: 8px 12px;
+  margin-top: -6px;
 }
 
-.divider {
+.loginBtn {
+  align-self: center;
+  margin-top: 8px;
+  padding: 12px 34px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ff7a33 0%, #fb4d3d 50%, #f31e46 100%);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 12px 22px rgba(243, 30, 70, 0.45);
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+.loginBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 28px rgba(243, 30, 70, 0.55);
+}
+.loginBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.others {
+  text-align: center;
+  font-size: 14px;
+  color: #6a6a7e;
+  margin: 26px 0 16px;
+}
+.others strong {
+  color: #1c1c2e;
+}
+
+/* Custom social button + transparent real Google widget on top */
+.socialWrap {
+  position: relative;
+  height: 48px;
+  overflow: hidden;
+}
+.socialBtn {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 20px 0 16px;
-  color: var(--text-tertiary);
-  font-size: 13px;
-}
-.divider::before,
-.divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--border-default);
-}
-
-.googleBtn {
-  display: flex;
   justify-content: center;
-  margin-bottom: 4px;
+  gap: 10px;
+  width: 100%;
+  height: 48px;
+  border: 1px solid #ececf4;
+  border-radius: 12px;
+  background: #ffffff;
+  font-size: 14px;
+  color: #4a4a5e;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+}
+.socialBtn strong {
+  color: #1c1c2e;
+}
+.googleOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 48px;
+  max-height: 48px;
+  opacity: 0;
+  overflow: hidden;
+}
+/* Force the GSI widget (nested divs + iframe) down to the 48px button size.
+   A fixed height is used instead of 100% because height:100% only resolves
+   when every ancestor has an explicit height — the iframe is nested several
+   divs deep, so % collapses back to the iframe's default 150px. */
+.googleOverlay div,
+.googleOverlay iframe {
+  width: 100% !important;
+  height: 48px !important;
 }
 
 .footer {
-  margin-top: 20px;
+  position: relative;
+  z-index: 5;
+  margin-top: 22px;
   text-align: center;
   font-size: 13px;
-  color: var(--text-secondary);
+  color: #6a6a7e;
 }
 .link {
-  color: var(--primary-600);
-  font-weight: 500;
+  position: relative;
+  z-index: 5;
+  color: #f4452e;
+  font-weight: 600;
   text-decoration: none;
 }
 .link:hover {
   text-decoration: underline;
+}
+
+/* ---------- Right: gradient hero ---------- */
+.right {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 44px 36px;
+  border-radius: 0 28px 28px 0;
+  background: linear-gradient(135deg, #ff7a33 0%, #fb4d3d 50%, #f31e46 100%);
+  opacity: 80%;
+}
+
+/* Topographic contour texture */
+.right::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("/topo-pattern.svg");
+  background-size: cover;
+  background-position: center;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.heroCard {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 300px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.22);
+}
+.heroImg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.welcome {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  color: #ffffff;
+}
+.welcomeTitle {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.welcomeSub {
+  margin-top: 8px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.badge {
+  position: absolute;
+  z-index: 2;
+  top: 44px;
+  left: max(24px, calc(50% - 158px));
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .card {
+    max-width: 440px;
+    min-height: 0;
+  }
+  .right {
+    display: none;
+  }
+  .left {
+    border-radius: 28px;
+  }
 }

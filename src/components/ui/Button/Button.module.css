@@ -1,4 +1,4 @@
-.button {
+﻿.button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -16,7 +16,7 @@
 }
 
 .button:focus-visible {
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 0 0 3px rgba(37, 99, 255, 0.3);
 }
 
 .button:disabled {

@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/Select";
 import { useAppDispatch } from "@/store";
 import { candidateRegister } from "@/store/slices/authSlice";
 import { IconEye, IconEyeOff } from "@/assets/icons";
+import logoUrl from "@/assets/favicon.svg";
 
 const passwordSchema = z
   .string()
@@ -72,14 +73,16 @@ export default function RegisterPage() {
   return (
     <div className={styles.page}>
       <div className={styles.card}>
-        <div className={styles.logo}>
-          <span className={styles.logoMark}>S</span>
-          <span className={styles.logoText}>SoftSuave Hire</span>
-        </div>
-        <h1 className={styles.title}>Create Account</h1>
-        <p className={styles.subtitle}>Register to start your assessment</p>
+        {/* Left: register form */}
+        <div className={styles.left}>
+          <div className={styles.formWrap}>
+            <div className={styles.brand}>
+              <img src={logoUrl} width="44" height="44" alt="SoftSuave Hire" />
+              <h1 className={styles.brandName}>SoftSuave Hire</h1>
+              <span className={styles.portalPill}>Create Account</span>
+            </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+            <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
           <div className={styles.row}>
             <Input
               label="First Name *"
@@ -203,21 +206,46 @@ export default function RegisterPage() {
               {...register("confirm_password")}
             />
           </div>
-          {errors.root && <p className={styles.error}>{errors.root.message}</p>}
-          <Button type="submit" fullWidth isLoading={isSubmitting}>
-            Create Account
-          </Button>
-        </form>
+              {errors.root && <p className={styles.error}>{errors.root.message}</p>}
+              <Button
+                type="submit"
+                fullWidth
+                isLoading={isSubmitting}
+                className={styles.submitBtn}
+              >
+                Create Account
+              </Button>
+            </form>
 
-        <p className={styles.footer}>
-          Already have an account?{" "}
-          <Link
-            to={shareLink ? `/candidate/login?share=${shareLink}` : "/candidate/login"}
-            className={styles.link}
-          >
-            Sign in
-          </Link>
-        </p>
+            <p className={styles.footer}>
+              Already have an account?{" "}
+              <Link
+                to={shareLink ? `/candidate/login?share=${shareLink}` : "/candidate/login"}
+                className={styles.link}
+              >
+                Sign in
+              </Link>
+            </p>
+          </div>
+        </div>
+
+        {/* Right: gradient hero panel */}
+        <div className={styles.right}>
+          <div className={styles.heroWrap}>
+            <div className={styles.badge} aria-hidden="true">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="#FBBF24">
+                <path d="M13 2L4.5 13.5H11l-1 8.5L19.5 10H13z" />
+              </svg>
+            </div>
+            <div className={styles.heroCard}>
+              <img src="/person.svg" alt="" className={styles.heroImg} />
+            </div>
+          </div>
+          <div className={styles.welcome}>
+            <h2 className={styles.welcomeTitle}>Get Started!</h2>
+            <p className={styles.welcomeSub}>Create your account to begin</p>
+          </div>
+        </div>
       </div>
     </div>
   );

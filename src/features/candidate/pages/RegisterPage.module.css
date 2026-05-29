@@ -1,56 +1,90 @@
 .page {
   min-height: 100vh;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  background: var(--bg-default);
-  padding: 32px 24px;
+  padding: 40px 24px;
+  background: #fbe9e3;
 }
 
+/* ---------- Floating card ---------- */
 .card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
   width: 100%;
-  max-width: 640px;
-  background: var(--bg-surface);
-  border: 1.5px solid var(--border-default);
-  border-radius: var(--radius-xl);
-  padding: 40px;
-  box-shadow: var(--shadow-lg);
+  max-width: 1040px;
+  min-height: 560px;
+  border-radius: 28px;
+  background: #ffffff;
+  box-shadow: 0 40px 90px rgba(243, 30, 70, 0.18);
 }
 
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 28px;
+/* Decorative accent circle (peeks out from behind the left edge) */
+.card::before {
+  content: "";
+  position: absolute;
+  top: -28px;
+  left: -28px;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff7a33, #f31e46);
+  z-index: -1;
+  pointer-events: none;
 }
-.logoMark {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--primary-600);
-  color: #fff;
-  font-size: 18px;
-  font-weight: 800;
+
+/* Decorative light circle (bottom-right, peeking out) */
+.card::after {
+  content: "";
+  position: absolute;
+  bottom: -34px;
+  right: -34px;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ---------- Left: form ---------- */
+.left {
+  flex: 1.35;
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-.logoText {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary);
+  padding: 44px 44px;
+  border-radius: 28px 0 0 28px;
+  background: #ffffff;
 }
 
-.title {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 6px;
+.formWrap {
+  width: 100%;
+  max-width: 460px;
 }
-.subtitle {
-  font-size: 14px;
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.brandName {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+}
+.portalPill {
+  font-size: 13px;
   color: var(--text-tertiary);
-  margin-bottom: 28px;
+  background: var(--bg-muted);
+  padding: 2px 12px;
+  border-radius: var(--radius-full);
 }
 
 .form {
@@ -65,40 +99,6 @@
   gap: 16px;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-.select {
-  height: 40px;
-  padding: 0 12px;
-  border: 1.5px solid var(--border-default);
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  color: var(--text-primary);
-  background: var(--bg-surface);
-  width: 100%;
-  cursor: pointer;
-  outline: none;
-  transition: border-color var(--transition-fast);
-}
-.select:focus {
-  border-color: var(--primary-400);
-}
-.selectError {
-  border-color: var(--error-500);
-}
-.fieldError {
-  font-size: 12px;
-  color: var(--error-600);
-}
-
 .error {
   font-size: 13px;
   color: var(--error-600);
@@ -108,26 +108,134 @@
   padding: 8px 12px;
 }
 
+/* Gradient submit button to match the candidate login */
+.submitBtn {
+  margin-top: 4px;
+  background: linear-gradient(135deg, #ff7a33 0%, #fb4d3d 50%, #f31e46 100%) !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  box-shadow: 0 12px 22px rgba(243, 30, 70, 0.45);
+}
+.submitBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 28px rgba(243, 30, 70, 0.55);
+}
+
 .footer {
+  position: relative;
+  z-index: 1;
   margin-top: 20px;
   text-align: center;
   font-size: 13px;
-  color: var(--text-secondary);
+  color: #6a6a7e;
 }
 .link {
-  color: var(--primary-600);
-  font-weight: 500;
+  color: #f4452e;
+  font-weight: 600;
   text-decoration: none;
 }
 .link:hover {
   text-decoration: underline;
 }
 
+/* ---------- Right: gradient hero ---------- */
+.right {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 44px 36px;
+  border-radius: 0 28px 28px 0;
+  background: linear-gradient(135deg, #ff7a33 0%, #fb4d3d 50%, #f31e46 100%);
+  opacity: 80%;
+}
+
+/* Topographic contour texture */
+.right::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("/topo-pattern.svg");
+  background-size: cover;
+  background-position: center;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.heroWrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 300px;
+}
+.heroCard {
+  width: 100%;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.22);
+}
+.heroImg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.welcome {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  color: #ffffff;
+}
+.welcomeTitle {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.welcomeSub {
+  margin-top: 8px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.badge {
+  position: absolute;
+  z-index: 2;
+  top: -16px;
+  left: -16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .card {
+    max-width: 520px;
+    min-height: 0;
+  }
+  .right {
+    display: none;
+  }
+  .left {
+    border-radius: 28px;
+  }
+}
+
 @media (max-width: 520px) {
   .row {
     grid-template-columns: 1fr;
   }
-  .card {
-    padding: 28px 20px;
+  .left {
+    padding: 32px 22px;
   }
 }

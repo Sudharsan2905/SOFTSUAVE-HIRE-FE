@@ -1,4 +1,4 @@
-.sidebar {
+﻿.sidebar {
   height: 100vh;
   position: fixed;
   left: 0;
@@ -11,10 +11,10 @@
   flex-shrink: 0;
   transition: width 0.18s ease;
   user-select: none;
-  /* No overflow: hidden — lets the workspace popup escape the sidebar bounds */
+  /* No overflow: hidden â€” lets the workspace popup escape the sidebar bounds */
 }
 
-/* ── Logo ── */
+/* â”€â”€ Logo â”€â”€ */
 .logo {
   display: flex;
   align-items: center;
@@ -68,7 +68,7 @@
   margin-top: 2px;
 }
 
-/* ── Workspace section ── */
+/* â”€â”€ Workspace section â”€â”€ */
 .workspaceSection {
   padding: 12px 10px;
   border-bottom: 1px solid var(--sidebar-border);
@@ -77,7 +77,7 @@
   padding: 10px 6px;
 }
 
-/* ── Nav ── */
+/* â”€â”€ Nav â”€â”€ */
 .navContainer {
   flex: 1;
   overflow-y: auto;
@@ -135,7 +135,7 @@
   gap: 0;
 }
 
-/* ── Profile trigger ── */
+/* â”€â”€ Profile trigger â”€â”€ */
 .profileTrigger {
   display: flex;
   align-items: center;
@@ -198,7 +198,7 @@
   }
 }
 
-/* ── Profile Popup ─────────────────────────────────────────── */
+/* â”€â”€ Profile Popup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .ppOverlay {
   position: fixed;
@@ -381,7 +381,7 @@
 .ppFieldInput:focus {
   border-color: var(--border-focus);
   background-color: var(--bg-surface);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 0 3px rgba(37, 99, 255, 0.12);
 }
 
 .ppRoleTag {
@@ -421,8 +421,8 @@
   border-color: var(--border-strong);
 }
 [data-theme="dark"] .ppChangeBtn:hover {
-  background: rgba(37, 99, 235, 0.15);
-  border-color: rgba(37, 99, 235, 0.4);
+  background: rgba(37, 99, 255, 0.15);
+  border-color: rgba(37, 99, 255, 0.4);
 }
 
 /* Footer */
@@ -440,7 +440,7 @@
   gap: 8px;
 }
 
-/* Logout button — icon only, expands on hover */
+/* Logout button â€” icon only, expands on hover */
 .ppLogoutBtn {
   display: inline-flex;
   align-items: center;
