@@ -4,11 +4,11 @@ import { Spinner } from "@/components/ui/Spinner";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useAppSelector } from "@/store";
 
-function SuperAdminRoute({ children }: { children: React.ReactNode }) {
+const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
   const user = useAppSelector((s) => s.auth.user);
   if (user?.role !== "super_admin") return <Navigate to="/question-bank" replace />;
   return <>{children}</>;
-}
+};
 
 function CandidateDashboard() {
   return (

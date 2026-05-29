@@ -21,9 +21,12 @@ import { Input, Textarea } from "@/components/ui/Input";
 import { getInitials, getAvatarColor, getFullName } from "@/utils/helpers";
 import { updateUser } from "@/store/slices/authSlice";
 import toast from "react-hot-toast";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
   const dispatch = useAppDispatch();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { activeWorkspace, workspaces } = useAppSelector((s) => s.workspace);
   const user = useAppSelector((s) => s.auth.user);
   const isSuperAdmin = user?.role === "super_admin";
@@ -187,6 +190,14 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
     );
   };
 
+  const switchWorkspace = (ws: Workspace) => {
+    dispatch(setActiveWorkspace(ws));
+    setIsOpen(false);
+    if (location.pathname.startsWith("/workspaces")) {
+      navigate(`/workspaces/${ws.id}/assessments`);
+    }
+  };
+
   const isActiveDefault = activeWorkspace?.id === user?.default_workspace_id;
 
   // Admin with no workspace access
@@ -320,8 +331,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
               key={ws.id}
               className={`${styles.wsItem} ${activeWorkspace?.id === ws.id ? styles.wsItemActive : ""}`}
               onClick={() => {
-                dispatch(setActiveWorkspace(ws));
-                setIsOpen(false);
+                switchWorkspace(ws);
               }}
             >
               <div className={styles.wsItemIcon} style={{ background: getAvatarColor(ws.name) }}>
