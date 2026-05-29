@@ -38,7 +38,7 @@ const adminNav: NavItem[] = [
   {
     to: "/question-bank",
     label: "Knowledge Vault",
-    icon: <IconQuestionBank size={22} />,
+    icon: <IconQuestionBank size={21} />,
   },
   {
     to: "/live-interviews",

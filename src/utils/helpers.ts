@@ -67,7 +67,7 @@ export function downloadBlob(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-export function percentageBadgeColor(pct: number): string {
+export function percentageBadgeColor(pct: number): "success" | "warning" | "error" {
   if (pct >= 75) return "success";
   if (pct >= 50) return "warning";
   return "error";

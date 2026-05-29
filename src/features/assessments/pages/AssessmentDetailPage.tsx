@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import writeXlsxFile from "write-excel-file/browser";
 import { useParams, useNavigate } from "react-router-dom";
 import styles from "./AssessmentDetailPage.module.css";
 import { Header } from "@/components/layout/Header";
@@ -22,13 +23,22 @@ import {
 } from "@/utils/helpers";
 import toast from "react-hot-toast";
 
-interface SubmissionWithCandidate extends Submission {
+interface SubmissionWithCandidate extends Omit<Submission, "candidate"> {
   candidate?: { first_name?: string; last_name?: string; email?: string };
   score_percentage?: number;
 }
 
+type ExportRow = {
+  name: string;
+  email: string;
+  phone: string;
+  percentage: number;
+  rounds_count: number;
+  completed_at: string;
+};
+
 export default function AssessmentDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { workspaceId, id } = useParams<{ workspaceId: string; id: string }>();
   const navigate = useNavigate();
   const [submissions, setSubmissions] = useState<SubmissionWithCandidate[]>([]);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
@@ -52,7 +62,9 @@ export default function AssessmentDetailPage() {
         sort_order: sortOrder,
         ...(debouncedSearch && { search: debouncedSearch }),
       });
-      const { data } = await api.get(`/api/assessments/${id}/submissions?${params}`);
+      const { data } = await api.get(
+        `/api/workspaces/${workspaceId}/assessments/${id}/submissions?${params}`
+      );
       setSubmissions(data.data?.submissions || []);
       setMeta(data.data?.pagination || null);
       if (data.data?.assessment_name) setAssessmentName(data.data.assessment_name);
@@ -73,7 +85,9 @@ export default function AssessmentDetailPage() {
   const handleReaccess = async (submissionId: string) => {
     setRegranting(submissionId);
     try {
-      await api.post(`/api/assessments/submissions/${submissionId}/reaccess`);
+      await api.post(
+        `/api/workspaces/${workspaceId}/assessments/${id}/submissions/${submissionId}/reaccess`
+      );
       toast.success("Access granted — candidate can re-enter the assessment");
       fetchSubmissions();
     } catch {
@@ -86,15 +100,24 @@ export default function AssessmentDetailPage() {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const res = await api.get(`/api/assessments/${id}/submissions/export`, {
-        responseType: "blob",
-      });
-      const url = URL.createObjectURL(res.data);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${assessmentName || "assessment"}_submissions.xlsx`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const { data } = await api.get(
+        `/api/workspaces/${workspaceId}/assessments/${id}/submissions/export`
+      );
+      const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return Number.isNaN(date.getTime()) ? "Invalid Date" : formatDateTime(dateStr);
+      };
+      const rows: ExportRow[] = data.data ?? data;
+      await writeXlsxFile<ExportRow>(rows, {
+        columns: [
+          { header: "Name", cell: (r: ExportRow) => r.name },
+          { header: "Email", cell: (r: ExportRow) => r.email },
+          { header: "Phone", cell: (r: ExportRow) => r.phone },
+          { header: "Score (%)", cell: (r: ExportRow) => r.percentage },
+          { header: "Rounds", cell: (r: ExportRow) => r.rounds_count },
+          { header: "Completed At", cell: (r: ExportRow) => formatDate(r.completed_at) },
+        ],
+      }).toFile(`${assessmentName || "assessment"}_submissions.xlsx`);
     } catch {
       toast.error("Export failed");
     } finally {
@@ -106,6 +129,108 @@ export default function AssessmentDetailPage() {
     setSelected(sub);
     setShowDetail(true);
   };
+
+  let content: React.ReactNode;
+  if (isLoading) {
+    content = (
+      <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
+        <Spinner size="lg" />
+      </div>
+    );
+  } else if (submissions.length === 0) {
+    content = (
+      <div className={styles.empty}>
+        <p>No submissions yet</p>
+        <span style={{ fontSize: 12 }}>
+          Candidates will appear here once they start the assessment
+        </span>
+      </div>
+    );
+  } else {
+    content = (
+      <>
+        <div className={styles.tableWrapper}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Candidate</th>
+                <th>Status</th>
+                <th>Score</th>
+                <th>Round</th>
+                <th>Started</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {submissions.map((sub) => {
+                const name = sub.candidate
+                  ? getFullName(sub.candidate as { first_name: string; last_name?: string })
+                  : "Unknown";
+                const pct = sub.score_percentage;
+                return (
+                  <tr key={sub.id}>
+                    <td>
+                      <div className={styles.candidateCell}>
+                        <div className={styles.avatar} style={{ background: getAvatarColor(name) }}>
+                          {getInitials(name)}
+                        </div>
+                        <div>
+                          <p className={styles.candidateName}>{name}</p>
+                          <p className={styles.candidateEmail}>{sub.candidate?.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <StatusBadge status={sub.status} />
+                    </td>
+                    <td>
+                      {pct !== undefined && pct !== null ? (
+                        <Badge variant={percentageBadgeColor(pct)}>{pct.toFixed(1)}%</Badge>
+                      ) : (
+                        <span style={{ color: "var(--text-tertiary)", fontSize: 13 }}>—</span>
+                      )}
+                    </td>
+                    <td style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+                      Round {sub.current_round}
+                    </td>
+                    <td style={{ fontSize: 13, color: "var(--text-tertiary)" }}>
+                      {formatDateTime(sub.started_at)}
+                    </td>
+                    <td>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button
+                          className={styles.actionBtn}
+                          onClick={() => openDetail(sub)}
+                          title="View Details"
+                        >
+                          <IconEye size={14} />
+                        </button>
+                        {(sub.status === "completed" || sub.status === "malpractice") && (
+                          <button
+                            className={`${styles.actionBtn} ${styles.reaccess}`}
+                            onClick={() => handleReaccess(sub.id)}
+                            title="Grant Re-access"
+                            disabled={regranting === sub.id}
+                          >
+                            {regranting === sub.id ? (
+                              <Spinner size="sm" />
+                            ) : (
+                              <IconRefresh size={14} />
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {meta && <Pagination meta={meta} onPageChange={goToPage} />}
+      </>
+    );
+  }
 
   return (
     <div>
@@ -141,103 +266,7 @@ export default function AssessmentDetailPage() {
         onSortOrderToggle={() => setSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
       />
 
-      {isLoading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
-          <Spinner size="lg" />
-        </div>
-      ) : submissions.length === 0 ? (
-        <div className={styles.empty}>
-          <p>No submissions yet</p>
-          <span style={{ fontSize: 12 }}>
-            Candidates will appear here once they start the assessment
-          </span>
-        </div>
-      ) : (
-        <>
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Candidate</th>
-                  <th>Status</th>
-                  <th>Score</th>
-                  <th>Round</th>
-                  <th>Started</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {submissions.map((sub) => {
-                  const name = sub.candidate
-                    ? getFullName(sub.candidate as { first_name: string; last_name?: string })
-                    : "Unknown";
-                  const pct = sub.score_percentage;
-                  return (
-                    <tr key={sub.id}>
-                      <td>
-                        <div className={styles.candidateCell}>
-                          <div
-                            className={styles.avatar}
-                            style={{ background: getAvatarColor(name) }}
-                          >
-                            {getInitials(name)}
-                          </div>
-                          <div>
-                            <p className={styles.candidateName}>{name}</p>
-                            <p className={styles.candidateEmail}>{sub.candidate?.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <StatusBadge status={sub.status} />
-                      </td>
-                      <td>
-                        {pct !== undefined && pct !== null ? (
-                          <Badge variant={percentageBadgeColor(pct)}>{pct.toFixed(1)}%</Badge>
-                        ) : (
-                          <span style={{ color: "var(--text-tertiary)", fontSize: 13 }}>—</span>
-                        )}
-                      </td>
-                      <td style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                        Round {sub.current_round}
-                      </td>
-                      <td style={{ fontSize: 13, color: "var(--text-tertiary)" }}>
-                        {formatDateTime(sub.started_at)}
-                      </td>
-                      <td>
-                        <div style={{ display: "flex", gap: 6 }}>
-                          <button
-                            className={styles.actionBtn}
-                            onClick={() => openDetail(sub)}
-                            title="View Details"
-                          >
-                            <IconEye size={14} />
-                          </button>
-                          {(sub.status === "completed" || sub.status === "malpractice") && (
-                            <button
-                              className={`${styles.actionBtn} ${styles.reaccess}`}
-                              onClick={() => handleReaccess(sub.id)}
-                              title="Grant Re-access"
-                              disabled={regranting === sub.id}
-                            >
-                              {regranting === sub.id ? (
-                                <Spinner size="sm" />
-                              ) : (
-                                <IconRefresh size={14} />
-                              )}
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          {meta && <Pagination meta={meta} onPageChange={goToPage} />}
-        </>
-      )}
+      {content}
 
       <Modal
         isOpen={showDetail}
@@ -291,8 +320,8 @@ export default function AssessmentDetailPage() {
                 <p style={{ fontWeight: 600, color: "var(--error-600)", marginBottom: 6 }}>
                   Malpractice Flags ({selected.malpractice_flags.length})
                 </p>
-                {selected.malpractice_flags.map((flag, i) => (
-                  <div key={i} className={styles.flagItem}>
+                {selected.malpractice_flags.map((flag) => (
+                  <div key={`${flag.type}-${flag.flagged_at}`} className={styles.flagItem}>
                     <span>{flag.type}</span>
                     <span style={{ color: "var(--text-tertiary)", fontSize: 11 }}>
                       {formatDateTime(flag.flagged_at)}
@@ -302,32 +331,30 @@ export default function AssessmentDetailPage() {
               </div>
             )}
 
-            {selected.rounds &&
-              selected.rounds.map((round, ri) => (
-                <div key={ri} className={styles.roundSection}>
-                  <h4
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      marginBottom: 10,
-                      color: "var(--text-secondary)",
-                    }}
-                  >
-                    Round {round.round_number}
-                  </h4>
-                  {round.answers &&
-                    Object.entries(round.answers).map(([qId, answer]) => (
-                      <div key={qId} className={styles.answerItem}>
-                        <p style={{ fontSize: 13, color: "var(--text-primary)", marginBottom: 4 }}>
-                          Q: {qId}
-                        </p>
-                        <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-                          A: {Array.isArray(answer) ? answer.join(", ") : String(answer || "—")}
-                        </p>
-                      </div>
-                    ))}
-                </div>
-              ))}
+            {selected.rounds?.map((round) => (
+              <div key={round.round_number} className={styles.roundSection}>
+                <h4
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    marginBottom: 10,
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  Round {round.round_number}
+                </h4>
+                {Object.entries(round.answers ?? {}).map(([qId, answer]) => (
+                  <div key={qId} className={styles.answerItem}>
+                    <p style={{ fontSize: 13, color: "var(--text-primary)", marginBottom: 4 }}>
+                      Q: {qId}
+                    </p>
+                    <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                      A: {Array.isArray(answer) ? answer.join(", ") : String(answer || "—")}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ))}
 
             {selected.screenshots && selected.screenshots.length > 0 && (
               <div>
@@ -336,7 +363,7 @@ export default function AssessmentDetailPage() {
                 </p>
                 <div className={styles.screenshotGrid}>
                   {selected.screenshots.map((s, i) => (
-                    <div key={i}>
+                    <div key={s.taken_at}>
                       <div className={styles.screenshotBox}>Screenshot {i + 1}</div>
                       <p
                         style={{
