@@ -3,11 +3,13 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { GoogleLogin } from "@react-oauth/google";
+import type { CredentialResponse } from "@react-oauth/google";
 import styles from "./CandidateLoginPage.module.css";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useAppDispatch } from "@/store";
-import { candidateLogin } from "@/store/slices/authSlice";
+import { candidateLogin, googleLogin } from "@/store/slices/authSlice";
 import { IconEye, IconEyeOff } from "@/assets/icons";
 import logoUrl from "@/assets/favicon.svg";
 
@@ -40,6 +42,17 @@ export default function CandidateLoginPage() {
       else navigate("/candidate/dashboard");
     } catch (e: unknown) {
       setError("root", { message: (e as { message?: string })?.message || "Invalid credentials" });
+    }
+  };
+
+  const handleGoogleLogin = async (credentialResponse: CredentialResponse) => {
+    if (!credentialResponse.credential) return;
+    try {
+      await dispatch(googleLogin(credentialResponse.credential)).unwrap();
+      if (shareLink) navigate(`/assessment/${shareLink}/instructions`);
+      else navigate("/candidate/dashboard");
+    } catch {
+      // error already shown via Redux toast
     }
   };
 
@@ -89,6 +102,20 @@ export default function CandidateLoginPage() {
             Sign In
           </Button>
         </form>
+
+        <div className={styles.divider}>
+          <span>or</span>
+        </div>
+
+        <div className={styles.googleBtn}>
+          <GoogleLogin
+            onSuccess={handleGoogleLogin}
+            onError={() => {}}
+            width="340"
+            text="continue_with"
+            shape="rectangular"
+          />
+        </div>
 
         <p className={styles.footer}>
           Don't have an account?{" "}

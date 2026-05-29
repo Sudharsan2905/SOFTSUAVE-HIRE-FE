@@ -33,11 +33,8 @@
 .cardActions {
   display: flex;
   gap: 4px;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-.card:hover .cardActions {
   opacity: 1;
+  transition: opacity var(--transition-fast);
 }
 
 .iconBtn {

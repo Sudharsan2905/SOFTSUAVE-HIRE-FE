@@ -19,6 +19,7 @@ import {
   IconCopy,
   IconMail,
   IconWhatsApp,
+  IconWorkspace,
   IconChevronRight,
 } from "@/assets/icons";
 import { api } from "@/utils/api";
@@ -27,9 +28,11 @@ import { usePagination } from "@/hooks/usePagination";
 import { Assessment, PaginationMeta, ViewMode, SortOrder } from "@/types";
 import { formatDate, generateShareUrl, copyToClipboard } from "@/utils/helpers";
 import toast from "react-hot-toast";
-import { CreateAssessmentWizard } from "../components/CreateWizard/WizardContainer";
+import {
+  CreateAssessmentWizard,
+  AssessmentDraft,
+} from "../components/CreateWizard/WizardContainer";
 import { useAppSelector } from "@/store";
-import { IconWorkspace } from "@/assets/icons";
 
 const SORT_OPTIONS = [
   { value: "created_at", label: "Created Date" },
@@ -54,7 +57,7 @@ export default function AssessmentsPage() {
   const [showWizard, setShowWizard] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
-  const [_cloneSource, _setCloneSource] = useState<Assessment | null>(null);
+  const [wizardPrefill, setWizardPrefill] = useState<Partial<AssessmentDraft> | null>(null);
   const [selected, setSelected] = useState<Assessment | null>(null);
   const [saving, setSaving] = useState(false);
   const { page, pageSize, goToPage, reset } = usePagination();
@@ -88,14 +91,20 @@ export default function AssessmentsPage() {
     reset();
   }, [debouncedSearch, sortBy, sortOrder]);
 
-  const handleClone = async (a: Assessment) => {
-    try {
-      await api.post(`/api/workspaces/${workspaceId}/assessments/${a.id}/clone`);
-      toast.success("Assessment cloned");
-      fetchAssessments();
-    } catch {
-      toast.error("Failed to clone");
-    }
+  const handleCloneClick = (a: Assessment) => {
+    setWizardPrefill({
+      name: `Copy of ${a.name}`,
+      description: a.description,
+      rounds: a.rounds.map((r) => ({
+        round_number: r.round_number,
+        question_count: r.question_count,
+        max_duration_minutes: r.max_duration_minutes,
+        question_ids: r.question_ids,
+      })),
+      accessibility: a.accessibility,
+      monitoring_config: a.monitoring_config,
+    });
+    setShowWizard(true);
   };
 
   const handleDelete = async () => {
@@ -146,7 +155,13 @@ export default function AssessmentsPage() {
         title="Assessments"
         subtitle={`${meta?.total ?? 0} assessments`}
         actions={
-          <Button leftIcon={<IconPlus size={16} />} onClick={() => setShowWizard(true)}>
+          <Button
+            leftIcon={<IconPlus size={16} />}
+            onClick={() => {
+              setWizardPrefill(null);
+              setShowWizard(true);
+            }}
+          >
             Create Assessment
           </Button>
         }
@@ -172,7 +187,13 @@ export default function AssessmentsPage() {
         <div className={styles.empty}>
           <IconAssessment size={48} color="var(--text-tertiary)" />
           <p>No assessments yet</p>
-          <Button leftIcon={<IconPlus size={15} />} onClick={() => setShowWizard(true)}>
+          <Button
+            leftIcon={<IconPlus size={15} />}
+            onClick={() => {
+              setWizardPrefill(null);
+              setShowWizard(true);
+            }}
+          >
             Create Assessment
           </Button>
         </div>
@@ -205,7 +226,11 @@ export default function AssessmentsPage() {
                     >
                       <IconShare size={14} />
                     </button>
-                    <button className={styles.iconBtn} onClick={() => handleClone(a)} title="Clone">
+                    <button
+                      className={styles.iconBtn}
+                      onClick={() => handleCloneClick(a)}
+                      title="Clone"
+                    >
                       <IconClone size={14} />
                     </button>
                     <button
@@ -251,11 +276,16 @@ export default function AssessmentsPage() {
       {showWizard && workspaceId && (
         <CreateAssessmentWizard
           workspaceId={workspaceId}
-          onClose={() => setShowWizard(false)}
+          onClose={() => {
+            setShowWizard(false);
+            setWizardPrefill(null);
+          }}
           onSuccess={() => {
             setShowWizard(false);
+            setWizardPrefill(null);
             fetchAssessments();
           }}
+          initialData={wizardPrefill || undefined}
         />
       )}
 
