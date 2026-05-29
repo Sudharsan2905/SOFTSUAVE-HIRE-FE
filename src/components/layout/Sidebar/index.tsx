@@ -38,12 +38,12 @@ const adminNav: NavItem[] = [
   {
     to: "/question-bank",
     label: "Knowledge Vault",
-    icon: <IconQuestionBank size={18} />,
+    icon: <IconQuestionBank size={22} />,
   },
   {
     to: "/live-interviews",
     label: "Live Interviews",
-    icon: <IconLiveInterview size={18} />,
+    icon: <IconLiveInterview size={20} />,
   },
 ];
 
@@ -229,7 +229,7 @@ export function Sidebar() {
                 className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ""}`}
                 title="Assessments"
               >
-                <IconAssessment size={18} />
+                <IconAssessment size={22} />
                 {!collapsed && <span>Assessments</span>}
               </NavLink>
             </div>
@@ -253,7 +253,7 @@ export function Sidebar() {
                 className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ""}`}
                 title="Users"
               >
-                <IconUsers size={18} />
+                <IconUsers size={20} />
                 {!collapsed && <span>Users</span>}
               </NavLink>
             )}
