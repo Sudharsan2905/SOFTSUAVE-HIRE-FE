@@ -3,18 +3,67 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-page);
-  padding: 24px;
+  padding: 40px 24px;
+  background: #fbe9e3;
 }
 
+/* ---------- Floating card ---------- */
 .card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
   width: 100%;
-  max-width: 400px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-xl);
-  padding: 40px 36px;
-  box-shadow: var(--shadow-lg);
+  max-width: 1000px;
+  min-height: 560px;
+  border-radius: 28px;
+  background: #ffffff;
+  box-shadow: 0 40px 90px rgba(243, 30, 70, 0.18);
+}
+
+/* Decorative accent circle (peeks out from behind the left edge) */
+.card::before {
+  content: "";
+  position: absolute;
+  top: -28px;
+  left: -28px;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff7a33, #f31e46);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Decorative light circle (bottom-right, peeking out) */
+.card::after {
+  content: "";
+  position: absolute;
+  bottom: -34px;
+  right: -34px;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ---------- Left: form ---------- */
+.left {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 40px;
+  border-radius: 28px 0 0 28px;
+  background: #ffffff;
+}
+
+.formWrap {
+  width: 100%;
+  max-width: 320px;
 }
 
 .logoArea {
@@ -24,23 +73,20 @@
   gap: 8px;
   margin-bottom: 32px;
 }
-
 .logoIcon {
   display: flex;
 }
-
 .appName {
   font-size: 22px;
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.03em;
 }
-
 .tagline {
   font-size: 13px;
   color: var(--text-tertiary);
   background: var(--bg-muted);
-  padding: 2px 10px;
+  padding: 2px 12px;
   border-radius: var(--radius-full);
 }
 
@@ -50,9 +96,114 @@
   gap: 16px;
 }
 
+/* Gradient submit button to match the candidate login */
+.submitBtn {
+  margin-top: 4px;
+  background: linear-gradient(135deg, #ff7a33 0%, #fb4d3d 50%, #f31e46 100%) !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  box-shadow: 0 12px 22px rgba(243, 30, 70, 0.45);
+}
+.submitBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 28px rgba(243, 30, 70, 0.55);
+}
+
 .footer {
+  position: relative;
+  z-index: 1;
   text-align: center;
   font-size: 12px;
   color: var(--text-tertiary);
   margin-top: 28px;
+}
+
+/* ---------- Right: gradient hero ---------- */
+.right {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 44px 36px;
+  border-radius: 0 28px 28px 0;
+  background: linear-gradient(135deg, #ff7a33 0%, #fb4d3d 50%, #f31e46 100%);
+  opacity: 80%;
+}
+
+/* Topographic contour texture */
+.right::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("/topo-pattern.svg");
+  background-size: cover;
+  background-position: center;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.heroCard {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 300px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.22);
+}
+.heroImg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.welcome {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  color: #ffffff;
+}
+.welcomeTitle {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.welcomeSub {
+  margin-top: 8px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.badge {
+  position: absolute;
+  z-index: 2;
+  top: 44px;
+  left: max(24px, calc(50% - 158px));
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .card {
+    max-width: 440px;
+    min-height: 0;
+  }
+  .right {
+    display: none;
+  }
+  .left {
+    border-radius: 28px;
+  }
 }

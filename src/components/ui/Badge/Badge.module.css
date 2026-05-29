@@ -1,4 +1,4 @@
-.badge {
+﻿.badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -49,7 +49,7 @@
   color: var(--text-secondary);
 }
 [data-theme="dark"] .primary {
-  background: rgba(37, 99, 235, 0.2);
+  background: rgba(37, 99, 255, 0.2);
   color: var(--primary-300);
 }
 [data-theme="dark"] .success {
