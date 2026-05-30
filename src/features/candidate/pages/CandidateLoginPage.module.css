@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   padding: 40px 24px;
-  background: #fbe9e3;
+  background: linear-gradient(135deg, #f7f2f2 0%, #fbf6f8 100%)
 }
 
 /* ---------- Floating card ---------- */
@@ -13,8 +13,8 @@
   isolation: isolate;
   display: flex;
   width: 100%;
-  max-width: 1000px;
-  min-height: 560px;
+  max-width: 1100px;
+  min-height: 620px;
   border-radius: 28px;
   background: #ffffff;
   box-shadow: 0 40px 90px rgba(243, 30, 70, 0.18);
@@ -63,7 +63,7 @@
 
 .formWrap {
   width: 100%;
-  max-width: 300px;
+  max-width: 330px;
 }
 
 .brand {
@@ -254,7 +254,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 0;
   padding: 44px 36px 40px;
   border-radius: 0 28px 28px 0;
@@ -278,11 +278,11 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 300px;
+  max-width: 345px;
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 22px 44px rgba(0, 0, 0, 0.22);
-  margin-bottom: -28px;
+  margin-bottom: -117px;
 }
 .heroImg {
   display: block;
@@ -296,6 +296,7 @@
   text-align: center;
   color: #ffffff;
   padding-top: 36px;
+  top :-50px
 }
 .welcomeTitle {
   font-size: 30px;
@@ -312,7 +313,7 @@
   position: absolute;
   z-index: 2;
   top: 44px;
-  left: max(24px, calc(50% - 158px));
+  left: max(24px, calc(43% - 158px));
   width: 56px;
   height: 56px;
   border-radius: 50%;
