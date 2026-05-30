@@ -188,10 +188,11 @@
 
 .welcome {
   position: relative;
-  z-index: 1;
+  z-index: 3;
   text-align: center;
   color: #ffffff;
   padding-top: 36px;
+  top :-116px;
 }
 .welcomeTitle {
   font-size: 30px;
