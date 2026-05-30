@@ -18,6 +18,7 @@ import {
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { getInitials, getAvatarColor, getFullName } from "@/utils/helpers";
 import { updateUser } from "@/store/slices/authSlice";
 import toast from "react-hot-toast";
@@ -43,13 +44,14 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
   const [loading, setLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [memberDetails, setMemberDetails] = useState<User[]>([]);
-  const [memberTooltip, setMemberTooltip] = useState<{ text: string; x: number; y: number } | null>(
-    null
-  );
   const ref = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
-  const [popupPos, setPopupPos] = useState({ top: 0, left: 0 });
+  const [popupPos, setPopupPos] = useState<{
+    top?: number;
+    bottom?: number;
+    left: number;
+  }>({ left: 0 });
 
   const fetchWorkspaces = useCallback(async () => {
     try {
@@ -227,15 +229,17 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
       return (
         <>
           <div style={{ display: "flex", justifyContent: "center" }}>
-            <button
-              className={styles.collapsedTrigger}
-              onClick={() => setShowCreate(true)}
-              title="Create Workspace"
-            >
-              <div className={styles.wsIcon} style={{ background: "#334155" }}>
-                <IconPlus size={13} color="#fff" />
-              </div>
-            </button>
+            <Tooltip content="Create Workspace" placement="right">
+              <button
+                className={styles.collapsedTrigger}
+                onClick={() => setShowCreate(true)}
+                aria-label="Create Workspace"
+              >
+                <div className={styles.wsIcon} style={{ background: "#334155" }}>
+                  <IconPlus size={13} color="#fff" />
+                </div>
+              </button>
+            </Tooltip>
           </div>
           <Modal
             isOpen={showCreate}
@@ -371,22 +375,43 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
     <>
       <div ref={ref} className={styles.container}>
         {collapsed ? (
-          <button
-            ref={triggerRef}
-            className={styles.collapsedTrigger}
-            title={activeWorkspace?.name || "Select Workspace"}
-            onClick={() => {
-              if (!isOpen && triggerRef.current) {
-                const rect = triggerRef.current.getBoundingClientRect();
-                setPopupPos({ top: rect.top, left: rect.right + 8 });
-              }
-              setIsOpen((v) => !v);
-            }}
-          >
-            <div className={styles.wsIcon} style={{ background: wsColor }}>
-              {wsInitials}
-            </div>
-          </button>
+          <Tooltip content={activeWorkspace?.name || "Select Workspace"} placement="right">
+            <button
+              ref={triggerRef}
+              className={styles.collapsedTrigger}
+              aria-label={activeWorkspace?.name || "Select Workspace"}
+              onClick={() => {
+                if (!isOpen && triggerRef.current) {
+                  const rect = triggerRef.current.getBoundingClientRect();
+                  const vw = window.innerWidth;
+                  const vh = window.innerHeight;
+                  const popupW = 240;
+                  const popupH = 300; // estimated max height
+                  const gap = 8;
+
+                  // Horizontal: prefer right of trigger, fall back to left
+                  let left = rect.right + gap;
+                  if (left + popupW > vw - gap) {
+                    left = rect.left - popupW - gap;
+                  }
+                  left = Math.max(gap, Math.min(left, vw - popupW - gap));
+
+                  // Vertical: open upward if not enough space below
+                  const spaceBelow = vh - rect.bottom;
+                  if (spaceBelow < popupH && rect.top > spaceBelow) {
+                    setPopupPos({ bottom: vh - rect.top + gap, left });
+                  } else {
+                    setPopupPos({ top: rect.top, left });
+                  }
+                }
+                setIsOpen((v) => !v);
+              }}
+            >
+              <div className={styles.wsIcon} style={{ background: wsColor }}>
+                {wsInitials}
+              </div>
+            </button>
+          </Tooltip>
         ) : (
           <button className={styles.trigger} onClick={() => setIsOpen(!isOpen)}>
             <div className={styles.triggerLeft}>
@@ -416,7 +441,9 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
             className={styles.popup}
             style={{
               position: "fixed",
-              top: popupPos.top,
+              ...(popupPos.bottom !== undefined
+                ? { bottom: popupPos.bottom, top: "auto" }
+                : { top: popupPos.top, bottom: "auto" }),
               left: popupPos.left,
               right: "auto",
               minWidth: 220,
@@ -499,22 +526,18 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
                           : "?";
                       const color = getAvatarColor(displayName);
                       return (
-                        <div
+                        <Tooltip
                           key={m.user_id}
-                          className={styles.memberAvatar}
-                          style={{ background: color, zIndex: 6 - i }}
-                          onMouseEnter={(e) => {
-                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                            setMemberTooltip({
-                              text: m.email || m.user_id,
-                              x: rect.left + rect.width / 2,
-                              y: rect.top - 6,
-                            });
-                          }}
-                          onMouseLeave={() => setMemberTooltip(null)}
+                          content={displayName}
+                          placement="top"
                         >
-                          {initials}
-                        </div>
+                          <div
+                            className={styles.memberAvatar}
+                            style={{ background: color, zIndex: 6 - i }}
+                          >
+                            {initials}
+                          </div>
+                        </Tooltip>
                       );
                     })}
                     {(activeWorkspace?.members?.length ?? 0) > 6 && (
@@ -675,30 +698,6 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
         </p>
       </Modal>
 
-      {memberTooltip &&
-        createPortal(
-          <div
-            style={{
-              position: "fixed",
-              top: memberTooltip.y,
-              left: memberTooltip.x,
-              transform: "translate(-50%, -100%)",
-              background: "#1e293b",
-              color: "#fff",
-              fontSize: 11,
-              fontWeight: 400,
-              padding: "4px 8px",
-              borderRadius: 4,
-              whiteSpace: "nowrap",
-              zIndex: 99999,
-              pointerEvents: "none",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
-            }}
-          >
-            {memberTooltip.text}
-          </div>,
-          document.body
-        )}
     </>
   );
 }

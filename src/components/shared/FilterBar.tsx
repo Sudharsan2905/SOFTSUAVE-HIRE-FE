@@ -3,6 +3,7 @@ import styles from "./FilterBar.module.css";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
+import { Tooltip } from "@/components/ui/Tooltip";
 import {
   IconSearch,
   IconSortAsc,
@@ -121,7 +122,6 @@ export function FilterBar({
             size="sm"
             onClick={onRefresh}
             leftIcon={<IconRefresh size={15} />}
-            title="Refresh"
           >
             Refresh
           </Button>
@@ -136,20 +136,24 @@ export function FilterBar({
         </Button>
         {onViewModeChange && viewMode && (
           <div className={styles.viewToggle}>
-            <button
-              className={`${styles.viewBtn} ${viewMode === "list" ? styles.viewActive : ""}`}
-              onClick={() => onViewModeChange("list")}
-              title="List view"
-            >
-              <IconList size={15} />
-            </button>
-            <button
-              className={`${styles.viewBtn} ${viewMode === "grid" ? styles.viewActive : ""}`}
-              onClick={() => onViewModeChange("grid")}
-              title="Grid view"
-            >
-              <IconGrid size={15} />
-            </button>
+            <Tooltip content="List view" placement="top">
+              <button
+                className={`${styles.viewBtn} ${viewMode === "list" ? styles.viewActive : ""}`}
+                onClick={() => onViewModeChange("list")}
+                aria-label="List view"
+              >
+                <IconList size={15} />
+              </button>
+            </Tooltip>
+            <Tooltip content="Grid view" placement="top">
+              <button
+                className={`${styles.viewBtn} ${viewMode === "grid" ? styles.viewActive : ""}`}
+                onClick={() => onViewModeChange("grid")}
+                aria-label="Grid view"
+              >
+                <IconGrid size={15} />
+              </button>
+            </Tooltip>
           </div>
         )}
         {onExport && (

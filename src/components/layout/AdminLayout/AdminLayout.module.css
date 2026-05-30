@@ -3,14 +3,23 @@
   min-height: 100vh;
 }
 
+/* The right-side column that holds AppHeader + page content */
 .main {
   flex: 1;
   margin-left: var(--sidebar-width);
   min-height: 100vh;
   overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-page);
+  transition:
+    margin-left 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+    background var(--transition-base);
 }
 
+/* Scrollable page content area, below the sticky AppHeader */
 .content {
+  flex: 1;
   padding: 28px 32px;
   width: 100%;
   box-sizing: border-box;
@@ -27,5 +36,7 @@
   }
   .content {
     padding: 16px;
+    /* Clear the fixed BottomNav (56px) + safe-area */
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 16px);
   }
 }

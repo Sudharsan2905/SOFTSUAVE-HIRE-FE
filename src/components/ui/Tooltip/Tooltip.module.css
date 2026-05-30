@@ -1,0 +1,81 @@
+/* ── Tooltip bubble ── */
+.tooltip {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  max-width: 240px;
+  padding: 6px 12px;
+  background: var(--tooltip-bg, #1e293b);
+  color: var(--tooltip-text, #f8fafc);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg), 0 0 0 1px var(--tooltip-border, rgba(255,255,255,0.06));
+  white-space: normal;
+  word-break: break-word;
+  pointer-events: none;
+}
+
+/* ── Direction-aware entrance animations ── */
+@keyframes tipInTop {
+  from { opacity: 0; transform: translateY(5px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+@keyframes tipInBottom {
+  from { opacity: 0; transform: translateY(-5px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@keyframes tipInLeft {
+  from { opacity: 0; transform: translateX(5px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(0)   scale(1); }
+}
+@keyframes tipInRight {
+  from { opacity: 0; transform: translateX(-5px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(0)    scale(1); }
+}
+
+.top    { animation: tipInTop    0.14s cubic-bezier(0.16, 1, 0.3, 1); }
+.bottom { animation: tipInBottom 0.14s cubic-bezier(0.16, 1, 0.3, 1); }
+.left   { animation: tipInLeft   0.14s cubic-bezier(0.16, 1, 0.3, 1); }
+.right  { animation: tipInRight  0.14s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* ── Arrow ── */
+.tooltip::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.top::after {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--tooltip-bg, #1e293b);
+}
+
+.bottom::after {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: var(--tooltip-bg, #1e293b);
+}
+
+.left::after {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 5px solid transparent;
+  border-left-color: var(--tooltip-bg, #1e293b);
+}
+
+.right::after {
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 5px solid transparent;
+  border-right-color: var(--tooltip-bg, #1e293b);
+}

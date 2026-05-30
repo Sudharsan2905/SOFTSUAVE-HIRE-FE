@@ -7,9 +7,11 @@ import { GoogleLogin } from "@react-oauth/google";
 import type { CredentialResponse } from "@react-oauth/google";
 import styles from "./CandidateLoginPage.module.css";
 import { useAppDispatch } from "@/store";
-import { candidateLogin, googleLogin } from "@/store/slices/authSlice";
+import { candidateLogin, setAuthData } from "@/store/slices/authSlice";
+import { api } from "@/utils/api";
 import { IconEye, IconEyeOff } from "@/assets/icons";
 import logoUrl from "@/assets/favicon.svg";
+import toast from "react-hot-toast";
 
 const schema = z.object({
   email: z.string().email("Invalid email"),
@@ -79,10 +81,28 @@ export default function CandidateLoginPage() {
   const handleGoogleLogin = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse.credential) return;
     try {
-      await dispatch(googleLogin(credentialResponse.credential)).unwrap();
+      const { data } = await api.post("/api/auth/google", {
+        credential: credentialResponse.credential,
+      });
+      const result = data.data;
+
+      if (result?.needs_registration) {
+        // New user — redirect to register with Google data prefilled
+        const registerPath = shareLink
+          ? `/candidate/register?share=${shareLink}`
+          : "/candidate/register";
+        navigate(registerPath, { state: { googleData: result.google_data } });
+        return;
+      }
+
+      // Existing candidate — store auth and proceed
+      dispatch(setAuthData(result));
       goNext();
-    } catch {
-      // error already shown via Redux toast
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Google login failed";
+      toast.error(msg);
     }
   };
 

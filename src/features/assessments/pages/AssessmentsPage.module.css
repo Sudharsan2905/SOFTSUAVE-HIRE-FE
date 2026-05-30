@@ -10,12 +10,31 @@
 }
 
 .card {
+  position: relative;
   background: var(--bg-surface);
   border: 1.5px solid var(--border-default);
   border-radius: var(--radius-lg);
   padding: 18px;
   cursor: pointer;
   transition: all var(--transition-fast);
+}
+
+/* Transparent overlay — the actual navigation anchor; sits below all card content */
+.cardOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+}
+
+/* All card content must sit above the overlay so it's readable/interactive */
+.cardTop,
+.assessmentName,
+.assessmentDesc,
+.metaRow,
+.cardFooter {
+  position: relative;
+  z-index: 1;
 }
 .card:hover {
   border-color: var(--primary-400);

@@ -10,16 +10,28 @@
   cursor: not-allowed;
 }
 
+.hiddenInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hiddenInput:focus-visible + .track {
+  box-shadow: 0 0 0 3px rgba(37, 99, 255, 0.3);
+}
+
 .track {
   position: relative;
   border-radius: var(--radius-full);
   background: var(--border-strong);
   transition: background var(--transition-fast);
   cursor: pointer;
-  outline: none;
-}
-.track:focus-visible {
-  box-shadow: 0 0 0 3px rgba(37, 99, 255, 0.3);
 }
 
 .sm {

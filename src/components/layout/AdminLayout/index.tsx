@@ -3,6 +3,8 @@ import { Navigate, Outlet } from "react-router-dom";
 import styles from "./AdminLayout.module.css";
 import { useAppSelector } from "@/store";
 import { Sidebar } from "../Sidebar";
+import { AppHeader } from "../AppHeader";
+import { BottomNav } from "../BottomNav";
 
 export function AdminLayout() {
   const { isAuthenticated, user } = useAppSelector((s) => s.auth);
@@ -13,11 +15,13 @@ export function AdminLayout() {
   return (
     <div className={styles.layout}>
       <Sidebar />
-      <main className={styles.main}>
-        <div className={styles.content}>
+      <div className={styles.main}>
+        <AppHeader />
+        <main className={styles.content}>
           <Outlet />
-        </div>
-      </main>
+        </main>
+      </div>
+      <BottomNav />
     </div>
   );
 }

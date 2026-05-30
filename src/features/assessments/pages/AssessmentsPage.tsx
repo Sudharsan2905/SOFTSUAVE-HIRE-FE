@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import styles from "./AssessmentsPage.module.css";
 import { Header } from "@/components/layout/Header";
 import { FilterBar } from "@/components/shared/FilterBar";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
 import { Pagination } from "@/components/ui/Pagination";
 import { Spinner } from "@/components/ui/Spinner";
 import {
   IconPlus,
   IconDelete,
+  IconEdit,
   IconShare,
   IconClone,
   IconUsers,
@@ -21,7 +23,9 @@ import {
   IconWhatsApp,
   IconWorkspace,
   IconChevronRight,
+  IconShield,
 } from "@/assets/icons";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
@@ -43,7 +47,7 @@ const SORT_OPTIONS = [
 export default function AssessmentsPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const navigate = useNavigate();
-  const { activeWorkspace } = useAppSelector((s) => s.workspace);
+  const { activeWorkspace, workspaces: allWorkspaces } = useAppSelector((s) => s.workspace);
   const user = useAppSelector((s) => s.auth.user);
   const isSuperAdmin = user?.role === "super_admin";
 
@@ -57,9 +61,12 @@ export default function AssessmentsPage() {
   const [showWizard, setShowWizard] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showCloneWorkspace, setShowCloneWorkspace] = useState(false);
   const [wizardPrefill, setWizardPrefill] = useState<Partial<AssessmentDraft> | null>(null);
+  const [cloneTargetWorkspaceId, setCloneTargetWorkspaceId] = useState<string>("");
   const [selected, setSelected] = useState<Assessment | null>(null);
   const [saving, setSaving] = useState(false);
+  const [editTarget, setEditTarget] = useState<Assessment | null>(null);
   const { page, pageSize, goToPage, reset, changePageSize } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
 
@@ -91,18 +98,30 @@ export default function AssessmentsPage() {
     reset();
   }, [debouncedSearch, sortBy, sortOrder]);
 
+  const handleEditClick = (a: Assessment) => {
+    setEditTarget(a);
+  };
+
   const handleCloneClick = (a: Assessment) => {
+    setSelected(a);
+    setCloneTargetWorkspaceId(workspaceId ?? "");
+    setShowCloneWorkspace(true);
+  };
+
+  const handleCloneConfirm = () => {
+    if (!selected) return;
+    setShowCloneWorkspace(false);
     setWizardPrefill({
-      name: `Copy of ${a.name}`,
-      description: a.description,
-      rounds: a.rounds.map((r) => ({
+      name: `Copy of ${selected.name}`,
+      description: selected.description,
+      rounds: selected.rounds.map((r) => ({
         round_number: r.round_number,
         question_count: r.question_count,
         max_duration_minutes: r.max_duration_minutes,
         question_ids: r.question_ids,
       })),
-      accessibility: a.accessibility,
-      monitoring_config: a.monitoring_config,
+      accessibility: selected.accessibility,
+      monitoring_config: selected.monitoring_config,
     });
     setShowWizard(true);
   };
@@ -149,6 +168,128 @@ export default function AssessmentsPage() {
     );
   }
 
+  let assessmentContent: React.ReactNode;
+  if (isLoading) {
+    assessmentContent = (
+      <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
+        <Spinner size="lg" />
+      </div>
+    );
+  } else if (assessments.length === 0) {
+    assessmentContent = (
+      <div className={styles.empty}>
+        <IconAssessment size={48} color="var(--text-tertiary)" />
+        <p>No assessments yet</p>
+        <Button
+          leftIcon={<IconPlus size={15} />}
+          onClick={() => {
+            setWizardPrefill(null);
+            setShowWizard(true);
+          }}
+        >
+          Create Assessment
+        </Button>
+      </div>
+    );
+  } else {
+    assessmentContent = (
+      <>
+        <div className={viewMode === "grid" ? styles.grid : styles.list}>
+          {assessments.map((a) => (
+            <div key={a.id} className={styles.card}>
+              {/* Stretched link covers the card; action buttons sit above it via z-index */}
+              <Link
+                to={`/workspaces/${workspaceId}/assessments/${a.id}`}
+                className={styles.cardOverlay}
+                aria-label={`View ${a.name} assessment`}
+              />
+              <div className={styles.cardTop}>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <Badge variant={a.accessibility === "monitoring" ? "accent" : "default"}>
+                    {a.accessibility === "monitoring" ? (
+                      <><IconShield size={11} /> Monitoring</>
+                    ) : (
+                      "Normal"
+                    )}
+                  </Badge>
+                  <Badge variant="info">
+                    {a.rounds.length} round{a.rounds.length === 1 ? "" : "s"}
+                  </Badge>
+                </div>
+                <div className={styles.cardActions}>
+                  <Tooltip content="Edit" placement="top">
+                    <button
+                      className={styles.iconBtn}
+                      onClick={() => handleEditClick(a)}
+                      aria-label="Edit assessment"
+                    >
+                      <IconEdit size={14} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content="Share" placement="top">
+                    <button
+                      className={styles.iconBtn}
+                      onClick={() => { setSelected(a); setShowShare(true); }}
+                      aria-label="Share assessment"
+                    >
+                      <IconShare size={14} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content="Clone" placement="top">
+                    <button
+                      className={styles.iconBtn}
+                      onClick={() => handleCloneClick(a)}
+                      aria-label="Clone assessment"
+                    >
+                      <IconClone size={14} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content="Delete" placement="top">
+                    <button
+                      className={`${styles.iconBtn} ${styles.danger}`}
+                      onClick={() => { setSelected(a); setShowDelete(true); }}
+                      aria-label="Delete assessment"
+                    >
+                      <IconDelete size={14} />
+                    </button>
+                  </Tooltip>
+                </div>
+              </div>
+
+              <h3 className={styles.assessmentName}>{a.name}</h3>
+              {a.description && <p className={styles.assessmentDesc}>{a.description}</p>}
+
+              <div className={styles.metaRow}>
+                <span className={styles.metaItem}>
+                  <IconTime size={12} /> {a.rounds.reduce((t, r) => t + r.max_duration_minutes, 0)}{" "}
+                  min total
+                </span>
+                <span className={styles.metaItem}>
+                  <IconUsers size={12} /> {a.submission_count ?? 0} submitted
+                </span>
+              </div>
+
+              <div className={styles.cardFooter}>
+                <span className={styles.dateText}>{formatDate(a.created_at)}</span>
+                <span className={styles.viewDetail}>
+                  View Details <IconChevronRight size={12} />
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+        {meta && (
+          <Pagination
+            meta={meta}
+            onPageChange={goToPage}
+            pageSize={pageSize}
+            onPageSizeChange={changePageSize}
+          />
+        )}
+      </>
+    );
+  }
+
   return (
     <div>
       <Header
@@ -180,115 +321,91 @@ export default function AssessmentsPage() {
         onRefresh={fetchAssessments}
       />
 
-      {isLoading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
-          <Spinner size="lg" />
-        </div>
-      ) : assessments.length === 0 ? (
-        <div className={styles.empty}>
-          <IconAssessment size={48} color="var(--text-tertiary)" />
-          <p>No assessments yet</p>
-          <Button
-            leftIcon={<IconPlus size={15} />}
-            onClick={() => {
-              setWizardPrefill(null);
-              setShowWizard(true);
-            }}
-          >
-            Create Assessment
-          </Button>
-        </div>
-      ) : (
-        <>
-          <div className={viewMode === "grid" ? styles.grid : styles.list}>
-            {assessments.map((a) => (
-              <div
-                key={a.id}
-                className={styles.card}
-                onClick={() => navigate(`/workspaces/${workspaceId}/assessments/${a.id}`)}
-              >
-                <div className={styles.cardTop}>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    <Badge variant={a.accessibility === "monitoring" ? "accent" : "default"}>
-                      {a.accessibility === "monitoring" ? "🛡 Monitoring" : "Normal"}
-                    </Badge>
-                    <Badge variant="info">
-                      {a.rounds.length} round{a.rounds.length !== 1 ? "s" : ""}
-                    </Badge>
-                  </div>
-                  <div className={styles.cardActions} onClick={(e) => e.stopPropagation()}>
-                    <button
-                      className={styles.iconBtn}
-                      onClick={() => {
-                        setSelected(a);
-                        setShowShare(true);
-                      }}
-                      title="Share"
-                    >
-                      <IconShare size={14} />
-                    </button>
-                    <button
-                      className={styles.iconBtn}
-                      onClick={() => handleCloneClick(a)}
-                      title="Clone"
-                    >
-                      <IconClone size={14} />
-                    </button>
-                    <button
-                      className={`${styles.iconBtn} ${styles.danger}`}
-                      onClick={() => {
-                        setSelected(a);
-                        setShowDelete(true);
-                      }}
-                      title="Delete"
-                    >
-                      <IconDelete size={14} />
-                    </button>
-                  </div>
-                </div>
+      {assessmentContent}
 
-                <h3 className={styles.assessmentName}>{a.name}</h3>
-                {a.description && <p className={styles.assessmentDesc}>{a.description}</p>}
-
-                <div className={styles.metaRow}>
-                  <span className={styles.metaItem}>
-                    <IconTime size={12} />{" "}
-                    {a.rounds.reduce((t, r) => t + r.max_duration_minutes, 0)} min total
-                  </span>
-                  <span className={styles.metaItem}>
-                    <IconUsers size={12} /> {a.submission_count ?? 0} submitted
-                  </span>
-                </div>
-
-                <div className={styles.cardFooter}>
-                  <span className={styles.dateText}>{formatDate(a.created_at)}</span>
-                  <span className={styles.viewDetail}>
-                    View Details <IconChevronRight size={12} />
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-          {meta && <Pagination meta={meta} onPageChange={goToPage} pageSize={pageSize} onPageSizeChange={changePageSize} />}
-        </>
-      )}
-
-      {/* Create Wizard */}
-      {showWizard && workspaceId && (
+      {/* Create / Clone Wizard */}
+      {showWizard && (cloneTargetWorkspaceId || workspaceId) && (
         <CreateAssessmentWizard
-          workspaceId={workspaceId}
+          workspaceId={wizardPrefill ? cloneTargetWorkspaceId : (workspaceId ?? "")}
           onClose={() => {
             setShowWizard(false);
             setWizardPrefill(null);
+            setCloneTargetWorkspaceId("");
           }}
           onSuccess={() => {
             setShowWizard(false);
             setWizardPrefill(null);
+            setCloneTargetWorkspaceId("");
             fetchAssessments();
           }}
           initialData={wizardPrefill || undefined}
         />
       )}
+
+      {/* Edit Wizard */}
+      {editTarget && workspaceId && (
+        <CreateAssessmentWizard
+          workspaceId={workspaceId}
+          editMode
+          assessmentId={editTarget.id}
+          initialData={{
+            name: editTarget.name,
+            description: editTarget.description,
+            rounds: editTarget.rounds.map((r) => ({
+              round_number: r.round_number,
+              question_count: r.question_count,
+              max_duration_minutes: r.max_duration_minutes,
+              question_ids: r.question_ids,
+            })),
+            accessibility: editTarget.accessibility,
+            monitoring_config: editTarget.monitoring_config,
+          }}
+          onClose={() => setEditTarget(null)}
+          onSuccess={() => {
+            setEditTarget(null);
+            fetchAssessments();
+          }}
+        />
+      )}
+
+      {/* Clone — Workspace Selector */}
+      <Modal
+        isOpen={showCloneWorkspace}
+        onClose={() => setShowCloneWorkspace(false)}
+        title="Clone Assessment"
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setShowCloneWorkspace(false)}>
+              Cancel
+            </Button>
+            <Button
+              leftIcon={<IconClone size={15} />}
+              onClick={handleCloneConfirm}
+              disabled={!cloneTargetWorkspaceId}
+            >
+              Clone
+            </Button>
+          </>
+        }
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <p style={{ fontSize: 13.5, color: "var(--text-secondary)", lineHeight: 1.6 }}>
+            Clone <strong>{selected?.name}</strong> into the selected workspace. A new assessment
+            with all rounds and question selections will be created.
+          </p>
+          <Select
+            label="Target Workspace"
+            value={cloneTargetWorkspaceId}
+            onChange={setCloneTargetWorkspaceId}
+            options={(isSuperAdmin ? allWorkspaces : (user?.workspaces ?? [])).map((ws) => ({
+              value: ws.id,
+              label: ws.name,
+            }))}
+            showRequired
+          />
+        </div>
+      </Modal>
 
       {/* Share Modal */}
       <Modal

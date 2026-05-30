@@ -1,0 +1,406 @@
+/* ── Page shell ── */
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.loadingWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+}
+
+/* ── Back button ── */
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 6px 12px 6px 8px;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
+}
+.backBtn:hover {
+  color: var(--text-primary);
+  background: var(--bg-muted);
+}
+
+/* ── Gradient Hero Header ── */
+.hero {
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--accent-600) 100%);
+  padding: 28px 32px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle texture overlay */
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.heroInner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.heroLeft {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* ── Circular Avatar ── */
+.avatarCircle {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-full);
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.heroInfo {
+  min-width: 0;
+}
+
+.heroName {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.heroMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.82);
+  margin: 0;
+}
+
+.heroDot {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.statusActive {
+  color: #86efac;
+  font-weight: 600;
+}
+
+.statusInactive {
+  color: #fca5a5;
+  font-weight: 600;
+}
+
+.heroActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Content area ── */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── White branded cards ── */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+}
+
+.cardTitle {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 14px 24px 12px;
+  border-bottom: 1px solid var(--border-default);
+  margin: 0;
+}
+
+/* ── Grid for fields ── */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 32px;
+  row-gap: 10px;
+  padding: 16px 24px;
+}
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Read-only field ── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-default);
+}
+
+/* Remove border on the last 1-2 fields in the grid */
+.grid > .field:last-child,
+.grid > .field:nth-last-child(2):nth-child(odd) {
+  border-bottom: none;
+}
+
+@media (max-width: 640px) {
+  .grid > .field:nth-last-child(2):nth-child(odd) {
+    border-bottom: 1px solid var(--border-default);
+  }
+}
+
+.fieldLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.fieldValue {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* ── Native checkbox ── */
+.checkboxLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkboxNative {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--primary-600);
+  flex-shrink: 0;
+}
+
+.checkboxText {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Read-only checkbox display (non-interactive) */
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 2px solid var(--border-strong);
+  background: var(--bg-muted);
+  flex-shrink: 0;
+}
+
+.checkboxChecked {
+  background: var(--primary-600);
+  border-color: var(--primary-600);
+  color: #fff;
+}
+
+/* ── Security section ── */
+.securityRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 24px;
+  flex-wrap: wrap;
+}
+
+.securityHint {
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+  margin-top: 3px;
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+/* ── Workspace assignment chips ── */
+.wsAssignSection {
+  padding: 16px 24px;
+}
+
+.wsAssignHint {
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+  margin: 0 0 12px;
+}
+
+.wsGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wsChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px 6px 10px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border-default);
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+.wsChip:hover {
+  border-color: var(--primary-400);
+  background: var(--primary-50);
+  color: var(--primary-700);
+}
+
+.wsChipActive {
+  border-color: var(--primary-500);
+  background: var(--primary-50);
+  color: var(--primary-700);
+  font-weight: 600;
+}
+
+[data-theme="dark"] .wsChipActive {
+  background: rgba(37, 99, 255, 0.15);
+  color: var(--primary-400);
+  border-color: var(--primary-500);
+}
+
+.wsChipCheck {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border-strong);
+  background: transparent;
+  flex-shrink: 0;
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.wsChipCheckActive {
+  border-color: var(--primary-600);
+  background: var(--primary-600);
+  color: #fff;
+}
+
+/* ── Workspace pills (read mode) ── */
+.wsPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.wsPill {
+  display: inline-block;
+  padding: 3px 10px;
+  background: var(--bg-muted);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .hero {
+    padding: 20px;
+  }
+  .heroName {
+    font-size: 18px;
+  }
+  .avatarCircle {
+    width: 56px;
+    height: 56px;
+    font-size: 20px;
+  }
+  .card {
+    border-radius: var(--radius-lg);
+  }
+  .grid {
+    padding: 4px 16px 12px;
+  }
+  .wsAssignSection {
+    padding: 12px 16px;
+  }
+  .securityRow {
+    padding: 12px 16px;
+  }
+  .cardTitle {
+    padding: 12px 16px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroInner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .heroActions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

@@ -10,6 +10,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { Spinner } from "@/components/ui/Spinner";
 import { Badge, StatusBadge } from "@/components/ui/Badge";
 import { IconDownload, IconEye, IconRefresh, IconChevronLeft } from "@/assets/icons";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
@@ -209,26 +210,30 @@ export default function AssessmentDetailPage() {
                     </td>
                     <td>
                       <div style={{ display: "flex", gap: 6 }}>
-                        <button
-                          className={styles.actionBtn}
-                          onClick={() => openDetail(sub)}
-                          title="View Details"
-                        >
-                          <IconEye size={14} />
-                        </button>
-                        {(sub.status === "completed" || sub.status === "malpractice") && (
+                        <Tooltip content="View Details" placement="top">
                           <button
-                            className={`${styles.actionBtn} ${styles.reaccess}`}
-                            onClick={() => handleReaccess(sub.id)}
-                            title="Grant Re-access"
-                            disabled={regranting === sub.id}
+                            className={styles.actionBtn}
+                            onClick={() => openDetail(sub)}
+                            aria-label="View submission details"
                           >
-                            {regranting === sub.id ? (
-                              <Spinner size="sm" />
-                            ) : (
-                              <IconRefresh size={14} />
-                            )}
+                            <IconEye size={14} />
                           </button>
+                        </Tooltip>
+                        {(sub.status === "completed" || sub.status === "malpractice") && (
+                          <Tooltip content="Grant Re-access" placement="top">
+                            <button
+                              className={`${styles.actionBtn} ${styles.reaccess}`}
+                              onClick={() => handleReaccess(sub.id)}
+                              aria-label="Grant re-access"
+                              disabled={regranting === sub.id}
+                            >
+                              {regranting === sub.id ? (
+                                <Spinner size="sm" />
+                              ) : (
+                                <IconRefresh size={14} />
+                              )}
+                            </button>
+                          </Tooltip>
                         )}
                       </div>
                     </td>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import styles from "./UsersPage.module.css";
 import { Header } from "@/components/layout/Header";
 import { FilterBar } from "@/components/shared/FilterBar";
@@ -14,9 +15,10 @@ import {
   IconEye,
   IconEyeOff,
   IconCheck,
-  IconEdit,
   IconWorkspace,
+  IconUserSetting,
 } from "@/assets/icons";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useAppSelector } from "@/store";
@@ -25,6 +27,7 @@ import { getAvatarColor, getInitials, getFullName } from "@/utils/helpers";
 import toast from "react-hot-toast";
 
 export default function UsersPage() {
+  const navigate = useNavigate();
   const allWorkspaces = useAppSelector((s) => s.workspace.workspaces);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,15 +44,7 @@ export default function UsersPage() {
     role: "admin",
   });
   const [showPassword, setShowPassword] = useState(false);
-
   const [createWsIds, setCreateWsIds] = useState<string[]>([]);
-
-  // Edit modal state
-  const [showEdit, setShowEdit] = useState(false);
-  const [editTarget, setEditTarget] = useState<User | null>(null);
-  const [editIsActive, setEditIsActive] = useState(true);
-  const [selectedWsIds, setSelectedWsIds] = useState<string[]>([]);
-  const [editSaving, setEditSaving] = useState(false);
 
   const debouncedSearch = useDebounce(search, 300);
 
@@ -123,38 +118,74 @@ export default function UsersPage() {
     }
   };
 
-  const openEdit = async (user: User) => {
-    setEditTarget(user);
-    setEditIsActive(user.is_active !== false);
-    setSelectedWsIds(user.workspaces?.map((w) => w.id) || []);
-    setShowEdit(true);
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editTarget) return;
-    setEditSaving(true);
-    try {
-      await api.patch(`/api/users/${editTarget.id}`, {
-        is_active: editIsActive,
-        workspace_ids: selectedWsIds,
-      });
-      toast.success("Changes saved");
-      setShowEdit(false);
-      fetchUsers();
-    } catch {
-      toast.error("Failed to save changes");
-    } finally {
-      setEditSaving(false);
-    }
-  };
-
   const toggleCreateWs = (id: string) =>
     setCreateWsIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
-  const toggleWs = (id: string) =>
-    setSelectedWsIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-
   const noWorkspaces = allWorkspaces.length === 0;
+
+  let userContent: React.ReactNode;
+  if (isLoading) {
+    userContent = (
+      <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
+        <Spinner size="lg" />
+      </div>
+    );
+  } else if (users.length === 0) {
+    userContent = (
+      <div className={styles.empty}>
+        <IconUsers size={48} color="var(--text-tertiary)" />
+        <p>No admin users yet</p>
+        <Button leftIcon={<IconPlus size={15} />} onClick={openCreate}>
+          Create first admin
+        </Button>
+      </div>
+    );
+  } else {
+    userContent = (
+      <div className={viewMode === "grid" ? styles.grid : styles.list}>
+        {users.map((user) => {
+          const isActive = user.is_active !== false;
+          const isSuperAdmin = user.role === "super_admin";
+          return (
+            <div key={user.id} className={`${styles.card} ${isActive ? "" : styles.cardInactive}`}>
+              <div className={styles.cardLeft}>
+                <div
+                  className={styles.avatar}
+                  style={{
+                    background: getAvatarColor(getFullName(user)),
+                    opacity: isActive ? 1 : 0.5,
+                  }}
+                >
+                  {getInitials(getFullName(user))}
+                </div>
+                <div className={styles.info}>
+                  <p className={styles.name}>{getFullName(user)}</p>
+                  <p className={styles.email}>{user.email}</p>
+                </div>
+              </div>
+              <div className={styles.cardRight}>
+                <Badge variant={isSuperAdmin ? "accent" : "primary"}>
+                  {isSuperAdmin ? "Super Admin" : "Admin"}
+                </Badge>
+                <Badge variant={isActive ? "success" : "default"}>
+                  {isActive ? "Active" : "Inactive"}
+                </Badge>
+                <Tooltip content="Edit user profile" placement="top">
+                  <button
+                    className={styles.editBtn}
+                    onClick={() => navigate(`/profile/${user.id}`)}
+                    aria-label={`Edit profile of ${getFullName(user)}`}
+                  >
+                    <IconUserSetting size={16} />
+                  </button>
+                </Tooltip>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -204,65 +235,7 @@ export default function UsersPage() {
             onViewModeChange={setViewMode}
           />
 
-          {isLoading ? (
-            <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
-              <Spinner size="lg" />
-            </div>
-          ) : users.length === 0 ? (
-            <div className={styles.empty}>
-              <IconUsers size={48} color="var(--text-tertiary)" />
-              <p>No admin users yet</p>
-              <Button leftIcon={<IconPlus size={15} />} onClick={openCreate}>
-                Create first admin
-              </Button>
-            </div>
-          ) : (
-            <div className={viewMode === "grid" ? styles.grid : styles.list}>
-              {users.map((user) => {
-                const isActive = user.is_active !== false;
-                const isSuperAdmin = user.role === "super_admin";
-                return (
-                  <div
-                    key={user.id}
-                    className={`${styles.card} ${!isActive ? styles.cardInactive : ""}`}
-                  >
-                    <div className={styles.cardLeft}>
-                      <div
-                        className={styles.avatar}
-                        style={{
-                          background: getAvatarColor(getFullName(user)),
-                          opacity: isActive ? 1 : 0.5,
-                        }}
-                      >
-                        {getInitials(getFullName(user))}
-                      </div>
-                      <div className={styles.info}>
-                        <p className={styles.name}>{getFullName(user)}</p>
-                        <p className={styles.email}>{user.email}</p>
-                      </div>
-                    </div>
-                    <div className={styles.cardRight}>
-                      <Badge variant={isSuperAdmin ? "accent" : "primary"}>
-                        {isSuperAdmin ? "Super Admin" : "Admin"}
-                      </Badge>
-                      <Badge variant={isActive ? "success" : "default"}>
-                        {isActive ? "Active" : "Inactive"}
-                      </Badge>
-                      {!isSuperAdmin && (
-                        <button
-                          className={styles.editBtn}
-                          onClick={() => openEdit(user)}
-                          title="Edit user"
-                        >
-                          <IconEdit size={15} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {userContent}
         </>
       )}
 
@@ -371,11 +344,16 @@ export default function UsersPage() {
                 {allWorkspaces.map((ws) => {
                   const checked = createWsIds.includes(ws.id);
                   return (
-                    <div
+                    <label
                       key={ws.id}
                       className={`${styles.wsItem} ${checked ? styles.wsItemSelected : ""}`}
-                      onClick={() => toggleCreateWs(ws.id)}
                     >
+                      <input
+                        type="checkbox"
+                        className={styles.wsHiddenCheckbox}
+                        checked={checked}
+                        onChange={() => toggleCreateWs(ws.id)}
+                      />
                       <div className={styles.wsInfo}>
                         <p className={styles.wsName}>{ws.name}</p>
                         {ws.description && <p className={styles.wsDesc}>{ws.description}</p>}
@@ -383,97 +361,12 @@ export default function UsersPage() {
                       <div className={`${styles.wsCheck} ${checked ? styles.wsCheckSelected : ""}`}>
                         {checked && <IconCheck size={12} />}
                       </div>
-                    </div>
+                    </label>
                   );
                 })}
               </div>
             </div>
           )}
-        </div>
-      </Modal>
-
-      {/* Edit Modal */}
-      <Modal
-        isOpen={showEdit}
-        onClose={() => setShowEdit(false)}
-        title={`Edit — ${editTarget ? getFullName(editTarget) : ""}`}
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setShowEdit(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveEdit} isLoading={editSaving}>
-              Save
-            </Button>
-          </>
-        }
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <div>
-            <p
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: "var(--text-secondary)",
-                marginBottom: 8,
-              }}
-            >
-              Status
-            </p>
-            <div className={styles.statusToggle}>
-              <button
-                className={`${styles.statusOption} ${editIsActive ? styles.statusActive : ""}`}
-                onClick={() => setEditIsActive(true)}
-              >
-                Active
-              </button>
-              <button
-                className={`${styles.statusOption} ${!editIsActive ? styles.statusInactive : ""}`}
-                onClick={() => setEditIsActive(false)}
-              >
-                Inactive
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <p
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: "var(--text-secondary)",
-                marginBottom: 8,
-              }}
-            >
-              Workspaces
-            </p>
-            {allWorkspaces.length === 0 ? (
-              <p style={{ fontSize: 13, color: "var(--text-tertiary)", padding: "12px 0" }}>
-                No workspaces available.
-              </p>
-            ) : (
-              <div className={styles.wsList}>
-                {allWorkspaces.map((ws) => {
-                  const checked = selectedWsIds.includes(ws.id);
-                  return (
-                    <div
-                      key={ws.id}
-                      className={`${styles.wsItem} ${checked ? styles.wsItemSelected : ""}`}
-                      onClick={() => toggleWs(ws.id)}
-                    >
-                      <div className={styles.wsInfo}>
-                        <p className={styles.wsName}>{ws.name}</p>
-                        {ws.description && <p className={styles.wsDesc}>{ws.description}</p>}
-                      </div>
-                      <div className={`${styles.wsCheck} ${checked ? styles.wsCheckSelected : ""}`}>
-                        {checked && <IconCheck size={12} />}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
         </div>
       </Modal>
     </div>

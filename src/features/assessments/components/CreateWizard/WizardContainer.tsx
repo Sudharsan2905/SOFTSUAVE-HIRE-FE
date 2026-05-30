@@ -28,6 +28,8 @@ interface Props {
   onClose: () => void;
   onSuccess: () => void;
   initialData?: Partial<AssessmentDraft>;
+  editMode?: boolean;
+  assessmentId?: string;
 }
 
 const defaultMonitoring: MonitoringConfig = {
@@ -38,7 +40,14 @@ const defaultMonitoring: MonitoringConfig = {
   screenshot_interval_minutes: 5,
 };
 
-export function CreateAssessmentWizard({ workspaceId, onClose, onSuccess, initialData }: Props) {
+export function CreateAssessmentWizard({
+  workspaceId,
+  onClose,
+  onSuccess,
+  initialData,
+  editMode = false,
+  assessmentId,
+}: Readonly<Props>) {
   const [step, setStep] = useState(1);
   const [currentRound, setCurrentRound] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -86,14 +95,18 @@ export function CreateAssessmentWizard({ workspaceId, onClose, onSuccess, initia
   const handleFinish = async () => {
     setSaving(true);
     try {
-      await api.post(`/api/workspaces/${workspaceId}/assessments`, draft);
-      toast.success("Assessment created successfully");
+      if (editMode && assessmentId) {
+        await api.put(`/api/workspaces/${workspaceId}/assessments/${assessmentId}`, draft);
+        toast.success("Assessment updated successfully");
+      } else {
+        await api.post(`/api/workspaces/${workspaceId}/assessments`, draft);
+        toast.success("Assessment created successfully");
+      }
       onSuccess();
     } catch (e: unknown) {
-      toast.error(
-        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-          "Failed to create assessment"
-      );
+      const msg =
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg || (editMode ? "Failed to update assessment" : "Failed to create assessment"));
     } finally {
       setSaving(false);
     }
@@ -101,16 +114,17 @@ export function CreateAssessmentWizard({ workspaceId, onClose, onSuccess, initia
 
   const roundRequired = draft.rounds[currentRound]?.question_count || 0;
   const roundSelected = draft.rounds[currentRound]?.question_ids.length || 0;
+  const questionsTitle = `Select Questions — Round ${currentRound + 1} of ${draft.rounds.length}`;
+  const step1Title = editMode ? "Edit Assessment" : "Create Assessment";
+  const modalTitle = step === 1 ? step1Title : questionsTitle;
+
+  const finishLabel = editMode ? "Save Changes" : "Finish & Create";
 
   return (
     <Modal
       isOpen
       onClose={onClose}
-      title={
-        step === 1
-          ? "Create Assessment"
-          : `Select Questions — Round ${currentRound + 1} of ${draft.rounds.length}`
-      }
+      title={modalTitle}
       size="xl"
       footer={
         step === 1 ? undefined : (
@@ -144,7 +158,7 @@ export function CreateAssessmentWizard({ workspaceId, onClose, onSuccess, initia
                   isLoading={saving}
                   disabled={roundSelected < roundRequired}
                 >
-                  Finish & Create
+                  {finishLabel}
                 </Button>
               ) : (
                 <Button onClick={handleRoundNext} disabled={roundSelected < roundRequired}>

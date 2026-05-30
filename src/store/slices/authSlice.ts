@@ -123,6 +123,19 @@ const authSlice = createSlice({
       state.user = action.payload;
       localStorage.setItem(USER_KEY, JSON.stringify(action.payload));
     },
+    setAuthData(
+      state,
+      action: PayloadAction<{ access_token: string; refresh_token: string; user: User }>
+    ) {
+      state.isLoading = false;
+      state.accessToken = action.payload.access_token;
+      state.refreshToken = action.payload.refresh_token;
+      state.user = action.payload.user;
+      state.isAuthenticated = true;
+      localStorage.setItem(TOKEN_KEY, action.payload.access_token);
+      localStorage.setItem(REFRESH_KEY, action.payload.refresh_token);
+      localStorage.setItem(USER_KEY, JSON.stringify(action.payload.user));
+    },
   },
   extraReducers: (builder) => {
     const handleAuthFulfilled = (
@@ -175,5 +188,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, setTokens, updateUser } = authSlice.actions;
+export const { logout, setTokens, updateUser, setAuthData } = authSlice.actions;
 export default authSlice.reducer;

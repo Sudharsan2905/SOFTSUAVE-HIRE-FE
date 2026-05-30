@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useId } from "react";
 import styles from "./Input.module.css";
 import { clsx } from "@/utils/helpers";
 
@@ -12,52 +12,71 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   showRequired?: boolean;
 }
 
-export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  (
-    {
-      label,
-      error,
-      hint,
-      leftElement,
-      rightElement,
-      fullWidth = true,
-      className,
-      id,
-      showRequired,
-      ...rest
-    },
-    ref
-  ) => {
-    const inputId = id || label?.toLowerCase().replace(/\s/g, "-");
-    return (
-      <div className={clsx(styles.wrapper, fullWidth && styles.fullWidth)}>
-        {label && (
-          <label className={styles.label} htmlFor={inputId}>
-            {label}
-            {showRequired && <span style={{ color: "var(--error-500)", marginLeft: 2 }}>*</span>}
-          </label>
-        )}
-        <div className={clsx(styles.inputWrapper, error && styles.hasError)}>
-          {leftElement && <span className={styles.leftEl}>{leftElement}</span>}
-          <input
-            ref={ref}
-            id={inputId}
-            className={clsx(
-              styles.input,
-              leftElement && styles.hasLeft,
-              rightElement && styles.hasRight,
-              className
-            )}
-            {...rest}
-          />
-          {rightElement && <span className={styles.rightEl}>{rightElement}</span>}
-        </div>
-        {error && <p className={styles.error}>{error}</p>}
-        {!error && hint && <p className={styles.hint}>{hint}</p>}
+function InputInner(
+  {
+    label,
+    error,
+    hint,
+    leftElement,
+    rightElement,
+    fullWidth = true,
+    className,
+    id,
+    name,
+    showRequired,
+    ...rest
+  }: InputProps,
+  ref: React.ForwardedRef<HTMLInputElement>
+) {
+  const uid = useId();
+  const inputId = id ?? `input-${uid}`;
+  const fieldName = name;
+
+  const errorId = error ? `${inputId}-error` : undefined;
+  const hintId = !error && hint ? `${inputId}-hint` : undefined;
+  const describedBy = errorId ?? hintId;
+
+  return (
+    <div className={clsx(styles.wrapper, fullWidth && styles.fullWidth)}>
+      {label && (
+        <label className={styles.label} htmlFor={inputId}>
+          {label}
+          {showRequired && <span style={{ color: "var(--error-500)", marginLeft: 2 }}>*</span>}
+        </label>
+      )}
+      <div className={clsx(styles.inputWrapper, error && styles.hasError)}>
+        {leftElement && <span className={styles.leftEl}>{leftElement}</span>}
+        <input
+          ref={ref}
+          id={inputId}
+          name={fieldName}
+          className={clsx(
+            styles.input,
+            leftElement && styles.hasLeft,
+            rightElement && styles.hasRight,
+            className
+          )}
+          aria-invalid={error ? "true" : undefined}
+          aria-describedby={describedBy}
+          {...rest}
+        />
+        {rightElement && <span className={styles.rightEl}>{rightElement}</span>}
       </div>
-    );
-  }
-);
+      {error && (
+        <p id={errorId} className={styles.error} role="alert" aria-live="polite">
+          {error}
+        </p>
+      )}
+      {!error && hint && (
+        <p id={hintId} className={styles.hint}>
+          {hint}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(InputInner);
 Input.displayName = "Input";
 
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -67,26 +86,47 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
   fullWidth?: boolean;
 }
 
-export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ label, error, hint, fullWidth = true, className, id, ...rest }, ref) => {
-    const inputId = id || label?.toLowerCase().replace(/\s/g, "-");
-    return (
-      <div className={clsx(styles.wrapper, fullWidth && styles.fullWidth)}>
-        {label && (
-          <label className={styles.label} htmlFor={inputId}>
-            {label}
-          </label>
-        )}
-        <textarea
-          ref={ref}
-          id={inputId}
-          className={clsx(styles.textarea, error && styles.textareaError, className)}
-          {...rest}
-        />
-        {error && <p className={styles.error}>{error}</p>}
-        {!error && hint && <p className={styles.hint}>{hint}</p>}
-      </div>
-    );
-  }
-);
+function TextareaInner(
+  { label, error, hint, fullWidth = true, className, id, name, ...rest }: TextareaProps,
+  ref: React.ForwardedRef<HTMLTextAreaElement>
+) {
+  const uid = useId();
+  const inputId = id ?? `textarea-${uid}`;
+  const fieldName = name;
+
+  const errorId = error ? `${inputId}-error` : undefined;
+  const hintId = !error && hint ? `${inputId}-hint` : undefined;
+  const describedBy = errorId ?? hintId;
+
+  return (
+    <div className={clsx(styles.wrapper, fullWidth && styles.fullWidth)}>
+      {label && (
+        <label className={styles.label} htmlFor={inputId}>
+          {label}
+        </label>
+      )}
+      <textarea
+        ref={ref}
+        id={inputId}
+        name={fieldName}
+        className={clsx(styles.textarea, error && styles.textareaError, className)}
+        aria-invalid={error ? "true" : undefined}
+        aria-describedby={describedBy}
+        {...rest}
+      />
+      {error && (
+        <p id={errorId} className={styles.error} role="alert" aria-live="polite">
+          {error}
+        </p>
+      )}
+      {!error && hint && (
+        <p id={hintId} className={styles.hint}>
+          {hint}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(TextareaInner);
 Textarea.displayName = "Textarea";

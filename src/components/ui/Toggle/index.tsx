@@ -12,13 +12,17 @@ interface ToggleProps {
 export function Toggle({ checked, onChange, label, disabled, size = "md" }: ToggleProps) {
   return (
     <label className={`${styles.wrapper} ${disabled ? styles.disabled : ""}`}>
-      <div
-        className={`${styles.track} ${styles[size]} ${checked ? styles.on : ""}`}
-        onClick={() => !disabled && onChange(!checked)}
+      <input
+        type="checkbox"
         role="switch"
-        aria-checked={checked}
-        tabIndex={0}
-        onKeyDown={(e) => e.key === " " && !disabled && onChange(!checked)}
+        className={styles.hiddenInput}
+        checked={checked}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <div
+        aria-hidden="true"
+        className={`${styles.track} ${styles[size]} ${checked ? styles.on : ""}`}
       >
         <div className={styles.thumb} />
       </div>

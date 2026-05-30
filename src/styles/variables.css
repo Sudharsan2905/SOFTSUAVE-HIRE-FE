@@ -52,12 +52,15 @@
   --text-inverse: #ffffff;
   --text-brand: #2563ff;
 
-  --sidebar-bg: #0b0f19;
-  --sidebar-text: #94a3b8;
-  --sidebar-text-active: #f1f5f9;
-  --sidebar-item-hover: rgba(255, 255, 255, 0.06);
-  --sidebar-item-active: rgba(37, 99, 255, 0.25);
-  --sidebar-border: rgba(255, 255, 255, 0.07);
+  /* Sidebar — Light Mode (white sidebar matching Figma) */
+  --sidebar-bg: #ffffff;
+  --sidebar-text: #64748b;
+  --sidebar-text-active: #1e293b;
+  --sidebar-item-hover: rgba(15, 23, 42, 0.05);
+  --sidebar-item-active: rgba(37, 99, 255, 0.08);
+  --sidebar-border: #e2e8f0;
+  --sidebar-active-text: var(--primary-700);
+  --sidebar-logo-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 
   /* Shadows */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
@@ -78,16 +81,23 @@
   --transition-base: 200ms ease;
   --transition-slow: 300ms ease;
 
-  /* Sidebar */
-  --sidebar-width: 260px;
-  --sidebar-collapsed-width: 64px;
+  /* Layout */
+  --sidebar-width: 225px;
+  --sidebar-collapsed-width: 65px;
+  --header-height: 64px;
 
-  /* Z-index */
+  /* Z-index scale */
   --z-sidebar: 100;
-  --z-header: 90;
+  --z-header: 95;
+  --z-dropdown: 150;
   --z-modal: 200;
   --z-toast: 300;
   --z-tooltip: 250;
+
+  /* Tooltip */
+  --tooltip-bg: #1e293b;
+  --tooltip-text: #f8fafc;
+  --tooltip-border: rgba(255, 255, 255, 0.06);
 }
 
 [data-theme="dark"] {
@@ -115,9 +125,24 @@
   --text-inverse: #0f172a;
   --text-brand: #60a5fa;
 
+  /* Sidebar — Dark Mode (keeps the original dark sidebar) */
+  --sidebar-bg: #0b0f19;
+  --sidebar-text: #64748b;
+  --sidebar-text-active: #f1f5f9;
+  --sidebar-item-hover: rgba(255, 255, 255, 0.06);
+  --sidebar-item-active: rgba(37, 99, 255, 0.22);
+  --sidebar-border: rgba(255, 255, 255, 0.07);
+  --sidebar-active-text: var(--primary-400);
+  --sidebar-logo-shadow: none;
+
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.3);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+
+  /* Tooltip — dark mode: invert to light surface */
+  --tooltip-bg: #f1f5f9;
+  --tooltip-text: #0f172a;
+  --tooltip-border: rgba(0, 0, 0, 0.08);
 }

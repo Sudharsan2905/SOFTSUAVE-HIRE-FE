@@ -10,6 +10,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { Spinner } from "@/components/ui/Spinner";
 import { Badge } from "@/components/ui/Badge";
 import { IconPlus, IconEdit, IconDelete, IconQuestionBank } from "@/assets/icons";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
@@ -184,16 +185,24 @@ export default function CategoriesPage() {
                     {getInitials(cat.name)}
                   </div>
                   <div className={styles.cardActions} onClick={(e) => e.stopPropagation()}>
-                    <button className={styles.iconBtn} onClick={() => openEdit(cat)} title="Edit">
-                      <IconEdit size={14} />
-                    </button>
-                    <button
-                      className={`${styles.iconBtn} ${styles.danger}`}
-                      onClick={() => openDelete(cat)}
-                      title="Delete"
-                    >
-                      <IconDelete size={14} />
-                    </button>
+                    <Tooltip content="Edit" placement="top">
+                      <button
+                        className={styles.iconBtn}
+                        onClick={() => openEdit(cat)}
+                        aria-label="Edit category"
+                      >
+                        <IconEdit size={14} />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Delete" placement="top">
+                      <button
+                        className={`${styles.iconBtn} ${styles.danger}`}
+                        onClick={() => openDelete(cat)}
+                        aria-label="Delete category"
+                      >
+                        <IconDelete size={14} />
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
                 <h3 className={styles.catName}>{cat.name}</h3>
@@ -215,16 +224,24 @@ export default function CategoriesPage() {
                     <span className={styles.listDate}>{formatDate(cat.created_at)}</span>
                   </div>
                   <div className={styles.listActions} onClick={(e) => e.stopPropagation()}>
-                    <button className={styles.iconBtn} onClick={() => openEdit(cat)} title="Edit">
-                      <IconEdit size={14} />
-                    </button>
-                    <button
-                      className={`${styles.iconBtn} ${styles.danger}`}
-                      onClick={() => openDelete(cat)}
-                      title="Delete"
-                    >
-                      <IconDelete size={14} />
-                    </button>
+                    <Tooltip content="Edit" placement="top">
+                      <button
+                        className={styles.iconBtn}
+                        onClick={() => openEdit(cat)}
+                        aria-label="Edit category"
+                      >
+                        <IconEdit size={14} />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Delete" placement="top">
+                      <button
+                        className={`${styles.iconBtn} ${styles.danger}`}
+                        onClick={() => openDelete(cat)}
+                        aria-label="Delete category"
+                      >
+                        <IconDelete size={14} />
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
               </div>

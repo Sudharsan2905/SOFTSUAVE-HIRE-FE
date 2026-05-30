@@ -2,11 +2,21 @@ import React, { Suspense, lazy } from "react";
 import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import { Spinner } from "@/components/ui/Spinner";
 import { AdminLayout } from "@/components/layout/AdminLayout";
+import { NoAccessPage } from "@/components/shared/NoAccessPage";
 import { useAppSelector } from "@/store";
 
 const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
   const user = useAppSelector((s) => s.auth.user);
-  if (user?.role !== "super_admin") return <Navigate to="/question-bank" replace />;
+  if (user?.role !== "super_admin") {
+    return (
+      <NoAccessPage
+        title="Super Admin Only"
+        description="This area is restricted to Super Admins. Contact your administrator if you require access."
+        backTo="/question-bank"
+        backLabel="Back to Dashboard"
+      />
+    );
+  }
   return <>{children}</>;
 };
 
@@ -49,6 +59,8 @@ const AssessmentDetailPage = lazy(
 );
 const LiveInterviewsPage = lazy(() => import("@/features/liveInterviews/pages/LiveInterviewsPage"));
 const UsersPage = lazy(() => import("@/features/users/pages/UsersPage"));
+const UserProfilePage = lazy(() => import("@/features/profile/pages/UserProfilePage"));
+const NotificationsPage = lazy(() => import("@/features/notifications/pages/NotificationsPage"));
 
 // Lazy-loaded candidate pages
 const CandidateLoginPage = lazy(() => import("@/features/candidate/pages/CandidateLoginPage"));
@@ -95,6 +107,16 @@ export default function App() {
             element={<AssessmentDetailPage />}
           />
           <Route path="/live-interviews" element={<LiveInterviewsPage />} />
+          <Route path="/profile" element={<UserProfilePage />} />
+          <Route
+            path="/profile/:userId"
+            element={
+              <SuperAdminRoute>
+                <UserProfilePage />
+              </SuperAdminRoute>
+            }
+          />
+          <Route path="/notifications" element={<NotificationsPage />} />
           <Route
             path="/users"
             element={

@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/Badge";
 import { ComplexityBadge } from "@/components/ui/Badge";
 import { Spinner } from "@/components/ui/Spinner";
 import { RichText } from "@/components/ui/RichText";
+import { Tooltip } from "@/components/ui/Tooltip";
 import {
   IconPlus,
   IconEdit,
@@ -20,6 +21,7 @@ import {
   IconSparkles,
   IconFileExcel,
   IconChevronLeft,
+  IconChevronRight,
 } from "@/assets/icons";
 import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -96,7 +98,10 @@ export default function QuestionsPage() {
   const { page, pageSize, goToPage, reset, changePageSize } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
 
-  const [forms, setForms] = useState<QuestionForm[]>([newBlankForm()]);
+  const [forms, setForms] = useState<QuestionForm[]>(() => [newBlankForm()]);
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(
+    () => new Set([forms[0]?._key ?? ""])
+  );
 
   const [aiForm, setAiForm] = useState({
     topic: "",
@@ -147,7 +152,27 @@ export default function QuestionsPage() {
     reset();
   }, [debouncedSearch, complexity, questionType, sortBy, sortOrder]);
 
-  const resetForms = () => setForms([newBlankForm()]);
+  const resetForms = () => {
+    const f = newBlankForm();
+    setForms([f]);
+    setExpandedKeys(new Set([f._key]));
+  };
+
+  const toggleAccordion = (key: string) => {
+    setExpandedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const getAccordionTitle = (f: QuestionForm, idx: number): string => {
+    const text = f.question_text.trim();
+    if (!text) return `Question ${idx + 1}`;
+    const truncated = text.length > 55 ? `${text.slice(0, 55)}…` : text;
+    return `${idx + 1}. ${truncated}`;
+  };
 
   const updateForm = (idx: number, patch: Partial<QuestionForm>) => {
     setForms((prev) => prev.map((f, i) => (i === idx ? { ...f, ...patch } : f)));
@@ -286,10 +311,11 @@ export default function QuestionsPage() {
   };
 
   const openEdit = (q: Question) => {
+    const key = crypto.randomUUID();
     setSelected(q);
     setForms([
       {
-        _key: crypto.randomUUID(),
+        _key: key,
         question_text: q.question_text,
         question_type: q.question_type,
         complexity: q.complexity,
@@ -304,6 +330,7 @@ export default function QuestionsPage() {
         correct_answer: q.correct_answer || "",
       },
     ]);
+    setExpandedKeys(new Set([key]));
     setShowCreate(true);
   };
 
@@ -333,6 +360,7 @@ export default function QuestionsPage() {
               Excel Import
             </Button>
             <Button
+              size="sm"
               leftIcon={<IconPlus size={15} />}
               onClick={() => {
                 resetForms();
@@ -411,18 +439,27 @@ export default function QuestionsPage() {
                     </Badge>
                   </div>
                   <div className={styles.cardActions}>
-                    <button className={styles.iconBtn} onClick={() => openEdit(q)}>
-                      <IconEdit size={14} />
-                    </button>
-                    <button
-                      className={`${styles.iconBtn} ${styles.danger}`}
-                      onClick={() => {
-                        setSelected(q);
-                        setShowDelete(true);
-                      }}
-                    >
-                      <IconDelete size={14} />
-                    </button>
+                    <Tooltip content="Edit" placement="top">
+                      <button
+                        className={styles.iconBtn}
+                        onClick={() => openEdit(q)}
+                        aria-label="Edit question"
+                      >
+                        <IconEdit size={14} />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Delete" placement="top">
+                      <button
+                        className={`${styles.iconBtn} ${styles.danger}`}
+                        onClick={() => {
+                          setSelected(q);
+                          setShowDelete(true);
+                        }}
+                        aria-label="Delete question"
+                      >
+                        <IconDelete size={14} />
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
                 <div className={styles.questionText}>
@@ -476,135 +513,135 @@ export default function QuestionsPage() {
           </>
         }
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {forms.map((f, idx) => (
-            <div key={f._key} className={styles.formCard}>
-              {!selected && (
-                <div className={styles.formCardHeader}>
-                  <span className={styles.formCardTitle}>Question {idx + 1}</span>
-                  {forms.length > 1 && (
-                    <button
-                      className={`${styles.iconBtn} ${styles.danger}`}
-                      onClick={() => setForms((prev) => prev.filter((_, i) => i !== idx))}
-                      title="Remove"
-                    >
-                      <IconDelete size={14} />
-                    </button>
-                  )}
-                </div>
-              )}
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <div>
-                  <Textarea
-                    label="Question Text"
-                    placeholder="Enter the question..."
-                    value={f.question_text}
-                    onChange={(e) => updateForm(idx, { question_text: e.target.value })}
-                    rows={3}
-                  />
-                  <p
-                    style={{
-                      fontSize: 11,
-                      color: "var(--text-tertiary)",
-                      marginTop: 4,
-                    }}
-                  >
-                    Markdown supported — wrap code in ``` code fences ```
-                  </p>
-                </div>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 12,
-                  }}
+            <div key={f._key} className={styles.accordionItem}>
+              {/* Accordion header */}
+              <div className={styles.accordionHeader}>
+                <button
+                  type="button"
+                  className={styles.accordionTrigger}
+                  onClick={() => toggleAccordion(f._key)}
+                  aria-expanded={expandedKeys.has(f._key)}
                 >
-                  <Select
-                    label="Question Type"
-                    options={QUESTION_TYPE_OPTIONS}
-                    value={f.question_type}
-                    onChange={(v) => updateForm(idx, { question_type: v as QuestionType })}
+                  <IconChevronRight
+                    size={15}
+                    className={`${styles.accordionChevron} ${expandedKeys.has(f._key) ? styles.accordionChevronOpen : ""}`}
                   />
-                  <Select
-                    label="Complexity"
-                    options={COMPLEXITY_OPTIONS}
-                    value={f.complexity}
-                    onChange={(v) => updateForm(idx, { complexity: v as Complexity })}
-                  />
-                </div>
+                  <span className={styles.accordionTitle}>
+                    {getAccordionTitle(f, idx)}
+                  </span>
+                </button>
+                {!selected && forms.length > 1 && (
+                  <button
+                    type="button"
+                    className={`${styles.iconBtn} ${styles.danger}`}
+                    onClick={() => {
+                      setForms((prev) => prev.filter((_, i) => i !== idx));
+                      setExpandedKeys((prev) => {
+                        const next = new Set(prev);
+                        next.delete(f._key);
+                        return next;
+                      });
+                    }}
+                    title="Remove question"
+                    aria-label="Remove question"
+                  >
+                    <IconDelete size={14} />
+                  </button>
+                )}
+              </div>
 
-                {f.question_type === "essay" ? (
-                  <Textarea
-                    label="Model Answer (optional)"
-                    placeholder="Provide a model answer for reference..."
-                    value={f.correct_answer}
-                    onChange={(e) => updateForm(idx, { correct_answer: e.target.value })}
-                    rows={3}
-                  />
-                ) : (
-                  <div>
-                    <label
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 500,
-                        color: "var(--text-secondary)",
-                        display: "block",
-                        marginBottom: 8,
-                      }}
-                    >
-                      Options{" "}
-                      {f.question_type === "mcq_multi"
-                        ? "(check all correct)"
-                        : "(check one correct)"}
-                    </label>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 8,
-                      }}
-                    >
-                      {f.options.map((opt, optIdx) => (
-                        <div
-                          key={opt.id}
+              {/* Accordion body (animated) */}
+              <div
+                className={`${styles.accordionContent} ${expandedKeys.has(f._key) ? styles.accordionOpen : ""}`}
+              >
+                <div className={styles.accordionInner}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    <div>
+                      <Textarea
+                        label="Question Text"
+                        placeholder="Enter the question..."
+                        value={f.question_text}
+                        onChange={(e) => updateForm(idx, { question_text: e.target.value })}
+                        rows={3}
+                      />
+                      <p style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 4 }}>
+                        Markdown supported — wrap code in ``` code fences ```
+                      </p>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <Select
+                        label="Question Type"
+                        options={QUESTION_TYPE_OPTIONS}
+                        value={f.question_type}
+                        onChange={(v) => updateForm(idx, { question_type: v as QuestionType })}
+                      />
+                      <Select
+                        label="Complexity"
+                        options={COMPLEXITY_OPTIONS}
+                        value={f.complexity}
+                        onChange={(v) => updateForm(idx, { complexity: v as Complexity })}
+                      />
+                    </div>
+
+                    {f.question_type === "essay" ? (
+                      <Textarea
+                        label="Model Answer (optional)"
+                        placeholder="Provide a model answer for reference..."
+                        value={f.correct_answer}
+                        onChange={(e) => updateForm(idx, { correct_answer: e.target.value })}
+                        rows={3}
+                      />
+                    ) : (
+                      <div>
+                        <p
                           style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
+                            fontSize: 13,
+                            fontWeight: 500,
+                            color: "var(--text-secondary)",
+                            margin: "0 0 8px",
                           }}
                         >
-                          <input
-                            type={f.question_type === "mcq_single" ? "radio" : "checkbox"}
-                            checked={opt.is_correct}
-                            onChange={() => {
-                              const options = f.options.map((o, i) => ({
-                                ...o,
-                                is_correct:
-                                  f.question_type === "mcq_single"
-                                    ? i === optIdx
-                                    : i === optIdx
-                                      ? !o.is_correct
-                                      : o.is_correct,
-                              }));
-                              updateForm(idx, { options });
-                            }}
-                            style={{ flexShrink: 0 }}
-                          />
-                          <Input
-                            placeholder={`Option ${optIdx + 1}`}
-                            value={opt.text}
-                            onChange={(e) =>
-                              updateOption(idx, optIdx, {
-                                text: e.target.value,
-                              })
-                            }
-                          />
+                          Options{" "}
+                          {f.question_type === "mcq_multi"
+                            ? "(check all correct)"
+                            : "(check one correct)"}
+                        </p>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          {f.options.map((opt, optIdx) => (
+                            <div key={opt.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <input
+                                type={f.question_type === "mcq_single" ? "radio" : "checkbox"}
+                                checked={opt.is_correct}
+                                onChange={() => {
+                                  const options = f.options.map((o, i) => ({
+                                    ...o,
+                                    is_correct:
+                                      f.question_type === "mcq_single"
+                                        ? i === optIdx
+                                        : i === optIdx
+                                          ? !o.is_correct
+                                          : o.is_correct,
+                                  }));
+                                  updateForm(idx, { options });
+                                }}
+                                style={{ flexShrink: 0 }}
+                              />
+                              <Input
+                                placeholder={`Option ${optIdx + 1}`}
+                                value={opt.text}
+                                onChange={(e) =>
+                                  updateOption(idx, optIdx, { text: e.target.value })
+                                }
+                              />
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
           ))}
@@ -613,9 +650,13 @@ export default function QuestionsPage() {
             <Button
               variant="secondary"
               leftIcon={<IconPlus size={15} />}
-              onClick={() => setForms((prev) => [...prev, newBlankForm()])}
+              onClick={() => {
+                const newForm = newBlankForm();
+                setForms((prev) => [...prev, newForm]);
+                setExpandedKeys((prev) => new Set([...prev, newForm._key]));
+              }}
             >
-              Add More
+              Add Another Question
             </Button>
           )}
         </div>

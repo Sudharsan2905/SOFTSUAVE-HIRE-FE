@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useId } from "react";
 import { createPortal } from "react-dom";
 import styles from "./Select.module.css";
 import { clsx } from "@/utils/helpers";
@@ -40,7 +40,8 @@ export function Select({
   className,
   style,
 }: Readonly<SelectProps>) {
-  const inputId = id || label?.toLowerCase().replace(/\s/g, "-");
+  const uid = useId();
+  const inputId = id ?? `select-${uid}`;
   const [open, setOpen] = useState(false);
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -52,13 +53,32 @@ export function Select({
     if (disabled) return;
     if (!open && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
-      setDropdownStyle({
-        position: "fixed",
-        top: rect.bottom + 4,
-        left: rect.left,
-        width: rect.width,
-        zIndex: 9999,
-      });
+      const estimatedHeight = Math.min(options.length * 38 + 8, 280);
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const openUp = spaceBelow < estimatedHeight + 8 && spaceAbove > spaceBelow;
+
+      if (openUp) {
+        setDropdownStyle({
+          position: "fixed",
+          bottom: window.innerHeight - rect.top + 4,
+          left: rect.left,
+          width: rect.width,
+          maxHeight: Math.min(spaceAbove - 8, 280),
+          overflowY: "auto",
+          zIndex: 9999,
+        });
+      } else {
+        setDropdownStyle({
+          position: "fixed",
+          top: rect.bottom + 4,
+          left: rect.left,
+          width: rect.width,
+          maxHeight: Math.min(spaceBelow - 8, 280),
+          overflowY: "auto",
+          zIndex: 9999,
+        });
+      }
     }
     setOpen((v) => !v);
   };
@@ -87,9 +107,10 @@ export function Select({
           {showRequired && <span style={{ color: "var(--error-500)", marginLeft: 2 }}>*</span>}
         </label>
       )}
-      <div className={clsx(styles.container, className)} id={inputId}>
+      <div className={clsx(styles.container, className)}>
         <button
           ref={triggerRef}
+          id={inputId}
           type="button"
           className={clsx(
             styles.trigger,

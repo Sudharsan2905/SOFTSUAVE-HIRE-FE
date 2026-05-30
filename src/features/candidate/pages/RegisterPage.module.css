@@ -87,6 +87,24 @@
   border-radius: var(--radius-full);
 }
 
+.googleBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #15803d;
+  line-height: 1.4;
+}
+.googleBanner svg {
+  flex-shrink: 0;
+}
+
 .form {
   display: flex;
   flex-direction: column;

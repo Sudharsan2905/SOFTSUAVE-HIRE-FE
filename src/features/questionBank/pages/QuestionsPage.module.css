@@ -146,3 +146,82 @@
   color: var(--text-secondary);
   font-size: 14px;
 }
+
+/* ── Accordion question items ── */
+.accordionItem {
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  overflow: hidden;
+  transition: border-color var(--transition-fast);
+}
+.accordionItem:focus-within {
+  border-color: var(--border-focus);
+}
+
+.accordionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 12px 0 0;
+  background: var(--bg-muted);
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--transition-fast);
+}
+.accordionItem .accordionHeader:has(+ .accordionOpen) {
+  border-bottom-color: var(--border-default);
+}
+
+.accordionTrigger {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.accordionChevron {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  transition: transform var(--transition-base);
+}
+.accordionChevronOpen {
+  transform: rotate(90deg);
+}
+
+.accordionTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color var(--transition-fast);
+}
+.accordionTrigger:hover .accordionTitle {
+  color: var(--text-primary);
+}
+
+/* CSS grid-template-rows trick for height: auto animation */
+.accordionContent {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.accordionOpen {
+  grid-template-rows: 1fr;
+}
+
+.accordionInner {
+  overflow: hidden;
+  padding: 0 16px;
+  transition: padding 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.accordionOpen .accordionInner {
+  padding: 16px;
+}

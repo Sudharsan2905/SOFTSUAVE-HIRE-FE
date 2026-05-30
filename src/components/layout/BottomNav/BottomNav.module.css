@@ -1,0 +1,126 @@
+/* ── Only render on mobile ── */
+.nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--z-sidebar);
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-default);
+    /* iOS safe-area support */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+    transition:
+      background var(--transition-base),
+      border-color var(--transition-base);
+    /* Horizontal scroll when items overflow (e.g. super admin) */
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ── Nav item ── */
+.item {
+  position: relative;
+  flex: 1;
+  flex-shrink: 0;
+  min-width: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0 8px;
+  text-decoration: none;
+  color: var(--text-tertiary);
+  transition: color var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+  min-height: 56px;
+}
+.item:hover {
+  color: var(--text-secondary);
+}
+.item.active {
+  color: var(--primary-600);
+}
+[data-theme="dark"] .item.active {
+  color: var(--primary-400);
+}
+.item.disabled {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+/* Active indicator dot */
+.item.active::after {
+  content: "";
+  position: absolute;
+  bottom: 5px;
+  width: 4px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--primary-600);
+}
+[data-theme="dark"] .item.active::after {
+  background: var(--primary-400);
+}
+
+/* Tap feedback */
+.item.tapped .iconWrap {
+  background: var(--bg-muted);
+  transform: scale(0.88);
+}
+
+/* ── Icon wrapper ── */
+.iconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  transition:
+    background var(--transition-fast),
+    transform var(--transition-fast);
+}
+.item:active .iconWrap {
+  background: var(--bg-muted);
+  transform: scale(0.9);
+}
+.item.active .iconWrap {
+  background: var(--primary-50);
+}
+[data-theme="dark"] .item.active .iconWrap {
+  background: rgba(37, 99, 255, 0.12);
+}
+
+/* ── Workspace switcher item (mirrors .item layout without NavLink) ── */
+.wsItem {
+  position: relative;
+  flex: 1;
+  flex-shrink: 0;
+  min-width: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0 8px;
+  color: var(--text-tertiary);
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+  min-height: 56px;
+}
+.wsItem:hover {
+  color: var(--text-secondary);
+}
