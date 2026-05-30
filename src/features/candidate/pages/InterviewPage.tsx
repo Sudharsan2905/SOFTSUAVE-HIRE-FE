@@ -210,6 +210,15 @@ export default function InterviewPage() {
   if (!roundData) return null;
 
   const questions = roundData.questions;
+
+  if (questions.length === 0) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: 12, color: "var(--text-tertiary)", fontSize: 14 }}>
+        <p>No questions found for this round. Please contact the administrator.</p>
+      </div>
+    );
+  }
+
   const currentQuestion = questions[currentIdx];
   const answered = Object.keys(answers).length;
   const isLowTime = timeLeft < 120;
