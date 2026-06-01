@@ -134,7 +134,7 @@ export function useNetworkMonitoring({
   const connect = useCallback(() => {
     if (!submissionId || !accessToken || unmountedRef.current) return;
 
-    const apiBase = import.meta.env.API_BASE_URL || "http://localhost:8000";
+    const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
     const url = `${apiBase.replace(/^https/, "wss").replace(/^http/, "ws")}/api/ws/interview/${submissionId}?token=${accessToken}`;
 
     const ws = new WebSocket(url);
@@ -209,7 +209,19 @@ export function useNetworkMonitoring({
       unmountedRef.current = true;
       stopHeartbeat();
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
-      wsRef.current?.close();
+      const ws = wsRef.current;
+      wsRef.current = null;
+      if (ws) {
+        // Null out onclose so the scheduleReconnect path never fires for this ws
+        ws.onclose = null;
+        ws.onerror = null;
+        ws.onmessage = null;
+        // Avoid closing a still-connecting socket (causes a browser warning);
+        // onopen will see unmountedRef.current=true and close it there instead.
+        if (ws.readyState !== WebSocket.CONNECTING) {
+          ws.close();
+        }
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submissionId, accessToken]);

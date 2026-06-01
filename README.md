@@ -172,8 +172,8 @@ npm run build
 Create a `.env` file in the project root:
 
 ```env
-API_BASE_URL=http://localhost:8000
-GOOGLE_CLIENT_ID=your-google-client-id
+VITE_API_BASE_URL=http://localhost:8000
+VITE_GOOGLE_CLIENT_ID=your-google-client-id
 ```
 
 The Vite proxy in `vite.config.ts` forwards all `/api` requests to `http://localhost:8000` in development.

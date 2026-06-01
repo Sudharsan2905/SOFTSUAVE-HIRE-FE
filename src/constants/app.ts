@@ -1,4 +1,4 @@
-export const APP_NAME = "SoftSuave Hire";
+export const VITE_APP_NAME = "SoftSuave Hire";
 
 export const COMPLEXITY_OPTIONS = [
   { value: "low", label: "Low" },

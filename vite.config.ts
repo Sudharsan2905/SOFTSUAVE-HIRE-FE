@@ -6,9 +6,9 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
     define: {
-      'import.meta.env.API_BASE_URL': JSON.stringify(env.API_BASE_URL),
-      'import.meta.env.GOOGLE_CLIENT_ID': JSON.stringify(env.GOOGLE_CLIENT_ID),
-      'import.meta.env.APP_NAME': JSON.stringify(env.APP_NAME),
+      'import.meta.env.VITE_API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL),
+      'import.meta.env.VITE_GOOGLE_CLIENT_ID': JSON.stringify(env.VITE_GOOGLE_CLIENT_ID),
+      'import.meta.env.VITE_APP_NAME': JSON.stringify(env.VITE_APP_NAME),
     },
     plugins: [react()],
     resolve: {
