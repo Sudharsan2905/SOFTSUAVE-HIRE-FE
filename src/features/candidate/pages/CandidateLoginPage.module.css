@@ -76,15 +76,15 @@
 .brandName {
   font-size: 20px;
   font-weight: 800;
-  color: var(--text-primary);
+  color: #0f172a;
   letter-spacing: -0.03em;
 }
 .portalPill {
   font-size: 13px;
-  color: var(--text-tertiary);
-  background: var(--bg-muted);
+  color: #94a3b8;
+  background: #f1f5f9;
   padding: 2px 12px;
-  border-radius: var(--radius-full);
+  border-radius: 9999px;
 }
 
 .title {
@@ -109,7 +109,7 @@
   padding: 0 16px;
   border-radius: 10px;
   background: #f1eff9;
-  transition: box-shadow var(--transition-fast);
+  transition: box-shadow 150ms ease;
 }
 .field:focus-within {
   box-shadow: 0 0 0 2px rgba(251, 77, 61, 0.45);
@@ -126,7 +126,7 @@
   background: none;
   cursor: pointer;
   color: #8a8a9e;
-  transition: color var(--transition-fast);
+  transition: color 150ms ease;
 }
 .fieldIconBtn:hover {
   color: #f4452e;
@@ -145,7 +145,7 @@
 
 .error {
   font-size: 12px;
-  color: var(--error-600);
+  color: #dc2626;
   margin-top: -6px;
 }
 
@@ -162,8 +162,8 @@
   cursor: pointer;
   box-shadow: 0 8px 20px rgba(243, 30, 70, 0.45);
   transition:
-    transform var(--transition-fast),
-    box-shadow var(--transition-fast);
+    transform 150ms ease,
+    box-shadow 150ms ease;
 }
 .loginBtn:hover {
   transform: translateY(-1px);

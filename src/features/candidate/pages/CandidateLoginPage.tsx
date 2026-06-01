@@ -110,6 +110,7 @@ export default function CandidateLoginPage() {
                   className={styles.input}
                   type="email"
                   placeholder="Username"
+                  autoComplete="email"
                   {...register("email")}
                 />
               </div>
@@ -123,6 +124,7 @@ export default function CandidateLoginPage() {
                   className={styles.input}
                   type={showPass ? "text" : "password"}
                   placeholder="Password"
+                  autoComplete="current-password"
                   {...register("password")}
                 />
                 <button

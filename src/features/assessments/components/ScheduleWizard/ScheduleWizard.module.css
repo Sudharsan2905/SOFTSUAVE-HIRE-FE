@@ -1,0 +1,438 @@
+/* ─── Stepper ──────────────────────────────────────────────────────────────── */
+.steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.step.active {
+  color: var(--primary-600);
+}
+
+.step.done {
+  color: var(--success-600);
+}
+
+.stepDot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--border-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+
+.step.active .stepDot {
+  border-color: var(--primary-600);
+  background: var(--primary-600);
+  color: #fff;
+}
+
+.step.done .stepDot {
+  border-color: var(--success-600);
+  background: var(--success-600);
+  color: #fff;
+}
+
+.stepLine {
+  flex: 1;
+  height: 1px;
+  background: var(--border-primary);
+  margin: 0 8px;
+}
+
+/* ─── Step 1 – Candidate Info ──────────────────────────────────────────────── */
+.candidateSearch {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.candidateCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-primary);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+}
+
+.candidateAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.candidateInfo {
+  flex: 1;
+}
+
+.candidateName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 2px;
+}
+
+.candidateMeta {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+.candidateField {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.fieldItem {
+  flex: 1;
+  min-width: 140px;
+}
+
+.fieldLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 3px;
+}
+
+.fieldValue {
+  font-size: 13px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* ─── Step 1 – New Candidate Form ─────────────────────────────────────────── */
+.createForm {
+  margin-top: 4px;
+  border: 1px solid var(--border-primary);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+@media (max-width: 600px) {
+  .formGrid { grid-template-columns: 1fr; }
+}
+
+/* ─── Step 2 – Monitoring Overrides ───────────────────────────────────────── */
+.monitoringSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.inheritBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--primary-50, #eff6ff);
+  border: 1px solid var(--primary-200, #bfdbfe);
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: var(--primary-700, #1d4ed8);
+  line-height: 1.5;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.toggleRow:last-child {
+  border-bottom: none;
+}
+
+.toggleMeta {
+  flex: 1;
+}
+
+.toggleLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 2px;
+}
+
+.toggleHint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+.overridePill {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 99px;
+  background: var(--warning-100, #fef3c7);
+  color: var(--warning-700, #b45309);
+  margin-left: 8px;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.screenshotOptions {
+  padding: 12px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ─── Step 3 – Question Selection ─────────────────────────────────────────── */
+.questionStep {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.roundTabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.roundTab {
+  padding: 5px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  transition: all 0.15s ease;
+}
+
+.roundTab:hover {
+  border-color: var(--primary-400);
+  color: var(--primary-600);
+}
+
+.roundTab.roundTabActive {
+  border-color: var(--primary-600);
+  background: var(--primary-600);
+  color: #fff;
+}
+
+.roundTab.roundTabDone {
+  border-color: var(--success-500);
+  background: var(--success-50, #f0fdf4);
+  color: var(--success-700, #15803d);
+}
+
+.questionPanes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  min-height: 320px;
+}
+
+.pane {
+  border: 1px solid var(--border-primary);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.paneHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+}
+
+.paneTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.paneCount {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.paneBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-primary);
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-primary);
+  transition: background 0.12s ease;
+  line-height: 1.4;
+}
+
+.qItem:hover {
+  background: var(--bg-secondary);
+}
+
+.qItemSelected {
+  border-color: var(--primary-300);
+  background: var(--primary-50, #eff6ff);
+}
+
+.qText {
+  flex: 1;
+  margin: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.qRemove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.qRemove:hover {
+  color: var(--error-600);
+}
+
+.filterRow {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  border-bottom: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+  flex-wrap: wrap;
+}
+
+.emptyHint {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+/* ─── Time window ──────────────────────────────────────────────────────────── */
+.timeWindow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--border-primary);
+  margin-top: 12px;
+}
+
+.timeWindowLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin: 0 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* ─── Share link result ────────────────────────────────────────────────────── */
+.shareLinkBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 0;
+  text-align: center;
+}
+
+.shareLinkTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.shareLinkSub {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.shareLinkInput {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.shareLinkField {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

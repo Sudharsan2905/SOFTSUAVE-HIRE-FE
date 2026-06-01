@@ -86,6 +86,11 @@
   color: var(--primary-600);
 }
 
+.resume:hover {
+  background: var(--success-50, #f0fdf4);
+  color: var(--success-700, #15803d);
+}
+
 .empty {
   display: flex;
   flex-direction: column;

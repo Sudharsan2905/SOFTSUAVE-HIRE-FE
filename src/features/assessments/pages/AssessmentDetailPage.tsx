@@ -9,14 +9,15 @@ import { Modal } from "@/components/ui/Modal";
 import { Pagination } from "@/components/ui/Pagination";
 import { Spinner } from "@/components/ui/Spinner";
 import { Badge, StatusBadge } from "@/components/ui/Badge";
-import { IconDownload, IconEye, IconRefresh, IconChevronLeft } from "@/assets/icons";
+import { IconDownload, IconEye, IconRefresh, IconChevronLeft, IconAssessment } from "@/assets/icons";
 import { Tooltip } from "@/components/ui/Tooltip";
 import type { DateRange } from "@/components/datetime/DateRangePicker";
 import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
-import { Submission, PaginationMeta, SortOrder } from "@/types";
+import { Assessment, Submission, PaginationMeta, SortOrder } from "@/types";
 import { SUBMISSION_STATUS_OPTIONS } from "@/constants/app";
+import { ScheduleWizardModal } from "@/features/assessments/components/ScheduleWizard/ScheduleWizardModal";
 import {
   formatDateTime,
   getAvatarColor,
@@ -57,13 +58,25 @@ export default function AssessmentDetailPage() {
   const [sortBy, setSortBy] = useState("started_at");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [status, setStatus] = useState("");
+  const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [selected, setSelected] = useState<SubmissionWithCandidate | null>(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
   const [regranting, setRegranting] = useState<string | null>(null);
+  const [resuming, setResuming] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
   const { page, pageSize, goToPage, reset, changePageSize } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
+
+  // Fetch the full assessment once (needed by the schedule wizard)
+  useEffect(() => {
+    if (!workspaceId || !id) return;
+    api
+      .get(`/api/workspaces/${workspaceId}/assessments/${id}`)
+      .then(({ data }) => setAssessment(data.data ?? null))
+      .catch(() => { /* non-critical — schedule button stays disabled */ });
+  }, [workspaceId, id]);
 
   const fetchSubmissions = useCallback(async () => {
     setIsLoading(true);
@@ -97,6 +110,22 @@ export default function AssessmentDetailPage() {
   useEffect(() => {
     reset();
   }, [debouncedSearch, sortBy, sortOrder, status, dateRange]);
+
+  const handleResume = async (submissionId: string) => {
+    setResuming(submissionId);
+    try {
+      await api.post(
+        `/api/workspaces/${workspaceId}/assessments/${id}/submissions/${submissionId}/resume`
+      );
+      toast.success("Interview resumed — candidate can continue.");
+      void fetchSubmissions();
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg || "Failed to resume interview");
+    } finally {
+      setResuming(null);
+    }
+  };
 
   const handleReaccess = async (submissionId: string) => {
     setRegranting(submissionId);
@@ -227,7 +256,7 @@ export default function AssessmentDetailPage() {
                           <Tooltip content="Grant Re-access" placement="top">
                             <button
                               className={`${styles.actionBtn} ${styles.reaccess}`}
-                              onClick={() => handleReaccess(sub.id)}
+                              onClick={() => void handleReaccess(sub.id)}
                               aria-label="Grant re-access"
                               disabled={regranting === sub.id}
                             >
@@ -235,6 +264,22 @@ export default function AssessmentDetailPage() {
                                 <Spinner size="sm" />
                               ) : (
                                 <IconRefresh size={14} />
+                              )}
+                            </button>
+                          </Tooltip>
+                        )}
+                        {sub.status === "on_hold" && (
+                          <Tooltip content="Resume Interview" placement="top">
+                            <button
+                              className={`${styles.actionBtn} ${styles.resume}`}
+                              onClick={() => void handleResume(sub.id)}
+                              aria-label="Resume interview"
+                              disabled={resuming === sub.id}
+                            >
+                              {resuming === sub.id ? (
+                                <Spinner size="sm" />
+                              ) : (
+                                <span style={{ fontSize: 14 }}>▶</span>
                               )}
                             </button>
                           </Tooltip>
@@ -274,6 +319,13 @@ export default function AssessmentDetailPage() {
             >
               Export
             </Button>
+            <Button
+              leftIcon={<IconAssessment size={16} />}
+              onClick={() => setShowSchedule(true)}
+              disabled={!assessment}
+            >
+              Schedule Candidate
+            </Button>
           </div>
         }
       />
@@ -296,6 +348,15 @@ export default function AssessmentDetailPage() {
       />
 
       {content}
+
+      {showSchedule && assessment && (
+        <ScheduleWizardModal
+          assessment={assessment}
+          workspaceId={workspaceId!}
+          onClose={() => setShowSchedule(false)}
+          onSuccess={fetchSubmissions}
+        />
+      )}
 
       <Modal
         isOpen={showDetail}

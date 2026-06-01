@@ -59,6 +59,25 @@
   padding: 44px 44px;
   border-radius: 28px 0 0 28px;
   background: #ffffff;
+
+  /* Pin all child inputs/selects/datepickers to CandidateLogin light colors */
+  --bg-surface: #f1eff9;
+  --border-default: transparent;
+  --border-strong: #d8d3ef;
+  --text-primary: #1c1c2e;
+  --text-secondary: #8a8a9e;
+  --text-tertiary: #9a9aae;
+  --bg-muted: #e8e6f4;
+  --bg-hover: #ece8f7;
+  --bg-active: rgba(243, 30, 70, 0.08);
+  --radius-md: 10px;
+  /* Replace blue primary brand with red/orange brand for Select/DatePicker accents */
+  --primary-50: #fef2f2;
+  --primary-100: #fee2e2;
+  --primary-400: #fb8072;
+  --primary-500: #fb4d3d;
+  --primary-600: #f31e46;
+  --primary-700: #dc2626;
 }
 
 .formWrap {
@@ -76,15 +95,15 @@
 .brandName {
   font-size: 20px;
   font-weight: 800;
-  color: var(--text-primary);
+  color: #0f172a;
   letter-spacing: -0.03em;
 }
 .portalPill {
   font-size: 13px;
-  color: var(--text-tertiary);
-  background: var(--bg-muted);
+  color: #94a3b8;
+  background: #f1f5f9;
   padding: 2px 12px;
-  border-radius: var(--radius-full);
+  border-radius: 9999px;
 }
 
 .googleBanner {
@@ -93,7 +112,7 @@
   gap: 8px;
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
-  border-radius: var(--radius-md);
+  border-radius: 8px;
   padding: 10px 14px;
   margin-bottom: 4px;
   font-size: 13px;
@@ -119,10 +138,10 @@
 
 .error {
   font-size: 13px;
-  color: var(--error-600);
-  background: var(--error-50);
-  border: 1px solid var(--error-200, #fecaca);
-  border-radius: var(--radius-sm);
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
   padding: 8px 12px;
 }
 
@@ -190,7 +209,7 @@
   z-index: 1;
   width: 100%;
   max-width: 380px;
-  flex: 0.7 0 auto;
+  flex: 0.2 0 auto;
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 22px 44px rgba(0, 0, 0, 0.22);
@@ -204,7 +223,7 @@
 .welcome {
   position: absolute;
   z-index: 3;
-  bottom: 118px;
+  bottom: 170px;
   left: 0;
   right: 0;
   text-align: center;

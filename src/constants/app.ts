@@ -25,7 +25,12 @@ export const SUBMISSION_STATUS_OPTIONS = [
   { value: "in_progress", label: "In Progress" },
   { value: "completed", label: "Completed" },
   { value: "malpractice", label: "Malpractice" },
+  { value: "on_hold", label: "On Hold" },
+  { value: "terminated", label: "Terminated" },
 ] as const;
+
+export const HOLD_RECONNECT_THRESHOLD_MS = 30_000;  // show overlay after 30s offline
+export const WS_HEARTBEAT_INTERVAL_MS = 10_000;      // ping every 10s
 
 export const AVATAR_COLORS = [
   "#2563eb",

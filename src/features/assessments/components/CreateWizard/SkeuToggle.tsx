@@ -1,29 +1,29 @@
-import styles from "./Toggle.module.css";
+import styles from "./SkeuToggle.module.css";
 
-interface ToggleProps {
+interface SkeuToggleProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label?: string;
   disabled?: boolean;
-  size?: "sm" | "md";
 }
 
-export function Toggle({ checked, onChange, label, disabled, size = "md" }: Readonly<ToggleProps>) {
+export function SkeuToggle({ checked, onChange, label, disabled }: Readonly<SkeuToggleProps>) {
   return (
     <label className={`${styles.wrapper} ${disabled ? styles.disabled : ""}`}>
       <input
         type="checkbox"
         role="switch"
         className={styles.hiddenInput}
-        checked={checked}
+        checked={!!checked}
         disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}
       />
       <div
         aria-hidden="true"
-        className={`${styles.track} ${styles[size]} ${checked ? styles.on : ""}`}
+        className={`${styles.track} ${checked ? styles.checked : ""}`}
       >
-        <div className={styles.thumb} />
+        <span className={styles.offText}>OFF</span>
+        <span className={styles.onText}>ON</span>
       </div>
       {label && <span className={styles.label}>{label}</span>}
     </label>

@@ -3,9 +3,11 @@ import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import { Spinner } from "@/components/ui/Spinner";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { NoAccessPage } from "@/components/shared/NoAccessPage";
+import { CandidateRoute } from "@/features/candidate/components/CandidateRoute";
 import { LinkStatusScreen, LinkStatus } from "@/features/candidate/components/LinkStatusScreen";
 import { useAppSelector } from "@/store";
 import { api } from "@/utils/api";
+import { isAssessmentDone } from "@/utils/assessmentSession";
 
 const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
   const user = useAppSelector((s) => s.auth.user);
@@ -44,7 +46,7 @@ function CandidateDashboard() {
 function AssessmentEntry() {
   const { shareLink } = useParams<{ shareLink: string }>();
   const { isAuthenticated, user } = useAppSelector((s) => s.auth);
-  const isCandidate = isAuthenticated && user?.role !== "admin" && user?.role !== "super_admin";
+  const isCandidate = isAuthenticated && user?.role === "candidate";
 
   const [checking, setChecking] = useState(true);
   const [linkStatus, setLinkStatus] = useState<LinkStatus | "valid" | null>(null);
@@ -84,8 +86,17 @@ function AssessmentEntry() {
     );
   }
 
-  if (isCandidate) return <Navigate to={`/assessment/${shareLink}/instructions`} replace />;
-  return <Navigate to={`/candidate/login?share=${shareLink}`} replace />;
+  if (!isCandidate) {
+    return <Navigate to={`/candidate/login?share=${shareLink}`} replace />;
+  }
+
+  // If this session already completed the assessment, go straight to the done screen.
+  if (shareLink && isAssessmentDone(shareLink)) {
+    return <Navigate to={`/assessment/${shareLink}/completed`} replace />;
+  }
+
+  // Authenticated candidate with a valid link — proceed to instructions.
+  return <Navigate to={`/assessment/${shareLink}/instructions`} replace />;
 }
 
 // Lazy-loaded admin pages
@@ -126,11 +137,13 @@ export default function App() {
         <Route path="/candidate/register" element={<RegisterPage />} />
         <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
 
-        {/* Assessment flow */}
+        {/* Assessment flow — entry is public, protected pages require candidate auth */}
         <Route path="/assessment/:shareLink" element={<AssessmentEntry />} />
-        <Route path="/assessment/:shareLink/instructions" element={<InstructionsPage />} />
-        <Route path="/assessment/:shareLink/interview/:submissionId" element={<InterviewPage />} />
-        <Route path="/assessment/:shareLink/completed" element={<CompletedPage />} />
+        <Route element={<CandidateRoute />}>
+          <Route path="/assessment/:shareLink/instructions" element={<InstructionsPage />} />
+          <Route path="/assessment/:shareLink/interview/:submissionId" element={<InterviewPage />} />
+          <Route path="/assessment/:shareLink/completed" element={<CompletedPage />} />
+        </Route>
 
         {/* Admin auth */}
         <Route path="/admin/login" element={<AdminLoginPage />} />

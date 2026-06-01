@@ -62,6 +62,7 @@ export default function AdminLoginPage() {
                   className={styles.fieldInput}
                   type="email"
                   placeholder="Enter email"
+                  autoComplete="email"
                   {...register("email")}
                 />
               </div>
@@ -75,6 +76,7 @@ export default function AdminLoginPage() {
                   className={styles.fieldInput}
                   type={showPass ? "text" : "password"}
                   placeholder="Enter password"
+                  autoComplete="current-password"
                   {...register("password")}
                 />
                 <button
