@@ -17,9 +17,12 @@ import { RichText } from "@/components/ui/RichText";
 import CandidateHeader from "@/features/candidate/components/CandidateHeader";
 import { VideoMonitor } from "@/features/candidate/components/VideoMonitor";
 import { AudioMonitor } from "@/features/candidate/components/AudioMonitor";
+import { ConnectionLostOverlay } from "@/features/candidate/components/ConnectionLostOverlay";
 import { useTabMonitoring } from "@/features/candidate/hooks/useTabMonitoring";
 import { useAudioMonitoring } from "@/features/candidate/hooks/useAudioMonitoring";
+import { useNetworkMonitoring } from "@/features/candidate/hooks/useNetworkMonitoring";
 import { useAppSelector } from "@/store/hooks";
+import { markAssessmentDone } from "@/utils/assessmentSession";
 import toast from "react-hot-toast";
 
 // ─── Local types ──────────────────────────────────────────────────────────────
@@ -38,6 +41,10 @@ interface RoundApiResponse {
   screenshot_enabled?: boolean;
   screenshot_interval_minutes?: number;
   screenshot_count?: number;
+  // Session state fields for resume-after-network-loss
+  remaining_seconds?: number | null;
+  current_question_idx?: number;
+  session_status?: string;
 }
 
 interface AssessmentData {
@@ -68,8 +75,8 @@ export default function InterviewPage() {
   }>();
   const navigate = useNavigate();
 
-  // Redux user name
   const user = useAppSelector((state) => state.auth.user);
+  const accessToken = useAppSelector((state) => state.auth.accessToken);
   const candidateName = user
     ? [user.first_name, user.last_name].filter(Boolean).join(" ")
     : undefined;
@@ -93,6 +100,10 @@ export default function InterviewPage() {
   const [roundsExpanded, setRoundsExpanded] = useState<Record<number, boolean>>({});
   const [monitoringConfig, setMonitoringConfig] = useState<Partial<MonitoringConfig>>({});
 
+  // ── Network / timer pausing ──────────────────────────────────────────────────
+  // Whether the timer should be running (false when network is down)
+  const [timerActive, setTimerActive] = useState(true);
+
   // ── Monitoring state ────────────────────────────────────────────────────────
   const [audioActive, setAudioActive] = useState(false);
 
@@ -103,18 +114,61 @@ export default function InterviewPage() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answerSyncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const submittingRef = useRef(false);
-  // Stable ref for finish-round so malpractice callback is always current
   const finishRoundRef = useRef<(autoSubmit?: boolean) => Promise<void>>(
-    async () => { /* placeholder, replaced below */ }
+    async () => { /* placeholder */ }
   );
+  // Stable refs for useNetworkMonitoring callbacks
+  const timeLeftRef = useRef(timeLeft);
+  const currentIdxRef = useRef(0);
 
-  // Keep submittingRef in sync
+  useEffect(() => { submittingRef.current = submitting; }, [submitting]);
+  useEffect(() => { timeLeftRef.current = timeLeft; }, [timeLeft]);
+
+  // ── Network monitoring ───────────────────────────────────────────────────────
+  const { networkStatus } = useNetworkMonitoring({
+    submissionId,
+    accessToken,
+    onSessionState: useCallback((remainingSeconds, questionIdx) => {
+      // Server sent the last-known timer/position on connect — use it if server has
+      // a more recent value (i.e., the tab was refreshed or a new connection was opened)
+      if (remainingSeconds !== null && remainingSeconds !== undefined) {
+        setTimeLeft(remainingSeconds);
+      }
+      if (questionIdx !== undefined) {
+        setCurrentIdx(questionIdx);
+        currentIdxRef.current = questionIdx;
+      }
+    }, []),
+    onSessionOnHold: useCallback(() => {
+      setTimerActive(false);
+    }, []),
+    onResumeApproved: useCallback((remainingSeconds, questionIdx) => {
+      setTimerActive(true);
+      if (remainingSeconds !== null && remainingSeconds !== undefined) {
+        setTimeLeft(remainingSeconds);
+      }
+      if (questionIdx !== undefined) {
+        setCurrentIdx(questionIdx);
+        currentIdxRef.current = questionIdx;
+      }
+      toast.success("Your interview has been resumed by the administrator.");
+    }, []),
+    onTerminated: useCallback(() => {
+      toast.error("Your session has been terminated by an administrator.");
+      setTimeout(() => navigate(`/assessment/${shareLink ?? ""}`), 2000);
+    }, [navigate, shareLink]),
+    getRemainingSeconds: useCallback(() => timeLeftRef.current, []),
+    getCurrentQuestionIdx: useCallback(() => currentIdxRef.current, []),
+  });
+
+  // Pause/resume the timer based on network status
   useEffect(() => {
-    submittingRef.current = submitting;
-  }, [submitting]);
+    const isOffline = networkStatus === "offline" || networkStatus === "reconnecting" || networkStatus === "on_hold";
+    setTimerActive(!isOffline);
+  }, [networkStatus]);
 
   // ── Data fetching ───────────────────────────────────────────────────────────
-  const fetchRound = useCallback(async (): Promise<{ round: InterviewRoundData | null; monitoring: Partial<MonitoringConfig> }> => {
+  const fetchRound = useCallback(async (): Promise<{ round: InterviewRoundData | null; monitoring: Partial<MonitoringConfig>; remainingSeconds: number | null; questionIdx: number }> => {
     const { data } = await api.get(
       `/api/candidate/submission/${submissionId}/round`
     );
@@ -127,7 +181,12 @@ export default function InterviewPage() {
       screenshot_interval_minutes: responseData.screenshot_interval_minutes,
       screenshot_count: responseData.screenshot_count,
     };
-    return { round: responseData.round ?? null, monitoring };
+    return {
+      round: responseData.round ?? null,
+      monitoring,
+      remainingSeconds: responseData.remaining_seconds ?? null,
+      questionIdx: responseData.current_question_idx ?? 0,
+    };
   }, [submissionId]);
 
   const fetchAssessment = useCallback(async (): Promise<AssessmentData | null> => {
@@ -139,27 +198,49 @@ export default function InterviewPage() {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [{ round: rd, monitoring: cfg }, assessment] = await Promise.all([
+      const [{ round: rd, monitoring: cfg, remainingSeconds, questionIdx }, assessment] = await Promise.all([
         fetchRound(),
         fetchAssessment(),
       ]);
 
       if (rd) {
         setRoundData(rd);
-        setTimeLeft((rd.max_duration_minutes || 30) * 60);
+        // Restore from server-persisted timer if available, otherwise use round max duration
+        const initialTime = remainingSeconds ?? (rd.max_duration_minutes || 30) * 60;
+        setTimeLeft(initialTime);
         setMonitoringConfig(cfg);
         setRoundsExpanded({ [rd.round_number]: true });
+        // Restore question position if we're resuming
+        if (questionIdx > 0 && questionIdx < rd.questions.length) {
+          setCurrentIdx(questionIdx);
+          currentIdxRef.current = questionIdx;
+        }
       }
 
       if (assessment?.rounds) {
         setAssessmentRounds(assessment.rounds);
       }
-    } catch {
-      toast.error("Failed to load questions");
+    } catch (e: unknown) {
+      const status = (e as { response?: { status?: number } })?.response?.status;
+      const msg =
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message || "";
+
+      if (status === 403) {
+        if (shareLink) markAssessmentDone(shareLink);
+        const isRevoked = msg.toLowerCase().includes("revoked");
+        navigate(
+          isRevoked
+            ? `/assessment/${shareLink}`
+            : `/assessment/${shareLink}/completed`,
+          { replace: true }
+        );
+      } else {
+        toast.error("Failed to load questions");
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [fetchRound, fetchAssessment]);
+  }, [fetchRound, fetchAssessment, shareLink, navigate]);
 
   useEffect(() => {
     void loadData();
@@ -191,17 +272,8 @@ export default function InterviewPage() {
     [syncAnswer]
   );
 
-  // Stable ref so navigateTo can read the latest roundData without being a dep
   const roundDataRef = useRef<InterviewRoundData | null>(null);
-  useEffect(() => {
-    roundDataRef.current = roundData;
-  }, [roundData]);
-
-  // Stable ref for currentIdx
-  const currentIdxRef = useRef(0);
-  useEffect(() => {
-    currentIdxRef.current = currentIdx;
-  }, [currentIdx]);
+  useEffect(() => { roundDataRef.current = roundData; }, [roundData]);
 
   // ── Navigation helpers ──────────────────────────────────────────────────────
   const markVisited = useCallback((questionId: string) => {
@@ -222,6 +294,7 @@ export default function InterviewPage() {
         if (leavingQ) markVisited(leavingQ.id);
       }
       setCurrentIdx(idx);
+      currentIdxRef.current = idx;
     },
     [markVisited]
   );
@@ -244,10 +317,12 @@ export default function InterviewPage() {
           `/api/candidate/submission/${submissionId}/finish-round`
         );
         if (data.data?.completed) {
-          navigate(`/assessment/${shareLink}/completed`);
+          if (shareLink) markAssessmentDone(shareLink);
+          navigate(`/assessment/${shareLink}/completed`, { replace: true });
         } else {
           setRoundData(null);
           setCurrentIdx(0);
+          currentIdxRef.current = 0;
           setAnswers({});
           setVisitedQuestions(new Set());
           setSubmitting(false);
@@ -263,7 +338,6 @@ export default function InterviewPage() {
     [submissionId, shareLink, navigate, loadData]
   );
 
-  // Keep finishRoundRef current so malpractice can call it without stale closure
   useEffect(() => {
     finishRoundRef.current = handleFinishRound;
   }, [handleFinishRound]);
@@ -274,7 +348,6 @@ export default function InterviewPage() {
       setMalpracticeCount((prev) => {
         const newCount = prev + 1;
         if (newCount >= 3) {
-          // Trigger auto-submit outside this updater to avoid nested setState issues
           setTimeout(() => {
             setShowMalpractice(false);
             void finishRoundRef.current(true);
@@ -296,7 +369,7 @@ export default function InterviewPage() {
     [submissionId]
   );
 
-  // ── Tab monitoring hook (unconditional) ────────────────────────────────────
+  // ── Tab monitoring hook ─────────────────────────────────────────────────────
   useTabMonitoring({
     enabled: monitoringConfig.tab_monitoring ?? false,
     submissionId: submissionId ?? "",
@@ -305,7 +378,7 @@ export default function InterviewPage() {
     }, [handleMalpractice]),
   });
 
-  // ── Audio monitoring hook (unconditional) ──────────────────────────────────
+  // ── Audio monitoring hook ───────────────────────────────────────────────────
   useAudioMonitoring({
     enabled: monitoringConfig.audio_monitoring ?? false,
     submissionId: submissionId ?? "",
@@ -335,18 +408,18 @@ export default function InterviewPage() {
     };
   }, [monitoringConfig.video_monitoring]);
 
-  // Track audio active state when audio monitoring starts
   useEffect(() => {
     if (monitoringConfig.audio_monitoring) {
       setAudioActive(true);
     }
   }, [monitoringConfig.audio_monitoring]);
 
-  // ── Countdown timer ─────────────────────────────────────────────────────────
+  // ── Countdown timer (respects timerActive) ──────────────────────────────────
   useEffect(() => {
-    if (!roundData) return;
+    if (!roundData || !timerActive) return;
     timerRef.current = setInterval(() => {
       setTimeLeft((t) => {
+        timeLeftRef.current = t - 1;
         if (t <= 1) {
           clearInterval(timerRef.current!);
           timerRef.current = null;
@@ -366,7 +439,7 @@ export default function InterviewPage() {
         timerRef.current = null;
       }
     };
-  }, [roundData]);
+  }, [roundData, timerActive]);
 
   // ── Screenshot capture ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -481,6 +554,9 @@ export default function InterviewPage() {
 
   return (
     <div className={styles.page}>
+      {/* Network monitoring overlay — shown above everything when offline/on_hold */}
+      <ConnectionLostOverlay status={networkStatus} />
+
       {/* Sticky header */}
       <CandidateHeader candidateName={candidateName} />
 
@@ -615,7 +691,14 @@ export default function InterviewPage() {
         <aside className={styles.sidebar}>
           {/* 1. Timer */}
           <div className={`${styles.timerCard} ${isLowTime ? styles.timerLow : ""}`}>
-            <p className={styles.sidebarSectionLabel}>Time Remaining</p>
+            <p className={styles.sidebarSectionLabel}>
+              Time Remaining
+              {!timerActive && networkStatus !== "connected" && (
+                <span style={{ fontSize: 11, color: "var(--warning-600, #d97706)", marginLeft: 6 }}>
+                  (paused)
+                </span>
+              )}
+            </p>
             <div className={styles.timerBoxRow}>
               <div className={styles.timerBox}>
                 <span className={styles.timerDigit}>{hh}</span>
@@ -638,7 +721,6 @@ export default function InterviewPage() {
           <div className={styles.roundsCard}>
             <p className={styles.sidebarSectionLabel}>Rounds</p>
 
-            {/* Fallback: if assessment fetch returned no rounds, show current round only */}
             {assessmentRounds.length === 0 ? (
               <div className={styles.accordionItem}>
                 <button
@@ -799,7 +881,6 @@ export default function InterviewPage() {
 
       {/* ── Modals ── */}
 
-      {/* Submit confirmation */}
       <Modal
         isOpen={showSubmitConfirm}
         onClose={() => setShowSubmitConfirm(false)}
@@ -828,7 +909,6 @@ export default function InterviewPage() {
         </p>
       </Modal>
 
-      {/* Malpractice warning */}
       <Modal
         isOpen={showMalpractice}
         onClose={() => setShowMalpractice(false)}
@@ -863,7 +943,6 @@ export default function InterviewPage() {
         </div>
       </Modal>
 
-      {/* Time expired */}
       <Modal
         isOpen={showTimeExpired}
         onClose={() => {

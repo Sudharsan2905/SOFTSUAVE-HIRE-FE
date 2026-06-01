@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import styles from "./Step1BasicInfo.module.css";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { Toggle } from "@/components/ui/Toggle";
 import { Button } from "@/components/ui/Button";
+import { SkeuToggle } from "./SkeuToggle";
 import { Badge } from "@/components/ui/Badge";
 import { IconPlus, IconDelete, IconMonitor, IconShield } from "@/assets/icons";
 import { AssessmentDraft, RoundSetup } from "./WizardContainer";
@@ -158,20 +158,25 @@ export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<
               Monitoring Options
             </h4>
             <div className={styles.toggleList}>
-              <Toggle
+              <SkeuToggle
                 label="Tab switch detection (auto-submit on violation)"
                 checked={monitoring.tab_monitoring}
-                onChange={(v) => setMonitoring((p) => ({ ...p, tab_monitoring: v }))}
+                onChange={(v: boolean) => setMonitoring((p) => ({ ...p, tab_monitoring: v }))}
               />
-              <Toggle
+              <SkeuToggle
                 label="Voice/noise monitoring"
                 checked={monitoring.audio_monitoring}
-                onChange={(v) => setMonitoring((p) => ({ ...p, audio_monitoring: v }))}
+                onChange={(v: boolean) => setMonitoring((p) => ({ ...p, audio_monitoring: v }))}
               />
-              <Toggle
+              <SkeuToggle
                 label="Camera required"
                 checked={monitoring.video_monitoring}
-                onChange={(v) => setMonitoring((p) => ({ ...p, video_monitoring: v }))}
+                onChange={(v: boolean) => setMonitoring((p) => ({ ...p, video_monitoring: v }))}
+              />
+              <SkeuToggle
+                label="Screenshot capture"
+                checked={monitoring.screenshot_enabled}
+                onChange={(v: boolean) => setMonitoring((p) => ({ ...p, screenshot_enabled: v }))}
               />
             </div>
             <div style={{ marginTop: 14 }}>

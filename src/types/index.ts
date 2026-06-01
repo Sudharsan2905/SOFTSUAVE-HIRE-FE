@@ -142,7 +142,13 @@ export interface CandidateQuestion {
 
 // ─── Submission ──────────────────────────────────────────────────────────────
 
-export type SubmissionStatus = "pending" | "in_progress" | "completed" | "malpractice";
+export type SubmissionStatus =
+  | "pending"
+  | "in_progress"
+  | "completed"
+  | "malpractice"
+  | "on_hold"
+  | "terminated";
 
 export interface MalpracticeFlag {
   type: string;
@@ -178,14 +184,77 @@ export interface Submission {
   reaccess_count: number;
   started_at: string;
   completed_at?: string;
+  paused_at?: string;
+  resumed_at?: string;
+  remaining_seconds?: number;
+  current_question_idx?: number;
   created_at: string;
   updated_at: string;
+}
+
+// ─── Interview Session / Network ─────────────────────────────────────────────
+
+export interface SessionState {
+  status: SubmissionStatus;
+  remaining_seconds: number | null;
+  current_question_idx: number;
+  current_round: number;
+}
+
+export type WsMessageType =
+  | "connected"
+  | "on_hold"
+  | "resume_approved"
+  | "terminated"
+  | "pong"
+  | "error";
+
+export interface WsMessage {
+  type: WsMessageType;
+  status?: string;
+  remaining_seconds?: number | null;
+  current_question_idx?: number;
+  message?: string;
 }
 
 export interface Screenshot {
   url: string;
   round: number;
   taken_at: string;
+}
+
+// ─── Candidate Scheduling ────────────────────────────────────────────────────
+
+export interface MonitoringOverrides {
+  tab_monitoring?: boolean;
+  audio_monitoring?: boolean;
+  video_monitoring?: boolean;
+  screenshot_enabled?: boolean;
+  screenshot_mode?: "time_interval" | "count";
+  screenshot_interval_minutes?: number;
+  screenshot_count?: number;
+}
+
+export interface ScheduledRound {
+  round_number: number;
+  question_ids: string[];
+}
+
+export interface CandidateSchedule {
+  id: string;
+  assessment_id: string;
+  workspace_id: string;
+  candidate_id: string;
+  candidate?: { first_name?: string; last_name?: string; email?: string };
+  monitoring_overrides: MonitoringOverrides | null;
+  rounds: ScheduledRound[] | null;
+  effective_monitoring?: MonitoringConfig;
+  share_link: string;
+  start_time: string | null;
+  end_time: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // ─── Pagination ──────────────────────────────────────────────────────────────

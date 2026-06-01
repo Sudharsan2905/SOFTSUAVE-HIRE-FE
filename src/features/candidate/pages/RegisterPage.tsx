@@ -129,6 +129,7 @@ export default function RegisterPage() {
                 <Input
                   label="First Name *"
                   placeholder="John"
+                  autoComplete="given-name"
                   error={errors.first_name?.message}
                   readOnly={!!googleData?.first_name}
                   {...register("first_name")}
@@ -136,6 +137,7 @@ export default function RegisterPage() {
                 <Input
                   label="Last Name"
                   placeholder="Doe (optional)"
+                  autoComplete="family-name"
                   error={errors.last_name?.message}
                   readOnly={!!googleData?.last_name}
                   {...register("last_name")}
@@ -145,6 +147,7 @@ export default function RegisterPage() {
                 label="Email *"
                 type="email"
                 placeholder="john@email.com"
+                autoComplete="email"
                 error={errors.email?.message}
                 readOnly={!!googleData?.email}
                 {...register("email")}
@@ -152,6 +155,7 @@ export default function RegisterPage() {
               <Input
                 label="Phone *"
                 placeholder="+91 9876543210"
+                autoComplete="tel"
                 error={errors.phone?.message}
                 {...register("phone")}
               />
@@ -192,12 +196,14 @@ export default function RegisterPage() {
                 <Input
                   label="College / Institution"
                   placeholder="University name (optional)"
+                  autoComplete="organization"
                   error={errors.college_name?.message}
                   {...register("college_name")}
                 />
                 <Input
                   label="College City"
                   placeholder="City (optional)"
+                  autoComplete="address-level2"
                   error={errors.college_city?.message}
                   {...register("college_city")}
                 />
@@ -207,6 +213,7 @@ export default function RegisterPage() {
                   label="Password *"
                   type={showPass ? "text" : "password"}
                   placeholder="Min 8 characters"
+                  autoComplete="new-password"
                   error={errors.password?.message}
                   rightElement={
                     <button
@@ -216,7 +223,7 @@ export default function RegisterPage() {
                         background: "none",
                         border: "none",
                         cursor: "pointer",
-                        color: "var(--text-tertiary)",
+                        color: "#9a9aae",
                         display: "flex",
                         alignItems: "center",
                       }}
@@ -230,6 +237,7 @@ export default function RegisterPage() {
                   label="Confirm Password *"
                   type={showConfirm ? "text" : "password"}
                   placeholder="Repeat password"
+                  autoComplete="new-password"
                   error={errors.confirm_password?.message}
                   rightElement={
                     <button
@@ -239,7 +247,7 @@ export default function RegisterPage() {
                         background: "none",
                         border: "none",
                         cursor: "pointer",
-                        color: "var(--text-tertiary)",
+                        color: "#9a9aae",
                         display: "flex",
                         alignItems: "center",
                       }}

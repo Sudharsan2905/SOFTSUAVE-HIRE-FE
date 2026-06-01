@@ -8,6 +8,7 @@ import { Assessment } from "@/types";
 import { IconCamera, IconMic, IconMonitor, IconTime, IconShield, IconInfo } from "@/assets/icons";
 import CandidateHeader from "@/features/candidate/components/CandidateHeader";
 import { useAppSelector } from "@/store/hooks";
+import { markAssessmentDone, saveSubmissionId } from "@/utils/assessmentSession";
 import toast from "react-hot-toast";
 
 export default function InstructionsPage() {
@@ -84,12 +85,20 @@ export default function InstructionsPage() {
     try {
       const { data } = await api.post(`/api/candidate/assessment/${shareLink}/start`);
       const submissionId = data.data?.id;
-      navigate(`/assessment/${shareLink}/interview/${submissionId}`);
+      // Persist submission ID so other pages can reference it without URL manipulation.
+      if (shareLink && submissionId) saveSubmissionId(shareLink, submissionId);
+      // Use replace so the browser back button skips instructions and goes to entry.
+      navigate(`/assessment/${shareLink}/interview/${submissionId}`, { replace: true });
     } catch (e: unknown) {
-      toast.error(
-        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-          "Failed to start assessment"
-      );
+      const msg =
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message || "";
+      // Backend signals the candidate already finished — redirect them to the done screen.
+      if (msg.toLowerCase().includes("already completed")) {
+        if (shareLink) markAssessmentDone(shareLink);
+        navigate(`/assessment/${shareLink}/completed`, { replace: true });
+      } else {
+        toast.error(msg || "Failed to start assessment");
+      }
     } finally {
       setStarting(false);
     }
