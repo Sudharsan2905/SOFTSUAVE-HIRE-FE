@@ -196,11 +196,55 @@
   display: flex;
   gap: 2px;
   flex-shrink: 0;
-  opacity: 0;
-  transition: opacity var(--transition-fast);
 }
-.list .card:hover .listActions {
-  opacity: 1;
+
+/* ── List row responsive (<640px) ── */
+@media (max-width: 639px) {
+  /* Collapse to a 2-row CSS grid:
+       Row 1: [icon] [name          ] [actions]
+       Row 2: [icon] [meta (badge+date)       ]
+     The icon cell spans both rows automatically via align-self: start. */
+  .listRow {
+    display: grid;
+    grid-template-areas:
+      "icon name    actions"
+      "icon meta    meta";
+    grid-template-columns: 34px 1fr auto;
+    gap: 4px 10px;
+    align-items: center;
+  }
+
+  .listIcon {
+    grid-area: icon;
+    align-self: start;
+    margin-top: 2px;
+  }
+
+  .listName {
+    grid-area: name;
+    width: auto;       /* override the fixed 180px */
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Description is redundant in the compact 2-row layout */
+  .listDesc {
+    display: none;
+  }
+
+  .listMeta {
+    grid-area: meta;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .listActions {
+    grid-area: actions;
+    align-self: start;
+    margin-top: 2px;
+  }
 }
 
 /* ── Empty state ── */

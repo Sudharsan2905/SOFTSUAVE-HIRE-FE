@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, memo } from "react";
 import styles from "./WizardContainer.module.css";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 import { Step1BasicInfo } from "./Step1BasicInfo";
 import { Step2Questions } from "./Step2Questions";
 import { api } from "@/utils/api";
@@ -30,27 +31,31 @@ interface Props {
   initialData?: Partial<AssessmentDraft>;
   editMode?: boolean;
   assessmentId?: string;
+  availableWorkspaces?: { id: string; name: string }[];
 }
 
 const defaultMonitoring: MonitoringConfig = {
   tab_monitoring: true,
-  voice_monitoring: true,
-  camera_enabled: true,
+  audio_monitoring: true,
+  video_monitoring: true,
   screenshot_mode: "time_interval",
   screenshot_interval_minutes: 5,
+  screenshot_enabled: true,
 };
 
-export function CreateAssessmentWizard({
+export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
   workspaceId,
   onClose,
   onSuccess,
   initialData,
   editMode = false,
   assessmentId,
+  availableWorkspaces,
 }: Readonly<Props>) {
   const [step, setStep] = useState(1);
   const [currentRound, setCurrentRound] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState(workspaceId);
 
   const [draft, setDraft] = useState<AssessmentDraft>({
     name: initialData?.name || "",
@@ -96,10 +101,10 @@ export function CreateAssessmentWizard({
     setSaving(true);
     try {
       if (editMode && assessmentId) {
-        await api.put(`/api/workspaces/${workspaceId}/assessments/${assessmentId}`, draft);
+        await api.put(`/api/workspaces/${selectedWorkspaceId}/assessments/${assessmentId}`, draft);
         toast.success("Assessment updated successfully");
       } else {
-        await api.post(`/api/workspaces/${workspaceId}/assessments`, draft);
+        await api.post(`/api/workspaces/${selectedWorkspaceId}/assessments`, draft);
         toast.success("Assessment created successfully");
       }
       onSuccess();
@@ -120,12 +125,17 @@ export function CreateAssessmentWizard({
 
   const finishLabel = editMode ? "Save Changes" : "Finish & Create";
 
+  const showWorkspaceSelector =
+    availableWorkspaces !== undefined && availableWorkspaces.length > 1;
+  const workspaceSelectorEmpty = showWorkspaceSelector && !selectedWorkspaceId;
+
   return (
     <Modal
       isOpen
       onClose={onClose}
       title={modalTitle}
       size="xl"
+      disableBackdropClose
       footer={
         step === 1 ? undefined : (
           <div
@@ -133,6 +143,8 @@ export function CreateAssessmentWizard({
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
+              gap: 8,
+              flexWrap: "wrap",
               width: "100%",
             }}
           >
@@ -148,7 +160,7 @@ export function CreateAssessmentWizard({
               </strong>{" "}
               / <strong>{roundRequired}</strong> required (can select more for randomization)
             </div>
-            <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
               <Button variant="secondary" onClick={handleRoundPrev}>
                 Back
               </Button>
@@ -185,7 +197,27 @@ export function CreateAssessmentWizard({
         </div>
 
         {step === 1 ? (
-          <Step1BasicInfo draft={draft} onNext={handleStep1Next} />
+          <>
+            {showWorkspaceSelector && (
+              <div style={{ marginBottom: 20 }}>
+                <Select
+                  label="Target Workspace"
+                  showRequired
+                  value={selectedWorkspaceId}
+                  onChange={setSelectedWorkspaceId}
+                  options={availableWorkspaces.map((ws) => ({
+                    value: ws.id,
+                    label: ws.name,
+                  }))}
+                />
+              </div>
+            )}
+            <Step1BasicInfo
+              draft={draft}
+              onNext={handleStep1Next}
+              disableNext={workspaceSelectorEmpty}
+            />
+          </>
         ) : (
           <Step2Questions
             draft={draft}
@@ -196,4 +228,4 @@ export function CreateAssessmentWizard({
       </div>
     </Modal>
   );
-}
+});

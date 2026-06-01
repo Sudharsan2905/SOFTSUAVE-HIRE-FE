@@ -1,9 +1,11 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useState, useEffect } from "react";
 import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import { Spinner } from "@/components/ui/Spinner";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { NoAccessPage } from "@/components/shared/NoAccessPage";
+import { LinkStatusScreen, LinkStatus } from "@/features/candidate/components/LinkStatusScreen";
 import { useAppSelector } from "@/store";
+import { api } from "@/utils/api";
 
 const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
   const user = useAppSelector((s) => s.auth.user);
@@ -43,6 +45,44 @@ function AssessmentEntry() {
   const { shareLink } = useParams<{ shareLink: string }>();
   const { isAuthenticated, user } = useAppSelector((s) => s.auth);
   const isCandidate = isAuthenticated && user?.role !== "admin" && user?.role !== "super_admin";
+
+  const [checking, setChecking] = useState(true);
+  const [linkStatus, setLinkStatus] = useState<LinkStatus | "valid" | null>(null);
+  const [linkMessage, setLinkMessage] = useState("");
+  const [linkStartTime, setLinkStartTime] = useState("");
+
+  useEffect(() => {
+    if (!shareLink) {
+      setLinkStatus("invalid");
+      setChecking(false);
+      return;
+    }
+    api
+      .get(`/api/assessments/share/validate?link=${shareLink}`)
+      .then((res) => {
+        const v = res.data.data;
+        if (v.can_allow) {
+          setLinkStatus("valid");
+        } else {
+          setLinkStatus(v.is_expired ? "expired" : "not_started");
+          setLinkMessage(v.message || "");
+          if (v.start_time) setLinkStartTime(v.start_time);
+        }
+      })
+      .catch(() => {
+        // Network error — don't block the candidate
+        setLinkStatus("valid");
+      })
+      .finally(() => setChecking(false));
+  }, [shareLink]);
+
+  if (checking) return <Loading />;
+
+  if (linkStatus === "not_started" || linkStatus === "expired" || linkStatus === "invalid") {
+    return (
+      <LinkStatusScreen status={linkStatus} message={linkMessage} startTime={linkStartTime} />
+    );
+  }
 
   if (isCandidate) return <Navigate to={`/assessment/${shareLink}/instructions`} replace />;
   return <Navigate to={`/candidate/login?share=${shareLink}`} replace />;

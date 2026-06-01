@@ -25,6 +25,13 @@
   min-width: 0;
 }
 
+/* Hidden on desktop — sidebar already shows the logo */
+.mobileLogo {
+  display: none;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+}
+
 .greeting {
   font-size: 15px;
   font-weight: 600;
@@ -290,6 +297,16 @@
 @media (max-width: 768px) {
   .header {
     padding: 0 16px;
+  }
+
+  /* Show logo; switch left zone to a horizontal row */
+  .mobileLogo {
+    display: block;
+  }
+  .left {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
   }
 
   .userInfo {

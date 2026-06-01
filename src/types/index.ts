@@ -97,11 +97,12 @@ export type AssessmentAccessibility = "normal" | "monitoring";
 
 export interface MonitoringConfig {
   tab_monitoring: boolean;
-  voice_monitoring: boolean;
-  camera: boolean;
+  audio_monitoring: boolean;
+  video_monitoring: boolean;
   screenshot_mode: "time_interval" | "count";
   screenshot_interval_minutes?: number;
   screenshot_count?: number;
+  screenshot_enabled: boolean;
 }
 
 export interface RoundConfig {

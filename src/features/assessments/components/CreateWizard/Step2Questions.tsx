@@ -112,7 +112,7 @@ export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Props
       {/* Right — question browser */}
       <div className={styles.browserPane}>
         <div className={styles.paneHeader}>
-          <h3 className={styles.paneTitle}>Question Bank</h3>
+          <h3 className={styles.paneTitle}>Knowledge Vault</h3>
         </div>
         <div className={styles.filters}>
           <Select

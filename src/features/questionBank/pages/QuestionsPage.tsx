@@ -368,7 +368,7 @@ export default function QuestionsPage() {
                 setShowCreate(true);
               }}
             >
-              Add Questions
+              Add
             </Button>
           </div>
         }

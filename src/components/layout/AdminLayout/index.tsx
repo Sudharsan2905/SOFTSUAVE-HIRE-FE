@@ -10,7 +10,7 @@ export function AdminLayout() {
   const { isAuthenticated, user } = useAppSelector((s) => s.auth);
 
   if (!isAuthenticated) return <Navigate to="/admin/login" replace />;
-  if (user?.role === "candidate") return <Navigate to="/login" replace />;
+  if (user?.role === "candidate") return <Navigate to="/candidate/login" replace />;
 
   return (
     <div className={styles.layout}>

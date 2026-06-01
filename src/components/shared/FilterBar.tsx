@@ -13,6 +13,7 @@ import {
   IconDownload,
   IconRefresh,
 } from "@/assets/icons";
+import { DateRangePicker, DateRange } from "@/components/datetime/DateRangePicker";
 import { COMPLEXITY_OPTIONS, QUESTION_TYPE_OPTIONS } from "@/constants/app";
 import type { ViewMode, SortOrder } from "@/types";
 
@@ -37,6 +38,9 @@ interface FilterBarProps {
   onRefresh?: () => void;
   showComplexity?: boolean;
   showQuestionType?: boolean;
+  dateRange?: DateRange;
+  onDateRangeChange?: (range: DateRange) => void;
+  dateRangePlaceholder?: string;
   children?: React.ReactNode;
 }
 
@@ -61,111 +65,178 @@ export function FilterBar({
   onRefresh,
   showComplexity = false,
   showQuestionType = false,
+  dateRange,
+  onDateRangeChange,
+  dateRangePlaceholder = "Date range",
   children,
 }: Readonly<FilterBarProps>) {
+  // Count active dropdown slots to choose the mobile layout condition
+  const dropdownCount = [
+    showComplexity && onComplexityChange,
+    showQuestionType && onQuestionTypeChange,
+    statusOptions && onStatusChange,
+    sortByOptions && onSortByChange,
+    dateRange && onDateRangeChange,
+  ].filter(Boolean).length;
+
+  const singleDropdown = dropdownCount === 1;
+
+  const hasFilterDrops = dropdownCount > 0 || children;
+
   return (
     <div className={styles.filterBar}>
-      <div className={styles.left}>
-        <Input
-          placeholder="Search..."
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          leftElement={<IconSearch size={15} />}
-          fullWidth={false}
-          style={{ minWidth: 200 }}
-        />
-        {showComplexity && onComplexityChange && (
-          <Select
-            options={COMPLEXITY_OPTIONS}
-            placeholder="Complexity"
-            value={complexity}
-            onChange={onComplexityChange}
-            fullWidth={false}
-            style={{ minWidth: 130 }}
-          />
-        )}
-        {showQuestionType && onQuestionTypeChange && (
-          <Select
-            options={QUESTION_TYPE_OPTIONS}
-            placeholder="Question Type"
-            value={questionType}
-            onChange={onQuestionTypeChange}
-            fullWidth={false}
-            style={{ minWidth: 160 }}
-          />
-        )}
-        {statusOptions && onStatusChange && (
-          <Select
-            options={[{ value: "", label: "All Statuses" }, ...statusOptions]}
-            placeholder="Status"
-            value={status}
-            onChange={onStatusChange}
-            fullWidth={false}
-            style={{ minWidth: 145 }}
-          />
-        )}
-        {sortByOptions && onSortByChange && (
-          <Select
-            options={sortByOptions}
-            value={sortBy}
-            onChange={onSortByChange}
-            fullWidth={false}
-            style={{ minWidth: 130 }}
-          />
-        )}
-        {children}
-      </div>
-      <div className={styles.right}>
+      {/*
+        searchRow — dissolves on desktop (display:contents), reinstates
+        as Row 1 on mobile: [Refresh?] [Search — flex-1]
+      */}
+      <div className={styles.searchRow}>
         {onRefresh && (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={onRefresh}
-            leftIcon={<IconRefresh size={15} />}
-          >
-            Refresh
-          </Button>
+          <Tooltip content="Refresh" placement="top">
+            <button
+              className={styles.refreshBtn}
+              onClick={onRefresh}
+              aria-label="Refresh"
+            >
+              <IconRefresh size={16} />
+            </button>
+          </Tooltip>
         )}
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={onSortOrderToggle}
-          leftIcon={sortOrder === "asc" ? <IconSortAsc size={15} /> : <IconSortDesc size={15} />}
-        >
-          {sortOrder === "asc" ? "ASC" : "DESC"}
-        </Button>
-        {onViewModeChange && viewMode && (
-          <div className={styles.viewToggle}>
-            <Tooltip content="List view" placement="top">
-              <button
-                className={`${styles.viewBtn} ${viewMode === "list" ? styles.viewActive : ""}`}
-                onClick={() => onViewModeChange("list")}
-                aria-label="List view"
-              >
-                <IconList size={15} />
-              </button>
-            </Tooltip>
-            <Tooltip content="Grid view" placement="top">
-              <button
-                className={`${styles.viewBtn} ${viewMode === "grid" ? styles.viewActive : ""}`}
-                onClick={() => onViewModeChange("grid")}
-                aria-label="Grid view"
-              >
-                <IconGrid size={15} />
-              </button>
-            </Tooltip>
+        <div className={styles.searchWrap}>
+          <Input
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            leftElement={<IconSearch size={15} />}
+            fullWidth
+          />
+        </div>
+      </div>
+
+      {/*
+        midSection — dissolves on desktop so all its descendants join the
+        flat flex row. On mobile it reinstates as the layout container:
+
+          CONDITION A (.midMulti) — multiple dropdowns:
+            flex-col → sub-Row 2: 2-col grid | sub-Row 3: utilities
+
+          CONDITION B (.midSingle) — single dropdown:
+            flex-row → [dropdown flex-1] [utilities]  (one combined row)
+      */}
+      <div
+        className={`${styles.midSection} ${singleDropdown ? styles.midSingle : styles.midMulti}`}
+      >
+        {hasFilterDrops && (
+          <div className={styles.filterDrops}>
+            {showComplexity && onComplexityChange && (
+              <div className={styles.filterSelect}>
+                <Select
+                  options={COMPLEXITY_OPTIONS}
+                  placeholder="Complexity"
+                  value={complexity}
+                  onChange={onComplexityChange}
+                  fullWidth
+                />
+              </div>
+            )}
+            {showQuestionType && onQuestionTypeChange && (
+              <div className={styles.filterSelect}>
+                <Select
+                  options={QUESTION_TYPE_OPTIONS}
+                  placeholder="Question Type"
+                  value={questionType}
+                  onChange={onQuestionTypeChange}
+                  fullWidth
+                />
+              </div>
+            )}
+            {statusOptions && onStatusChange && (
+              <div className={styles.filterSelect}>
+                <Select
+                  options={[{ value: "", label: "All Statuses" }, ...statusOptions]}
+                  placeholder="Status"
+                  value={status}
+                  onChange={onStatusChange}
+                  fullWidth
+                />
+              </div>
+            )}
+            {sortByOptions && onSortByChange && (
+              <div className={styles.filterSelect}>
+                <Select
+                  options={sortByOptions}
+                  value={sortBy}
+                  onChange={onSortByChange}
+                  fullWidth
+                />
+              </div>
+            )}
+            {dateRange && onDateRangeChange && (
+              <div className={styles.datePickerWrap}>
+                <DateRangePicker
+                  value={dateRange}
+                  onChange={onDateRangeChange}
+                  placeholder={dateRangePlaceholder}
+                  fullWidth
+                />
+              </div>
+            )}
+            {children}
           </div>
         )}
-        {onExport && (
+
+        {/* Utilities: Sort order toggle + View mode switch + Export */}
+        <div className={styles.utilities}>
           <Button
             variant="secondary"
-            size="sm"
-            leftIcon={<IconDownload size={15} />}
-            onClick={onExport}
+            size="md"
+            onClick={onSortOrderToggle}
+            leftIcon={
+              sortOrder === "asc" ? (
+                <IconSortAsc size={16} />
+              ) : (
+                <IconSortDesc size={16} />
+              )
+            }
           >
-            Export
+            <span className={styles.btnLabel}>
+              {sortOrder === "asc" ? "ASC" : "DESC"}
+            </span>
           </Button>
-        )}
+
+          {onViewModeChange && viewMode && (
+            <div className={styles.viewToggle}>
+              <Tooltip content="List view" placement="top">
+                <button
+                  className={`${styles.viewBtn} ${viewMode === "list" ? styles.viewActive : ""}`}
+                  onClick={() => onViewModeChange("list")}
+                  aria-label="List view"
+                >
+                  <IconList size={15} />
+                </button>
+              </Tooltip>
+              <Tooltip content="Grid view" placement="top">
+                <button
+                  className={`${styles.viewBtn} ${viewMode === "grid" ? styles.viewActive : ""}`}
+                  onClick={() => onViewModeChange("grid")}
+                  aria-label="Grid view"
+                >
+                  <IconGrid size={15} />
+                </button>
+              </Tooltip>
+            </div>
+          )}
+
+          {onExport && (
+            <Button
+              variant="secondary"
+              size="md"
+              leftIcon={<IconDownload size={16} />}
+              onClick={onExport}
+            >
+              <span className={styles.btnLabel}>Export</span>
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

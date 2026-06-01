@@ -1,49 +1,35 @@
+/* ── Page shell: flex column so CandidateHeader is sticky at the top ──────── */
 .page {
   min-height: 100vh;
   background: var(--bg-default);
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+}
+
+/* ── Scrollable content area beneath the sticky header ─────────────────── */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
   justify-content: center;
   padding: 40px 24px;
 }
 
+/* ── Centred container ───────────────────────────────────────────────────── */
 .container {
   width: 100%;
-  max-width: 680px;
+  max-width: 720px;
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
+/* ── Assessment header card ──────────────────────────────────────────────── */
 .header {
   background: var(--bg-surface);
   border: 1.5px solid var(--border-default);
   border-radius: var(--radius-xl);
   padding: 32px;
-}
-
-.logoRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-.logoMark {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: var(--primary-600);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.logoText {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-primary);
 }
 
 .title {
@@ -58,6 +44,7 @@
   line-height: 1.6;
 }
 
+/* ── Stats row ───────────────────────────────────────────────────────────── */
 .statsRow {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -85,6 +72,7 @@
   color: var(--text-tertiary);
 }
 
+/* ── Instructions section ────────────────────────────────────────────────── */
 .section {
   background: var(--bg-surface);
   border: 1.5px solid var(--border-default);
@@ -111,9 +99,10 @@
   line-height: 1.6;
 }
 
+/* ── Monitoring section — accent-400 border ──────────────────────────────── */
 .monitoringSection {
   background: var(--bg-surface);
-  border: 1.5px solid var(--accent-200, #ddd6fe);
+  border: 1.5px solid var(--accent-400, #a78bfa);
   border-radius: var(--radius-xl);
   padding: 24px 32px;
   display: flex;
@@ -146,25 +135,59 @@
   color: var(--text-secondary);
 }
 
-.cameraSetup {
+/* ── Permission request area ─────────────────────────────────────────────── */
+.permissionSetup {
   display: flex;
-  align-items: center;
-  gap: 16px;
+  flex-direction: column;
+  gap: 12px;
   padding-top: 4px;
 }
-.cameraLabel {
+
+.permissionRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.permissionLabel {
   font-size: 14px;
   font-weight: 500;
   color: var(--text-secondary);
-  flex: 1;
-}
-.granted {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  flex-shrink: 0;
 }
 
+.permissionPills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── Status pill badges ──────────────────────────────────────────────────── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.pillPending {
+  background: var(--bg-muted);
+  color: var(--text-tertiary);
+  border-color: var(--border-default);
+}
+
+.pillGranted {
+  background: var(--success-50, #f0fdf4);
+  color: var(--success-700, #15803d);
+  border-color: var(--success-200, #bbf7d0);
+}
+
+/* ── Footer / start button ───────────────────────────────────────────────── */
 .footer {
   background: var(--bg-surface);
   border: 1.5px solid var(--border-default);
@@ -172,14 +195,25 @@
   padding: 24px 32px;
 }
 
+/* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 560px) {
+  .content {
+    padding: 24px 16px;
+  }
+
   .statsRow {
     grid-template-columns: repeat(2, 1fr);
   }
+
   .header,
   .section,
   .monitoringSection,
   .footer {
     padding: 20px;
+  }
+
+  .permissionRow {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

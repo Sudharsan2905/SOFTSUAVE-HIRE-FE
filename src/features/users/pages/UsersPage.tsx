@@ -53,14 +53,14 @@ export default function UsersPage() {
     try {
       const { data } = await api.get(`/api/users`);
       const list: User[] = Array.isArray(data.data) ? data.data : [];
-      const filtered = debouncedSearch
+      let filteredList = debouncedSearch
         ? list.filter(
             (u) =>
               getFullName(u).toLowerCase().includes(debouncedSearch.toLowerCase()) ||
               u.email.toLowerCase().includes(debouncedSearch.toLowerCase())
           )
         : list;
-      const sorted = [...filtered].sort((a, b) => {
+      const sorted = [...filteredList].sort((a, b) => {
         if (a.role === "super_admin" && b.role !== "super_admin") return -1;
         if (a.role !== "super_admin" && b.role === "super_admin") return 1;
         const da = new Date(a.created_at).getTime();

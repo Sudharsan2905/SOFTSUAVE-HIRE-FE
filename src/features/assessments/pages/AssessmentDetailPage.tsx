@@ -11,6 +11,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Badge, StatusBadge } from "@/components/ui/Badge";
 import { IconDownload, IconEye, IconRefresh, IconChevronLeft } from "@/assets/icons";
 import { Tooltip } from "@/components/ui/Tooltip";
+import type { DateRange } from "@/components/datetime/DateRangePicker";
 import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
@@ -60,6 +61,7 @@ export default function AssessmentDetailPage() {
   const [showDetail, setShowDetail] = useState(false);
   const [regranting, setRegranting] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
   const { page, pageSize, goToPage, reset, changePageSize } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
 
@@ -73,6 +75,8 @@ export default function AssessmentDetailPage() {
         sort_order: sortOrder,
         ...(debouncedSearch && { search: debouncedSearch }),
         ...(status && { status }),
+        ...(dateRange.from && { from_date: dateRange.from }),
+        ...(dateRange.to && { to_date: dateRange.to }),
       });
       const { data } = await api.get(
         `/api/workspaces/${workspaceId}/assessments/${id}/submissions?${params}`
@@ -85,14 +89,14 @@ export default function AssessmentDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [id, workspaceId, page, pageSize, sortBy, sortOrder, debouncedSearch, status]);
+  }, [id, workspaceId, page, pageSize, sortBy, sortOrder, debouncedSearch, status, dateRange]);
 
   useEffect(() => {
     fetchSubmissions();
   }, [fetchSubmissions]);
   useEffect(() => {
     reset();
-  }, [debouncedSearch, sortBy, sortOrder, status]);
+  }, [debouncedSearch, sortBy, sortOrder, status, dateRange]);
 
   const handleReaccess = async (submissionId: string) => {
     setRegranting(submissionId);
@@ -285,6 +289,9 @@ export default function AssessmentDetailPage() {
         status={status}
         onStatusChange={setStatus}
         statusOptions={SUBMISSION_STATUS_OPTIONS}
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        dateRangePlaceholder="Started date"
         onRefresh={fetchSubmissions}
       />
 

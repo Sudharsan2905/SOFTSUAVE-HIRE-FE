@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
+import logoUrl from "@/assets/favicon.svg";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { logout } from "@/store/slices/authSlice";
 import { toggleTheme } from "@/store/slices/uiSlice";
@@ -9,7 +10,6 @@ import { getFullName, getInitials, getAvatarColor } from "@/utils/helpers";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import {
   IconBell,
-  IconCalendar,
   IconSun,
   IconMoon,
   IconLogout,
@@ -18,7 +18,6 @@ import {
 } from "@/assets/icons";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
-import { CalendarPopup } from "@/components/calendar/CalendarPopup";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import styles from "./AppHeader.module.css";
@@ -39,13 +38,11 @@ export function AppHeader() {
 
   /* Popup states */
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showCalendar, setShowCalendar] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   /* Refs for anchor-based positioning */
   const bellRef = useRef<HTMLButtonElement>(null);
-  const calendarRef = useRef<HTMLButtonElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const profileBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -67,8 +64,15 @@ export function AppHeader() {
   return (
     <>
       <header className={styles.header}>
-        {/* Left — greeting */}
+        {/* Left — logo (mobile only) + greeting */}
         <div className={styles.left}>
+          <img
+            src={logoUrl}
+            className={styles.mobileLogo}
+            width={31}
+            height={31}
+            alt="SoftSuave Hire"
+          />
           <h2 className={styles.greeting}>
             Welcome, <span className={styles.greetingName}>{user?.first_name || fullName || "Admin"}</span>
           </h2>
@@ -85,10 +89,7 @@ export function AppHeader() {
             <button
               ref={bellRef}
               className={styles.iconBtn}
-              onClick={() => {
-                setShowCalendar(false);
-                setShowNotifications((p) => !p);
-              }}
+              onClick={() => setShowNotifications((p) => !p)}
               aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
               aria-expanded={showNotifications}
             >
@@ -98,22 +99,6 @@ export function AppHeader() {
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
-            </button>
-          </Tooltip>
-
-          {/* Calendar */}
-          <Tooltip content="Calendar" placement="bottom">
-            <button
-              ref={calendarRef}
-              className={styles.iconBtn}
-              onClick={() => {
-                setShowNotifications(false);
-                setShowCalendar((p) => !p);
-              }}
-              aria-label="Open calendar"
-              aria-expanded={showCalendar}
-            >
-              <IconCalendar size={19} />
             </button>
           </Tooltip>
 
@@ -202,14 +187,6 @@ export function AppHeader() {
         <NotificationDropdown
           anchorRef={bellRef}
           onClose={() => setShowNotifications(false)}
-        />
-      )}
-
-      {/* Calendar popup */}
-      {showCalendar && (
-        <CalendarPopup
-          anchorRef={calendarRef}
-          onClose={() => setShowCalendar(false)}
         />
       )}
 

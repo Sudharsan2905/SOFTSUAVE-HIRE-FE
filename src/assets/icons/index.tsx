@@ -130,6 +130,12 @@ export const IconUserPlus = icon(
     <line x1="23" y1="11" x2="17" y2="11" />
   </>
 );
+export const IconUser = icon(
+  <>
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 21v-1a7 7 0 0 1 14 0v1" />
+  </>
+);
 export const IconUsers = icon(
   <>
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />

@@ -9,6 +9,7 @@
 
 .titleArea {
   flex: 1;
+  min-width: 0;
 }
 
 .title {
@@ -31,4 +32,18 @@
   gap: 8px;
   flex-shrink: 0;
   flex-wrap: wrap;
+}
+
+/* ── Mobile (sm: <640px) ──────────────────────────────────────────
+   Actions wrap to a new line and left-align beneath the title.
+   ─────────────────────────────────────────────────────────────── */
+@media (max-width: 639px) {
+  .header {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }

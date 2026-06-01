@@ -130,7 +130,7 @@ export default function CategoriesPage() {
   return (
     <div>
       <Header
-        title="Question Bank"
+        title="Knowledge Vault"
         subtitle="Manage question categories and questions"
         actions={
           <Button

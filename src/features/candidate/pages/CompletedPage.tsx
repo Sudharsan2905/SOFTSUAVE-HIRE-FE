@@ -1,4 +1,5 @@
 import React from "react";
+import logoUrl from "@/assets/favicon.svg";
 import styles from "./CompletedPage.module.css";
 import { IconCheck } from "@/assets/icons";
 
@@ -19,7 +20,7 @@ export default function CompletedPage() {
           window.
         </p>
         <div className={styles.logo}>
-          <span className={styles.logoMark}>S</span>
+          <img src={logoUrl} width={28} height={28} alt="SoftSuave Hire" />
           <span className={styles.logoText}>SoftSuave Hire</span>
         </div>
       </div>

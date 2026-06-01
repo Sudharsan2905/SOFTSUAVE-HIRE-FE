@@ -17,6 +17,7 @@ import {
 } from "date-fns";
 import styles from "./DatePicker.module.css";
 import { clsx } from "@/utils/helpers";
+import { IconChevronLeft, IconChevronRight } from "@/assets/icons";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const MONTHS = [
@@ -212,7 +213,7 @@ export function DatePicker({
                 onClick={prevMonth}
                 aria-label="Previous month"
               >
-                <ChevronLeft />
+                <IconChevronLeft size={16} />
               </button>
 
               <div className={styles.headerCenter}>
@@ -272,7 +273,7 @@ export function DatePicker({
                 disabled={!canGoNext}
                 aria-label="Next month"
               >
-                <ChevronRight />
+                <IconChevronRight size={16} />
               </button>
             </div>
 
@@ -362,22 +363,3 @@ function CalendarIcon() {
   );
 }
 
-function ChevronLeft() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-      aria-hidden="true">
-      <polyline points="15 18 9 12 15 6" />
-    </svg>
-  );
-}
-
-function ChevronRight() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-      aria-hidden="true">
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
-  );
-}

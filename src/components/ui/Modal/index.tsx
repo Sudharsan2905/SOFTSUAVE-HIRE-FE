@@ -13,6 +13,7 @@ interface ModalProps {
   showClose?: boolean;
   footer?: React.ReactNode;
   className?: string;
+  disableBackdropClose?: boolean;
 }
 
 export function Modal({
@@ -24,6 +25,7 @@ export function Modal({
   showClose = true,
   footer,
   className,
+  disableBackdropClose = false,
 }: ModalProps) {
   const handleEsc = useCallback(
     (e: KeyboardEvent) => {
@@ -46,7 +48,7 @@ export function Modal({
   if (!isOpen) return null;
 
   return createPortal(
-    <div className={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
+    <div className={styles.overlay} onClick={disableBackdropClose ? undefined : onClose} role="dialog" aria-modal="true">
       <div
         className={clsx(styles.modal, styles[size], className)}
         onClick={(e) => e.stopPropagation()}

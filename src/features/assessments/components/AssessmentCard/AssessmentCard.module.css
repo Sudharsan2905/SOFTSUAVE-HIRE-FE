@@ -1,0 +1,333 @@
+/* ── Card shell ───────────────────────────────────────────────────────────── */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+}
+.card:hover {
+  border-color: var(--primary-300);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.cardMenuOpen {
+  z-index: 10;
+}
+
+/* Transparent stretched anchor — the real navigation target */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+}
+
+/* All content must clear the overlay */
+.body,
+.meta,
+.footer {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+/* No z-index here — keeps header out of a stacking context so menuWrap's
+   z-index: 10 is evaluated at the card level, above body/meta/footer (z: 1) */
+.header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ── Three-dot menu ───────────────────────────────────────────────────────── */
+.menuWrap {
+  position: relative;
+  flex-shrink: 0;
+  z-index: 5;
+}
+.menuTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  flex-shrink: 0;
+}
+.menuTrigger:hover,
+.menuTrigger:active,
+.menuTriggerOpen {
+  background: rgba(37, 99, 255, 0.12);
+  color: #ffffff;
+}
+.menuTrigger svg {
+  pointer-events: none;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  min-width: 160px;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 6px;
+  animation: fadeIn 120ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  text-align: left;
+}
+.menuItem:hover {
+  background: var(--bg-muted);
+}
+.menuItemDanger {
+  color: var(--error-600);
+}
+.menuItemDanger:hover {
+  background: var(--error-50);
+}
+.menuDivider {
+  height: 1px;
+  background: var(--border-default);
+  margin: 4px 0;
+}
+
+/* ── Body ─────────────────────────────────────────────────────────────────── */
+.body {
+  flex: 1;
+  margin-bottom: 10px;
+}
+.name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
+.desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Meta row ─────────────────────────────────────────────────────────────── */
+.meta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-default);
+  margin-top: auto;
+}
+.date {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+.viewBtn {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary-600);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--transition-fast);
+  text-decoration: none;
+}
+.viewBtn:hover {
+  color: var(--primary-700);
+}
+
+/* ── List-mode overrides ──────────────────────────────────────────────────── */
+.listCard {
+  flex-direction: row;
+  align-items: center;
+  padding: 11px 16px;
+  gap: 0;
+  min-height: unset;
+}
+.listCard:hover {
+  transform: none;
+}
+.listCard .body {
+  order: 1;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+.listCard .name {
+  font-size: 14px;
+  -webkit-line-clamp: 1;
+  margin: 0;
+  padding-right: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+.listCard .desc {
+  display: none;
+}
+.listCard .header {
+  order: 2;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0 14px;
+  border-left: 1px solid var(--border-default);
+  border-right: 1px solid var(--border-default);
+  min-width: 220px;
+}
+.listCard .meta {
+  order: 3;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  padding: 0 14px;
+  border-right: 1px solid var(--border-default);
+  min-width: 120px;
+}
+.listCard .footer {
+  order: 4;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  padding: 0 0 0 14px;
+  border-top: none;
+  min-width: 110px;
+  margin: 0;
+}
+.listCard .viewBtn {
+  font-size: 11px;
+}
+
+/* ── List-mode responsive: stack vertically on mobile (<640px) ────────────── */
+@media (max-width: 639px) {
+  .listCard {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px;
+    gap: 8px;
+  }
+
+  /* Let DOM order (header → body → meta → footer) flow naturally */
+  .listCard .header,
+  .listCard .body,
+  .listCard .meta,
+  .listCard .footer {
+    order: unset;
+  }
+
+  /* Header: reset column constraints, revert to standard badges-left / menu-right row */
+  .listCard .header {
+    min-width: 0;
+    padding: 0;
+    border-left: none;
+    border-right: none;
+    margin-bottom: 0;
+  }
+
+  /* Body: reset margins, keep single-line truncation */
+  .listCard .body {
+    margin: 0;
+  }
+  .listCard .name {
+    padding-right: 0;
+    font-size: 14px;
+    /* Inherits: white-space: nowrap; overflow: hidden; text-overflow: ellipsis */
+  }
+
+  /* Meta: switch back to row, allow badges to wrap if needed */
+  .listCard .meta {
+    min-width: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 0;
+    border-right: none;
+    margin: 0;
+  }
+
+  /* Footer: date on left, link on right — separated by a hairline */
+  .listCard .footer {
+    min-width: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0 0;
+    border-top: 1px solid var(--border-default);
+    margin: 0;
+  }
+  .listCard .viewBtn {
+    font-size: 12px;
+  }
+}

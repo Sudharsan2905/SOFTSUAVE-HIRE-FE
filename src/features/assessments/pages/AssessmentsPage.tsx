@@ -1,41 +1,31 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import styles from "./AssessmentsPage.module.css";
 import { Header } from "@/components/layout/Header";
 import { FilterBar } from "@/components/shared/FilterBar";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { Select } from "@/components/ui/Select";
-import { Badge } from "@/components/ui/Badge";
 import { Pagination } from "@/components/ui/Pagination";
 import { Spinner } from "@/components/ui/Spinner";
 import {
   IconPlus,
-  IconDelete,
-  IconEdit,
-  IconShare,
-  IconClone,
-  IconUsers,
   IconAssessment,
-  IconTime,
   IconCopy,
   IconMail,
   IconWhatsApp,
   IconWorkspace,
-  IconChevronRight,
-  IconShield,
 } from "@/assets/icons";
-import { Tooltip } from "@/components/ui/Tooltip";
 import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
 import { Assessment, PaginationMeta, ViewMode, SortOrder } from "@/types";
-import { formatDate, generateShareUrl, copyToClipboard } from "@/utils/helpers";
+import { generateShareUrl, copyToClipboard } from "@/utils/helpers";
 import toast from "react-hot-toast";
 import {
   CreateAssessmentWizard,
   AssessmentDraft,
 } from "../components/CreateWizard/WizardContainer";
+import { AssessmentCard } from "../components/AssessmentCard";
 import { useAppSelector } from "@/store";
 
 const SORT_OPTIONS = [
@@ -46,7 +36,6 @@ const SORT_OPTIONS = [
 
 export default function AssessmentsPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
-  const navigate = useNavigate();
   const { activeWorkspace, workspaces: allWorkspaces } = useAppSelector((s) => s.workspace);
   const user = useAppSelector((s) => s.auth.user);
   const isSuperAdmin = user?.role === "super_admin";
@@ -61,12 +50,16 @@ export default function AssessmentsPage() {
   const [showWizard, setShowWizard] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
-  const [showCloneWorkspace, setShowCloneWorkspace] = useState(false);
   const [wizardPrefill, setWizardPrefill] = useState<Partial<AssessmentDraft> | null>(null);
-  const [cloneTargetWorkspaceId, setCloneTargetWorkspaceId] = useState<string>("");
+  const [cloneWorkspaces, setCloneWorkspaces] = useState<{ id: string; name: string }[]>([]);
   const [selected, setSelected] = useState<Assessment | null>(null);
   const [saving, setSaving] = useState(false);
   const [editTarget, setEditTarget] = useState<Assessment | null>(null);
+  const [shareStep, setShareStep] = useState<"question" | "expirable" | "ready">("question");
+  const [shareUrl, setShareUrl] = useState("");
+  const [shareExpireFrom, setShareExpireFrom] = useState("");
+  const [shareExpireTo, setShareExpireTo] = useState("");
+  const [generatingLink, setGeneratingLink] = useState(false);
   const { page, pageSize, goToPage, reset, changePageSize } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
 
@@ -91,6 +84,19 @@ export default function AssessmentsPage() {
     }
   }, [workspaceId, page, pageSize, sortBy, sortOrder, debouncedSearch]);
 
+  const handleWizardClose = useCallback(() => {
+    setShowWizard(false);
+    setWizardPrefill(null);
+    setCloneWorkspaces([]);
+  }, []);
+
+  const handleWizardSuccess = useCallback(() => {
+    setShowWizard(false);
+    setWizardPrefill(null);
+    setCloneWorkspaces([]);
+    fetchAssessments();
+  }, [fetchAssessments]);
+
   useEffect(() => {
     fetchAssessments();
   }, [fetchAssessments]);
@@ -103,26 +109,20 @@ export default function AssessmentsPage() {
   };
 
   const handleCloneClick = (a: Assessment) => {
-    setSelected(a);
-    setCloneTargetWorkspaceId(workspaceId ?? "");
-    setShowCloneWorkspace(true);
-  };
-
-  const handleCloneConfirm = () => {
-    if (!selected) return;
-    setShowCloneWorkspace(false);
+    const workspaces = isSuperAdmin ? allWorkspaces : (user?.workspaces ?? []);
     setWizardPrefill({
-      name: `Copy of ${selected.name}`,
-      description: selected.description,
-      rounds: selected.rounds.map((r) => ({
+      name: `Copy of ${a.name}`,
+      description: a.description,
+      rounds: a.rounds.map((r) => ({
         round_number: r.round_number,
         question_count: r.question_count,
         max_duration_minutes: r.max_duration_minutes,
         question_ids: r.question_ids,
       })),
-      accessibility: selected.accessibility,
-      monitoring_config: selected.monitoring_config,
+      accessibility: a.accessibility,
+      monitoring_config: a.monitoring_config,
     });
+    setCloneWorkspaces(workspaces);
     setShowWizard(true);
   };
 
@@ -141,7 +141,6 @@ export default function AssessmentsPage() {
     }
   };
 
-  const shareUrl = selected ? generateShareUrl(selected.share_link) : "";
 
   if (!activeWorkspace) {
     return (
@@ -196,86 +195,21 @@ export default function AssessmentsPage() {
       <>
         <div className={viewMode === "grid" ? styles.grid : styles.list}>
           {assessments.map((a) => (
-            <div key={a.id} className={styles.card}>
-              {/* Stretched link covers the card; action buttons sit above it via z-index */}
-              <Link
-                to={`/workspaces/${workspaceId}/assessments/${a.id}`}
-                className={styles.cardOverlay}
-                aria-label={`View ${a.name} assessment`}
-              />
-              <div className={styles.cardTop}>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  <Badge variant={a.accessibility === "monitoring" ? "accent" : "default"}>
-                    {a.accessibility === "monitoring" ? (
-                      <><IconShield size={11} /> Monitoring</>
-                    ) : (
-                      "Normal"
-                    )}
-                  </Badge>
-                  <Badge variant="info">
-                    {a.rounds.length} round{a.rounds.length === 1 ? "" : "s"}
-                  </Badge>
-                </div>
-                <div className={styles.cardActions}>
-                  <Tooltip content="Edit" placement="top">
-                    <button
-                      className={styles.iconBtn}
-                      onClick={() => handleEditClick(a)}
-                      aria-label="Edit assessment"
-                    >
-                      <IconEdit size={14} />
-                    </button>
-                  </Tooltip>
-                  <Tooltip content="Share" placement="top">
-                    <button
-                      className={styles.iconBtn}
-                      onClick={() => { setSelected(a); setShowShare(true); }}
-                      aria-label="Share assessment"
-                    >
-                      <IconShare size={14} />
-                    </button>
-                  </Tooltip>
-                  <Tooltip content="Clone" placement="top">
-                    <button
-                      className={styles.iconBtn}
-                      onClick={() => handleCloneClick(a)}
-                      aria-label="Clone assessment"
-                    >
-                      <IconClone size={14} />
-                    </button>
-                  </Tooltip>
-                  <Tooltip content="Delete" placement="top">
-                    <button
-                      className={`${styles.iconBtn} ${styles.danger}`}
-                      onClick={() => { setSelected(a); setShowDelete(true); }}
-                      aria-label="Delete assessment"
-                    >
-                      <IconDelete size={14} />
-                    </button>
-                  </Tooltip>
-                </div>
-              </div>
-
-              <h3 className={styles.assessmentName}>{a.name}</h3>
-              {a.description && <p className={styles.assessmentDesc}>{a.description}</p>}
-
-              <div className={styles.metaRow}>
-                <span className={styles.metaItem}>
-                  <IconTime size={12} /> {a.rounds.reduce((t, r) => t + r.max_duration_minutes, 0)}{" "}
-                  min total
-                </span>
-                <span className={styles.metaItem}>
-                  <IconUsers size={12} /> {a.submission_count ?? 0} submitted
-                </span>
-              </div>
-
-              <div className={styles.cardFooter}>
-                <span className={styles.dateText}>{formatDate(a.created_at)}</span>
-                <span className={styles.viewDetail}>
-                  View Details <IconChevronRight size={12} />
-                </span>
-              </div>
-            </div>
+            <AssessmentCard
+              key={a.id}
+              assessment={a}
+              workspaceId={workspaceId!}
+              viewMode={viewMode}
+              onEdit={handleEditClick}
+              onShare={(assessment) => {
+                setSelected(assessment);
+                setShowShare(true);
+                setShareStep("question");
+                setShareUrl("");
+              }}
+              onClone={handleCloneClick}
+              onDelete={(assessment) => { setSelected(assessment); setShowDelete(true); }}
+            />
           ))}
         </div>
         {meta && (
@@ -324,20 +258,12 @@ export default function AssessmentsPage() {
       {assessmentContent}
 
       {/* Create / Clone Wizard */}
-      {showWizard && (cloneTargetWorkspaceId || workspaceId) && (
+      {showWizard && workspaceId && (
         <CreateAssessmentWizard
-          workspaceId={wizardPrefill ? cloneTargetWorkspaceId : (workspaceId ?? "")}
-          onClose={() => {
-            setShowWizard(false);
-            setWizardPrefill(null);
-            setCloneTargetWorkspaceId("");
-          }}
-          onSuccess={() => {
-            setShowWizard(false);
-            setWizardPrefill(null);
-            setCloneTargetWorkspaceId("");
-            fetchAssessments();
-          }}
+          workspaceId={workspaceId}
+          availableWorkspaces={wizardPrefill ? cloneWorkspaces : undefined}
+          onClose={handleWizardClose}
+          onSuccess={handleWizardSuccess}
           initialData={wizardPrefill || undefined}
         />
       )}
@@ -368,93 +294,190 @@ export default function AssessmentsPage() {
         />
       )}
 
-      {/* Clone — Workspace Selector */}
-      <Modal
-        isOpen={showCloneWorkspace}
-        onClose={() => setShowCloneWorkspace(false)}
-        title="Clone Assessment"
-        size="sm"
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setShowCloneWorkspace(false)}>
-              Cancel
-            </Button>
-            <Button
-              leftIcon={<IconClone size={15} />}
-              onClick={handleCloneConfirm}
-              disabled={!cloneTargetWorkspaceId}
-            >
-              Clone
-            </Button>
-          </>
-        }
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <p style={{ fontSize: 13.5, color: "var(--text-secondary)", lineHeight: 1.6 }}>
-            Clone <strong>{selected?.name}</strong> into the selected workspace. A new assessment
-            with all rounds and question selections will be created.
-          </p>
-          <Select
-            label="Target Workspace"
-            value={cloneTargetWorkspaceId}
-            onChange={setCloneTargetWorkspaceId}
-            options={(isSuperAdmin ? allWorkspaces : (user?.workspaces ?? [])).map((ws) => ({
-              value: ws.id,
-              label: ws.name,
-            }))}
-            showRequired
-          />
-        </div>
-      </Modal>
 
       {/* Share Modal */}
       <Modal
         isOpen={showShare}
         onClose={() => setShowShare(false)}
-        title="Share Assessment"
+        title={shareStep === "expirable" ? "Set Expiry Window" : "Share Assessment"}
         size="md"
       >
-        <div className={styles.shareCards}>
-          <button
-            className={styles.shareCard}
-            onClick={() => {
-              copyToClipboard(shareUrl).then(() => toast.success("Link copied!"));
-            }}
-          >
-            <IconCopy size={24} color="var(--primary-600)" />
-            <div>
-              <p className={styles.shareCardTitle}>Copy Link</p>
-              <p className={styles.shareCardDesc}>Share the unique assessment link directly</p>
+        {shareStep === "question" && (
+          <div className={styles.shareQuestion}>
+            <p className={styles.shareQuestionTitle}>
+              Should this share link have an expiry?
+            </p>
+            <div className={styles.shareOptionBtns}>
+              <button
+                className={styles.shareOptionBtn}
+                onClick={() => {
+                  if (selected) setShareUrl(generateShareUrl(selected.share_link));
+                  setShareStep("ready");
+                }}
+              >
+                <p className={styles.shareOptionBtnTitle}>No — Use Permanent Link</p>
+                <p className={styles.shareOptionBtnDesc}>Generate a link that never expires</p>
+              </button>
+              <button
+                className={styles.shareOptionBtn}
+                onClick={() => {
+                  setShareExpireFrom("");
+                  setShareExpireTo("");
+                  setShareStep("expirable");
+                }}
+              >
+                <p className={styles.shareOptionBtnTitle}>Yes — Set Expiry</p>
+                <p className={styles.shareOptionBtnDesc}>Restrict access to a specific date and time window</p>
+              </button>
             </div>
-          </button>
-          <a
-            className={styles.shareCard}
-            href={`mailto:?subject=Assessment Invitation&body=Please complete this assessment: ${shareUrl}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <IconMail size={24} color="var(--primary-600)" />
-            <div>
-              <p className={styles.shareCardTitle}>Share via Email</p>
-              <p className={styles.shareCardDesc}>Send invitation through email</p>
+          </div>
+        )}
+
+        {shareStep === "expirable" && (
+          <div className={styles.shareExpireForm}>
+            <button className={styles.shareBackLink} onClick={() => setShareStep("question")}>
+              ← Back
+            </button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <label htmlFor="share-from" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+                From Date &amp; Time
+              </label>
+              <input
+                id="share-from"
+                type="datetime-local"
+                value={shareExpireFrom}
+                min={new Date().toISOString().slice(0, 16)}
+                onChange={(e) => setShareExpireFrom(e.target.value)}
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: "var(--radius-md)",
+                  border: "1.5px solid var(--border-default)",
+                  fontSize: 13,
+                  background: "var(--bg-surface)",
+                  color: "var(--text-primary)",
+                  width: "100%",
+                  boxSizing: "border-box",
+                }}
+              />
             </div>
-          </a>
-          <a
-            className={styles.shareCard}
-            href={`https://wa.me/?text=Please complete this assessment: ${encodeURIComponent(shareUrl)}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <IconWhatsApp size={24} color="#25D366" />
-            <div>
-              <p className={styles.shareCardTitle}>Share via WhatsApp</p>
-              <p className={styles.shareCardDesc}>Send via WhatsApp message</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <label htmlFor="share-to" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+                To Date &amp; Time
+              </label>
+              <input
+                id="share-to"
+                type="datetime-local"
+                value={shareExpireTo}
+                min={
+                  shareExpireFrom
+                    ? new Date(new Date(shareExpireFrom).getTime() + 60000).toISOString().slice(0, 16)
+                    : new Date().toISOString().slice(0, 16)
+                }
+                onChange={(e) => setShareExpireTo(e.target.value)}
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: "var(--radius-md)",
+                  border: "1.5px solid var(--border-default)",
+                  fontSize: 13,
+                  background: "var(--bg-surface)",
+                  color: "var(--text-primary)",
+                  width: "100%",
+                  boxSizing: "border-box",
+                }}
+              />
             </div>
-          </a>
-        </div>
-        <div className={styles.shareLinkBox}>
-          <code className={styles.shareLink}>{shareUrl}</code>
-        </div>
+            <Button
+              isLoading={generatingLink}
+              disabled={!shareExpireFrom || !shareExpireTo || generatingLink}
+              onClick={async () => {
+                if (!selected || !workspaceId) return;
+                const start = new Date(shareExpireFrom);
+                const end = new Date(shareExpireTo);
+                const now = new Date();
+                if (start < new Date(now.getTime() - 60000)) {
+                  toast.error("Start time must be now or in the future.");
+                  return;
+                }
+                if (end <= start) {
+                  toast.error("End time must be after start time.");
+                  return;
+                }
+                setGeneratingLink(true);
+                try {
+                  const { data } = await api.post(
+                    `/api/assessments/share/expirable?workspace_id=${workspaceId}`,
+                    {
+                      assessment_id: selected.id,
+                      start_time: start.toISOString(),
+                      end_time: end.toISOString(),
+                    }
+                  );
+                  setShareUrl(generateShareUrl(data.data.share_link));
+                  setShareStep("ready");
+                } catch {
+                  toast.error("Unable to generate share link. Please retry.");
+                } finally {
+                  setGeneratingLink(false);
+                }
+              }}
+            >
+              Generate Link
+            </Button>
+          </div>
+        )}
+
+        {shareStep === "ready" && (
+          <>
+            <div className={styles.shareCards}>
+              <button
+                className={styles.shareCard}
+                onClick={() => {
+                  copyToClipboard(shareUrl).then(() => toast.success("Link copied!"));
+                }}
+              >
+                <IconCopy size={24} color="var(--primary-600)" />
+                <div>
+                  <p className={styles.shareCardTitle}>Copy Link</p>
+                  <p className={styles.shareCardDesc}>Share the unique assessment link directly</p>
+                </div>
+              </button>
+              <a
+                className={styles.shareCard}
+                href={`mailto:?subject=Assessment Invitation&body=Please complete this assessment: ${shareUrl}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <IconMail size={24} color="var(--primary-600)" />
+                <div>
+                  <p className={styles.shareCardTitle}>Share via Email</p>
+                  <p className={styles.shareCardDesc}>Send invitation through email</p>
+                </div>
+              </a>
+              <a
+                className={styles.shareCard}
+                href={`https://wa.me/?text=Please complete this assessment: ${encodeURIComponent(shareUrl)}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <IconWhatsApp size={24} color="#25D366" />
+                <div>
+                  <p className={styles.shareCardTitle}>Share via WhatsApp</p>
+                  <p className={styles.shareCardDesc}>Send via WhatsApp message</p>
+                </div>
+              </a>
+            </div>
+            <div className={styles.shareLinkBox}>
+              <code className={styles.shareLink}>{shareUrl}</code>
+            </div>
+            <button
+              className={styles.shareBackLink}
+              style={{ marginTop: 12 }}
+              onClick={() => { setShareStep("question"); setShareUrl(""); }}
+            >
+              ← Generate Different Link
+            </button>
+          </>
+        )}
       </Modal>
 
       {/* Delete Modal */}

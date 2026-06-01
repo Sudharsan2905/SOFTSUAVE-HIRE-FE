@@ -12,9 +12,10 @@ import { AssessmentAccessibility, MonitoringConfig } from "@/types";
 interface Props {
   draft: AssessmentDraft;
   onNext: (info: Partial<AssessmentDraft>) => void;
+  disableNext?: boolean;
 }
 
-export function Step1BasicInfo({ draft, onNext }: Props) {
+export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<Props>) {
   const [name, setName] = useState(draft.name);
   const [description, setDescription] = useState(draft.description);
   const [accessibility, setAccessibility] = useState<AssessmentAccessibility>(draft.accessibility);
@@ -22,10 +23,11 @@ export function Step1BasicInfo({ draft, onNext }: Props) {
   const [monitoring, setMonitoring] = useState<MonitoringConfig>(
     draft.monitoring_config || {
       tab_monitoring: true,
-      voice_monitoring: true,
-      camera_enabled: true,
+      audio_monitoring: true,
+      video_monitoring: true,
       screenshot_mode: "time_interval",
       screenshot_interval_minutes: 5,
+      screenshot_enabled: true,
     }
   );
 
@@ -163,13 +165,13 @@ export function Step1BasicInfo({ draft, onNext }: Props) {
               />
               <Toggle
                 label="Voice/noise monitoring"
-                checked={monitoring.voice_monitoring}
-                onChange={(v) => setMonitoring((p) => ({ ...p, voice_monitoring: v }))}
+                checked={monitoring.audio_monitoring}
+                onChange={(v) => setMonitoring((p) => ({ ...p, audio_monitoring: v }))}
               />
               <Toggle
                 label="Camera required"
-                checked={monitoring.camera_enabled}
-                onChange={(v) => setMonitoring((p) => ({ ...p, camera_enabled: v }))}
+                checked={monitoring.video_monitoring}
+                onChange={(v) => setMonitoring((p) => ({ ...p, video_monitoring: v }))}
               />
             </div>
             <div style={{ marginTop: 14 }}>
@@ -217,7 +219,7 @@ export function Step1BasicInfo({ draft, onNext }: Props) {
 
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
         <Button
-          disabled={!canProceed}
+          disabled={!canProceed || disableNext}
           onClick={() =>
             onNext({ name, description, accessibility, rounds, monitoring_config: monitoring })
           }
