@@ -1,6 +1,6 @@
 import React from "react";
 import logoUrl from "@/assets/favicon.svg";
-import { IconTime, IconShield } from "@/assets/icons";
+import { IconTime, IconInvalid, IconNotStarted } from "@/assets/icons";
 import styles from "./LinkStatusScreen.module.css";
 
 export type LinkStatus = "not_started" | "expired" | "invalid";
@@ -21,9 +21,9 @@ const COPY: Record<LinkStatus, { title: string; fallbackDesc: string }> = {
 };
 
 const STATUS_ICON: Record<LinkStatus, React.ReactNode> = {
-  not_started: <IconTime size={32} />,
-  expired: <IconTime size={32} />,
-  invalid: <IconShield size={32} />,
+  not_started: <IconNotStarted size={42} />,
+  expired: <IconTime size={40} />,
+  invalid: <IconInvalid size={40} />,
 };
 
 interface LinkStatusScreenProps {
@@ -50,9 +50,7 @@ export function LinkStatusScreen({ status, message, startTime }: Readonly<LinkSt
         <p className={styles.description}>{message || fallbackDesc}</p>
 
         {status === "not_started" && startTime && (
-          <p className={styles.time}>
-            Starts: {new Date(startTime).toLocaleString()}
-          </p>
+          <p className={styles.time}>Starts: {new Date(startTime).toLocaleString()}</p>
         )}
       </div>
     </div>

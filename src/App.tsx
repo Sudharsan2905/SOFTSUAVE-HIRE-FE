@@ -1,13 +1,10 @@
-import React, { Suspense, lazy, useState, useEffect } from "react";
-import { Routes, Route, Navigate, useParams } from "react-router-dom";
+import React, { Suspense, lazy } from "react";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { Spinner } from "@/components/ui/Spinner";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { NoAccessPage } from "@/components/shared/NoAccessPage";
 import { CandidateRoute } from "@/features/candidate/components/CandidateRoute";
-import { LinkStatusScreen, LinkStatus } from "@/features/candidate/components/LinkStatusScreen";
 import { useAppSelector } from "@/store";
-import { api } from "@/utils/api";
-import { isAssessmentDone } from "@/utils/assessmentSession";
 
 const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
   const user = useAppSelector((s) => s.auth.user);
@@ -24,81 +21,6 @@ const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-function CandidateDashboard() {
-  return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-        flexDirection: "column",
-        gap: 12,
-        color: "var(--text-secondary)",
-      }}
-    >
-      <h2 style={{ color: "var(--text-primary)" }}>No Assessment Linked</h2>
-      <p>Please use your assessment link to access your assessment.</p>
-    </div>
-  );
-}
-
-function AssessmentEntry() {
-  const { shareLink } = useParams<{ shareLink: string }>();
-  const { isAuthenticated, user } = useAppSelector((s) => s.auth);
-  const isCandidate = isAuthenticated && user?.role === "candidate";
-
-  const [checking, setChecking] = useState(true);
-  const [linkStatus, setLinkStatus] = useState<LinkStatus | "valid" | null>(null);
-  const [linkMessage, setLinkMessage] = useState("");
-  const [linkStartTime, setLinkStartTime] = useState("");
-
-  useEffect(() => {
-    if (!shareLink) {
-      setLinkStatus("invalid");
-      setChecking(false);
-      return;
-    }
-    api
-      .get(`/api/assessments/share/validate?link=${shareLink}`)
-      .then((res) => {
-        const v = res.data.data;
-        if (v.can_allow) {
-          setLinkStatus("valid");
-        } else {
-          setLinkStatus(v.is_expired ? "expired" : "not_started");
-          setLinkMessage(v.message || "");
-          if (v.start_time) setLinkStartTime(v.start_time);
-        }
-      })
-      .catch(() => {
-        // Network error — don't block the candidate
-        setLinkStatus("valid");
-      })
-      .finally(() => setChecking(false));
-  }, [shareLink]);
-
-  if (checking) return <Loading />;
-
-  if (linkStatus === "not_started" || linkStatus === "expired" || linkStatus === "invalid") {
-    return (
-      <LinkStatusScreen status={linkStatus} message={linkMessage} startTime={linkStartTime} />
-    );
-  }
-
-  if (!isCandidate) {
-    return <Navigate to={`/candidate/login?share=${shareLink}`} replace />;
-  }
-
-  // If this session already completed the assessment, go straight to the done screen.
-  if (shareLink && isAssessmentDone(shareLink)) {
-    return <Navigate to={`/assessment/${shareLink}/completed`} replace />;
-  }
-
-  // Authenticated candidate with a valid link — proceed to instructions.
-  return <Navigate to={`/assessment/${shareLink}/instructions`} replace />;
-}
-
 // Lazy-loaded admin pages
 const AdminLoginPage = lazy(() => import("@/features/auth/pages/AdminLoginPage"));
 const DashboardPage = lazy(() => import("@/features/dashboard/DashboardPage"));
@@ -114,6 +36,12 @@ const UserProfilePage = lazy(() => import("@/features/profile/pages/UserProfileP
 const NotificationsPage = lazy(() => import("@/features/notifications/pages/NotificationsPage"));
 
 // Lazy-loaded candidate pages
+const AssessmentEntryPage = lazy(() => import("@/features/candidate/pages/AssessmentEntryPage"));
+const CandidateDashboard = lazy(() =>
+  import("@/features/candidate/pages/AssessmentEntryPage").then((m) => ({
+    default: m.CandidateDashboard,
+  }))
+);
 const CandidateLoginPage = lazy(() => import("@/features/candidate/pages/CandidateLoginPage"));
 const RegisterPage = lazy(() => import("@/features/candidate/pages/RegisterPage"));
 const InstructionsPage = lazy(() => import("@/features/candidate/pages/InstructionsPage"));
@@ -138,10 +66,13 @@ export default function App() {
         <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
 
         {/* Assessment flow — entry is public, protected pages require candidate auth */}
-        <Route path="/assessment/:shareLink" element={<AssessmentEntry />} />
+        <Route path="/assessment/:shareLink" element={<AssessmentEntryPage />} />
         <Route element={<CandidateRoute />}>
           <Route path="/assessment/:shareLink/instructions" element={<InstructionsPage />} />
-          <Route path="/assessment/:shareLink/interview/:submissionId" element={<InterviewPage />} />
+          <Route
+            path="/assessment/:shareLink/interview/:submissionId"
+            element={<InterviewPage />}
+          />
           <Route path="/assessment/:shareLink/completed" element={<CompletedPage />} />
         </Route>
 
@@ -155,29 +86,23 @@ export default function App() {
           <Route path="/question-bank" element={<CategoriesPage />} />
           <Route path="/question-bank/:categoryId" element={<QuestionsPage />} />
           <Route path="/workspaces/:workspaceId/assessments" element={<AssessmentsPage />} />
+          <Route path="/live-interviews" element={<LiveInterviewsPage />} />
+          <Route path="/profile" element={<UserProfilePage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
           <Route
             path="/workspaces/:workspaceId/assessments/:id"
             element={<AssessmentDetailPage />}
           />
-          <Route path="/live-interviews" element={<LiveInterviewsPage />} />
-          <Route path="/profile" element={<UserProfilePage />} />
           <Route
-            path="/profile/:userId"
             element={
               <SuperAdminRoute>
-                <UserProfilePage />
+                <Outlet />
               </SuperAdminRoute>
             }
-          />
-          <Route path="/notifications" element={<NotificationsPage />} />
-          <Route
-            path="/users"
-            element={
-              <SuperAdminRoute>
-                <UsersPage />
-              </SuperAdminRoute>
-            }
-          />
+          >
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/profile/:userId" element={<UserProfilePage />} />
+          </Route>
         </Route>
 
         {/* Fallback */}

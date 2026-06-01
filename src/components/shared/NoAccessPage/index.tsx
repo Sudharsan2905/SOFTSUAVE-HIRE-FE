@@ -5,12 +5,18 @@ import { IconLock } from "@/assets/icons";
 import logoUrl from "@/assets/favicon.svg";
 import styles from "./NoAccessPage.module.css";
 
+interface IconProps {
+  size?: number | string;
+  strokeWidth?: number;
+}
+
 interface NoAccessPageProps {
   title?: string;
   description?: string;
   showBackButton?: boolean;
   backTo?: string;
   backLabel?: string;
+  icon?: React.ElementType<IconProps>;
 }
 
 export function NoAccessPage({
@@ -19,6 +25,7 @@ export function NoAccessPage({
   showBackButton = true,
   backTo = "/question-bank",
   backLabel = "Go Back",
+  icon: Icon = IconLock,
 }: Readonly<NoAccessPageProps>) {
   const navigate = useNavigate();
 
@@ -31,9 +38,9 @@ export function NoAccessPage({
           <span className={styles.brandName}>SoftSuave Hire</span>
         </div>
 
-        {/* Lock icon */}
+        {/* Icon */}
         <div className={styles.iconWrap} aria-hidden="true">
-          <IconLock size={40} strokeWidth={1.5} />
+          <Icon size={40} strokeWidth={1.5} />
         </div>
 
         {/* Message */}

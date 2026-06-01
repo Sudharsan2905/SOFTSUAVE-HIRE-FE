@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: #fff4ed;
+  background: #faf4f4;
 }
 
 .card {
@@ -30,7 +30,7 @@
 .brandName {
   font-size: 16px;
   font-weight: 800;
-  color: var(--text-primary);
+  color: #0f172a;
   letter-spacing: -0.02em;
 }
 
@@ -50,7 +50,7 @@
 .title {
   font-size: 20px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #0f172a;
   letter-spacing: -0.02em;
   margin: 0 0 10px;
 }

@@ -14,9 +14,8 @@ export function AdminLayout() {
   // Explicit allowlist — only admin/super_admin may enter. Any other role
   // (candidate, undefined, unknown) is rejected to prevent privilege escalation.
   const isAdmin = user?.role === "admin" || user?.role === "super_admin";
-  if (!isAdmin) {
-    return <Navigate to="/admin/login" replace />;
-  }
+  if (user?.role === "candidate") return <Navigate to="/candidate/login" replace />;
+  else if (!isAdmin) return <Navigate to="/admin/login" replace />;
 
   return (
     <div className={styles.layout}>
