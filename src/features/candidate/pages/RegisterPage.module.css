@@ -14,7 +14,7 @@
   display: flex;
   width: 100%;
   max-width: 1040px;
-  min-height: 560px;
+  min-height: 640px;
   border-radius: 28px;
   background: #ffffff;
   box-shadow: 0 40px 90px rgba(243, 30, 70, 0.18);
@@ -50,7 +50,7 @@
 
 /* ---------- Left: form ---------- */
 .left {
-  flex: 1.35;
+  flex: 1;
   position: relative;
   z-index: 1;
   display: flex;
@@ -165,9 +165,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 0;
-  padding: 44px 36px 40px;
+  padding: 80px 45px 40px;
   border-radius: 0 28px 28px 0;
   background: linear-gradient(135deg, #ff7a33 0%, #fb4d3d 50%, #f31e46 100%);
   opacity: 80%;
@@ -185,15 +185,12 @@
   pointer-events: none;
 }
 
-.heroWrap {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  max-width: 300px;
-  margin-bottom: -28px;
-}
 .heroCard {
+  position: relative;
+  z-index: 1;
   width: 100%;
+  max-width: 380px;
+  flex: 0.7 0 auto;
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 22px 44px rgba(0, 0, 0, 0.22);
@@ -201,16 +198,17 @@
 .heroImg {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
 }
 
 .welcome {
-  position: relative;
+  position: absolute;
   z-index: 3;
+  bottom: 118px;
+  left: 0;
+  right: 0;
   text-align: center;
   color: #ffffff;
-  padding-top: 36px;
-  top :-116px;
 }
 .welcomeTitle {
   font-size: 30px;
@@ -226,8 +224,8 @@
 .badge {
   position: absolute;
   z-index: 2;
-  top: -16px;
-  left: -16px;
+  top: 58px;
+  left: max(24px, calc(43% - 175px));
   width: 56px;
   height: 56px;
   border-radius: 50%;

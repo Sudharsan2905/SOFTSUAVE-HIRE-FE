@@ -275,15 +275,13 @@ export default function RegisterPage() {
 
         {/* Right: gradient hero panel */}
         <div className={styles.right}>
-          <div className={styles.heroWrap}>
-            <div className={styles.badge} aria-hidden="true">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="#FBBF24">
-                <path d="M13 2L4.5 13.5H11l-1 8.5L19.5 10H13z" />
-              </svg>
-            </div>
-            <div className={styles.heroCard}>
-              <img src="/person.svg" alt="" className={styles.heroImg} />
-            </div>
+          <div className={styles.badge} aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="#FBBF24">
+              <path d="M13 2L4.5 13.5H11l-1 8.5L19.5 10H13z" />
+            </svg>
+          </div>
+          <div className={styles.heroCard}>
+            <img src="/person.svg" alt="" className={styles.heroImg} />
           </div>
           <div className={styles.welcome}>
             <h2 className={styles.welcomeTitle}>Get Started!</h2>
