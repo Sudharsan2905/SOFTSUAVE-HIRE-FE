@@ -32,6 +32,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
+    const leadingContent = isLoading
+      ? <span className={styles.spinner} aria-hidden="true" />
+      : leftIcon
+      ? <span className={styles.icon}>{leftIcon}</span>
+      : null;
+
     const btn = (
       <button
         ref={ref}
@@ -46,11 +52,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         )}
         {...rest}
       >
-        {isLoading ? (
-          <span className={styles.spinner} aria-hidden="true" />
-        ) : leftIcon ? (
-          <span className={styles.icon}>{leftIcon}</span>
-        ) : null}
+        {leadingContent}
         {children && <span>{children}</span>}
         {!isLoading && rightIcon && <span className={styles.icon}>{rightIcon}</span>}
       </button>

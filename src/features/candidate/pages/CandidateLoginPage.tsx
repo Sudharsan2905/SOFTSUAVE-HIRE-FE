@@ -57,7 +57,7 @@ export default function CandidateLoginPage() {
       await dispatch(candidateLogin(values)).unwrap();
       goNext();
     } catch (e: unknown) {
-      setError("root", { message: (e as { message?: string })?.message || "Invalid credentials" });
+      setError("root", { message: (e as { message?: string })?.message ?? "Invalid credentials" });
     }
   };
 
@@ -83,7 +83,7 @@ export default function CandidateLoginPage() {
       goNext();
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
         "Google login failed";
       toast.error(msg);
     }

@@ -10,7 +10,7 @@ const WORKSPACE_KEY = "ssh_workspace";
 
 const savedWorkspace = (): Workspace | null => {
   try {
-    return JSON.parse(localStorage.getItem(WORKSPACE_KEY) || "null");
+    return JSON.parse(localStorage.getItem(WORKSPACE_KEY) ?? "null");
   } catch {
     return null;
   }

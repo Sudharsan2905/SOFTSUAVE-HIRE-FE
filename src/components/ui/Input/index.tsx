@@ -52,8 +52,8 @@ function InputInner(
           name={fieldName}
           className={clsx(
             styles.input,
-            leftElement && styles.hasLeft,
-            rightElement && styles.hasRight,
+            leftElement ? styles.hasLeft : undefined,
+            rightElement ? styles.hasRight : undefined,
             className
           )}
           aria-invalid={error ? "true" : undefined}

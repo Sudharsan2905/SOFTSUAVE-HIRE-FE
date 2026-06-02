@@ -44,6 +44,44 @@ function buildTriggerLabel(value: DateRange, placeholder: string): string {
   return placeholder;
 }
 
+// Fix S3776: extract class-name computation outside the component to reduce cognitive complexity
+function getDayClassNames(
+  day: Date,
+  fromParsed: Date | null,
+  toParsed: Date | null,
+  hoverParsed: Date | null,
+  selectionPhase: "from" | "to",
+  today: Date,
+  viewDate: Date
+): string {
+  const isFrom = !!(fromParsed && isSameDay(day, fromParsed));
+  const isTo = !!(toParsed && isSameDay(day, toParsed));
+  const isInRange = !!(
+    fromParsed && toParsed &&
+    isAfter(day, fromParsed) && isBefore(day, toParsed)
+  );
+  const isHoverRange = !!(
+    selectionPhase === "to" && fromParsed && hoverParsed &&
+    isAfter(day, fromParsed) && isBefore(day, hoverParsed)
+  );
+  const isDisabled = !!(
+    selectionPhase === "to" && fromParsed &&
+    isBefore(day, fromParsed) && !isSameDay(day, fromParsed)
+  );
+  const isToday = isSameDay(day, today);
+  const isOutsideMonth = !isSameMonth(day, viewDate);
+
+  return [
+    styles.calDay,
+    (isFrom || isTo) ? styles.calDaySelected : "",
+    isInRange ? styles.calDayInRange : "",
+    isHoverRange ? styles.calDayHoverRange : "",
+    isToday && !isFrom && !isTo ? styles.calDayToday : "",
+    isOutsideMonth ? styles.calDayOutside : "",
+    isDisabled ? styles.calDayDisabled : "",
+  ].filter(Boolean).join(" ");
+}
+
 export function DateRangePicker({
   value,
   onChange,
@@ -83,17 +121,16 @@ export function DateRangePicker({
     if (selectionPhase === "from") {
       onChange({ from: dayStr, to: "" });
       setSelectionPhase("to");
+    // Fix S6660: collapse else + inner if into else-if
+    } else if (fromParsed && isBefore(day, fromParsed) && !isSameDay(day, fromParsed)) {
+      // If to < from, restart selection
+      onChange({ from: dayStr, to: "" });
+      setSelectionPhase("to");
     } else {
-      if (fromParsed && isBefore(day, fromParsed) && !isSameDay(day, fromParsed)) {
-        // If to < from, restart selection
-        onChange({ from: dayStr, to: "" });
-        setSelectionPhase("to");
-      } else {
-        onChange({ from: value.from, to: dayStr });
-        setSelectionPhase("from");
-        setOpen(false);
-        setHoverDate("");
-      }
+      onChange({ from: value.from, to: dayStr });
+      setSelectionPhase("from");
+      setOpen(false);
+      setHoverDate("");
     }
   };
 
@@ -125,7 +162,8 @@ export function DateRangePicker({
       </button>
 
       {open && (
-        <div className={styles.popup} role="dialog" aria-label="Date range picker">
+        // Fix S6819 (line 128): popup is not a dialog — use role="region" with aria-label
+        <div className={styles.popup} role="region" aria-label="Date range picker">
           {/* Month navigation */}
           <div className={styles.calNav}>
             <button
@@ -147,8 +185,8 @@ export function DateRangePicker({
             </button>
           </div>
 
-          {/* Day grid */}
-          <div className={styles.calGrid} role="listbox">
+          {/* Day grid — Fix S6819 (line 151): use role="grid" for a calendar grid */}
+          <div className={styles.calGrid} role="grid" aria-label={format(viewDate, "MMMM yyyy")}>
             {DAY_LABELS.map((d) => (
               <div key={d} className={styles.calDayHeader}>{d}</div>
             ))}
@@ -158,34 +196,21 @@ export function DateRangePicker({
               const toParsed = value.to ? parseISO(value.to) : null;
               const hoverParsed = hoverDate ? parseISO(hoverDate) : null;
 
-              const isFrom = !!(fromParsed && isSameDay(day, fromParsed));
-              const isTo = !!(toParsed && isSameDay(day, toParsed));
-              const isInRange = !!(
-                fromParsed && toParsed &&
-                isAfter(day, fromParsed) && isBefore(day, toParsed)
-              );
-              const isHoverRange = !!(
-                selectionPhase === "to" && fromParsed && hoverParsed &&
-                isAfter(day, fromParsed) && isBefore(day, hoverParsed)
+              const isSelected = !!(
+                (fromParsed && isSameDay(day, fromParsed)) ||
+                (toParsed && isSameDay(day, toParsed))
               );
               const isDisabled = !!(
                 selectionPhase === "to" && fromParsed &&
                 isBefore(day, fromParsed) && !isSameDay(day, fromParsed)
               );
-              const isToday = isSameDay(day, today);
-              const isOutsideMonth = !isSameMonth(day, viewDate);
 
-              const cls = [
-                styles.calDay,
-                (isFrom || isTo) ? styles.calDaySelected : "",
-                isInRange ? styles.calDayInRange : "",
-                isHoverRange ? styles.calDayHoverRange : "",
-                isToday && !isFrom && !isTo ? styles.calDayToday : "",
-                isOutsideMonth ? styles.calDayOutside : "",
-                isDisabled ? styles.calDayDisabled : "",
-              ].filter(Boolean).join(" ");
+              // Fix S3776: use extracted helper for class computation
+              const cls = getDayClassNames(day, fromParsed, toParsed, hoverParsed, selectionPhase, today, viewDate);
 
               return (
+                // Fix S6819 (line 189): role="gridcell" matches the grid container
+                // Fix S6811 (line 189): use aria-selected (supported on gridcell) instead of aria-pressed
                 <button
                   key={dayStr}
                   type="button"
@@ -195,9 +220,8 @@ export function DateRangePicker({
                   onMouseEnter={() => selectionPhase === "to" && !isDisabled && setHoverDate(dayStr)}
                   onMouseLeave={() => setHoverDate("")}
                   aria-label={format(day, "PPP")}
-                  aria-pressed={isFrom || isTo}
-                  role="option"
-                  aria-selected={isFrom || isTo}
+                  role="gridcell"
+                  aria-selected={isSelected}
                 >
                   {format(day, "d")}
                 </button>

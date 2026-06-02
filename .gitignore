@@ -42,3 +42,12 @@ Thumbs.db
 # Cache
 .eslintcache
 .vite/
+
+# Test coverage
+coverage/
+
+# SonarQube
+.sonar/
+.scannerwork/
+SONARQUBE_SETUP.md
+sonar-project.properties

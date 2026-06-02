@@ -71,9 +71,9 @@ export default function RegisterPage() {
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      first_name: googleData?.first_name || "",
-      last_name: googleData?.last_name || "",
-      email: googleData?.email || "",
+      first_name: googleData?.first_name ?? "",
+      last_name: googleData?.last_name ?? "",
+      email: googleData?.email ?? "",
     },
   });
 
@@ -96,7 +96,7 @@ export default function RegisterPage() {
       if (shareLink) navigate(`/candidate/login?share=${shareLink}`);
       else navigate("/candidate/dashboard");
     } catch (e: unknown) {
-      setError("root", { message: (e as { message?: string })?.message || "Registration failed" });
+      setError("root", { message: (e as { message?: string })?.message ?? "Registration failed" });
     }
   };
 

@@ -39,8 +39,8 @@ export function useApi<T>(
         return result;
       } catch (err: unknown) {
         const msg =
-          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-          (err as Error).message ||
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          (err as Error).message ??
           "Request failed";
         if (msg !== "canceled") {
           setError(msg);

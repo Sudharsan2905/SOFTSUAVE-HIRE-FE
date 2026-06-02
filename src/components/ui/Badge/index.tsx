@@ -18,7 +18,7 @@ export function Badge({
   size = "md",
   dot = false,
   className,
-}: BadgeProps) {
+}: Readonly<BadgeProps>) {
   return (
     <span className={clsx(styles.badge, styles[variant], styles[size], className)}>
       {dot && <span className={styles.dot} />}
@@ -27,7 +27,7 @@ export function Badge({
   );
 }
 
-export function ComplexityBadge({ complexity }: { complexity: string }) {
+export function ComplexityBadge({ complexity }: Readonly<{ complexity: string }>) {
   const map: Record<string, BadgeVariant> = {
     low: "success",
     medium: "warning",
@@ -40,7 +40,7 @@ export function ComplexityBadge({ complexity }: { complexity: string }) {
   );
 }
 
-export function StatusBadge({ status }: { status: string }) {
+export function StatusBadge({ status }: Readonly<{ status: string }>) {
   const map: Record<string, BadgeVariant> = {
     pending: "default",
     in_progress: "primary",

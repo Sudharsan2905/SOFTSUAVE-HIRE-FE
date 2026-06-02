@@ -57,9 +57,9 @@ export function InterviewSessionProvider({ children }: Readonly<{ children: Reac
   const { networkStatus, isOnline } = useNetworkMonitoring({
     submissionId: sessionSubmissionId ?? undefined,
     accessToken,
-    onSessionState: useCallback((rs, qi) => onSessionStateRef.current?.(rs, qi), []),
+    onSessionState: useCallback((rs: number | null, qi: number) => onSessionStateRef.current?.(rs, qi), []),
     onSessionOnHold: useCallback(() => onSessionOnHoldRef.current?.(), []),
-    onResumeApproved: useCallback((rs, qi) => onResumeApprovedRef.current?.(rs, qi), []),
+    onResumeApproved: useCallback((rs: number | null, qi: number) => onResumeApprovedRef.current?.(rs, qi), []),
     onTerminated: useCallback(() => onTerminatedRef.current?.(), []),
     getRemainingSeconds: useCallback(() => getRemainingSecondsRef.current(), []),
     getCurrentQuestionIdx: useCallback(() => getCurrentQuestionIdxRef.current(), []),

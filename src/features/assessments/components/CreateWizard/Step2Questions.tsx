@@ -17,7 +17,7 @@ interface Props {
   onUpdateQuestions: (ids: string[]) => void;
 }
 
-export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Props) {
+export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Readonly<Props>) {
   const round = draft.rounds[currentRound];
   const selectedIds = round.question_ids;
 
@@ -77,6 +77,47 @@ export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Props
   const removeSelected = (id: string) => {
     onUpdateQuestions(selectedIds.filter((sid) => sid !== id));
   };
+
+  let browserContent: React.ReactNode;
+  if (isLoading) {
+    browserContent = (
+      <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
+        <Spinner />
+      </div>
+    );
+  } else if (availableQuestions.length === 0) {
+    browserContent = (
+      <div className={styles.dropHint}>
+        <p>No questions available</p>
+      </div>
+    );
+  } else {
+    browserContent = (
+      <div className={styles.questionList}>
+        {availableQuestions.map((q) => (
+          <button
+            key={q.id}
+            type="button"
+            className={styles.questionItem}
+            onClick={() => toggle(q)}
+          >
+            <div className={styles.questionItemLeft}>
+              <IconDrag size={16} color="var(--text-tertiary)" />
+              <div>
+                <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
+                  <ComplexityBadge complexity={q.complexity} />
+                </div>
+                <p className={styles.qText}>{q.question_text}</p>
+              </div>
+            </div>
+            <button className={styles.addBtn} title="Add to round">
+              <IconCheck size={13} />
+            </button>
+          </button>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
@@ -149,34 +190,7 @@ export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Props
           />
         </div>
 
-        {isLoading ? (
-          <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
-            <Spinner />
-          </div>
-        ) : availableQuestions.length === 0 ? (
-          <div className={styles.dropHint}>
-            <p>No questions available</p>
-          </div>
-        ) : (
-          <div className={styles.questionList}>
-            {availableQuestions.map((q) => (
-              <div key={q.id} className={styles.questionItem} onClick={() => toggle(q)}>
-                <div className={styles.questionItemLeft}>
-                  <IconDrag size={16} color="var(--text-tertiary)" />
-                  <div>
-                    <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
-                      <ComplexityBadge complexity={q.complexity} />
-                    </div>
-                    <p className={styles.qText}>{q.question_text}</p>
-                  </div>
-                </div>
-                <button className={styles.addBtn} title="Add to round">
-                  <IconCheck size={13} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+        {browserContent}
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ interface VideoMonitorProps {
   onWarning?: () => void;
 }
 
-export function VideoMonitor({ videoRef, onWarning }: VideoMonitorProps) {
+export function VideoMonitor({ videoRef, onWarning }: Readonly<VideoMonitorProps>) {
   const [status, setStatus] = useState<VideoStatus>("checking");
   const darkFrameCountRef = useRef(0);
 
@@ -60,6 +60,8 @@ export function VideoMonitor({ videoRef, onWarning }: VideoMonitorProps) {
   const badgeLabel =
     status === "live" ? "Live" : status === "no-feed" ? "No Feed" : "Checking";
 
+  const badgeClass = `${styles.badge} ${status === "live" ? styles.badgeLive : status === "no-feed" ? styles.badgeNoFeed : styles.badgeChecking}`;
+
   return (
     <div className={styles.container}>
       <div className={styles.sectionTitle}>
@@ -76,15 +78,7 @@ export function VideoMonitor({ videoRef, onWarning }: VideoMonitorProps) {
           className={styles.video}
         />
 
-        <span
-          className={`${styles.badge} ${
-            status === "live"
-              ? styles.badgeLive
-              : status === "no-feed"
-              ? styles.badgeNoFeed
-              : styles.badgeChecking
-          }`}
-        >
+        <span className={badgeClass}>
           {status === "live" && <span className={styles.badgeDot} />}
           {badgeLabel}
         </span>

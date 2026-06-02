@@ -12,7 +12,7 @@ const CANVAS_HEIGHT = 48;
 const BAR_COUNT = 32;
 const BAR_GAP = 2;
 
-export function AudioMonitor({ analyserRef, active }: AudioMonitorProps) {
+export function AudioMonitor({ analyserRef, active }: Readonly<AudioMonitorProps>) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef<number>(0);
 

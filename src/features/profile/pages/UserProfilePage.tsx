@@ -41,6 +41,184 @@ function CheckIcon() {
   );
 }
 
+// S3358 (line 246): Extracted nested ternary to a named helper function
+function getRoleLabel(role: string | undefined): string {
+  if (role === UserRole.SUPER_ADMIN) return "Super Admin";
+  if (role === UserRole.ADMIN) return "Admin";
+  return "Candidate";
+}
+
+type ProfileFormState = {
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: string;
+  is_active: boolean;
+  default_workspace_id: string;
+  workspace_ids: string[];
+};
+
+// S3776 (line 44): Extracted form state construction to reduce cognitive complexity of the effect
+function buildProfileFormState(
+  activeUser: User,
+  wsOptions: { id: string; name: string }[]
+): ProfileFormState {
+  return {
+    first_name: activeUser.first_name ?? "",
+    last_name: activeUser.last_name ?? "",
+    email: activeUser.email ?? "",
+    role: activeUser.role ?? "",
+    is_active: activeUser.is_active !== false,
+    default_workspace_id: activeUser.default_workspace_id ?? wsOptions[0]?.id ?? "",
+    workspace_ids: (activeUser.workspaces ?? []).map((w) => w.id),
+  };
+}
+
+// S3776 (line 132): Extracted base payload building (common fields) to reduce handleSave complexity
+function buildBasePayload(
+  profileForm: ProfileFormState,
+  activeUser: User
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+  if (profileForm.first_name !== (activeUser.first_name ?? ""))
+    payload.first_name = profileForm.first_name;
+  if (profileForm.last_name !== (activeUser.last_name ?? ""))
+    payload.last_name = profileForm.last_name;
+  if (profileForm.email !== activeUser.email)
+    payload.email = profileForm.email;
+  if (
+    profileForm.default_workspace_id &&
+    profileForm.default_workspace_id !== activeUser.default_workspace_id
+  )
+    payload.default_workspace_id = profileForm.default_workspace_id;
+  return payload;
+}
+
+// S3776 (line 132): Extracted admin-specific payload building to reduce handleSave complexity
+function buildAdminPayload(
+  profileForm: ProfileFormState,
+  activeUser: User
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+  if (profileForm.role !== activeUser.role) payload.role = profileForm.role;
+  if (profileForm.is_active !== (activeUser.is_active !== false))
+    payload.is_active = profileForm.is_active;
+  const cmp = (a: string, b: string) => a.localeCompare(b);
+  const currentWsIds = (activeUser.workspaces ?? []).map((w) => w.id).sort(cmp).join(",");
+  const newWsIds = [...profileForm.workspace_ids].sort(cmp).join(",");
+  if (currentWsIds !== newWsIds) payload.workspace_ids = profileForm.workspace_ids;
+  return payload;
+}
+
+// S3358 (line 477): Extracted nested ternary workspace content to a named component
+function WorkspacePreferencesContent({
+  isEditing,
+  isViewingOther,
+  isSuperAdmin,
+  profileForm,
+  allWorkspaces,
+  wsOptions,
+  defaultWsName,
+  activeUser,
+  setProfileForm,
+  toggleWs,
+}: Readonly<{
+  isEditing: boolean;
+  isViewingOther: boolean;
+  isSuperAdmin: boolean;
+  profileForm: ProfileFormState;
+  allWorkspaces: { id: string; name: string }[];
+  wsOptions: { id: string; name: string }[];
+  defaultWsName: string;
+  activeUser: User;
+  setProfileForm: React.Dispatch<React.SetStateAction<ProfileFormState>>;
+  toggleWs: (id: string) => void;
+}>) {
+  const editingAdminWs = isEditing && isViewingOther && isSuperAdmin;
+  const editingSelfWs = isEditing && !isViewingOther;
+
+  if (editingAdminWs) {
+    return (
+      <div className={styles.wsAssignSection}>
+        <p className={styles.wsAssignHint}>
+          Select workspaces to assign to this user
+        </p>
+        <div className={styles.wsGrid}>
+          {allWorkspaces.map((ws) => {
+            const checked = profileForm.workspace_ids.includes(ws.id);
+            return (
+              <button
+                key={ws.id}
+                type="button"
+                className={`${styles.wsChip} ${checked ? styles.wsChipActive : ""}`}
+                onClick={() => toggleWs(ws.id)}
+                aria-pressed={checked}
+              >
+                <span
+                  className={`${styles.wsChipCheck} ${checked ? styles.wsChipCheckActive : ""}`}
+                >
+                  {checked && <CheckIcon />}
+                </span>
+                <span>{ws.name}</span>
+              </button>
+            );
+          })}
+        </div>
+        {profileForm.workspace_ids.length > 0 && (
+          <div className={styles.field} style={{ marginTop: 16 }}>
+            <Select
+              label="Default Workspace"
+              value={profileForm.default_workspace_id}
+              onChange={(v) =>
+                setProfileForm((p) => ({ ...p, default_workspace_id: v }))
+              }
+              options={allWorkspaces
+                .filter((ws) => profileForm.workspace_ids.includes(ws.id))
+                .map((ws) => ({ value: ws.id, label: ws.name }))}
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (editingSelfWs) {
+    return (
+      <div className={styles.grid}>
+        <Select
+          label="Default Workspace"
+          value={profileForm.default_workspace_id}
+          onChange={(v) =>
+            setProfileForm((p) => ({ ...p, default_workspace_id: v }))
+          }
+          options={wsOptions.map((ws) => ({ value: ws.id, label: ws.name }))}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.grid}>
+      <div className={styles.field}>
+        <span className={styles.fieldLabel}>Default Workspace</span>
+        <span className={styles.fieldValue}>{defaultWsName}</span>
+      </div>
+      {activeUser.workspaces && activeUser.workspaces.length > 0 && (
+        <div className={styles.field}>
+          <span className={styles.fieldLabel}>Assigned Workspaces</span>
+          <div className={styles.wsPills}>
+            {activeUser.workspaces.map((ws) => (
+              <span key={ws.id} className={styles.wsPill}>
+                {ws.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function UserProfilePage() {
   const { userId } = useParams<{ userId?: string }>();
   const navigate = useNavigate();
@@ -57,14 +235,14 @@ export default function UserProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const [profileForm, setProfileForm] = useState({
+  const [profileForm, setProfileForm] = useState<ProfileFormState>({
     first_name: "",
     last_name: "",
     email: "",
     role: "",
     is_active: true,
     default_workspace_id: "",
-    workspace_ids: [] as string[],
+    workspace_ids: [],
   });
 
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -96,65 +274,33 @@ export default function UserProfilePage() {
 
   const activeUser: User | null = isViewingOther ? profileUser : currentUser;
 
+  // S3776 (line 44): Delegated form state construction to buildProfileFormState helper
   useEffect(() => {
     if (!activeUser) return;
-    const wsOptions = isSuperAdmin ? allWorkspaces : activeUser.workspaces || [];
-    setProfileForm({
-      first_name: activeUser.first_name || "",
-      last_name: activeUser.last_name || "",
-      email: activeUser.email || "",
-      role: activeUser.role || "",
-      is_active: activeUser.is_active !== false,
-      default_workspace_id:
-        activeUser.default_workspace_id || wsOptions[0]?.id || "",
-      workspace_ids: (activeUser.workspaces || []).map((w) => w.id),
-    });
+    const wsOptions = isSuperAdmin ? allWorkspaces : activeUser.workspaces ?? [];
+    setProfileForm(buildProfileFormState(activeUser, wsOptions));
   }, [activeUser, allWorkspaces, isSuperAdmin]);
 
   const handleEdit = () => setIsEditing(true);
   const handleCancel = () => {
     setIsEditing(false);
     if (activeUser) {
-      const wsOptions = isSuperAdmin ? allWorkspaces : activeUser.workspaces || [];
-      setProfileForm({
-        first_name: activeUser.first_name || "",
-        last_name: activeUser.last_name || "",
-        email: activeUser.email || "",
-        role: activeUser.role || "",
-        is_active: activeUser.is_active !== false,
-        default_workspace_id:
-          activeUser.default_workspace_id || wsOptions[0]?.id || "",
-        workspace_ids: (activeUser.workspaces || []).map((w) => w.id),
-      });
+      const wsOptions = isSuperAdmin ? allWorkspaces : activeUser.workspaces ?? [];
+      setProfileForm(buildProfileFormState(activeUser, wsOptions));
     }
   };
 
+  // S3776 (line 132): Delegated payload construction to buildBasePayload / buildAdminPayload helpers
   const handleSave = async () => {
     if (!activeUser) return;
     setSaving(true);
     try {
-      const payload: Record<string, unknown> = {};
-      if (profileForm.first_name !== (activeUser.first_name || ""))
-        payload.first_name = profileForm.first_name;
-      if (profileForm.last_name !== (activeUser.last_name || ""))
-        payload.last_name = profileForm.last_name;
-      if (profileForm.email !== activeUser.email)
-        payload.email = profileForm.email;
-      if (
-        profileForm.default_workspace_id &&
-        profileForm.default_workspace_id !== activeUser.default_workspace_id
-      )
-        payload.default_workspace_id = profileForm.default_workspace_id;
-
-      if (isViewingOther && isSuperAdmin) {
-        if (profileForm.role !== activeUser.role) payload.role = profileForm.role;
-        if (profileForm.is_active !== (activeUser.is_active !== false))
-          payload.is_active = profileForm.is_active;
-        const cmp = (a: string, b: string) => a.localeCompare(b);
-        const currentWsIds = (activeUser.workspaces || []).map((w) => w.id).sort(cmp).join(",");
-        const newWsIds = [...profileForm.workspace_ids].sort(cmp).join(",");
-        if (currentWsIds !== newWsIds) payload.workspace_ids = profileForm.workspace_ids;
-      }
+      const payload: Record<string, unknown> = {
+        ...buildBasePayload(profileForm, activeUser),
+        ...(isViewingOther && isSuperAdmin
+          ? buildAdminPayload(profileForm, activeUser)
+          : {}),
+      };
 
       if (Object.keys(payload).length === 0) {
         setIsEditing(false);
@@ -172,8 +318,9 @@ export default function UserProfilePage() {
       toast.success("Profile updated");
       setIsEditing(false);
     } catch (e: unknown) {
+      // S6606 (line 176): Replace || with ??
       toast.error(
-        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
           "Failed to update profile"
       );
     } finally {
@@ -209,8 +356,9 @@ export default function UserProfilePage() {
       setPasswordForm({ current_password: "", new_password: "", confirm_password: "" });
       setShowPw({ current: false, new: false, confirm: false });
     } catch (e: unknown) {
+      // S6606 (line 213): Replace || with ??
       toast.error(
-        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
           "Failed to change password"
       );
     } finally {
@@ -240,17 +388,15 @@ export default function UserProfilePage() {
   const fullName = getFullName(activeUser);
   const initials = fullName ? getInitials(fullName) : "U";
   const avatarBg = fullName ? getAvatarColor(fullName) : "var(--primary-600)";
-  const roleLabel =
-    activeUser.role === UserRole.SUPER_ADMIN
-      ? "Super Admin"
-      : activeUser.role === UserRole.ADMIN
-        ? "Admin"
-        : "Candidate";
+  // S3358 (line 246): Extracted nested ternary to getRoleLabel helper function
+  const roleLabel = getRoleLabel(activeUser.role);
   const isActive = activeUser.is_active !== false;
 
-  const wsOptions = isSuperAdmin ? allWorkspaces : activeUser.workspaces || [];
+  // S6606 (line 251): Replace || with ??
+  const wsOptions = isSuperAdmin ? allWorkspaces : activeUser.workspaces ?? [];
+  // S6606 (line 253): Replace || with ??
   const defaultWsName =
-    wsOptions.find((ws) => ws.id === activeUser.default_workspace_id)?.name || "—";
+    wsOptions.find((ws) => ws.id === activeUser.default_workspace_id)?.name ?? "—";
 
   return (
     <div className={styles.page}>
@@ -348,11 +494,12 @@ export default function UserProfilePage() {
               <>
                 <div className={styles.field}>
                   <span className={styles.fieldLabel}>First Name</span>
-                  <span className={styles.fieldValue}>{activeUser.first_name || "—"}</span>
+                  <span className={styles.fieldValue}>{activeUser.first_name ?? "—"}</span>
                 </div>
                 <div className={styles.field}>
                   <span className={styles.fieldLabel}>Last Name</span>
-                  <span className={styles.fieldValue}>{activeUser.last_name || "—"}</span>
+                  {/* S6606 (line 355): Replace || with ?? */}
+                  <span className={styles.fieldValue}>{activeUser.last_name ?? "—"}</span>
                 </div>
                 <div className={styles.field}>
                   <span className={styles.fieldLabel}>Email Address</span>
@@ -426,88 +573,24 @@ export default function UserProfilePage() {
         )}
 
         {/* Workspace Preferences */}
-        {wsOptions.length > 0 && (() => {
-          const editingAdminWs = isEditing && isViewingOther && isSuperAdmin;
-          const editingSelfWs = isEditing && !isViewingOther;
-          return (
+        {/* S3358 (line 477): Extracted nested ternary to WorkspacePreferencesContent component */}
+        {wsOptions.length > 0 && (
           <div className={styles.card}>
             <h2 className={styles.cardTitle}>Workspace Preferences</h2>
-
-            {editingAdminWs ? (
-              <div className={styles.wsAssignSection}>
-                <p className={styles.wsAssignHint}>
-                  Select workspaces to assign to this user
-                </p>
-                <div className={styles.wsGrid}>
-                  {allWorkspaces.map((ws) => {
-                    const checked = profileForm.workspace_ids.includes(ws.id);
-                    return (
-                      <button
-                        key={ws.id}
-                        type="button"
-                        className={`${styles.wsChip} ${checked ? styles.wsChipActive : ""}`}
-                        onClick={() => toggleWs(ws.id)}
-                        aria-pressed={checked}
-                      >
-                        <span
-                          className={`${styles.wsChipCheck} ${checked ? styles.wsChipCheckActive : ""}`}
-                        >
-                          {checked && <CheckIcon />}
-                        </span>
-                        <span>{ws.name}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-                {profileForm.workspace_ids.length > 0 && (
-                  <div className={styles.field} style={{ marginTop: 16 }}>
-                    <Select
-                      label="Default Workspace"
-                      value={profileForm.default_workspace_id}
-                      onChange={(v) =>
-                        setProfileForm((p) => ({ ...p, default_workspace_id: v }))
-                      }
-                      options={allWorkspaces
-                        .filter((ws) => profileForm.workspace_ids.includes(ws.id))
-                        .map((ws) => ({ value: ws.id, label: ws.name }))}
-                    />
-                  </div>
-                )}
-              </div>
-            ) : editingSelfWs ? (
-              <div className={styles.grid}>
-                <Select
-                  label="Default Workspace"
-                  value={profileForm.default_workspace_id}
-                  onChange={(v) =>
-                    setProfileForm((p) => ({ ...p, default_workspace_id: v }))
-                  }
-                  options={wsOptions.map((ws) => ({ value: ws.id, label: ws.name }))}
-                />
-              </div>
-            ) : (
-              <div className={styles.grid}>
-                <div className={styles.field}>
-                  <span className={styles.fieldLabel}>Default Workspace</span>
-                  <span className={styles.fieldValue}>{defaultWsName}</span>
-                </div>
-                {activeUser.workspaces && activeUser.workspaces.length > 0 && (
-                  <div className={styles.field}>
-                    <span className={styles.fieldLabel}>Assigned Workspaces</span>
-                    <div className={styles.wsPills}>
-                      {activeUser.workspaces.map((ws) => (
-                        <span key={ws.id} className={styles.wsPill}>
-                          {ws.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            <WorkspacePreferencesContent
+              isEditing={isEditing}
+              isViewingOther={isViewingOther}
+              isSuperAdmin={isSuperAdmin}
+              profileForm={profileForm}
+              allWorkspaces={allWorkspaces}
+              wsOptions={wsOptions}
+              defaultWsName={defaultWsName}
+              activeUser={activeUser}
+              setProfileForm={setProfileForm}
+              toggleWs={toggleWs}
+            />
           </div>
-          );
-        })()}
+        )}
 
         {/* Security */}
         {canEditThis && (

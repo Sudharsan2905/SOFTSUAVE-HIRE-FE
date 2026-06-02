@@ -80,8 +80,8 @@ export function useAudioMonitoring({
           analyser.getByteFrequencyData(dataArray);
 
           let sum = 0;
-          for (let i = 0; i < dataArray.length; i++) {
-            sum += dataArray[i];
+          for (const value of dataArray) {
+            sum += value;
           }
           const average = sum / dataArray.length;
 

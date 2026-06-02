@@ -90,7 +90,7 @@ export default function CategoriesPage() {
       fetchCategories();
     } catch (e: unknown) {
       toast.error(
-        (e as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed"
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Failed"
       );
     } finally {
       setSaving(false);
@@ -127,6 +127,116 @@ export default function CategoriesPage() {
     }
   };
 
+  let content: React.ReactNode;
+  if (isLoading) {
+    content = (
+      <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
+        <Spinner size="lg" />
+      </div>
+    );
+  } else if (categories.length === 0) {
+    content = (
+      <div className={styles.empty}>
+        <IconQuestionBank size={48} color="var(--text-tertiary)" />
+        <p>No categories yet</p>
+        <Button leftIcon={<IconPlus size={15} />} onClick={() => setShowCreate(true)}>
+          Create your first category
+        </Button>
+      </div>
+    );
+  } else {
+    content = (
+      <>
+        <div className={viewMode === "grid" ? styles.grid : styles.list}>
+          {categories.map((cat) => (
+            <article key={cat.id} className={styles.card}>
+              <button
+                type="button"
+                className={styles.cardNavBtn}
+                onClick={() => navigate(`/question-bank/${cat.id}`)}
+                aria-label={`Open ${cat.name} category`}
+              />
+
+              {/* Grid layout */}
+              <div className={styles.cardTop}>
+                <div className={styles.catIcon} style={{ background: getAvatarColor(cat.name) }}>
+                  {getInitials(cat.name)}
+                </div>
+                <div className={styles.cardActions}>
+                  <Tooltip content="Edit" placement="top">
+                    <button
+                      className={styles.iconBtn}
+                      onClick={() => openEdit(cat)}
+                      aria-label="Edit category"
+                    >
+                      <IconEdit size={14} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content="Delete" placement="top">
+                    <button
+                      className={`${styles.iconBtn} ${styles.danger}`}
+                      onClick={() => openDelete(cat)}
+                      aria-label="Delete category"
+                    >
+                      <IconDelete size={14} />
+                    </button>
+                  </Tooltip>
+                </div>
+              </div>
+              <h3 className={styles.catName}>{cat.name}</h3>
+              <p className={styles.catDesc}>{cat.description || " "}</p>
+              <div className={styles.cardFooter}>
+                <Badge variant="primary">{cat.question_count} questions</Badge>
+                <span className={styles.dateText}>{formatDate(cat.created_at)}</span>
+              </div>
+
+              {/* List layout */}
+              <div className={styles.listRow}>
+                <div className={styles.listIcon} style={{ background: getAvatarColor(cat.name) }}>
+                  {getInitials(cat.name)}
+                </div>
+                <span className={styles.listName}>{cat.name}</span>
+                <span className={styles.listDesc}>{cat.description}</span>
+                <div className={styles.listMeta}>
+                  <Badge variant="primary">{cat.question_count} questions</Badge>
+                  <span className={styles.listDate}>{formatDate(cat.created_at)}</span>
+                </div>
+                <div className={styles.listActions}>
+                  <Tooltip content="Edit" placement="top">
+                    <button
+                      className={styles.iconBtn}
+                      onClick={() => openEdit(cat)}
+                      aria-label="Edit category"
+                    >
+                      <IconEdit size={14} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content="Delete" placement="top">
+                    <button
+                      className={`${styles.iconBtn} ${styles.danger}`}
+                      onClick={() => openDelete(cat)}
+                      aria-label="Delete category"
+                    >
+                      <IconDelete size={14} />
+                    </button>
+                  </Tooltip>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+        {meta && (
+          <Pagination
+            meta={meta}
+            onPageChange={goToPage}
+            pageSize={pageSize}
+            onPageSizeChange={changePageSize}
+          />
+        )}
+      </>
+    );
+  }
+
   return (
     <div>
       <Header
@@ -158,98 +268,7 @@ export default function CategoriesPage() {
         onRefresh={fetchCategories}
       />
 
-      {isLoading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
-          <Spinner size="lg" />
-        </div>
-      ) : categories.length === 0 ? (
-        <div className={styles.empty}>
-          <IconQuestionBank size={48} color="var(--text-tertiary)" />
-          <p>No categories yet</p>
-          <Button leftIcon={<IconPlus size={15} />} onClick={() => setShowCreate(true)}>
-            Create your first category
-          </Button>
-        </div>
-      ) : (
-        <>
-          <div className={viewMode === "grid" ? styles.grid : styles.list}>
-            {categories.map((cat) => (
-              <div
-                key={cat.id}
-                className={styles.card}
-                onClick={() => navigate(`/question-bank/${cat.id}`)}
-              >
-                {/* Grid layout */}
-                <div className={styles.cardTop}>
-                  <div className={styles.catIcon} style={{ background: getAvatarColor(cat.name) }}>
-                    {getInitials(cat.name)}
-                  </div>
-                  <div className={styles.cardActions} onClick={(e) => e.stopPropagation()}>
-                    <Tooltip content="Edit" placement="top">
-                      <button
-                        className={styles.iconBtn}
-                        onClick={() => openEdit(cat)}
-                        aria-label="Edit category"
-                      >
-                        <IconEdit size={14} />
-                      </button>
-                    </Tooltip>
-                    <Tooltip content="Delete" placement="top">
-                      <button
-                        className={`${styles.iconBtn} ${styles.danger}`}
-                        onClick={() => openDelete(cat)}
-                        aria-label="Delete category"
-                      >
-                        <IconDelete size={14} />
-                      </button>
-                    </Tooltip>
-                  </div>
-                </div>
-                <h3 className={styles.catName}>{cat.name}</h3>
-                <p className={styles.catDesc}>{cat.description || " "}</p>
-                <div className={styles.cardFooter}>
-                  <Badge variant="primary">{cat.question_count} questions</Badge>
-                  <span className={styles.dateText}>{formatDate(cat.created_at)}</span>
-                </div>
-
-                {/* List layout */}
-                <div className={styles.listRow}>
-                  <div className={styles.listIcon} style={{ background: getAvatarColor(cat.name) }}>
-                    {getInitials(cat.name)}
-                  </div>
-                  <span className={styles.listName}>{cat.name}</span>
-                  <span className={styles.listDesc}>{cat.description}</span>
-                  <div className={styles.listMeta}>
-                    <Badge variant="primary">{cat.question_count} questions</Badge>
-                    <span className={styles.listDate}>{formatDate(cat.created_at)}</span>
-                  </div>
-                  <div className={styles.listActions} onClick={(e) => e.stopPropagation()}>
-                    <Tooltip content="Edit" placement="top">
-                      <button
-                        className={styles.iconBtn}
-                        onClick={() => openEdit(cat)}
-                        aria-label="Edit category"
-                      >
-                        <IconEdit size={14} />
-                      </button>
-                    </Tooltip>
-                    <Tooltip content="Delete" placement="top">
-                      <button
-                        className={`${styles.iconBtn} ${styles.danger}`}
-                        onClick={() => openDelete(cat)}
-                        aria-label="Delete category"
-                      >
-                        <IconDelete size={14} />
-                      </button>
-                    </Tooltip>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          {meta && <Pagination meta={meta} onPageChange={goToPage} pageSize={pageSize} onPageSizeChange={changePageSize} />}
-        </>
-      )}
+      {content}
 
       {/* Create Modal */}
       <Modal

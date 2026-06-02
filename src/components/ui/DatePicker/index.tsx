@@ -184,7 +184,7 @@ export function DatePicker({
         className={clsx(styles.trigger, error && styles.triggerError, disabled && styles.disabled)}
         onClick={openCalendar}
         disabled={disabled}
-        aria-haspopup="dialog"
+        aria-haspopup="true"
         aria-expanded={isOpen}
       >
         <span className={clsx(styles.triggerText, !displayValue && styles.triggerPlaceholder)}>
@@ -202,7 +202,7 @@ export function DatePicker({
             ref={popupRef}
             className={styles.popup}
             style={popupStyle}
-            role="dialog"
+            role="region"
             aria-label="Date picker calendar"
           >
             {/* Header */}

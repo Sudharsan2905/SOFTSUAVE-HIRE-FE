@@ -121,7 +121,7 @@ export default function AssessmentDetailPage() {
       void fetchSubmissions();
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast.error(msg || "Failed to resume interview");
+      toast.error(msg ?? "Failed to resume interview");
     } finally {
       setResuming(null);
     }

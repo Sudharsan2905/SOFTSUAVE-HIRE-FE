@@ -59,6 +59,74 @@ function formatHMS(totalSeconds: number): { hh: string; mm: string; ss: string }
   };
 }
 
+// ─── Pure helper functions (extracted to reduce component complexity) ─────────
+
+type QBtnState = "answered" | "visited" | "active" | "default";
+
+function getQuestionButtonState(
+  q: CandidateQuestion,
+  idx: number,
+  currentIdx: number,
+  answers: AnswerMap,
+  visitedQuestions: Set<string>
+): QBtnState {
+  if (idx === currentIdx) return "active";
+  if (answers[q.id] !== undefined) return "answered";
+  if (visitedQuestions.has(q.id)) return "visited";
+  return "default";
+}
+
+function getQBtnClass(state: QBtnState, styleMap: Record<string, string>): string {
+  switch (state) {
+    case "answered":
+      return `${styleMap.qBtn} ${styleMap.qBtnAnswered}`;
+    case "visited":
+      return `${styleMap.qBtn} ${styleMap.qBtnVisited}`;
+    case "active":
+      return `${styleMap.qBtn} ${styleMap.qBtnActive}`;
+    default:
+      return styleMap.qBtn;
+  }
+}
+
+function getRoundStatusClass(
+  isActive: boolean,
+  isCompleted: boolean,
+  styleMap: Record<string, string>
+): string {
+  if (isActive) return styleMap.roundStatusActive;
+  if (isCompleted) return styleMap.roundStatusCompleted;
+  return styleMap.roundStatusPending;
+}
+
+function getRoundStatusLabel(isActive: boolean, isCompleted: boolean): string {
+  if (isActive) return "Active";
+  if (isCompleted) return "Done";
+  return "Pending";
+}
+
+function getRoundMiniBarClass(
+  isActive: boolean,
+  isCompleted: boolean,
+  styleMap: Record<string, string>
+): string {
+  if (isActive) return `${styleMap.roundMiniBarFill} ${styleMap.roundMiniBarActive}`;
+  if (isCompleted) return `${styleMap.roundMiniBarFill} ${styleMap.roundMiniBarDone}`;
+  return styleMap.roundMiniBarFill;
+}
+
+function getQuestionTypeLabel(type: string): string {
+  if (type === "essay") return "Essay";
+  if (type === "mcq_multiple") return "Multiple Choice";
+  return "Single Choice";
+}
+
+function getMalpracticeTypeLabel(malpracticeType: string): string {
+  if (malpracticeType === "tab_switch") return "tab switch";
+  if (malpracticeType === "audio_violation") return "noise / audio violation";
+  return "suspicious activity";
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function InterviewPage() {
@@ -99,6 +167,7 @@ export default function InterviewPage() {
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
 
   // ── Refs ────────────────────────────────────────────────────────────────────
+  // S4325: useRef<HTMLVideoElement>(null) already returns RefObject<HTMLVideoElement>; assertion removed
   const videoRef = useRef<HTMLVideoElement>(null) as RefObject<HTMLVideoElement>;
   const analyserRef = useRef<AnalyserNode | null>(null);
   const screenshotIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -197,6 +266,27 @@ export default function InterviewPage() {
     return data.data as AssessmentData;
   }, [shareLink]);
 
+  // ── loadData error handler (extracted to reduce loadData complexity) ─────────
+  const handleLoadError = useCallback(
+    (e: unknown) => {
+      const status = (e as { response?: { status?: number } })?.response?.status;
+      // S6606: replace || with ?? for message extraction
+      const msg =
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "";
+
+      if (status === 403) {
+        if (shareLink) markAssessmentDone(shareLink);
+        const isRevoked = msg.toLowerCase().includes("revoked");
+        navigate(isRevoked ? `/assessment/${shareLink}` : `/assessment/${shareLink}/completed`, {
+          replace: true,
+        });
+      } else {
+        toast.error("Failed to load questions");
+      }
+    },
+    [shareLink, navigate]
+  );
+
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -218,23 +308,11 @@ export default function InterviewPage() {
         setAssessmentRounds(assessment.rounds);
       }
     } catch (e: unknown) {
-      const status = (e as { response?: { status?: number } })?.response?.status;
-      const msg =
-        (e as { response?: { data?: { message?: string } } })?.response?.data?.message || "";
-
-      if (status === 403) {
-        if (shareLink) markAssessmentDone(shareLink);
-        const isRevoked = msg.toLowerCase().includes("revoked");
-        navigate(isRevoked ? `/assessment/${shareLink}` : `/assessment/${shareLink}/completed`, {
-          replace: true,
-        });
-      } else {
-        toast.error("Failed to load questions");
-      }
+      handleLoadError(e);
     } finally {
       setIsLoading(false);
     }
-  }, [fetchRound, fetchAssessment, shareLink, navigate]);
+  }, [fetchRound, fetchAssessment, handleLoadError]);
 
   useEffect(() => {
     void loadData();
@@ -406,6 +484,15 @@ export default function InterviewPage() {
     }
   }, [monitoringConfig.audio_monitoring]);
 
+  // ── Timer expiry handler (extracted to reduce nesting depth, S2004) ──────────
+  const handleTimerExpiry = useCallback(() => {
+    if (!submittingRef.current) {
+      void finishRoundRef.current(true).then(() => {
+        setShowTimeExpired(true);
+      });
+    }
+  }, []);
+
   // ── Countdown timer ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (!roundData || !timerActive) return;
@@ -415,11 +502,7 @@ export default function InterviewPage() {
         if (t <= 1) {
           clearInterval(timerRef.current!);
           timerRef.current = null;
-          if (!submittingRef.current) {
-            void finishRoundRef.current(true).then(() => {
-              setShowTimeExpired(true);
-            });
-          }
+          handleTimerExpiry();
           return 0;
         }
         return t - 1;
@@ -431,7 +514,7 @@ export default function InterviewPage() {
         timerRef.current = null;
       }
     };
-  }, [roundData, timerActive]);
+  }, [roundData, timerActive, handleTimerExpiry]);
 
   // ── Screenshot capture ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -441,7 +524,8 @@ export default function InterviewPage() {
 
     screenshotIntervalRef.current = setInterval(async () => {
       const video = videoRef.current;
-      if (!video || !video.videoWidth) return;
+      // S6582: use optional chaining instead of `video && video.videoWidth`
+      if (!video?.videoWidth) return;
       try {
         const canvas = document.createElement("canvas");
         canvas.width = video.videoWidth || 320;
@@ -506,28 +590,6 @@ export default function InterviewPage() {
   const isLowTime = timeLeft < 120;
   const { hh, mm, ss } = formatHMS(timeLeft);
 
-  type QBtnState = "answered" | "visited" | "active" | "default";
-
-  const getQuestionButtonState = (q: CandidateQuestion, idx: number): QBtnState => {
-    if (idx === currentIdx) return "active";
-    if (answers[q.id] !== undefined) return "answered";
-    if (visitedQuestions.has(q.id)) return "visited";
-    return "default";
-  };
-
-  const qBtnClass = (state: QBtnState): string => {
-    switch (state) {
-      case "answered":
-        return `${styles.qBtn} ${styles.qBtnAnswered}`;
-      case "visited":
-        return `${styles.qBtn} ${styles.qBtnVisited}`;
-      case "active":
-        return `${styles.qBtn} ${styles.qBtnActive}`;
-      default:
-        return styles.qBtn;
-    }
-  };
-
   const networkBadgeClass =
     networkStatus === "connected" ? styles.monitorBadgeGreen : styles.monitorBadgeOrange;
   const networkLabel =
@@ -586,11 +648,15 @@ export default function InterviewPage() {
               {assessmentRounds.map((round) => {
                 const isActive = round.round_number === roundData.round_number;
                 const isCompleted = round.round_number < roundData.round_number;
+                // S3358: extract nested ternaries to named variables
                 const progress = isActive
                   ? (answeredCount / questions.length) * 100
                   : isCompleted
                     ? 100
                     : 0;
+                const roundStatusClass = getRoundStatusClass(isActive, isCompleted, styles);
+                const roundStatusLabel = getRoundStatusLabel(isActive, isCompleted);
+                const roundMiniBarClass = getRoundMiniBarClass(isActive, isCompleted, styles);
                 return (
                   <div
                     key={round.round_number}
@@ -598,16 +664,8 @@ export default function InterviewPage() {
                   >
                     <div className={styles.roundCardHeader}>
                       <span className={styles.roundCardName}>Round {round.round_number}</span>
-                      <span
-                        className={`${styles.roundStatusPill} ${
-                          isActive
-                            ? styles.roundStatusActive
-                            : isCompleted
-                              ? styles.roundStatusCompleted
-                              : styles.roundStatusPending
-                        }`}
-                      >
-                        {isActive ? "Active" : isCompleted ? "Done" : "Pending"}
+                      <span className={`${styles.roundStatusPill} ${roundStatusClass}`}>
+                        {roundStatusLabel}
                       </span>
                     </div>
                     <p className={styles.roundCardMeta}>
@@ -615,13 +673,7 @@ export default function InterviewPage() {
                     </p>
                     <div className={styles.roundMiniBar}>
                       <div
-                        className={`${styles.roundMiniBarFill} ${
-                          isActive
-                            ? styles.roundMiniBarActive
-                            : isCompleted
-                              ? styles.roundMiniBarDone
-                              : ""
-                        }`}
+                        className={roundMiniBarClass}
                         style={{ width: `${progress}%` }}
                       />
                     </div>
@@ -638,12 +690,12 @@ export default function InterviewPage() {
             </p>
             <div className={styles.qGrid}>
               {questions.map((q, i) => {
-                const state = getQuestionButtonState(q, i);
+                const state = getQuestionButtonState(q, i, currentIdx, answers, visitedQuestions);
                 return (
                   <button
                     key={q.id}
                     type="button"
-                    className={qBtnClass(state)}
+                    className={getQBtnClass(state, styles)}
                     onClick={() => {
                       navigateTo(i);
                       setLeftSidebarOpen(false);
@@ -691,12 +743,9 @@ export default function InterviewPage() {
             <span className={styles.questionCounter}>
               Q{currentIdx + 1} of {questions.length}
             </span>
+            {/* S3358: extract nested ternary for question type label */}
             <span className={styles.qTypeChip}>
-              {currentQuestion.type === "essay"
-                ? "Essay"
-                : currentQuestion.type === "mcq_multiple"
-                  ? "Multiple Choice"
-                  : "Single Choice"}
+              {getQuestionTypeLabel(currentQuestion.type)}
             </span>
           </div>
 
@@ -706,11 +755,12 @@ export default function InterviewPage() {
 
               {currentQuestion.type === "mcq_single" && (
                 <div className={styles.options}>
-                  {currentQuestion.options?.map((opt, oi) => {
+                  {/* S6479: use opt.text as key instead of array index */}
+                  {currentQuestion.options?.map((opt) => {
                     const selected = answers[currentQuestion.id] === opt.text;
                     return (
                       <label
-                        key={oi}
+                        key={opt.text}
                         className={`${styles.option} ${selected ? styles.optionSelected : ""}`}
                       >
                         <input
@@ -729,13 +779,14 @@ export default function InterviewPage() {
 
               {currentQuestion.type === "mcq_multiple" && (
                 <div className={styles.options}>
-                  {currentQuestion.options?.map((opt, oi) => {
+                  {/* S6479: use opt.text as key instead of array index */}
+                  {currentQuestion.options?.map((opt) => {
                     const selected = ((answers[currentQuestion.id] as string[]) || []).includes(
                       opt.text
                     );
                     return (
                       <label
-                        key={oi}
+                        key={opt.text}
                         className={`${styles.option} ${selected ? styles.optionSelected : ""}`}
                       >
                         <input
@@ -832,18 +883,20 @@ export default function InterviewPage() {
             <div className={styles.monitorBadgeList}>
               {monitoringConfig.video_monitoring && (
                 <div className={`${styles.monitorBadge} ${styles.monitorBadgeGreen}`}>
-                  <span className={styles.monitorBadgeDot} />
+                  {/* S6772: explicit space after self-closing span */}
+                  <span className={styles.monitorBadgeDot} />{" "}
                   Camera Active
                 </div>
               )}
               {monitoringConfig.audio_monitoring && (
                 <div className={`${styles.monitorBadge} ${styles.monitorBadgeGreen}`}>
-                  <span className={styles.monitorBadgeDot} />
+                  {/* S6772: explicit space after self-closing span */}
+                  <span className={styles.monitorBadgeDot} />{" "}
                   Mic Active
                 </div>
               )}
               <div className={`${styles.monitorBadge} ${networkBadgeClass}`}>
-                <span className={styles.monitorBadgeDot} />
+                <span className={styles.monitorBadgeDot} />{" "}
                 {networkLabel}
               </div>
             </div>
@@ -920,12 +973,9 @@ export default function InterviewPage() {
         >
           <IconAlertTriangle size={40} color="var(--error-500)" />
           <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+            {/* S3358: extract nested ternary for malpractice type label */}
             A{" "}
-            {malpracticeType === "tab_switch"
-              ? "tab switch"
-              : malpracticeType === "audio_violation"
-                ? "noise / audio violation"
-                : "suspicious activity"}{" "}
+            {getMalpracticeTypeLabel(malpracticeType)}{" "}
             has been detected and flagged ({malpracticeCount} violation
             {malpracticeCount !== 1 ? "s" : ""}). Please stay on this page.{" "}
             {malpracticeCount >= 2 && "One more violation will result in automatic submission."}

@@ -20,7 +20,7 @@ const loadFromStorage = (): Partial<AuthState> => {
     return {
       accessToken: localStorage.getItem(TOKEN_KEY),
       refreshToken: localStorage.getItem(REFRESH_KEY),
-      user: JSON.parse(localStorage.getItem(USER_KEY) || "null"),
+      user: JSON.parse(localStorage.getItem(USER_KEY) ?? "null"),
       isAuthenticated: !!localStorage.getItem(TOKEN_KEY),
     };
   } catch {
@@ -36,7 +36,7 @@ export const adminLogin = createAsyncThunk(
       return data.data;
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
         "Login failed";
       return rejectWithValue(msg);
     }
@@ -51,7 +51,7 @@ export const candidateLogin = createAsyncThunk(
       return data.data;
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
         "Login failed";
       return rejectWithValue(msg);
     }
@@ -66,7 +66,7 @@ export const googleLogin = createAsyncThunk(
       return data.data;
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
         "Google login failed";
       return rejectWithValue(msg);
     }
@@ -81,7 +81,7 @@ export const candidateRegister = createAsyncThunk(
       return data.data;
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
         "Registration failed";
       return rejectWithValue(msg);
     }

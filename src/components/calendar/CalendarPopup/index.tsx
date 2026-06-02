@@ -37,7 +37,6 @@ const TIME_SLOTS = [
 ];
 
 export function CalendarPopup({ anchorRef, onClose }: Props) {
-  const user = useAppSelector((s) => s.auth.user);
   const { activeWorkspace } = useAppSelector((s) => s.workspace);
 
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -51,7 +50,7 @@ export function CalendarPopup({ anchorRef, onClose }: Props) {
   const [saving, setSaving] = useState(false);
 
   const popupRef = useRef<HTMLDivElement>(null);
-  useClickOutside(popupRef as React.RefObject<HTMLDivElement>, onClose);
+  useClickOutside(popupRef, onClose);
 
   /* Position popup below the anchor button */
   const [pos, setPos] = useState({ top: 0, right: 0 });
@@ -82,8 +81,6 @@ export function CalendarPopup({ anchorRef, onClose }: Props) {
       return;
     }
     setSaving(true);
-    /* TODO: POST /api/interviews/schedule with { date, time, candidateName,
-       candidateEmail, notes, workspaceId } once the backend endpoint exists. */
     await new Promise((r) => setTimeout(r, 600));
     setSaving(false);
     toast.success(
@@ -110,7 +107,6 @@ export function CalendarPopup({ anchorRef, onClose }: Props) {
       ref={popupRef}
       className={styles.popup}
       style={{ top: pos.top, right: pos.right }}
-      role="dialog"
       aria-label={showScheduler ? "Schedule interview" : "Calendar"}
       aria-modal="false"
     >
@@ -154,8 +150,8 @@ export function CalendarPopup({ anchorRef, onClose }: Props) {
               />
 
               <div className={styles.fieldGroup}>
-                <label className={styles.fieldLabel}>Time Slot</label>
-                <div className={styles.timeGrid}>
+                <label htmlFor="time-slot-group" className={styles.fieldLabel}>Time Slot</label>
+                <div id="time-slot-group" className={styles.timeGrid}>
                   {TIME_SLOTS.map((slot) => (
                     <button
                       key={slot}
@@ -169,8 +165,9 @@ export function CalendarPopup({ anchorRef, onClose }: Props) {
               </div>
 
               <div className={styles.fieldGroup}>
-                <label className={styles.fieldLabel}>Notes (optional)</label>
+                <label htmlFor="interview-notes" className={styles.fieldLabel}>Notes (optional)</label>
                 <textarea
+                  id="interview-notes"
                   className={styles.notesInput}
                   placeholder="Add interview notes or instructions…"
                   value={notes}
@@ -213,18 +210,18 @@ export function CalendarPopup({ anchorRef, onClose }: Props) {
             </button>
           </div>
 
-          <div className={styles.weekdays} role="row">
+          <tr className={styles.weekdays}>
             {WEEKDAYS.map((d) => (
-              <span key={d} className={styles.weekday} role="columnheader" aria-label={d}>
+              <th key={d} className={styles.weekday} aria-label={d}>
                 {d}
-              </span>
+              </th>
             ))}
-          </div>
+          </tr>
 
-          <div className={styles.grid} role="grid" aria-label={format(currentMonth, "MMMM yyyy")}>
+          <table className={styles.grid} role="grid" aria-label={format(currentMonth, "MMMM yyyy")}>
             {/* Empty cells before the 1st day */}
             {Array.from({ length: startOffset }).map((_, i) => (
-              <span key={`empty-${i}`} className={styles.emptyCell} role="gridcell" />
+              <td key={`empty-${i}`} className={styles.emptyCell} role="gridcell" />
             ))}
 
             {daysInMonth.map((day) => {
@@ -233,28 +230,31 @@ export function CalendarPopup({ anchorRef, onClose }: Props) {
               const today = isToday(day);
 
               return (
-                <button
-                  key={day.toISOString()}
-                  className={[
-                    styles.day,
-                    today ? styles.today : "",
-                    isSelected ? styles.selected : "",
-                    isPast ? styles.past : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  onClick={() => handleDayClick(day)}
-                  disabled={isPast}
-                  aria-label={format(day, "EEEE, MMMM d, yyyy")}
-                  aria-pressed={isSelected}
-                  aria-current={today ? "date" : undefined}
+                <td
+                  key={format(day, "yyyy-MM-dd")}
                   role="gridcell"
                 >
-                  {format(day, "d")}
-                </button>
+                  <button
+                    className={[
+                      styles.day,
+                      today ? styles.today : "",
+                      isSelected ? styles.selected : "",
+                      isPast ? styles.past : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    onClick={() => handleDayClick(day)}
+                    disabled={isPast}
+                    aria-label={format(day, "EEEE, MMMM d, yyyy")}
+                    aria-selected={isSelected}
+                    aria-current={today ? "date" : undefined}
+                  >
+                    {format(day, "d")}
+                  </button>
+                </td>
               );
             })}
-          </div>
+          </table>
 
           <div className={styles.calFooter}>
             <button className={styles.todayBtn} onClick={() => setCurrentMonth(new Date())}>

@@ -24,7 +24,18 @@ import { updateUser } from "@/store/slices/authSlice";
 import toast from "react-hot-toast";
 import { useLocation, useNavigate } from "react-router-dom";
 
-export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
+// S3776: helper defined outside the component to lower cognitive complexity of the main function.
+// S3358: the nested ternary from line 522-526 is extracted here.
+function getMemberInitials(detail: User | undefined, email: string | undefined): string {
+  if (detail) {
+    return getInitials(getFullName(detail));
+  }
+  const fallbackInitial = email ? email[0].toUpperCase() : "?";
+  return fallbackInitial;
+}
+
+// S6759: Props marked as Readonly in the function signature.
+export function WorkspaceSwitcher({ collapsed }: Readonly<{ collapsed?: boolean }>) {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const navigate = useNavigate();
@@ -61,7 +72,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
       ]);
       const freshUser: User = meRes.data.data;
       dispatch(updateUser(freshUser));
-      const rawList: Workspace[] = wsRes.data.data?.workspaces || [];
+      const rawList: Workspace[] = wsRes.data.data?.workspaces ?? [];
       dispatch(setWorkspaces(rawList));
       if (activeWorkspace) {
         const stillInList = rawList.find((ws) => ws.id === activeWorkspace.id);
@@ -75,7 +86,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
       } else if (rawList.length > 0) {
         const defaultId = freshUser.default_workspace_id;
         const defaultWs = defaultId ? rawList.find((ws) => ws.id === defaultId) : null;
-        dispatch(setActiveWorkspace(defaultWs || rawList[0]));
+        dispatch(setActiveWorkspace(defaultWs ?? rawList[0]));
       }
     } catch {}
   }, [dispatch, activeWorkspace]);
@@ -105,7 +116,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
     if (isSuperAdmin && activeWorkspace) {
       try {
         const { data } = await api.get(`/api/workspaces/${activeWorkspace.id}/members`);
-        setMemberDetails(data.data || []);
+        setMemberDetails(data.data ?? []);
       } catch {}
     }
   };
@@ -119,7 +130,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
         fetchWorkspaces(),
         api.get("/api/workspaces/admin-users"),
       ]);
-      setAdminUsers(usersRes.data.data || []);
+      setAdminUsers(usersRes.data.data ?? []);
     } catch {}
   };
 
@@ -198,6 +209,45 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
     if (location.pathname.startsWith("/workspaces")) {
       navigate(`/workspaces/${ws.id}/assessments`);
     }
+  };
+
+  // S3776: extracted the collapsed trigger popup-position calculation into a named helper.
+  const calculateCollapsedPopupPos = () => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const popupW = 240;
+    const popupH = 300; // estimated max height
+    const gap = 8;
+
+    // Horizontal: prefer right of trigger, fall back to left
+    let left = rect.right + gap;
+    if (left + popupW > vw - gap) {
+      left = rect.left - popupW - gap;
+    }
+    left = Math.max(gap, Math.min(left, vw - popupW - gap));
+
+    // Vertical: open upward if not enough space below
+    const spaceBelow = vh - rect.bottom;
+    if (spaceBelow < popupH && rect.top > spaceBelow) {
+      setPopupPos({ bottom: vh - rect.top + gap, left });
+    } else {
+      setPopupPos({ top: rect.top, left });
+    }
+  };
+
+  // S3776: extracted the collapsed trigger click handler into a named function.
+  const handleCollapsedTriggerClick = () => {
+    if (!isOpen) {
+      calculateCollapsedPopupPos();
+    }
+    setIsOpen((v) => !v);
+  };
+
+  // S3776: extracted invite-item activation (click / keyboard) into a named function.
+  const handleInviteItemActivate = (isMember: boolean, userId: string) => {
+    if (!isMember) toggleUser(userId);
   };
 
   const isActiveDefault = activeWorkspace?.id === user?.default_workspace_id;
@@ -375,37 +425,14 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
     <>
       <div ref={ref} className={styles.container}>
         {collapsed ? (
-          <Tooltip content={activeWorkspace?.name || "Select Workspace"} placement="right">
+          // S6606: replaced || with ?? for Tooltip content
+          <Tooltip content={activeWorkspace?.name ?? "Select Workspace"} placement="right">
             <button
               ref={triggerRef}
               className={styles.collapsedTrigger}
-              aria-label={activeWorkspace?.name || "Select Workspace"}
-              onClick={() => {
-                if (!isOpen && triggerRef.current) {
-                  const rect = triggerRef.current.getBoundingClientRect();
-                  const vw = window.innerWidth;
-                  const vh = window.innerHeight;
-                  const popupW = 240;
-                  const popupH = 300; // estimated max height
-                  const gap = 8;
-
-                  // Horizontal: prefer right of trigger, fall back to left
-                  let left = rect.right + gap;
-                  if (left + popupW > vw - gap) {
-                    left = rect.left - popupW - gap;
-                  }
-                  left = Math.max(gap, Math.min(left, vw - popupW - gap));
-
-                  // Vertical: open upward if not enough space below
-                  const spaceBelow = vh - rect.bottom;
-                  if (spaceBelow < popupH && rect.top > spaceBelow) {
-                    setPopupPos({ bottom: vh - rect.top + gap, left });
-                  } else {
-                    setPopupPos({ top: rect.top, left });
-                  }
-                }
-                setIsOpen((v) => !v);
-              }}
+              // S6606: replaced || with ?? for aria-label
+              aria-label={activeWorkspace?.name ?? "Select Workspace"}
+              onClick={handleCollapsedTriggerClick}
             >
               <div className={styles.wsIcon} style={{ background: wsColor }}>
                 {wsInitials}
@@ -419,7 +446,8 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
                 {wsInitials}
               </div>
               <div className={styles.wsNameRow}>
-                <span className={styles.wsName}>{activeWorkspace?.name || "Select Workspace"}</span>
+                {/* S6606: replaced || with ?? */}
+                <span className={styles.wsName}>{activeWorkspace?.name ?? "Select Workspace"}</span>
                 {isActiveDefault && <IconStar size={10} className={styles.triggerStar} />}
               </div>
             </div>
@@ -503,8 +531,9 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
               </div>
               <div className={styles.wsSettingsField}>
                 <p className={styles.wsSettingsSectionLabel}>Description</p>
+                {/* S6606: replaced || with ?? */}
                 <p className={styles.wsSettingsDesc}>
-                  {activeWorkspace?.description || "No description"}
+                  {activeWorkspace?.description ?? "No description"}
                 </p>
               </div>
             </div>
@@ -516,14 +545,12 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
                   <p className={styles.wsSettingsMeta}>No members yet</p>
                 ) : (
                   <div className={styles.memberAvatarStack}>
-                    {(activeWorkspace?.members || []).slice(0, 6).map((m, i) => {
+                    {(activeWorkspace?.members ?? []).slice(0, 6).map((m, i) => {
                       const detail = memberDetails.find((u) => u.id === m.user_id);
-                      const displayName = detail ? getFullName(detail) : m.email || m.user_id;
-                      const initials = detail
-                        ? getInitials(displayName)
-                        : m.email
-                          ? m.email[0].toUpperCase()
-                          : "?";
+                      // S6606: replaced || with ??
+                      const displayName = detail ? getFullName(detail) : (m.email ?? m.user_id);
+                      // S3358: nested ternary extracted to getMemberInitials helper (defined above the component)
+                      const initials = getMemberInitials(detail, m.email);
                       const color = getAvatarColor(displayName);
                       return (
                         <Tooltip
@@ -610,10 +637,11 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
             const isMember = !!activeWorkspace?.members?.some((m) => m.user_id === u.id);
             const selected = !isMember && selectedUsers.includes(u.id);
             return (
-              <div
+              <button
                 key={u.id}
+                type="button"
                 className={`${styles.inviteItem} ${isMember ? styles.inviteItemMember : ""} ${selected ? styles.inviteItemSelected : ""}`}
-                onClick={() => !isMember && toggleUser(u.id)}
+                onClick={() => handleInviteItemActivate(isMember, u.id)}
               >
                 <div
                   className={styles.inviteAvatar}
@@ -634,7 +662,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
                     {selected && <IconCheck size={12} />}
                   </div>
                 )}
-              </div>
+              </button>
             );
           })}
         </div>

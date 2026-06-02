@@ -19,7 +19,7 @@ interface DotsIcon {
   size?: number;
   color?: string;
 }
-function IconDots({ size = 16, color = "currentColor" }: DotsIcon) {
+function IconDots({ size = 16, color = "currentColor" }: Readonly<DotsIcon>) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="5" r="1" fill={color} stroke="none" />
@@ -39,7 +39,7 @@ interface Props {
   onDelete: (a: Assessment) => void;
 }
 
-export function AssessmentCard({ assessment: a, workspaceId, viewMode, onEdit, onShare, onClone, onDelete }: Props) {
+export function AssessmentCard({ assessment: a, workspaceId, viewMode, onEdit, onShare, onClone, onDelete }: Readonly<Props>) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 

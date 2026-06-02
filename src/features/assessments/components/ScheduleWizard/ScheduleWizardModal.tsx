@@ -41,7 +41,7 @@ interface Props {
 
 const STEPS = ["Candidate Info", "Monitoring", "Questions"];
 
-function StepIndicator({ current }: { current: number }) {
+function StepIndicator({ current }: Readonly<{ current: number }>) {
   return (
     <div className={styles.steps}>
       {STEPS.map((label, i) => {
@@ -88,9 +88,9 @@ const EMPTY_FORM: NewCandidateForm = {
 
 function Step1Candidate({
   onNext,
-}: {
+}: Readonly<{
   onNext: (candidate: User) => void;
-}) {
+}>) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [candidate, setCandidate] = useState<User | null>(null);
@@ -146,7 +146,7 @@ function Step1Candidate({
       setShowCreateForm(false);
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      setError(msg || "Failed to create candidate.");
+      setError(msg ?? "Failed to create candidate.");
     } finally {
       setSaving(false);
     }
@@ -324,7 +324,7 @@ function MonitoringToggleRow({
   assessmentValue,
   overrideValue,
   onChange,
-}: MonitoringToggleRowProps) {
+}: Readonly<MonitoringToggleRowProps>) {
   const effective = overrideValue ?? assessmentValue;
   const isOverridden = overrideValue !== undefined && overrideValue !== assessmentValue;
   return (
@@ -351,7 +351,7 @@ function Step2Monitoring({
   onEndTime,
   onNext,
   onBack,
-}: {
+}: Readonly<{
   assessmentMonitoring: MonitoringConfig | undefined;
   overrides: MonitoringOverrides;
   onChange: (o: MonitoringOverrides) => void;
@@ -361,7 +361,7 @@ function Step2Monitoring({
   onEndTime: (v: string) => void;
   onNext: () => void;
   onBack: () => void;
-}) {
+}>) {
   const base = assessmentMonitoring;
   const set = (key: keyof MonitoringOverrides) => (v: boolean | string | number) =>
     onChange({ ...overrides, [key]: v });
@@ -493,13 +493,13 @@ function Step3Questions({
   onBack,
   onFinish,
   saving,
-}: {
+}: Readonly<{
   rounds: ScheduledRoundDraft[];
   onUpdateRound: (roundNumber: number, ids: string[]) => void;
   onBack: () => void;
   onFinish: () => void;
   saving: boolean;
-}) {
+}>) {
   const [activeRound, setActiveRound] = useState(rounds[0]?.round_number ?? 1);
   const [categories, setCategories] = useState<QuestionCategory[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -645,23 +645,32 @@ function Step3Questions({
             />
           </div>
           <div className={styles.paneBody}>
-            {loadingQ ? (
-              <div style={{ display: "flex", justifyContent: "center", padding: 30 }}>
-                <Spinner />
-              </div>
-            ) : available.length === 0 ? (
-              <div className={styles.emptyHint}>No questions available</div>
-            ) : (
-              available.map((q) => (
-                <div key={q.id} className={styles.qItem} onClick={() => toggle(q)}>
+            {(() => {
+              if (loadingQ) {
+                return (
+                  <div style={{ display: "flex", justifyContent: "center", padding: 30 }}>
+                    <Spinner />
+                  </div>
+                );
+              }
+              if (available.length === 0) {
+                return <div className={styles.emptyHint}>No questions available</div>;
+              }
+              return available.map((q) => (
+                <button
+                  key={q.id}
+                  type="button"
+                  className={styles.qItem}
+                  onClick={() => toggle(q)}
+                >
                   <ComplexityBadge complexity={q.complexity} />
                   <p className={styles.qText}>{q.question_text}</p>
                   <button className={styles.qRemove} title="Add">
                     <IconCheck size={13} color="var(--primary-600)" />
                   </button>
-                </div>
-              ))
-            )}
+                </button>
+              ));
+            })()}
           </div>
         </div>
       </div>
@@ -683,10 +692,10 @@ function Step3Questions({
 function StepResult({
   shareLink,
   onClose,
-}: {
+}: Readonly<{
   shareLink: string;
   onClose: () => void;
-}) {
+}>) {
   const [copied, setCopied] = useState(false);
   const fullUrl = `${window.location.origin}/assessment/${shareLink}/instructions`;
 
@@ -723,7 +732,7 @@ function StepResult({
 
 // ─── Main wizard ──────────────────────────────────────────────────────────────
 
-export function ScheduleWizardModal({ assessment, workspaceId, onClose, onSuccess }: Props) {
+export function ScheduleWizardModal({ assessment, workspaceId, onClose, onSuccess }: Readonly<Props>) {
   const [step, setStep] = useState(1);
   const [candidate, setCandidate] = useState<User | null>(null);
   const [overrides, setOverrides] = useState<MonitoringOverrides>({});
@@ -756,7 +765,7 @@ export function ScheduleWizardModal({ assessment, workspaceId, onClose, onSucces
       const cleanOverrides: MonitoringOverrides = {};
       (Object.keys(overrides) as (keyof MonitoringOverrides)[]).forEach((k) => {
         const v = overrides[k];
-        if (v !== undefined && v !== (base as Record<string, unknown>)?.[k]) {
+        if (v !== undefined && v !== (base as unknown as Record<string, unknown>)?.[k]) {
           (cleanOverrides as Record<string, unknown>)[k] = v;
         }
       });
@@ -783,7 +792,7 @@ export function ScheduleWizardModal({ assessment, workspaceId, onClose, onSucces
       onSuccess();
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast.error(msg || "Failed to schedule candidate");
+      toast.error(msg ?? "Failed to schedule candidate");
     } finally {
       setSaving(false);
     }

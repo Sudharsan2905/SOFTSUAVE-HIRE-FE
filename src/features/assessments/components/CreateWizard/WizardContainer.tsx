@@ -58,12 +58,12 @@ export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState(workspaceId);
 
   const [draft, setDraft] = useState<AssessmentDraft>({
-    name: initialData?.name || "",
-    description: initialData?.description || "",
+    name: initialData?.name ?? "",
+    description: initialData?.description ?? "",
     rounds: initialData?.rounds || [
       { round_number: 1, question_count: 10, max_duration_minutes: 30, question_ids: [] },
     ],
-    accessibility: initialData?.accessibility || "normal",
+    accessibility: initialData?.accessibility ?? "normal",
     monitoring_config: initialData?.monitoring_config || defaultMonitoring,
   });
 
@@ -117,8 +117,8 @@ export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
     }
   };
 
-  const roundRequired = draft.rounds[currentRound]?.question_count || 0;
-  const roundSelected = draft.rounds[currentRound]?.question_ids.length || 0;
+  const roundRequired = draft.rounds[currentRound]?.question_count ?? 0;
+  const roundSelected = draft.rounds[currentRound]?.question_ids.length ?? 0;
   const questionsTitle = `Select Questions — Round ${currentRound + 1} of ${draft.rounds.length}`;
   const step1Title = editMode ? "Edit Assessment" : "Create Assessment";
   const modalTitle = step === 1 ? step1Title : questionsTitle;

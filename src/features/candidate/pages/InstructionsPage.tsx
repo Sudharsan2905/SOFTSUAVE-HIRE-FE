@@ -23,6 +23,46 @@ import toast from "react-hot-toast";
 
 type NetworkCheckStatus = "checking" | "connected" | "unstable" | "disconnected";
 
+// ── Module-level helpers (keep component cognitive complexity low) ─────────────
+
+function buildPermissionMessage(needsVideo: boolean, needsAudio: boolean): string {
+  if (needsVideo && needsAudio) return "Camera and microphone access granted";
+  if (needsVideo) return "Camera access granted";
+  return "Microphone access granted";
+}
+
+function isAssessmentReady(
+  assessment: Assessment | null,
+  networkStatus: NetworkCheckStatus,
+  videoGranted: boolean,
+  audioGranted: boolean
+): boolean {
+  if (!assessment) return false;
+  if (networkStatus !== "connected") return false;
+  const cfg = assessment.monitoring_config;
+  if (cfg?.video_monitoring && !videoGranted) return false;
+  if (cfg?.audio_monitoring && !audioGranted) return false;
+  return true;
+}
+
+function resolveStartButtonLabel(
+  networkStatus: NetworkCheckStatus,
+  isMonitoring: boolean,
+  allPermissionsGranted: boolean
+): string {
+  if (networkStatus !== "connected") return "Network Connection Required";
+  if (isMonitoring && !allPermissionsGranted) return "Grant Required Access to Continue";
+  return "Start Assessment";
+}
+
+function extractStartErrorMessage(e: unknown): string {
+  return (
+    (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? ""
+  );
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export default function InstructionsPage() {
   const { shareLink } = useParams<{ shareLink: string }>();
   const navigate = useNavigate();
@@ -105,10 +145,7 @@ export default function InstructionsPage() {
       if (needsVideo) setVideoGranted(true);
       if (needsAudio) setAudioGranted(true);
 
-      let permissionMsg = "Microphone access granted";
-      if (needsVideo && needsAudio) permissionMsg = "Camera and microphone access granted";
-      else if (needsVideo) permissionMsg = "Camera access granted";
-      toast.success(permissionMsg);
+      toast.success(buildPermissionMessage(needsVideo, needsAudio));
     } catch {
       toast.error("Please allow the required device access to proceed");
     } finally {
@@ -116,14 +153,8 @@ export default function InstructionsPage() {
     }
   };
 
-  const canStart = (): boolean => {
-    if (!assessment) return false;
-    if (networkStatus !== "connected") return false;
-    const cfg = assessment.monitoring_config;
-    if (cfg?.video_monitoring && !videoGranted) return false;
-    if (cfg?.audio_monitoring && !audioGranted) return false;
-    return true;
-  };
+  const canStart = (): boolean =>
+    isAssessmentReady(assessment, networkStatus, videoGranted, audioGranted);
 
   const handleStart = async () => {
     if (!assessment) return;
@@ -147,8 +178,7 @@ export default function InstructionsPage() {
       // Use replace so the browser back button skips instructions and goes to entry.
       navigate(`/assessment/${shareLink}/interview/${submissionId}`, { replace: true });
     } catch (e: unknown) {
-      const msg =
-        (e as { response?: { data?: { message?: string } } })?.response?.data?.message || "";
+      const msg = extractStartErrorMessage(e);
       // Backend signals the candidate already finished — redirect them to the done screen.
       if (msg.toLowerCase().includes("already completed")) {
         if (shareLink) markAssessmentDone(shareLink);
@@ -214,12 +244,11 @@ export default function InstructionsPage() {
     disconnected: "Disconnected",
   }[networkStatus];
 
-  const startButtonLabel =
-    networkStatus !== "connected"
-      ? "Network Connection Required"
-      : isMonitoring && !allPermissionsGranted
-      ? "Grant Required Access to Continue"
-      : "Start Assessment";
+  const startButtonLabel = resolveStartButtonLabel(
+    networkStatus,
+    isMonitoring,
+    allPermissionsGranted
+  );
 
   return (
     <div className={styles.page}>

@@ -47,7 +47,7 @@ export function LinkStatusScreen({ status, message, startTime }: Readonly<LinkSt
         </div>
 
         <h1 className={styles.title}>{title}</h1>
-        <p className={styles.description}>{message || fallbackDesc}</p>
+        <p className={styles.description}>{message ?? fallbackDesc}</p>
 
         {status === "not_started" && startTime && (
           <p className={styles.time}>Starts: {new Date(startTime).toLocaleString()}</p>

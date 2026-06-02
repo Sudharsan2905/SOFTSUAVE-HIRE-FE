@@ -16,34 +16,28 @@ function ReconnectingDots() {
   );
 }
 
-export function ConnectionLostOverlay({ status }: Props) {
+export function ConnectionLostOverlay({ status }: Readonly<Props>) {
   if (status === "connected") return null;
 
   const isOnHold = status === "on_hold";
   const isOffline = status === "offline";
+
+  const titleText = isOnHold ? "Interview Paused" : isOffline ? "Connection Lost" : "Reconnecting…";
+
+  const bodyText = isOnHold
+    ? "Your session has been placed on hold due to a network interruption. Please wait — an administrator will resume your interview."
+    : isOffline
+    ? "Your internet connection was lost. Please check your network."
+    : "Trying to reconnect to the interview server.";
 
   return (
     <div className={styles.overlay} role="alert" aria-live="assertive">
       <div className={styles.card}>
         <div className={styles.icon}>{isOnHold ? "⏸" : "📡"}</div>
 
-        <p className={styles.title}>
-          {isOnHold
-            ? "Interview Paused"
-            : isOffline
-            ? "Connection Lost"
-            : "Reconnecting…"}
-        </p>
+        <p className={styles.title}>{titleText}</p>
 
-        <p className={styles.body}>
-          {isOnHold ? (
-            "Your session has been placed on hold due to a network interruption. Please wait — an administrator will resume your interview."
-          ) : isOffline ? (
-            "Your internet connection was lost. Please check your network."
-          ) : (
-            "Trying to reconnect to the interview server."
-          )}
-        </p>
+        <p className={styles.body}>{bodyText}</p>
 
         {!isOnHold && <ReconnectingDots />}
 

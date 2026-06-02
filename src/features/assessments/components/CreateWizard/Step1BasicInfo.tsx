@@ -92,7 +92,7 @@ export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<
         </div>
         <div className={styles.rounds}>
           {rounds.map((round, idx) => (
-            <div key={idx} className={styles.roundCard}>
+            <div key={round.round_number} className={styles.roundCard}>
               <div className={styles.roundHeader}>
                 <Badge variant="primary">Round {round.round_number}</Badge>
                 {rounds.length > 1 && (
@@ -196,7 +196,7 @@ export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<
                   label="Interval (minutes)"
                   type="number"
                   min={1}
-                  value={monitoring.screenshot_interval_minutes || 5}
+                  value={monitoring.screenshot_interval_minutes ?? 5}
                   onChange={(e) =>
                     setMonitoring((p) => ({
                       ...p,
@@ -210,7 +210,7 @@ export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<
                   label="Total screenshots per candidate"
                   type="number"
                   min={1}
-                  value={monitoring.screenshot_count || 10}
+                  value={monitoring.screenshot_count ?? 10}
                   onChange={(e) =>
                     setMonitoring((p) => ({ ...p, screenshot_count: Number(e.target.value) }))
                   }

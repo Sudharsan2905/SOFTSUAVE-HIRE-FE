@@ -59,6 +59,90 @@ export default function LiveInterviewsPage() {
     };
   }, [fetchSessions]);
 
+  // S3358: extract content decision to a variable before return
+  let pageContent: React.ReactNode;
+  if (isLoading) {
+    pageContent = (
+      <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
+        <Spinner size="lg" />
+      </div>
+    );
+  } else if (sessions.length === 0) {
+    pageContent = (
+      <div className={styles.empty}>
+        <IconLiveInterview size={48} color="var(--text-tertiary)" />
+        <p>No active interviews right now</p>
+        <span style={{ fontSize: 12 }}>This page auto-refreshes every 15 seconds</span>
+      </div>
+    );
+  } else {
+    pageContent = (
+      <>
+        <div className={viewMode === "grid" ? styles.grid : styles.list}>
+          {sessions.map((session) => {
+            const candidate = (
+              session as unknown as {
+                candidate?: { first_name?: string; last_name?: string; email?: string };
+              }
+            ).candidate;
+            const assessment = (
+              session as unknown as { assessment?: { name?: string; accessibility?: string } }
+            ).assessment;
+            const name = candidate
+              ? getFullName(candidate as { first_name: string; last_name?: string })
+              : "Unknown";
+            const isMonitoring = assessment?.accessibility === "monitoring";
+
+            return (
+              <button
+                key={session.id}
+                type="button"
+                className={styles.card}
+                onClick={() => {
+                  setSelectedSession(session);
+                  setShowDetail(true);
+                }}
+              >
+                <div className={styles.cardTop}>
+                  <div className={styles.avatarArea}>
+                    {isMonitoring ? (
+                      <div className={styles.cameraFeed}>
+                        <IconCamera size={20} color="var(--text-tertiary)" />
+                      </div>
+                    ) : (
+                      <div className={styles.avatar} style={{ background: getAvatarColor(name) }}>
+                        {getInitials(name)}
+                      </div>
+                    )}
+                    <div className={styles.liveIndicator} />
+                  </div>
+                  <div className={styles.candidateInfo}>
+                    <p className={styles.candidateName}>{name}</p>
+                    <p className={styles.candidateEmail}>{candidate?.email}</p>
+                  </div>
+                  <Badge variant={isMonitoring ? "accent" : "default"}>
+                    {isMonitoring ? "Monitored" : "Normal"}
+                  </Badge>
+                </div>
+                <div className={styles.assessmentName}>{assessment?.name}</div>
+                <div className={styles.metaRow}>
+                  <span>
+                    <IconTime size={12} /> Round {session.current_round}
+                  </span>
+                  <span>
+                    <IconEye size={12} /> {session.screenshots?.length || 0} screenshots
+                  </span>
+                  <span>Started {formatDateTime(session.started_at)}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        {meta && <Pagination meta={meta} onPageChange={goToPage} pageSize={pageSize} onPageSizeChange={changePageSize} />}
+      </>
+    );
+  }
+
   return (
     <div>
       <Header
@@ -86,80 +170,7 @@ export default function LiveInterviewsPage() {
         </div>
       </FilterBar>
 
-      {isLoading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
-          <Spinner size="lg" />
-        </div>
-      ) : sessions.length === 0 ? (
-        <div className={styles.empty}>
-          <IconLiveInterview size={48} color="var(--text-tertiary)" />
-          <p>No active interviews right now</p>
-          <span style={{ fontSize: 12 }}>This page auto-refreshes every 15 seconds</span>
-        </div>
-      ) : (
-        <>
-          <div className={viewMode === "grid" ? styles.grid : styles.list}>
-            {sessions.map((session) => {
-              const candidate = (
-                session as unknown as {
-                  candidate?: { first_name?: string; last_name?: string; email?: string };
-                }
-              ).candidate;
-              const assessment = (
-                session as unknown as { assessment?: { name?: string; accessibility?: string } }
-              ).assessment;
-              const name = candidate
-                ? getFullName(candidate as { first_name: string; last_name?: string })
-                : "Unknown";
-              const isMonitoring = assessment?.accessibility === "monitoring";
-
-              return (
-                <div
-                  key={session.id}
-                  className={styles.card}
-                  onClick={() => {
-                    setSelectedSession(session);
-                    setShowDetail(true);
-                  }}
-                >
-                  <div className={styles.cardTop}>
-                    <div className={styles.avatarArea}>
-                      {isMonitoring ? (
-                        <div className={styles.cameraFeed}>
-                          <IconCamera size={20} color="var(--text-tertiary)" />
-                        </div>
-                      ) : (
-                        <div className={styles.avatar} style={{ background: getAvatarColor(name) }}>
-                          {getInitials(name)}
-                        </div>
-                      )}
-                      <div className={styles.liveIndicator} />
-                    </div>
-                    <div className={styles.candidateInfo}>
-                      <p className={styles.candidateName}>{name}</p>
-                      <p className={styles.candidateEmail}>{candidate?.email}</p>
-                    </div>
-                    <Badge variant={isMonitoring ? "accent" : "default"}>
-                      {isMonitoring ? "Monitored" : "Normal"}
-                    </Badge>
-                  </div>
-                  <div className={styles.assessmentName}>{assessment?.name}</div>
-                  <div className={styles.metaRow}>
-                    <span>
-                      <IconTime size={12} /> Round {session.current_round}
-                    </span>
-                    <span>
-                      <IconEye size={12} /> {session.screenshots?.length || 0} screenshots
-                    </span>
-                    <span>Started {formatDateTime(session.started_at)}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          {meta && <Pagination meta={meta} onPageChange={goToPage} pageSize={pageSize} onPageSizeChange={changePageSize} />}
-        </>
-      )}
+      {pageContent}
 
       <Modal
         isOpen={showDetail}
@@ -173,8 +184,9 @@ export default function LiveInterviewsPage() {
               Screenshots taken: {selectedSession.screenshots?.length || 0}
             </p>
             <div className={styles.screenshotGrid}>
+              {/* S6479: use timestamp-based key instead of array index */}
               {(selectedSession.screenshots || []).map((s, i) => (
-                <div key={i} className={styles.screenshot}>
+                <div key={s.taken_at ?? i} className={styles.screenshot}>
                   <div className={styles.screenshotPlaceholder}>Screenshot {i + 1}</div>
                   <p
                     style={{

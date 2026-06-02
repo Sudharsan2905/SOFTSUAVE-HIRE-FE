@@ -122,7 +122,7 @@ export function Select({
           disabled={disabled}
         >
           <span className={selected ? styles.triggerValue : styles.triggerPlaceholder}>
-            {selected ? selected.label : placeholder || "Select…"}
+            {selected ? selected.label : placeholder ?? "Select…"}
           </span>
           <IconChevronDown size={14} className={clsx(styles.chevron, open && styles.chevronOpen)} />
         </button>

@@ -48,7 +48,7 @@ export function AppHeader() {
   const profileBtnRef = useRef<HTMLButtonElement>(null);
 
   /* Close profile menu on outside click */
-  useClickOutside(profileMenuRef as React.RefObject<HTMLDivElement>, () => setShowProfileMenu(false), showProfileMenu);
+  useClickOutside(profileMenuRef, () => setShowProfileMenu(false), showProfileMenu);
 
   const handleLogout = useCallback(() => {
     setShowLogoutConfirm(false);
@@ -61,6 +61,10 @@ export function AppHeader() {
     setShowProfileMenu(false);
     navigate("/profile");
   };
+
+  const notificationUnreadSuffix = unreadCount > 0 ? ` (${unreadCount} unread)` : "";
+  const notificationTooltip = `Notifications${notificationUnreadSuffix}`;
+  const notificationAriaLabel = `Notifications${notificationUnreadSuffix}`;
 
   return (
     <>
@@ -75,7 +79,7 @@ export function AppHeader() {
             alt="SoftSuave Hire"
           />
           <h2 className={styles.greeting}>
-            Welcome, <span className={styles.greetingName}>{user?.first_name || fullName || "Admin"}</span>
+            Welcome, <span className={styles.greetingName}>{user?.first_name ?? fullName ?? "Admin"}</span>
           </h2>
           <p className={styles.date}>{today}</p>
         </div>
@@ -84,14 +88,14 @@ export function AppHeader() {
         <div className={styles.right}>
           {/* Notification bell */}
           <Tooltip
-            content={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+            content={notificationTooltip}
             placement="bottom"
           >
             <button
               ref={bellRef}
               className={styles.iconBtn}
               onClick={() => setShowNotifications((p) => !p)}
-              aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+              aria-label={notificationAriaLabel}
               aria-expanded={showNotifications}
             >
               <IconBell size={19} />
@@ -159,7 +163,6 @@ export function AppHeader() {
                 <div className={styles.menuItems}>
                   <button
                     className={styles.menuItem}
-                    role="menuitem"
                     onClick={handleProfileClick}
                   >
                     <IconUsers size={15} />
@@ -167,7 +170,6 @@ export function AppHeader() {
                   </button>
                   <button
                     className={`${styles.menuItem} ${styles.menuItemDanger}`}
-                    role="menuitem"
                     onClick={() => {
                       setShowProfileMenu(false);
                       setShowLogoutConfirm(true);

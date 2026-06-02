@@ -9,8 +9,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Pagination } from "@/components/ui/Pagination";
-import { Badge } from "@/components/ui/Badge";
-import { ComplexityBadge } from "@/components/ui/Badge";
+import { Badge, ComplexityBadge } from "@/components/ui/Badge";
 import { Spinner } from "@/components/ui/Spinner";
 import { RichText } from "@/components/ui/RichText";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -66,6 +65,39 @@ const newBlankForm = (): QuestionForm => ({
   correct_answer: "",
 });
 
+// S2004: extracted from the nested map inside updateOption's setForms callback
+function patchOptionInForm(
+  f: QuestionForm,
+  formIdx: number,
+  i: number,
+  optIdx: number,
+  patch: Partial<{ text: string; is_correct: boolean }>
+): QuestionForm {
+  if (i !== formIdx) return f;
+  return {
+    ...f,
+    options: f.options.map((o, j) => (j === optIdx ? { ...o, ...patch } : o)),
+  };
+}
+
+// S3776: helper extracted from handleFileSelect to reduce cognitive complexity
+function autoMapColumns(headers: string[]): {
+  question: string;
+  options: string;
+  answer: string;
+  complexity: string;
+} {
+  const auto = { question: "", options: "", answer: "", complexity: "" };
+  for (const h of headers) {
+    const l = h.toLowerCase();
+    if (!auto.question && l.includes("question")) auto.question = h;
+    if (!auto.options && (l === "options" || l.includes("option"))) auto.options = h;
+    if (!auto.answer && l.includes("answer")) auto.answer = h;
+    if (!auto.complexity && l.includes("complex")) auto.complexity = h;
+  }
+  return auto;
+}
+
 export default function QuestionsPage() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
@@ -113,7 +145,7 @@ export default function QuestionsPage() {
   const fetchCategory = useCallback(async () => {
     try {
       const { data } = await api.get(`/api/questions/categories`);
-      const cats = data.data?.categories || [];
+      const cats = data.data?.categories ?? [];
       const cat = cats.find((c: QuestionCategory) => c.id === categoryId);
       if (cat) setCategory(cat);
     } catch {}
@@ -133,8 +165,8 @@ export default function QuestionsPage() {
         ...(questionType && { question_type: questionType }),
       });
       const { data } = await api.get(`/api/questions/categories/${categoryId}/questions?${params}`);
-      setQuestions(data.data?.questions || []);
-      setMeta(data.data?.pagination || null);
+      setQuestions(data.data?.questions ?? []);
+      setMeta(data.data?.pagination ?? null);
     } catch {
       toast.error("Failed to load questions");
     } finally {
@@ -178,19 +210,14 @@ export default function QuestionsPage() {
     setForms((prev) => prev.map((f, i) => (i === idx ? { ...f, ...patch } : f)));
   };
 
+  // S2004: uses extracted patchOptionInForm to avoid deeply nested function
   const updateOption = (
     formIdx: number,
     optIdx: number,
     patch: Partial<{ text: string; is_correct: boolean }>
   ) => {
     setForms((prev) =>
-      prev.map((f, i) => {
-        if (i !== formIdx) return f;
-        return {
-          ...f,
-          options: f.options.map((o, j) => (j === optIdx ? { ...o, ...patch } : o)),
-        };
-      })
+      prev.map((f, i) => patchOptionInForm(f, formIdx, i, optIdx, patch))
     );
   };
 
@@ -219,7 +246,7 @@ export default function QuestionsPage() {
         const { data } = await api.post(`/api/questions/categories/${categoryId}/bulk`, {
           questions,
         });
-        toast.success(`${data.data?.created || 0} question(s) created`);
+        toast.success(`${data.data?.created ?? 0} question(s) created`);
       }
       setShowCreate(false);
       resetForms();
@@ -254,7 +281,7 @@ export default function QuestionsPage() {
         `/api/questions/categories/${categoryId}/ai-generate`,
         aiForm
       );
-      toast.success(`${data.data?.created || 0} questions generated`);
+      toast.success(`${data.data?.created ?? 0} questions generated`);
       setShowAI(false);
       fetchQuestions();
     } catch {
@@ -264,21 +291,14 @@ export default function QuestionsPage() {
     }
   };
 
+  // S3776: auto-mapping logic extracted to autoMapColumns helper above
   const handleFileSelect = async (file: File) => {
     setExcelFile(file);
     try {
       const rows = await readXlsxFile(file);
-      const headers = (rows[0].data[0] || []).filter(Boolean).map(String);
+      const headers = (rows[0].data[0] ?? []).filter(Boolean).map(String);
       setExcelHeaders(headers);
-      // Auto-map columns by name similarity
-      const auto = { question: "", options: "", answer: "", complexity: "" };
-      for (const h of headers) {
-        const l = h.toLowerCase();
-        if (!auto.question && l.includes("question")) auto.question = h;
-        if (!auto.options && (l === "options" || l.includes("option"))) auto.options = h;
-        if (!auto.answer && l.includes("answer")) auto.answer = h;
-        if (!auto.complexity && l.includes("complex")) auto.complexity = h;
-      }
+      const auto = autoMapColumns(headers);
       setColumnMap(auto);
     } catch {
       toast.error("Failed to read Excel headers");
@@ -297,7 +317,7 @@ export default function QuestionsPage() {
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
-      toast.success(`${data.data?.created || 0} questions imported`);
+      toast.success(`${data.data?.created ?? 0} questions imported`);
       setShowColumnMap(false);
       setExcelFile(null);
       setExcelHeaders([]);
@@ -327,19 +347,137 @@ export default function QuestionsPage() {
                 text: "",
                 is_correct: false,
               })),
-        correct_answer: q.correct_answer || "",
+        correct_answer: q.correct_answer ?? "",
       },
     ]);
     setExpandedKeys(new Set([key]));
     setShowCreate(true);
   };
 
+  // S2004: extracted from accordion remove button onClick (was 5+ levels deep)
+  const handleRemoveForm = (idx: number, key: string) => {
+    setForms((prev) => prev.filter((_, i) => i !== idx));
+    setExpandedKeys((prev) => {
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+  };
+
+  // S2004: extracted from option input onChange (was 5+ levels deep)
+  const handleOptionCorrectChange = (
+    f: QuestionForm,
+    formIdx: number,
+    optIdx: number
+  ) => {
+    const options = f.options.map((o, i) => ({
+      ...o,
+      is_correct:
+        f.question_type === "mcq_single"
+          ? i === optIdx
+          : i === optIdx
+            ? !o.is_correct
+            : o.is_correct,
+    }));
+    updateForm(formIdx, { options });
+  };
+
   const canSave = forms.every((f) => f.question_text.trim());
+
+  // S3358: extract nested ternary for the main content area
+  const mainContent = (() => {
+    if (isLoading) {
+      return (
+        <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
+          <Spinner size="lg" />
+        </div>
+      );
+    }
+    if (questions.length === 0) {
+      return (
+        <div className={styles.empty}>
+          <p>No questions found</p>
+          <Button
+            leftIcon={<IconPlus size={15} />}
+            onClick={() => {
+              resetForms();
+              setShowCreate(true);
+            }}
+          >
+            Add Questions
+          </Button>
+        </div>
+      );
+    }
+    return (
+      <>
+        <div className={viewMode === "grid" ? styles.grid : styles.list}>
+          {questions.map((q) => (
+            <div key={q.id} className={styles.questionCard}>
+              <div className={styles.questionTop}>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <ComplexityBadge complexity={q.complexity} />
+                  <Badge variant="info">
+                    {QUESTION_TYPE_OPTIONS.find((o) => o.value === q.question_type)?.label ??
+                      q.question_type}
+                  </Badge>
+                </div>
+                <div className={styles.cardActions}>
+                  <Tooltip content="Edit" placement="top">
+                    <button
+                      className={styles.iconBtn}
+                      onClick={() => openEdit(q)}
+                      aria-label="Edit question"
+                    >
+                      <IconEdit size={14} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip content="Delete" placement="top">
+                    <button
+                      className={`${styles.iconBtn} ${styles.danger}`}
+                      onClick={() => {
+                        setSelected(q);
+                        setShowDelete(true);
+                      }}
+                      aria-label="Delete question"
+                    >
+                      <IconDelete size={14} />
+                    </button>
+                  </Tooltip>
+                </div>
+              </div>
+              <div className={styles.questionText}>
+                <RichText>{q.question_text}</RichText>
+              </div>
+              {q.options.length > 0 && (
+                <div className={styles.options}>
+                  {q.options.map((o) => (
+                    <div
+                      key={o.id}
+                      className={`${styles.option} ${o.is_correct ? styles.correctOption : ""}`}
+                    >
+                      {o.is_correct && <span className={styles.correctDot} />}
+                      <span>{o.text}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        {meta && <Pagination meta={meta} onPageChange={goToPage} pageSize={pageSize} onPageSizeChange={changePageSize} />}
+      </>
+    );
+  })();
+
+  // S3358 + S4624: extract nested ternary and inner template literal for Save button label
+  const saveCountSuffix = forms.length > 1 ? ` (${forms.length})` : "";
+  const saveButtonLabel = selected ? "Save Changes" : `Save${saveCountSuffix}`;
 
   return (
     <div>
       <Header
-        title={category?.name || "Questions"}
+        title={category?.name ?? "Questions"}
         subtitle={`${meta?.total ?? 0} questions`}
         actions={
           <div style={{ display: "flex", gap: 8 }}>
@@ -408,82 +546,7 @@ export default function QuestionsPage() {
         onRefresh={fetchQuestions}
       />
 
-      {isLoading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
-          <Spinner size="lg" />
-        </div>
-      ) : questions.length === 0 ? (
-        <div className={styles.empty}>
-          <p>No questions found</p>
-          <Button
-            leftIcon={<IconPlus size={15} />}
-            onClick={() => {
-              resetForms();
-              setShowCreate(true);
-            }}
-          >
-            Add Questions
-          </Button>
-        </div>
-      ) : (
-        <>
-          <div className={viewMode === "grid" ? styles.grid : styles.list}>
-            {questions.map((q) => (
-              <div key={q.id} className={styles.questionCard}>
-                <div className={styles.questionTop}>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    <ComplexityBadge complexity={q.complexity} />
-                    <Badge variant="info">
-                      {QUESTION_TYPE_OPTIONS.find((o) => o.value === q.question_type)?.label ||
-                        q.question_type}
-                    </Badge>
-                  </div>
-                  <div className={styles.cardActions}>
-                    <Tooltip content="Edit" placement="top">
-                      <button
-                        className={styles.iconBtn}
-                        onClick={() => openEdit(q)}
-                        aria-label="Edit question"
-                      >
-                        <IconEdit size={14} />
-                      </button>
-                    </Tooltip>
-                    <Tooltip content="Delete" placement="top">
-                      <button
-                        className={`${styles.iconBtn} ${styles.danger}`}
-                        onClick={() => {
-                          setSelected(q);
-                          setShowDelete(true);
-                        }}
-                        aria-label="Delete question"
-                      >
-                        <IconDelete size={14} />
-                      </button>
-                    </Tooltip>
-                  </div>
-                </div>
-                <div className={styles.questionText}>
-                  <RichText>{q.question_text}</RichText>
-                </div>
-                {q.options.length > 0 && (
-                  <div className={styles.options}>
-                    {q.options.map((o) => (
-                      <div
-                        key={o.id}
-                        className={`${styles.option} ${o.is_correct ? styles.correctOption : ""}`}
-                      >
-                        {o.is_correct && <span className={styles.correctDot} />}
-                        <span>{o.text}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-          {meta && <Pagination meta={meta} onPageChange={goToPage} pageSize={pageSize} onPageSizeChange={changePageSize} />}
-        </>
-      )}
+      {mainContent}
 
       {/* Create / Edit Question Modal */}
       <Modal
@@ -508,7 +571,7 @@ export default function QuestionsPage() {
               Cancel
             </Button>
             <Button onClick={handleSaveQuestions} isLoading={saving} disabled={!canSave}>
-              {selected ? "Save Changes" : `Save ${forms.length > 1 ? `(${forms.length})` : ""}`}
+              {saveButtonLabel}
             </Button>
           </>
         }
@@ -536,14 +599,7 @@ export default function QuestionsPage() {
                   <button
                     type="button"
                     className={`${styles.iconBtn} ${styles.danger}`}
-                    onClick={() => {
-                      setForms((prev) => prev.filter((_, i) => i !== idx));
-                      setExpandedKeys((prev) => {
-                        const next = new Set(prev);
-                        next.delete(f._key);
-                        return next;
-                      });
-                    }}
+                    onClick={() => handleRemoveForm(idx, f._key)}
                     title="Remove question"
                     aria-label="Remove question"
                   >
@@ -614,18 +670,7 @@ export default function QuestionsPage() {
                               <input
                                 type={f.question_type === "mcq_single" ? "radio" : "checkbox"}
                                 checked={opt.is_correct}
-                                onChange={() => {
-                                  const options = f.options.map((o, i) => ({
-                                    ...o,
-                                    is_correct:
-                                      f.question_type === "mcq_single"
-                                        ? i === optIdx
-                                        : i === optIdx
-                                          ? !o.is_correct
-                                          : o.is_correct,
-                                  }));
-                                  updateForm(idx, { options });
-                                }}
+                                onChange={() => handleOptionCorrectChange(f, idx, optIdx)}
                                 style={{ flexShrink: 0 }}
                               />
                               <Input

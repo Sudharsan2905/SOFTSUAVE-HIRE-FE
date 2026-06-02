@@ -110,7 +110,7 @@ export default function UsersPage() {
       fetchUsers();
     } catch (e: unknown) {
       toast.error(
-        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
           "Failed to create user"
       );
     } finally {
