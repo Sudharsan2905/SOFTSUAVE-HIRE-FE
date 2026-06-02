@@ -8,7 +8,7 @@ interface RichTextProps {
   className?: string;
 }
 
-function CodeBlock(props: React.ComponentPropsWithoutRef<"code">) {
+function CodeBlock(props: Readonly<React.ComponentPropsWithoutRef<"code">>) {
   const { className: cls, children: codeChildren } = props;
   const match = /language-(\w+)/.exec(cls ?? "");
   const codeStr = String(codeChildren ?? "").replace(/\n$/, "");
@@ -18,7 +18,7 @@ function CodeBlock(props: React.ComponentPropsWithoutRef<"code">) {
     return (
       <SyntaxHighlighter
         style={oneDark}
-        language={match?.[1] || "text"}
+        language={match?.[1] ?? "text"}
         PreTag="div"
         customStyle={{ borderRadius: 6, fontSize: 13, margin: "8px 0" }}
       >

@@ -22,13 +22,15 @@ export function ConnectionLostOverlay({ status }: Readonly<Props>) {
   const isOnHold = status === "on_hold";
   const isOffline = status === "offline";
 
-  const titleText = isOnHold ? "Interview Paused" : isOffline ? "Connection Lost" : "Reconnecting…";
+  let titleText: string;
+  if (isOnHold) titleText = "Interview Paused";
+  else if (isOffline) titleText = "Connection Lost";
+  else titleText = "Reconnecting…";
 
-  const bodyText = isOnHold
-    ? "Your session has been placed on hold due to a network interruption. Please wait — an administrator will resume your interview."
-    : isOffline
-    ? "Your internet connection was lost. Please check your network."
-    : "Trying to reconnect to the interview server.";
+  let bodyText: string;
+  if (isOnHold) bodyText = "Your session has been placed on hold due to a network interruption. Please wait — an administrator will resume your interview.";
+  else if (isOffline) bodyText = "Your internet connection was lost. Please check your network.";
+  else bodyText = "Trying to reconnect to the interview server.";
 
   return (
     <div className={styles.overlay} role="alert" aria-live="assertive">

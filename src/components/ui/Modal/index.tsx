@@ -51,16 +51,13 @@ export function Modal({
     <div
       className={styles.overlay}
       onClick={disableBackdropClose ? undefined : onClose}
-      onKeyDown={(e) => { if (!disableBackdropClose && e.key === 'Escape') onClose(); }}
-      tabIndex={-1}
+      aria-hidden="true"
     >
-      <div
+      <dialog
+        open
         className={clsx(styles.modal, styles[size], className)}
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        {...(title ? { 'aria-label': title } : {})}
+        aria-label={title}
       >
         {(title || showClose) && (
           <div className={styles.header}>
@@ -74,7 +71,7 @@ export function Modal({
         )}
         <div className={styles.body}>{children}</div>
         {footer && <div className={styles.footer}>{footer}</div>}
-      </div>
+      </dialog>
     </div>,
     document.body
   );

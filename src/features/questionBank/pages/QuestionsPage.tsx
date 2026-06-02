@@ -370,15 +370,17 @@ export default function QuestionsPage() {
     formIdx: number,
     optIdx: number
   ) => {
-    const options = f.options.map((o, i) => ({
-      ...o,
-      is_correct:
-        f.question_type === "mcq_single"
-          ? i === optIdx
-          : i === optIdx
-            ? !o.is_correct
-            : o.is_correct,
-    }));
+    const options = f.options.map((o, i) => {
+      let is_correct: boolean;
+      if (f.question_type === "mcq_single") {
+        is_correct = i === optIdx;
+      } else if (i === optIdx) {
+        is_correct = !o.is_correct;
+      } else {
+        is_correct = o.is_correct;
+      }
+      return { ...o, is_correct };
+    });
     updateForm(formIdx, { options });
   };
 

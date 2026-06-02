@@ -198,11 +198,10 @@ export function DatePicker({
 
       {isOpen &&
         createPortal(
-          <div
+          <section
             ref={popupRef}
             className={styles.popup}
             style={popupStyle}
-            role="region"
             aria-label="Date picker calendar"
           >
             {/* Header */}
@@ -343,7 +342,7 @@ export function DatePicker({
                 </button>
               )}
             </div>
-          </div>,
+          </section>,
           document.body
         )}
     </div>

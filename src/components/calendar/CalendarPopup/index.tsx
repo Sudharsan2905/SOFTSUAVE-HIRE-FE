@@ -9,6 +9,7 @@ import {
   isToday,
   isSameDay,
   addMonths,
+  addDays,
   subMonths,
   isBefore,
   startOfDay,
@@ -218,10 +219,12 @@ export function CalendarPopup({ anchorRef, onClose }: Props) {
             ))}
           </tr>
 
-          <table className={styles.grid} role="grid" aria-label={format(currentMonth, "MMMM yyyy")}>
-            {/* Empty cells before the 1st day */}
-            {Array.from({ length: startOffset }).map((_, i) => (
-              <td key={`empty-${i}`} className={styles.emptyCell} role="gridcell" />
+          <table className={styles.grid} aria-label={format(currentMonth, "MMMM yyyy")}>
+            {/* Empty cells before the 1st day — keyed by the actual previous-month date */}
+            {Array.from({ length: startOffset }, (_, i) =>
+              format(addDays(monthStart, i - startOffset), "yyyy-MM-dd")
+            ).map((dateKey) => (
+              <td key={dateKey} className={styles.emptyCell} />
             ))}
 
             {daysInMonth.map((day) => {
@@ -232,7 +235,7 @@ export function CalendarPopup({ anchorRef, onClose }: Props) {
               return (
                 <td
                   key={format(day, "yyyy-MM-dd")}
-                  role="gridcell"
+                  aria-selected={isSelected}
                 >
                   <button
                     className={[
@@ -246,7 +249,6 @@ export function CalendarPopup({ anchorRef, onClose }: Props) {
                     onClick={() => handleDayClick(day)}
                     disabled={isPast}
                     aria-label={format(day, "EEEE, MMMM d, yyyy")}
-                    aria-selected={isSelected}
                     aria-current={today ? "date" : undefined}
                   >
                     {format(day, "d")}

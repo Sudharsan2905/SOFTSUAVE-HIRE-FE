@@ -57,10 +57,16 @@ export function VideoMonitor({ videoRef, onWarning }: Readonly<VideoMonitorProps
     return () => clearInterval(intervalId);
   }, [videoRef, onWarning]);
 
-  const badgeLabel =
-    status === "live" ? "Live" : status === "no-feed" ? "No Feed" : "Checking";
+  let badgeLabel: string;
+  if (status === "live") badgeLabel = "Live";
+  else if (status === "no-feed") badgeLabel = "No Feed";
+  else badgeLabel = "Checking";
 
-  const badgeClass = `${styles.badge} ${status === "live" ? styles.badgeLive : status === "no-feed" ? styles.badgeNoFeed : styles.badgeChecking}`;
+  let badgeVariant: string;
+  if (status === "live") badgeVariant = styles.badgeLive;
+  else if (status === "no-feed") badgeVariant = styles.badgeNoFeed;
+  else badgeVariant = styles.badgeChecking;
+  const badgeClass = `${styles.badge} ${badgeVariant}`;
 
   return (
     <div className={styles.container}>

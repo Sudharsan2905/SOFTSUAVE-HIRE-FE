@@ -111,7 +111,7 @@ export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
     } catch (e: unknown) {
       const msg =
         (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast.error(msg || (editMode ? "Failed to update assessment" : "Failed to create assessment"));
+      toast.error(msg ?? (editMode ? "Failed to update assessment" : "Failed to create assessment"));
     } finally {
       setSaving(false);
     }

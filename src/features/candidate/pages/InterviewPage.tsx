@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, RefObject } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styles from "./InterviewPage.module.css";
 import { Button } from "@/components/ui/Button";
@@ -168,7 +168,7 @@ export default function InterviewPage() {
 
   // ── Refs ────────────────────────────────────────────────────────────────────
   // S4325: useRef<HTMLVideoElement>(null) already returns RefObject<HTMLVideoElement>; assertion removed
-  const videoRef = useRef<HTMLVideoElement>(null) as RefObject<HTMLVideoElement>;
+  const videoRef = useRef<HTMLVideoElement>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const screenshotIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -592,12 +592,10 @@ export default function InterviewPage() {
 
   const networkBadgeClass =
     networkStatus === "connected" ? styles.monitorBadgeGreen : styles.monitorBadgeOrange;
-  const networkLabel =
-    networkStatus === "connected"
-      ? "Network Stable"
-      : networkStatus === "on_hold"
-        ? "Session Paused"
-        : "Reconnecting…";
+  let networkLabel: string;
+  if (networkStatus === "connected") networkLabel = "Network Stable";
+  else if (networkStatus === "on_hold") networkLabel = "Session Paused";
+  else networkLabel = "Reconnecting…";
 
   return (
     <div className={styles.page}>
@@ -649,11 +647,10 @@ export default function InterviewPage() {
                 const isActive = round.round_number === roundData.round_number;
                 const isCompleted = round.round_number < roundData.round_number;
                 // S3358: extract nested ternaries to named variables
-                const progress = isActive
-                  ? (answeredCount / questions.length) * 100
-                  : isCompleted
-                    ? 100
-                    : 0;
+                let progress: number;
+                if (isActive) progress = (answeredCount / questions.length) * 100;
+                else if (isCompleted) progress = 100;
+                else progress = 0;
                 const roundStatusClass = getRoundStatusClass(isActive, isCompleted, styles);
                 const roundStatusLabel = getRoundStatusLabel(isActive, isCompleted);
                 const roundMiniBarClass = getRoundMiniBarClass(isActive, isCompleted, styles);

@@ -118,12 +118,7 @@ export function DateRangePicker({
   const handleDayClick = (day: Date) => {
     const dayStr = format(day, "yyyy-MM-dd");
     const fromParsed = value.from ? parseISO(value.from) : null;
-    if (selectionPhase === "from") {
-      onChange({ from: dayStr, to: "" });
-      setSelectionPhase("to");
-    // Fix S6660: collapse else + inner if into else-if
-    } else if (fromParsed && isBefore(day, fromParsed) && !isSameDay(day, fromParsed)) {
-      // If to < from, restart selection
+    if (selectionPhase === "from" || (fromParsed && isBefore(day, fromParsed) && !isSameDay(day, fromParsed))) {
       onChange({ from: dayStr, to: "" });
       setSelectionPhase("to");
     } else {
@@ -162,8 +157,7 @@ export function DateRangePicker({
       </button>
 
       {open && (
-        // Fix S6819 (line 128): popup is not a dialog — use role="region" with aria-label
-        <div className={styles.popup} role="region" aria-label="Date range picker">
+        <section className={styles.popup} aria-label="Date range picker">
           {/* Month navigation */}
           <div className={styles.calNav}>
             <button
@@ -185,8 +179,7 @@ export function DateRangePicker({
             </button>
           </div>
 
-          {/* Day grid — Fix S6819 (line 151): use role="grid" for a calendar grid */}
-          <div className={styles.calGrid} role="grid" aria-label={format(viewDate, "MMMM yyyy")}>
+          <div className={styles.calGrid} aria-label={format(viewDate, "MMMM yyyy")}>
             {DAY_LABELS.map((d) => (
               <div key={d} className={styles.calDayHeader}>{d}</div>
             ))}
@@ -209,8 +202,6 @@ export function DateRangePicker({
               const cls = getDayClassNames(day, fromParsed, toParsed, hoverParsed, selectionPhase, today, viewDate);
 
               return (
-                // Fix S6819 (line 189): role="gridcell" matches the grid container
-                // Fix S6811 (line 189): use aria-selected (supported on gridcell) instead of aria-pressed
                 <button
                   key={dayStr}
                   type="button"
@@ -220,8 +211,7 @@ export function DateRangePicker({
                   onMouseEnter={() => selectionPhase === "to" && !isDisabled && setHoverDate(dayStr)}
                   onMouseLeave={() => setHoverDate("")}
                   aria-label={format(day, "PPP")}
-                  role="gridcell"
-                  aria-selected={isSelected}
+                  aria-pressed={isSelected}
                 >
                   {format(day, "d")}
                 </button>
@@ -238,7 +228,7 @@ export function DateRangePicker({
               Clear
             </button>
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
