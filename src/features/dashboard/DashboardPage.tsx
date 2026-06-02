@@ -2,12 +2,13 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "@/store";
 import { Spinner } from "@/components/ui/Spinner";
+import { UserRole } from "@/types";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const activeWorkspace = useAppSelector((s) => s.workspace.activeWorkspace);
   const user = useAppSelector((s) => s.auth.user);
-  const isSuperAdmin = user?.role === "super_admin";
+  const isSuperAdmin = user?.role === UserRole.SUPER_ADMIN;
 
   useEffect(() => {
     if (activeWorkspace && activeWorkspace.name !== "Common") {

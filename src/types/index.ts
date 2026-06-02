@@ -1,6 +1,10 @@
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
-export type UserRole = "super_admin" | "admin" | "candidate";
+export enum UserRole {
+  SUPER_ADMIN = "super_admin",
+  ADMIN = "admin",
+  CANDIDATE = "candidate",
+}
 
 export interface User {
   id: string;
@@ -190,6 +194,19 @@ export interface Submission {
   current_question_idx?: number;
   created_at: string;
   updated_at: string;
+}
+
+// ─── Submission Status (candidate route guard) ────────────────────────────────
+
+export interface SubmissionStatusResponse {
+  submission_id: string;
+  status: SubmissionStatus;
+  assessment_id: string;
+  candidate_id: string;
+  current_round: number;
+  completed_at?: string | null;
+  paused_at?: string | null;
+  malpractice_reason?: string | null;
 }
 
 // ─── Interview Session / Network ─────────────────────────────────────────────

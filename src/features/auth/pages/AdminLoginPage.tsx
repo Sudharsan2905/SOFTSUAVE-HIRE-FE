@@ -9,6 +9,7 @@ import { adminLogin } from "@/store/slices/authSlice";
 import { Button } from "@/components/ui/Button";
 import { IconMail, IconLock, IconEye, IconEyeOff } from "@/assets/icons";
 import logoUrl from "@/assets/favicon.svg";
+import { UserRole } from "@/types";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -20,7 +21,7 @@ type FormData = z.infer<typeof schema>;
 export default function AdminLoginPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading } = useAppSelector((s) => s.auth);
+  const { isAuthenticated, isLoading, user } = useAppSelector((s) => s.auth);
   const [showPass, setShowPass] = useState(false);
 
   const {
@@ -32,7 +33,8 @@ export default function AdminLoginPage() {
   });
 
   useEffect(() => {
-    if (isAuthenticated) navigate("/question-bank", { replace: true });
+    const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
+    if (isAuthenticated && isAdmin) navigate("/question-bank", { replace: true });
   }, [isAuthenticated, navigate]);
 
   const onSubmit = (data: FormData) => {

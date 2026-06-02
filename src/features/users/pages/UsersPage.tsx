@@ -22,7 +22,7 @@ import { Tooltip } from "@/components/ui/Tooltip";
 import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useAppSelector } from "@/store";
-import { User, SortOrder } from "@/types";
+import { User, SortOrder, UserRole } from "@/types";
 import { getAvatarColor, getInitials, getFullName } from "@/utils/helpers";
 import toast from "react-hot-toast";
 
@@ -41,7 +41,7 @@ export default function UsersPage() {
     last_name: "",
     email: "",
     password: "",
-    role: "admin",
+    role: UserRole.ADMIN,
   });
   const [showPassword, setShowPassword] = useState(false);
   const [createWsIds, setCreateWsIds] = useState<string[]>([]);
@@ -61,8 +61,8 @@ export default function UsersPage() {
           )
         : list;
       const sorted = [...filteredList].sort((a, b) => {
-        if (a.role === "super_admin" && b.role !== "super_admin") return -1;
-        if (a.role !== "super_admin" && b.role === "super_admin") return 1;
+        if (a.role === UserRole.SUPER_ADMIN && b.role !== UserRole.SUPER_ADMIN) return -1;
+        if (a.role !== UserRole.SUPER_ADMIN && b.role === UserRole.SUPER_ADMIN) return 1;
         const da = new Date(a.created_at).getTime();
         const db2 = new Date(b.created_at).getTime();
         return sortOrder === "desc" ? db2 - da : da - db2;
@@ -80,14 +80,14 @@ export default function UsersPage() {
   }, [fetchUsers]);
 
   const openCreate = () => {
-    setForm({ first_name: "", last_name: "", email: "", password: "", role: "admin" });
+    setForm({ first_name: "", last_name: "", email: "", password: "", role: UserRole.ADMIN });
     setCreateWsIds([]);
     setShowPassword(false);
     setShowCreate(true);
   };
 
   const handleCreate = async () => {
-    const needsWorkspace = form.role !== "super_admin";
+    const needsWorkspace = form.role !== UserRole.SUPER_ADMIN;
     if (
       !form.first_name.trim() ||
       !form.email.trim() ||
@@ -145,7 +145,7 @@ export default function UsersPage() {
       <div className={viewMode === "grid" ? styles.grid : styles.list}>
         {users.map((user) => {
           const isActive = user.is_active !== false;
-          const isSuperAdmin = user.role === "super_admin";
+          const isSuperAdmin = user.role === UserRole.SUPER_ADMIN;
           return (
             <div key={user.id} className={`${styles.card} ${isActive ? "" : styles.cardInactive}`}>
               <div className={styles.cardLeft}>
@@ -256,7 +256,7 @@ export default function UsersPage() {
                 !form.first_name.trim() ||
                 !form.email.trim() ||
                 !form.password.trim() ||
-                (form.role !== "super_admin" && createWsIds.length === 0)
+                (form.role !== UserRole.SUPER_ADMIN && createWsIds.length === 0)
               }
             >
               Create
@@ -318,14 +318,14 @@ export default function UsersPage() {
           <Select
             label="Role"
             value={form.role}
-            onChange={(v) => setForm((p) => ({ ...p, role: v }))}
+            onChange={(v) => setForm((p) => ({ ...p, role: v as UserRole }))}
             options={[
-              { value: "admin", label: "Admin" },
-              { value: "super_admin", label: "Super Admin" },
+              { value: UserRole.ADMIN, label: "Admin" },
+              { value: UserRole.SUPER_ADMIN, label: "Super Admin" },
             ]}
             showRequired
           />
-          {form.role !== "super_admin" && (
+          {form.role !== UserRole.SUPER_ADMIN && (
             <div>
               <p
                 style={{

@@ -93,7 +93,7 @@ export default function RegisterPage() {
     }
     try {
       await dispatch(candidateRegister(finalPayload)).unwrap();
-      if (shareLink) navigate(`/assessment/${shareLink}/instructions`);
+      if (shareLink) navigate(`/candidate/login?share=${shareLink}`);
       else navigate("/candidate/dashboard");
     } catch (e: unknown) {
       setError("root", { message: (e as { message?: string })?.message || "Registration failed" });

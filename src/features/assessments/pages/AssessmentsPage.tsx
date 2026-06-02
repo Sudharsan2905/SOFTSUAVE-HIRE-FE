@@ -18,7 +18,7 @@ import {
 import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
-import { Assessment, PaginationMeta, ViewMode, SortOrder } from "@/types";
+import { Assessment, PaginationMeta, ViewMode, SortOrder, UserRole } from "@/types";
 import { generateShareUrl, copyToClipboard } from "@/utils/helpers";
 import toast from "react-hot-toast";
 import {
@@ -38,7 +38,7 @@ export default function AssessmentsPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const { activeWorkspace, workspaces: allWorkspaces } = useAppSelector((s) => s.workspace);
   const user = useAppSelector((s) => s.auth.user);
-  const isSuperAdmin = user?.role === "super_admin";
+  const isSuperAdmin = user?.role === UserRole.SUPER_ADMIN;
 
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
@@ -405,7 +405,7 @@ export default function AssessmentsPage() {
                 setGeneratingLink(true);
                 try {
                   const { data } = await api.post(
-                    `/api/assessments/share/expirable?workspace_id=${workspaceId}`,
+                    `/api/workspaces/${workspaceId}/assessments/share/expirable`,
                     {
                       assessment_id: selected.id,
                       start_time: start.toISOString(),

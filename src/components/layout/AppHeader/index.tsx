@@ -20,6 +20,7 @@ import { Tooltip } from "@/components/ui/Tooltip";
 import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { UserRole } from "@/types";
 import styles from "./AppHeader.module.css";
 
 export function AppHeader() {
@@ -33,7 +34,7 @@ export function AppHeader() {
   const fullName = user ? getFullName(user) : "";
   const initials = fullName ? getInitials(fullName) : "U";
   const avatarColor = fullName ? getAvatarColor(fullName) : "#2563eb";
-  const roleLabel = user?.role === "super_admin" ? "Super Admin" : "Admin";
+  const roleLabel = user?.role === UserRole.SUPER_ADMIN ? "Super Admin" : "Admin";
   const today = format(new Date(), "EEE, dd MMM yyyy");
 
   /* Popup states */

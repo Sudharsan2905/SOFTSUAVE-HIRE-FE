@@ -187,6 +187,18 @@
   border-color: var(--success-200, #bbf7d0);
 }
 
+.pillWarning {
+  background: var(--warning-50, #fffbeb);
+  color: var(--warning-700, #b45309);
+  border-color: var(--warning-200, #fde68a);
+}
+
+.pillError {
+  background: var(--error-50, #fef2f2);
+  color: var(--error-700, #b91c1c);
+  border-color: var(--error-200, #fecaca);
+}
+
 /* ── Footer / start button ───────────────────────────────────────────────── */
 .footer {
   background: var(--bg-surface);

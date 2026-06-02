@@ -5,6 +5,7 @@ import { NoAccessPage } from "@/components/shared/NoAccessPage";
 import { IconExternalLink } from "@/assets/icons";
 import { LinkStatusScreen, LinkStatus } from "@/features/candidate/components/LinkStatusScreen";
 import { useAppSelector } from "@/store";
+import { UserRole } from "@/types";
 import { api } from "@/utils/api";
 import { isAssessmentDone } from "@/utils/assessmentSession";
 
@@ -37,7 +38,7 @@ export function CandidateDashboard() {
 export default function AssessmentEntry() {
   const { shareLink } = useParams<{ shareLink: string }>();
   const { isAuthenticated, user } = useAppSelector((s) => s.auth);
-  const isCandidate = isAuthenticated && user?.role === "candidate";
+  const isCandidate = isAuthenticated && user?.role === UserRole.CANDIDATE;
 
   const [checking, setChecking] = useState(true);
   const [linkStatus, setLinkStatus] = useState<LinkStatus | "valid" | null>(null);

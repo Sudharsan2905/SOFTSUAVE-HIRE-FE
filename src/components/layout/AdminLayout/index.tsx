@@ -2,6 +2,7 @@ import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import styles from "./AdminLayout.module.css";
 import { useAppSelector } from "@/store";
+import { UserRole } from "@/types";
 import { Sidebar } from "../Sidebar";
 import { AppHeader } from "../AppHeader";
 import { BottomNav } from "../BottomNav";
@@ -13,8 +14,8 @@ export function AdminLayout() {
 
   // Explicit allowlist — only admin/super_admin may enter. Any other role
   // (candidate, undefined, unknown) is rejected to prevent privilege escalation.
-  const isAdmin = user?.role === "admin" || user?.role === "super_admin";
-  if (user?.role === "candidate") return <Navigate to="/candidate/login" replace />;
+  const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
+  if (user?.role === UserRole.CANDIDATE) return <Navigate to="/admin/no-access" replace />;
   else if (!isAdmin) return <Navigate to="/admin/login" replace />;
 
   return (

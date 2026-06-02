@@ -1,4 +1,5 @@
 .spinner {
+  display: block;
   border-radius: 50%;
   border: 2.5px solid var(--border-default);
   border-top-color: var(--primary-600);

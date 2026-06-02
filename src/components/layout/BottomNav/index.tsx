@@ -9,6 +9,7 @@ import {
 } from "@/assets/icons";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { WorkspaceSwitcher } from "@/components/layout/WorkspaceSwitcher";
+import { UserRole } from "@/types";
 import styles from "./BottomNav.module.css";
 
 interface NavItem {
@@ -23,7 +24,7 @@ export function BottomNav() {
   const { activeWorkspace } = useAppSelector((s) => s.workspace);
   const user = useAppSelector((s) => s.auth.user);
   const navigate = useNavigate();
-  const isSuperAdmin = user?.role === "super_admin";
+  const isSuperAdmin = user?.role === UserRole.SUPER_ADMIN;
 
   const [tappedKey, setTappedKey] = useState<string | null>(null);
 

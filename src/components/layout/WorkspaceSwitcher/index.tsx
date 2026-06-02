@@ -4,7 +4,7 @@ import styles from "./WorkspaceSwitcher.module.css";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { setActiveWorkspace, setWorkspaces, clearWorkspace } from "@/store/slices/workspaceSlice";
 import { api } from "@/utils/api";
-import { Workspace, User } from "@/types";
+import { Workspace, User, UserRole } from "@/types";
 import {
   IconChevronDown,
   IconSettings,
@@ -30,7 +30,7 @@ export function WorkspaceSwitcher({ collapsed }: { collapsed?: boolean }) {
   const navigate = useNavigate();
   const { activeWorkspace, workspaces } = useAppSelector((s) => s.workspace);
   const user = useAppSelector((s) => s.auth.user);
-  const isSuperAdmin = user?.role === "super_admin";
+  const isSuperAdmin = user?.role === UserRole.SUPER_ADMIN;
 
   const [isOpen, setIsOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);

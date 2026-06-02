@@ -5,10 +5,12 @@ import { AdminLayout } from "@/components/layout/AdminLayout";
 import { NoAccessPage } from "@/components/shared/NoAccessPage";
 import { CandidateRoute } from "@/features/candidate/components/CandidateRoute";
 import { useAppSelector } from "@/store";
+import { UserRole } from "@/types";
+import NeonLoader from "./components/ui/NeonLoader";
 
 const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
   const user = useAppSelector((s) => s.auth.user);
-  if (user?.role !== "super_admin") {
+  if (user?.role !== UserRole.SUPER_ADMIN) {
     return (
       <NoAccessPage
         title="Super Admin Only"
@@ -77,7 +79,12 @@ export default function App() {
         </Route>
 
         {/* Admin auth */}
+        <Route path="/loader" element={<NeonLoader />} />
         <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route
+          path="/admin/no-access"
+          element={<NoAccessPage backTo="/admin/login" backLabel="Go to Admin Login" />}
+        />
 
         {/* Admin protected routes */}
         <Route element={<AdminLayout />}>

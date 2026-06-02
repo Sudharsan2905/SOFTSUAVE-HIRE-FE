@@ -9,7 +9,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Spinner } from "@/components/ui/Spinner";
 import { getFullName, getInitials, getAvatarColor } from "@/utils/helpers";
 import { api } from "@/utils/api";
-import { User } from "@/types";
+import { User, UserRole } from "@/types";
 import toast from "react-hot-toast";
 import styles from "./UserProfilePage.module.css";
 
@@ -48,7 +48,7 @@ export default function UserProfilePage() {
   const currentUser = useAppSelector((s) => s.auth.user);
   const { workspaces: allWorkspaces } = useAppSelector((s) => s.workspace);
 
-  const isSuperAdmin = currentUser?.role === "super_admin";
+  const isSuperAdmin = currentUser?.role === UserRole.SUPER_ADMIN;
   const isViewingOther = !!userId && userId !== currentUser?.id;
   const canEditThis = isSuperAdmin || !isViewingOther;
 
@@ -241,9 +241,9 @@ export default function UserProfilePage() {
   const initials = fullName ? getInitials(fullName) : "U";
   const avatarBg = fullName ? getAvatarColor(fullName) : "var(--primary-600)";
   const roleLabel =
-    activeUser.role === "super_admin"
+    activeUser.role === UserRole.SUPER_ADMIN
       ? "Super Admin"
-      : activeUser.role === "admin"
+      : activeUser.role === UserRole.ADMIN
         ? "Admin"
         : "Candidate";
   const isActive = activeUser.is_active !== false;

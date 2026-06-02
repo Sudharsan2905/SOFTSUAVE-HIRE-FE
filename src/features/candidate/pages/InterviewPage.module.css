@@ -1,4 +1,4 @@
-/* ── Page shell ─────────────────────────────────────────────────────────────── */
+/* ── Page shell ─────────────────────────────────────────────────────────── */
 
 .page {
   min-height: 100vh;
@@ -25,30 +25,257 @@
   font-size: 14px;
 }
 
-/* ── Body row ────────────────────────────────────────────────────────────────── */
+/* ── Body (3-column grid) ────────────────────────────────────────────────── */
 
 .body {
-  display: flex;
   flex: 1;
   min-height: 0;
+  display: grid;
+  grid-template-columns: 240px 1fr 260px;
+  height: calc(100vh - 64px);
+  overflow: hidden;
   position: relative;
 }
 
-/* ── Main content ────────────────────────────────────────────────────────────── */
+/* ── Left Sidebar ────────────────────────────────────────────────────────── */
+
+.leftSidebar {
+  overflow-y: auto;
+  background: var(--bg-surface);
+  border-right: 1.5px solid var(--border-default);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Progress header */
+.progressHeader {
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-muted);
+}
+
+.progressHeaderLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 6px;
+}
+
+.progressRoundTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.progressBarOuter {
+  height: 6px;
+  background: var(--border-default);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progressBarInner {
+  height: 100%;
+  background: var(--primary-500);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.progressStats {
+  display: flex;
+  gap: 6px;
+}
+
+.progressStat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 4px 4px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+}
+
+.progressStatValue {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.progressStatLabel {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.progressStatAnswered .progressStatValue {
+  color: #15803d;
+}
+
+.progressStatAnswered {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.progressStatRemaining .progressStatValue {
+  color: var(--error-600, #dc2626);
+}
+
+/* ── Round list section ──────────────────────────────────────────────────── */
+
+.roundListSection {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.sidebarSectionLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+
+.roundCard {
+  position: relative;
+  padding: 9px 10px 8px 13px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--border-default);
+  background: var(--bg-surface);
+  margin-bottom: 6px;
+  overflow: hidden;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.roundCard:last-child {
+  margin-bottom: 0;
+}
+
+.roundCardActive {
+  border-color: var(--primary-300, #93c5fd);
+  background: var(--primary-50, #eff6ff);
+}
+
+.roundCardCompleted {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.roundCard::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 2px 0 0 2px;
+}
+
+.roundCardActive::before {
+  background: var(--primary-500);
+}
+
+.roundCardCompleted::before {
+  background: #4ade80;
+}
+
+.roundCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 3px;
+}
+
+.roundCardName {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.roundCardMeta {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  margin-bottom: 5px;
+}
+
+.roundStatusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.roundStatusActive {
+  background: var(--primary-100, #dbeafe);
+  color: var(--primary-700, #1d4ed8);
+}
+
+.roundStatusCompleted {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.roundStatusPending {
+  background: var(--bg-muted);
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-default);
+}
+
+.roundMiniBar {
+  height: 3px;
+  background: var(--border-default);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.roundMiniBarFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.roundMiniBarActive {
+  background: var(--primary-500);
+}
+
+.roundMiniBarDone {
+  background: #4ade80;
+}
+
+/* ── Question nav section ────────────────────────────────────────────────── */
+
+.questionNavSection {
+  padding: 12px 10px;
+  flex: 1;
+}
+
+/* ── Main content ────────────────────────────────────────────────────────── */
 
 .main {
-  flex: 1;
-  min-width: 0;
   overflow-y: auto;
   padding: 28px 32px 40px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  /* Offset right sidebar width so content doesn't slide under it */
-  margin-right: 280px;
+  background: var(--bg-default);
 }
 
-/* ── Round badge row ─────────────────────────────────────────────────────────── */
+/* ── Round badge row ─────────────────────────────────────────────────────── */
 
 .roundBadgeRow {
   display: flex;
@@ -89,7 +316,7 @@
   border: 1px solid var(--primary-200, #bfdbfe);
 }
 
-/* ── Question card ───────────────────────────────────────────────────────────── */
+/* ── Question card ───────────────────────────────────────────────────────── */
 
 .questionCard {
   background: var(--bg-surface);
@@ -112,7 +339,7 @@
   font-weight: 500;
 }
 
-/* ── MCQ options ─────────────────────────────────────────────────────────────── */
+/* ── MCQ options ─────────────────────────────────────────────────────────── */
 
 .options {
   display: flex;
@@ -130,9 +357,7 @@
   cursor: pointer;
   font-size: 14px;
   color: var(--text-primary);
-  transition:
-    border-color 0.15s,
-    background 0.15s;
+  transition: border-color 0.15s, background 0.15s;
   background: var(--bg-surface);
   user-select: none;
 }
@@ -160,7 +385,7 @@
   line-height: 1.5;
 }
 
-/* ── Essay ───────────────────────────────────────────────────────────────────── */
+/* ── Essay ───────────────────────────────────────────────────────────────── */
 
 .essayWrapper {
   display: flex;
@@ -194,7 +419,7 @@
   color: var(--text-tertiary);
 }
 
-/* ── Navigation row ──────────────────────────────────────────────────────────── */
+/* ── Navigation row ──────────────────────────────────────────────────────── */
 
 .navRow {
   display: flex;
@@ -209,36 +434,20 @@
   gap: 10px;
 }
 
-/* ── Right sidebar ───────────────────────────────────────────────────────────── */
+/* ── Right Sidebar ───────────────────────────────────────────────────────── */
 
-.sidebar {
-  position: fixed;
-  top: 64px; /* height of CandidateHeader */
-  right: 0;
-  width: 280px;
-  height: calc(100vh - 64px);
+.rightSidebar {
+  overflow-y: auto;
   background: var(--bg-surface);
   border-left: 1.5px solid var(--border-default);
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 0;
-  z-index: var(--z-sticky, 40);
 }
 
-.sidebarSectionLabel {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  margin-bottom: 10px;
-}
-
-/* ── Timer card ──────────────────────────────────────────────────────────────── */
+/* ── Timer card ──────────────────────────────────────────────────────────── */
 
 .timerCard {
-  padding: 16px 16px 14px;
+  padding: 16px 14px 14px;
   border-bottom: 1px solid var(--border-default);
 }
 
@@ -246,7 +455,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .timerBox {
@@ -256,12 +465,12 @@
   background: var(--bg-muted);
   border: 1.5px solid var(--border-default);
   border-radius: var(--radius-md);
-  padding: 8px 12px 6px;
-  min-width: 54px;
+  padding: 7px 10px 5px;
+  min-width: 48px;
 }
 
 .timerDigit {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
   color: var(--text-primary);
   line-height: 1;
@@ -279,14 +488,13 @@
 }
 
 .timerSep {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
   color: var(--text-secondary);
   align-self: flex-start;
-  padding-top: 6px;
+  padding-top: 5px;
 }
 
-/* Low-time state */
 .timerLow .timerDigit,
 .timerLow .timerSep {
   color: var(--error-600);
@@ -302,70 +510,74 @@
 }
 
 @keyframes blink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 
-/* ── Rounds accordion ────────────────────────────────────────────────────────── */
+/* ── Monitoring status panel ─────────────────────────────────────────────── */
 
-.roundsCard {
-  padding: 14px 16px 10px;
+.monitoringStatus {
+  padding: 12px 14px;
   border-bottom: 1px solid var(--border-default);
 }
 
-.accordionItem {
-  margin-bottom: 6px;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.accordionHeader {
-  width: 100%;
+.monitorBadgeList {
   display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.monitorBadge {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  background: var(--bg-muted);
-  border: none;
-  cursor: pointer;
-  font-size: 12px;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
   font-weight: 600;
-  color: var(--text-secondary);
-  text-align: left;
-  transition: background 0.12s;
+  border: 1px solid;
 }
 
-.accordionHeader:hover {
-  background: var(--bg-default);
+.monitorBadgeGreen {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #86efac;
 }
 
-.accordionHeaderActive {
-  background: var(--primary-50);
-  color: var(--primary-700);
+.monitorBadgeOrange {
+  background: #fff7ed;
+  color: #c2410c;
+  border-color: #fb923c;
 }
 
-.accordionChevron {
-  font-size: 9px;
-  opacity: 0.6;
+.monitorBadgeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+  animation: dotPulse 1.8s infinite;
 }
 
-.accordionBody {
-  padding: 10px 10px 12px;
-  background: var(--bg-surface);
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
-/* ── Question grid (inside accordion) ───────────────────────────────────────── */
+/* ── Monitor cards (video / audio) ───────────────────────────────────────── */
+
+.monitorCard {
+  padding: 14px 14px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+/* ── Question grid ───────────────────────────────────────────────────────── */
 
 .qGrid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 5px;
+  margin-bottom: 4px;
 }
 
 .qBtn {
@@ -381,10 +593,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition:
-    border-color 0.12s,
-    background 0.12s,
-    color 0.12s;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
   padding: 0;
   line-height: 1;
 }
@@ -394,21 +603,18 @@
   color: var(--primary-600);
 }
 
-/* Answered: green */
 .qBtnAnswered {
   background: #dcfce7 !important;
   border-color: #4ade80 !important;
   color: #15803d !important;
 }
 
-/* Visited but not answered: violet / accent-500 */
 .qBtnVisited {
   background: #ede9fe !important;
   border-color: #8b5cf6 !important;
   color: #6d28d9 !important;
 }
 
-/* Active question: primary-600 border */
 .qBtnActive {
   border-color: var(--primary-600) !important;
   background: var(--primary-50) !important;
@@ -416,7 +622,6 @@
   font-weight: 700;
 }
 
-/* Disabled (other rounds) */
 .qBtnDisabled {
   opacity: 0.35;
   cursor: not-allowed;
@@ -425,13 +630,13 @@
   border-color: var(--border-muted, var(--border-default)) !important;
 }
 
-/* ── Legend ──────────────────────────────────────────────────────────────────── */
+/* ── Legend ──────────────────────────────────────────────────────────────── */
 
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 12px;
-  margin-top: 12px;
+  gap: 4px 10px;
+  margin-top: 10px;
 }
 
 .legendItem {
@@ -466,105 +671,96 @@
   border-color: var(--primary-600);
 }
 
-/* ── Stats card ──────────────────────────────────────────────────────────────── */
+/* ── Left sidebar mobile toggle ──────────────────────────────────────────── */
 
-.statsCard {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border-default);
-}
-
-.statsRow {
-  display: flex;
-  gap: 0;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.statItem {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 10px 6px 8px;
-  border-right: 1px solid var(--border-default);
-  background: var(--bg-muted);
-}
-
-.statItem:last-child {
-  border-right: none;
-}
-
-.statValue {
+.leftToggleBtn {
+  display: none;
+  position: fixed;
+  bottom: 24px;
+  left: 16px;
+  z-index: 50;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--primary-600);
+  color: #fff;
+  border: none;
+  cursor: pointer;
   font-size: 18px;
-  font-weight: 800;
-  color: var(--text-primary);
-  line-height: 1;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, transform 0.15s;
 }
 
-.statLabel {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
-  margin-top: 4px;
+.leftToggleBtn:hover {
+  background: var(--primary-700, #1d4ed8);
+  transform: scale(1.06);
 }
 
-.statAnswered .statValue {
-  color: #15803d;
+.leftSidebarBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 49;
+  backdrop-filter: blur(1px);
+  animation: fadeIn 0.18s ease;
 }
 
-.statAnswered {
-  background: #f0fdf4;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.statRemaining .statValue {
-  color: var(--error-600, #dc2626);
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 1100px) {
+  .body {
+    grid-template-columns: 1fr 260px;
+  }
+
+  .leftSidebar {
+    display: none;
+  }
+
+  /* Compound selector: higher specificity overrides display:none above */
+  .leftSidebar.leftSidebarOpen {
+    display: flex;
+    position: fixed;
+    left: 0;
+    top: 64px;
+    height: calc(100vh - 64px);
+    width: 256px;
+    z-index: 50;
+    background: var(--bg-surface);
+    border-right: 1.5px solid var(--border-default);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    overflow-y: auto;
+  }
+
+  .leftToggleBtn {
+    display: flex;
+  }
 }
 
-.statRemaining {
-  background: #fff7ed;
-}
-
-/* ── Monitor cards (video / audio) ───────────────────────────────────────────── */
-
-.monitorCard {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border-default);
-}
-
-/* ── Responsive ──────────────────────────────────────────────────────────────── */
-
-@media (max-width: 900px) {
-  .sidebar {
-    position: static;
-    width: 100%;
+@media (max-width: 768px) {
+  .body {
+    grid-template-columns: 1fr;
     height: auto;
-    border-left: none;
-    border-top: 1.5px solid var(--border-default);
-    flex-direction: row;
-    flex-wrap: wrap;
-    overflow-x: auto;
+    overflow: visible;
   }
 
   .main {
-    margin-right: 0;
     padding: 20px 16px 32px;
+    overflow-y: visible;
+    height: auto;
   }
 
-  .body {
-    flex-direction: column;
-  }
-
-  .timerCard,
-  .roundsCard,
-  .statsCard,
-  .monitorCard {
-    flex: 0 0 auto;
-    min-width: 240px;
-    border-bottom: none;
-    border-right: 1px solid var(--border-default);
+  .rightSidebar {
+    overflow-y: visible;
+    height: auto;
+    border-left: none;
+    border-top: 1.5px solid var(--border-default);
   }
 }
 

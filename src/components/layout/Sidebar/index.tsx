@@ -12,6 +12,7 @@ import {
   IconUsers,
   IconDotsVertical,
 } from "@/assets/icons";
+import { UserRole } from "@/types";
 
 const COLLAPSED_KEY = "ssh_sidebar_collapsed";
 const COLLAPSED_WIDTH = 65;
@@ -39,7 +40,7 @@ const adminNav: NavItem[] = [
 export function Sidebar() {
   const user = useAppSelector((s) => s.auth.user);
   const { activeWorkspace } = useAppSelector((s) => s.workspace);
-  const isSuperAdmin = user?.role === "super_admin";
+  const isSuperAdmin = user?.role === UserRole.SUPER_ADMIN;
 
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem(COLLAPSED_KEY) === "true"

@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  RefObject,
-} from "react";
+import React, { useState, useEffect, useRef, useCallback, RefObject } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styles from "./InterviewPage.module.css";
 import { Button } from "@/components/ui/Button";
@@ -20,7 +14,7 @@ import { AudioMonitor } from "@/features/candidate/components/AudioMonitor";
 import { ConnectionLostOverlay } from "@/features/candidate/components/ConnectionLostOverlay";
 import { useTabMonitoring } from "@/features/candidate/hooks/useTabMonitoring";
 import { useAudioMonitoring } from "@/features/candidate/hooks/useAudioMonitoring";
-import { useNetworkMonitoring } from "@/features/candidate/hooks/useNetworkMonitoring";
+import { useInterviewSession } from "@/features/candidate/context/InterviewSessionContext";
 import { useAppSelector } from "@/store/hooks";
 import { markAssessmentDone } from "@/utils/assessmentSession";
 import toast from "react-hot-toast";
@@ -41,7 +35,6 @@ interface RoundApiResponse {
   screenshot_enabled?: boolean;
   screenshot_interval_minutes?: number;
   screenshot_count?: number;
-  // Session state fields for resume-after-network-loss
   remaining_seconds?: number | null;
   current_question_idx?: number;
   session_status?: string;
@@ -76,7 +69,6 @@ export default function InterviewPage() {
   const navigate = useNavigate();
 
   const user = useAppSelector((state) => state.auth.user);
-  const accessToken = useAppSelector((state) => state.auth.accessToken);
   const candidateName = user
     ? [user.first_name, user.last_name].filter(Boolean).join(" ")
     : undefined;
@@ -97,15 +89,14 @@ export default function InterviewPage() {
 
   // ── Assessment / rounds state ───────────────────────────────────────────────
   const [assessmentRounds, setAssessmentRounds] = useState<RoundConfig[]>([]);
-  const [roundsExpanded, setRoundsExpanded] = useState<Record<number, boolean>>({});
   const [monitoringConfig, setMonitoringConfig] = useState<Partial<MonitoringConfig>>({});
 
-  // ── Network / timer pausing ──────────────────────────────────────────────────
-  // Whether the timer should be running (false when network is down)
+  // ── Network / timer pausing ─────────────────────────────────────────────────
   const [timerActive, setTimerActive] = useState(true);
 
-  // ── Monitoring state ────────────────────────────────────────────────────────
+  // ── UI state ────────────────────────────────────────────────────────────────
   const [audioActive, setAudioActive] = useState(false);
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
 
   // ── Refs ────────────────────────────────────────────────────────────────────
   const videoRef = useRef<HTMLVideoElement>(null) as RefObject<HTMLVideoElement>;
@@ -114,64 +105,75 @@ export default function InterviewPage() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answerSyncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const submittingRef = useRef(false);
-  const finishRoundRef = useRef<(autoSubmit?: boolean) => Promise<void>>(
-    async () => { /* placeholder */ }
-  );
-  // Stable refs for useNetworkMonitoring callbacks
+  const finishRoundRef = useRef<(autoSubmit?: boolean) => Promise<void>>(async () => {
+    /* placeholder */
+  });
   const timeLeftRef = useRef(timeLeft);
   const currentIdxRef = useRef(0);
 
-  useEffect(() => { submittingRef.current = submitting; }, [submitting]);
-  useEffect(() => { timeLeftRef.current = timeLeft; }, [timeLeft]);
-
-  // ── Network monitoring ───────────────────────────────────────────────────────
-  const { networkStatus } = useNetworkMonitoring({
-    submissionId,
-    accessToken,
-    onSessionState: useCallback((remainingSeconds, questionIdx) => {
-      // Server sent the last-known timer/position on connect — use it if server has
-      // a more recent value (i.e., the tab was refreshed or a new connection was opened)
-      if (remainingSeconds !== null && remainingSeconds !== undefined) {
-        setTimeLeft(remainingSeconds);
-      }
-      if (questionIdx !== undefined) {
-        setCurrentIdx(questionIdx);
-        currentIdxRef.current = questionIdx;
-      }
-    }, []),
-    onSessionOnHold: useCallback(() => {
-      setTimerActive(false);
-    }, []),
-    onResumeApproved: useCallback((remainingSeconds, questionIdx) => {
-      setTimerActive(true);
-      if (remainingSeconds !== null && remainingSeconds !== undefined) {
-        setTimeLeft(remainingSeconds);
-      }
-      if (questionIdx !== undefined) {
-        setCurrentIdx(questionIdx);
-        currentIdxRef.current = questionIdx;
-      }
-      toast.success("Your interview has been resumed by the administrator.");
-    }, []),
-    onTerminated: useCallback(() => {
-      toast.error("Your session has been terminated by an administrator.");
-      setTimeout(() => navigate(`/assessment/${shareLink ?? ""}`), 2000);
-    }, [navigate, shareLink]),
-    getRemainingSeconds: useCallback(() => timeLeftRef.current, []),
-    getCurrentQuestionIdx: useCallback(() => currentIdxRef.current, []),
-  });
-
-  // Pause/resume the timer based on network status
   useEffect(() => {
-    const isOffline = networkStatus === "offline" || networkStatus === "reconnecting" || networkStatus === "on_hold";
+    submittingRef.current = submitting;
+  }, [submitting]);
+  useEffect(() => {
+    timeLeftRef.current = timeLeft;
+  }, [timeLeft]);
+
+  // ── Shared WebSocket session ────────────────────────────────────────────────
+  const { networkStatus, sessionSubmissionId, startSession, registerCallbacks } =
+    useInterviewSession();
+
+  useEffect(() => {
+    if (submissionId && sessionSubmissionId !== submissionId) {
+      startSession(submissionId);
+    }
+  }, [submissionId, sessionSubmissionId, startSession]);
+
+  useEffect(() => {
+    registerCallbacks({
+      onSessionState: (remainingSeconds, questionIdx) => {
+        if (remainingSeconds !== null && remainingSeconds !== undefined) {
+          setTimeLeft(remainingSeconds);
+        }
+        if (questionIdx !== undefined) {
+          setCurrentIdx(questionIdx);
+          currentIdxRef.current = questionIdx;
+        }
+      },
+      onResumeApproved: (remainingSeconds, questionIdx) => {
+        if (remainingSeconds !== null && remainingSeconds !== undefined) {
+          setTimeLeft(remainingSeconds);
+        }
+        if (questionIdx !== undefined) {
+          setCurrentIdx(questionIdx);
+          currentIdxRef.current = questionIdx;
+        }
+        toast.success("Your interview has been resumed by the administrator.");
+      },
+      onTerminated: () => {
+        toast.error("Your session has been terminated by an administrator.");
+        setTimeout(() => navigate(`/assessment/${shareLink ?? ""}`), 2000);
+      },
+      getRemainingSeconds: () => timeLeftRef.current,
+      getCurrentQuestionIdx: () => currentIdxRef.current,
+    });
+  }, [registerCallbacks, navigate, shareLink]);
+
+  useEffect(() => {
+    const isOffline =
+      networkStatus === "offline" ||
+      networkStatus === "reconnecting" ||
+      networkStatus === "on_hold";
     setTimerActive(!isOffline);
   }, [networkStatus]);
 
   // ── Data fetching ───────────────────────────────────────────────────────────
-  const fetchRound = useCallback(async (): Promise<{ round: InterviewRoundData | null; monitoring: Partial<MonitoringConfig>; remainingSeconds: number | null; questionIdx: number }> => {
-    const { data } = await api.get(
-      `/api/candidate/submission/${submissionId}/round`
-    );
+  const fetchRound = useCallback(async (): Promise<{
+    round: InterviewRoundData | null;
+    monitoring: Partial<MonitoringConfig>;
+    remainingSeconds: number | null;
+    questionIdx: number;
+  }> => {
+    const { data } = await api.get(`/api/candidate/submission/${submissionId}/round`);
     const responseData: RoundApiResponse = data.data ?? {};
     const monitoring: Partial<MonitoringConfig> = {
       tab_monitoring: responseData.tab_monitoring ?? false,
@@ -198,19 +200,14 @@ export default function InterviewPage() {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [{ round: rd, monitoring: cfg, remainingSeconds, questionIdx }, assessment] = await Promise.all([
-        fetchRound(),
-        fetchAssessment(),
-      ]);
+      const [{ round: rd, monitoring: cfg, remainingSeconds, questionIdx }, assessment] =
+        await Promise.all([fetchRound(), fetchAssessment()]);
 
       if (rd) {
         setRoundData(rd);
-        // Restore from server-persisted timer if available, otherwise use round max duration
         const initialTime = remainingSeconds ?? (rd.max_duration_minutes || 30) * 60;
         setTimeLeft(initialTime);
         setMonitoringConfig(cfg);
-        setRoundsExpanded({ [rd.round_number]: true });
-        // Restore question position if we're resuming
         if (questionIdx > 0 && questionIdx < rd.questions.length) {
           setCurrentIdx(questionIdx);
           currentIdxRef.current = questionIdx;
@@ -228,12 +225,9 @@ export default function InterviewPage() {
       if (status === 403) {
         if (shareLink) markAssessmentDone(shareLink);
         const isRevoked = msg.toLowerCase().includes("revoked");
-        navigate(
-          isRevoked
-            ? `/assessment/${shareLink}`
-            : `/assessment/${shareLink}/completed`,
-          { replace: true }
-        );
+        navigate(isRevoked ? `/assessment/${shareLink}` : `/assessment/${shareLink}/completed`, {
+          replace: true,
+        });
       } else {
         toast.error("Failed to load questions");
       }
@@ -273,7 +267,9 @@ export default function InterviewPage() {
   );
 
   const roundDataRef = useRef<InterviewRoundData | null>(null);
-  useEffect(() => { roundDataRef.current = roundData; }, [roundData]);
+  useEffect(() => {
+    roundDataRef.current = roundData;
+  }, [roundData]);
 
   // ── Navigation helpers ──────────────────────────────────────────────────────
   const markVisited = useCallback((questionId: string) => {
@@ -313,9 +309,7 @@ export default function InterviewPage() {
       }
 
       try {
-        const { data } = await api.post(
-          `/api/candidate/submission/${submissionId}/finish-round`
-        );
+        const { data } = await api.post(`/api/candidate/submission/${submissionId}/finish-round`);
         if (data.data?.completed) {
           if (shareLink) markAssessmentDone(shareLink);
           navigate(`/assessment/${shareLink}/completed`, { replace: true });
@@ -359,9 +353,7 @@ export default function InterviewPage() {
       setShowMalpractice(true);
 
       try {
-        await api.post(`/api/candidate/submission/${submissionId}/malpractice`, {
-          type,
-        });
+        await api.post(`/api/candidate/submission/${submissionId}/malpractice`, { type });
       } catch {
         /* silent */
       }
@@ -369,7 +361,7 @@ export default function InterviewPage() {
     [submissionId]
   );
 
-  // ── Tab monitoring hook ─────────────────────────────────────────────────────
+  // ── Tab monitoring ──────────────────────────────────────────────────────────
   useTabMonitoring({
     enabled: monitoringConfig.tab_monitoring ?? false,
     submissionId: submissionId ?? "",
@@ -378,7 +370,7 @@ export default function InterviewPage() {
     }, [handleMalpractice]),
   });
 
-  // ── Audio monitoring hook ───────────────────────────────────────────────────
+  // ── Audio monitoring ────────────────────────────────────────────────────────
   useAudioMonitoring({
     enabled: monitoringConfig.audio_monitoring ?? false,
     submissionId: submissionId ?? "",
@@ -414,7 +406,7 @@ export default function InterviewPage() {
     }
   }, [monitoringConfig.audio_monitoring]);
 
-  // ── Countdown timer (respects timerActive) ──────────────────────────────────
+  // ── Countdown timer ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (!roundData || !timerActive) return;
     timerRef.current = setInterval(() => {
@@ -445,8 +437,7 @@ export default function InterviewPage() {
   useEffect(() => {
     if (!monitoringConfig.screenshot_enabled || !submissionId) return;
 
-    const intervalMs =
-      (monitoringConfig.screenshot_interval_minutes ?? 0.5) * 60 * 1000;
+    const intervalMs = (monitoringConfig.screenshot_interval_minutes ?? 0.5) * 60 * 1000;
 
     screenshotIntervalRef.current = setInterval(async () => {
       const video = videoRef.current;
@@ -463,11 +454,9 @@ export default function InterviewPage() {
             if (!blob) return;
             const fd = new FormData();
             fd.append("file", blob, "screenshot.jpg");
-            await api.post(
-              `/api/candidate/submission/${submissionId}/screenshot`,
-              fd,
-              { headers: { "Content-Type": "multipart/form-data" } }
-            );
+            await api.post(`/api/candidate/submission/${submissionId}/screenshot`, fd, {
+              headers: { "Content-Type": "multipart/form-data" },
+            });
           },
           "image/jpeg",
           0.7
@@ -488,14 +477,6 @@ export default function InterviewPage() {
     monitoringConfig.screenshot_interval_minutes,
     submissionId,
   ]);
-
-  // ── Accordion toggle ────────────────────────────────────────────────────────
-  const toggleAccordion = (roundNumber: number) => {
-    setRoundsExpanded((prev) => ({
-      ...prev,
-      [roundNumber]: !prev[roundNumber],
-    }));
-  };
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -527,12 +508,7 @@ export default function InterviewPage() {
 
   type QBtnState = "answered" | "visited" | "active" | "default";
 
-  const getQuestionButtonState = (
-    q: CandidateQuestion,
-    idx: number,
-    isCurrentRound: boolean
-  ): QBtnState => {
-    if (!isCurrentRound) return "default";
+  const getQuestionButtonState = (q: CandidateQuestion, idx: number): QBtnState => {
     if (idx === currentIdx) return "active";
     if (answers[q.id] !== undefined) return "answered";
     if (visitedQuestions.has(q.id)) return "visited";
@@ -552,19 +528,164 @@ export default function InterviewPage() {
     }
   };
 
+  const networkBadgeClass =
+    networkStatus === "connected" ? styles.monitorBadgeGreen : styles.monitorBadgeOrange;
+  const networkLabel =
+    networkStatus === "connected"
+      ? "Network Stable"
+      : networkStatus === "on_hold"
+        ? "Session Paused"
+        : "Reconnecting…";
+
   return (
     <div className={styles.page}>
-      {/* Network monitoring overlay — shown above everything when offline/on_hold */}
+      {/* Network overlay */}
       <ConnectionLostOverlay status={networkStatus} />
 
-      {/* Sticky header */}
+      {/* Header */}
       <CandidateHeader candidateName={candidateName} />
 
-      {/* Body row */}
       <div className={styles.body}>
-        {/* ── Main content (left, scrollable) ── */}
+        {/* ── Left Sidebar ── */}
+        <aside
+          className={`${styles.leftSidebar} ${leftSidebarOpen ? styles.leftSidebarOpen : ""}`}
+        >
+          {/* Progress header */}
+          <div className={styles.progressHeader}>
+            <p className={styles.progressHeaderLabel}>Assessment Progress</p>
+            <p className={styles.progressRoundTitle}>
+              Round {roundData.round_number}
+              {assessmentRounds.length > 0 ? ` of ${assessmentRounds.length}` : ""}
+            </p>
+            <div className={styles.progressBarOuter}>
+              <div
+                className={styles.progressBarInner}
+                style={{ width: `${(answeredCount / questions.length) * 100}%` }}
+              />
+            </div>
+            <div className={styles.progressStats}>
+              <div className={`${styles.progressStat} ${styles.progressStatAnswered}`}>
+                <span className={styles.progressStatValue}>{answeredCount}</span>
+                <span className={styles.progressStatLabel}>Done</span>
+              </div>
+              <div className={styles.progressStat}>
+                <span className={styles.progressStatValue}>{questions.length}</span>
+                <span className={styles.progressStatLabel}>Total</span>
+              </div>
+              <div className={`${styles.progressStat} ${styles.progressStatRemaining}`}>
+                <span className={styles.progressStatValue}>{remainingCount}</span>
+                <span className={styles.progressStatLabel}>Left</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Round list (multi-round assessments only) */}
+          {assessmentRounds.length > 0 && (
+            <div className={styles.roundListSection}>
+              <p className={styles.sidebarSectionLabel}>Rounds</p>
+              {assessmentRounds.map((round) => {
+                const isActive = round.round_number === roundData.round_number;
+                const isCompleted = round.round_number < roundData.round_number;
+                const progress = isActive
+                  ? (answeredCount / questions.length) * 100
+                  : isCompleted
+                    ? 100
+                    : 0;
+                return (
+                  <div
+                    key={round.round_number}
+                    className={`${styles.roundCard} ${isActive ? styles.roundCardActive : ""} ${isCompleted ? styles.roundCardCompleted : ""}`}
+                  >
+                    <div className={styles.roundCardHeader}>
+                      <span className={styles.roundCardName}>Round {round.round_number}</span>
+                      <span
+                        className={`${styles.roundStatusPill} ${
+                          isActive
+                            ? styles.roundStatusActive
+                            : isCompleted
+                              ? styles.roundStatusCompleted
+                              : styles.roundStatusPending
+                        }`}
+                      >
+                        {isActive ? "Active" : isCompleted ? "Done" : "Pending"}
+                      </span>
+                    </div>
+                    <p className={styles.roundCardMeta}>
+                      {round.question_count} question{round.question_count !== 1 ? "s" : ""}
+                    </p>
+                    <div className={styles.roundMiniBar}>
+                      <div
+                        className={`${styles.roundMiniBarFill} ${
+                          isActive
+                            ? styles.roundMiniBarActive
+                            : isCompleted
+                              ? styles.roundMiniBarDone
+                              : ""
+                        }`}
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Question navigation grid */}
+          <div className={styles.questionNavSection}>
+            <p className={styles.sidebarSectionLabel}>
+              Questions — Round {roundData.round_number}
+            </p>
+            <div className={styles.qGrid}>
+              {questions.map((q, i) => {
+                const state = getQuestionButtonState(q, i);
+                return (
+                  <button
+                    key={q.id}
+                    type="button"
+                    className={qBtnClass(state)}
+                    onClick={() => {
+                      navigateTo(i);
+                      setLeftSidebarOpen(false);
+                    }}
+                  >
+                    {i + 1}
+                  </button>
+                );
+              })}
+            </div>
+            <div className={styles.legend}>
+              <div className={styles.legendItem}>
+                <div className={`${styles.legendDot} ${styles.legendAnswered}`} />
+                <span>Answered</span>
+              </div>
+              <div className={styles.legendItem}>
+                <div className={`${styles.legendDot} ${styles.legendVisited}`} />
+                <span>Visited</span>
+              </div>
+              <div className={styles.legendItem}>
+                <div className={`${styles.legendDot} ${styles.legendActive}`} />
+                <span>Current</span>
+              </div>
+              <div className={styles.legendItem}>
+                <div className={styles.legendDot} />
+                <span>Not visited</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Backdrop — closes left sidebar on tap outside (tablet/mobile) */}
+        {leftSidebarOpen && (
+          <div
+            className={styles.leftSidebarBackdrop}
+            onClick={() => setLeftSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
+        {/* ── Main Content ── */}
         <main className={styles.main}>
-          {/* Round badge row */}
           <div className={styles.roundBadgeRow}>
             <span className={styles.roundChip}>Round {roundData.round_number}</span>
             <span className={styles.questionCounter}>
@@ -574,19 +695,15 @@ export default function InterviewPage() {
               {currentQuestion.type === "essay"
                 ? "Essay"
                 : currentQuestion.type === "mcq_multiple"
-                ? "Multiple Choice"
-                : "Single Choice"}
+                  ? "Multiple Choice"
+                  : "Single Choice"}
             </span>
           </div>
 
-          {/* Question card */}
           <div className={styles.questionCard}>
             <div className={styles.questionBody}>
-              <RichText className={styles.questionText}>
-                {currentQuestion.text}
-              </RichText>
+              <RichText className={styles.questionText}>{currentQuestion.text}</RichText>
 
-              {/* MCQ single */}
               {currentQuestion.type === "mcq_single" && (
                 <div className={styles.options}>
                   {currentQuestion.options?.map((opt, oi) => {
@@ -610,13 +727,12 @@ export default function InterviewPage() {
                 </div>
               )}
 
-              {/* MCQ multiple */}
               {currentQuestion.type === "mcq_multiple" && (
                 <div className={styles.options}>
                   {currentQuestion.options?.map((opt, oi) => {
-                    const selected = (
-                      (answers[currentQuestion.id] as string[]) || []
-                    ).includes(opt.text);
+                    const selected = ((answers[currentQuestion.id] as string[]) || []).includes(
+                      opt.text
+                    );
                     return (
                       <label
                         key={oi}
@@ -627,8 +743,7 @@ export default function InterviewPage() {
                           className={styles.optionInput}
                           checked={selected}
                           onChange={() => {
-                            const current =
-                              (answers[currentQuestion.id] as string[]) || [];
+                            const current = (answers[currentQuestion.id] as string[]) || [];
                             const updated = selected
                               ? current.filter((v) => v !== opt.text)
                               : [...current, opt.text];
@@ -642,28 +757,23 @@ export default function InterviewPage() {
                 </div>
               )}
 
-              {/* Essay */}
               {currentQuestion.type === "essay" && (
                 <div className={styles.essayWrapper}>
                   <textarea
                     className={styles.essayBox}
                     placeholder="Write your answer here..."
                     value={(answers[currentQuestion.id] as string) || ""}
-                    onChange={(e) =>
-                      setAnswer(currentQuestion.id, e.target.value)
-                    }
+                    onChange={(e) => setAnswer(currentQuestion.id, e.target.value)}
                     rows={10}
                   />
                   <span className={styles.charCount}>
-                    {((answers[currentQuestion.id] as string) || "").length}{" "}
-                    characters
+                    {((answers[currentQuestion.id] as string) || "").length} characters
                   </span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Navigation */}
           <div className={styles.navRow}>
             <Button
               variant="secondary"
@@ -676,10 +786,7 @@ export default function InterviewPage() {
               {currentIdx < questions.length - 1 ? (
                 <Button onClick={() => navigateTo(currentIdx + 1)}>Next</Button>
               ) : (
-                <Button
-                  onClick={() => setShowSubmitConfirm(true)}
-                  isLoading={submitting}
-                >
+                <Button onClick={() => setShowSubmitConfirm(true)} isLoading={submitting}>
                   Submit Round
                 </Button>
               )}
@@ -687,14 +794,16 @@ export default function InterviewPage() {
           </div>
         </main>
 
-        {/* ── Right sidebar (fixed) ── */}
-        <aside className={styles.sidebar}>
-          {/* 1. Timer */}
+        {/* ── Right Sidebar ── */}
+        <aside className={styles.rightSidebar}>
+          {/* Timer */}
           <div className={`${styles.timerCard} ${isLowTime ? styles.timerLow : ""}`}>
             <p className={styles.sidebarSectionLabel}>
               Time Remaining
               {!timerActive && networkStatus !== "connected" && (
-                <span style={{ fontSize: 11, color: "var(--warning-600, #d97706)", marginLeft: 6 }}>
+                <span
+                  style={{ fontSize: 11, color: "var(--warning-600, #d97706)", marginLeft: 6 }}
+                >
                   (paused)
                 </span>
               )}
@@ -717,150 +826,30 @@ export default function InterviewPage() {
             </div>
           </div>
 
-          {/* 2. Rounds accordion */}
-          <div className={styles.roundsCard}>
-            <p className={styles.sidebarSectionLabel}>Rounds</p>
-
-            {assessmentRounds.length === 0 ? (
-              <div className={styles.accordionItem}>
-                <button
-                  type="button"
-                  className={`${styles.accordionHeader} ${styles.accordionHeaderActive}`}
-                  onClick={() => toggleAccordion(roundData.round_number)}
-                  aria-expanded={roundsExpanded[roundData.round_number] ?? true}
-                >
-                  <span>Round {roundData.round_number}</span>
-                  <span className={styles.accordionChevron}>
-                    {(roundsExpanded[roundData.round_number] ?? true) ? "▲" : "▼"}
-                  </span>
-                </button>
-                {(roundsExpanded[roundData.round_number] ?? true) && (
-                  <div className={styles.accordionBody}>
-                    <div className={styles.qGrid}>
-                      {questions.map((q, i) => {
-                        const state = getQuestionButtonState(q, i, true);
-                        return (
-                          <button
-                            key={q.id}
-                            type="button"
-                            className={qBtnClass(state)}
-                            onClick={() => navigateTo(i)}
-                          >
-                            {i + 1}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              assessmentRounds.map((round) => {
-                const isCurrentRound =
-                  round.round_number === roundData.round_number;
-                const isExpanded = roundsExpanded[round.round_number] ?? false;
-                return (
-                  <div key={round.round_number} className={styles.accordionItem}>
-                    <button
-                      type="button"
-                      className={`${styles.accordionHeader} ${
-                        isCurrentRound ? styles.accordionHeaderActive : ""
-                      }`}
-                      onClick={() => toggleAccordion(round.round_number)}
-                      aria-expanded={isExpanded}
-                    >
-                      <span>Round {round.round_number}</span>
-                      <span className={styles.accordionChevron}>
-                        {isExpanded ? "▲" : "▼"}
-                      </span>
-                    </button>
-                    {isExpanded && (
-                      <div className={styles.accordionBody}>
-                        {isCurrentRound ? (
-                          <div className={styles.qGrid}>
-                            {questions.map((q, i) => {
-                              const state = getQuestionButtonState(
-                                q,
-                                i,
-                                isCurrentRound
-                              );
-                              return (
-                                <button
-                                  key={q.id}
-                                  type="button"
-                                  className={qBtnClass(state)}
-                                  onClick={() => navigateTo(i)}
-                                >
-                                  {i + 1}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div className={styles.qGrid}>
-                            {Array.from(
-                              { length: round.question_count },
-                              (_, i) => (
-                                <button
-                                  key={i}
-                                  type="button"
-                                  className={`${styles.qBtn} ${styles.qBtnDisabled}`}
-                                  disabled
-                                >
-                                  {i + 1}
-                                </button>
-                              )
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-
-            {/* Legend */}
-            <div className={styles.legend}>
-              <div className={styles.legendItem}>
-                <div className={`${styles.legendDot} ${styles.legendAnswered}`} />
-                <span>Answered</span>
-              </div>
-              <div className={styles.legendItem}>
-                <div className={`${styles.legendDot} ${styles.legendVisited}`} />
-                <span>Visited</span>
-              </div>
-              <div className={styles.legendItem}>
-                <div className={`${styles.legendDot} ${styles.legendActive}`} />
-                <span>Current</span>
-              </div>
-              <div className={styles.legendItem}>
-                <div className={styles.legendDot} />
-                <span>Not visited</span>
+          {/* Monitoring status badges */}
+          <div className={styles.monitoringStatus}>
+            <p className={styles.sidebarSectionLabel}>Monitoring</p>
+            <div className={styles.monitorBadgeList}>
+              {monitoringConfig.video_monitoring && (
+                <div className={`${styles.monitorBadge} ${styles.monitorBadgeGreen}`}>
+                  <span className={styles.monitorBadgeDot} />
+                  Camera Active
+                </div>
+              )}
+              {monitoringConfig.audio_monitoring && (
+                <div className={`${styles.monitorBadge} ${styles.monitorBadgeGreen}`}>
+                  <span className={styles.monitorBadgeDot} />
+                  Mic Active
+                </div>
+              )}
+              <div className={`${styles.monitorBadge} ${networkBadgeClass}`}>
+                <span className={styles.monitorBadgeDot} />
+                {networkLabel}
               </div>
             </div>
           </div>
 
-          {/* 3. Stats card */}
-          <div className={styles.statsCard}>
-            <p className={styles.sidebarSectionLabel}>Progress</p>
-            <div className={styles.statsRow}>
-              <div className={styles.statItem}>
-                <span className={styles.statValue}>{questions.length}</span>
-                <span className={styles.statLabel}>Total</span>
-              </div>
-              <div className={`${styles.statItem} ${styles.statAnswered}`}>
-                <span className={styles.statValue}>{answeredCount}</span>
-                <span className={styles.statLabel}>Answered</span>
-              </div>
-              <div className={`${styles.statItem} ${styles.statRemaining}`}>
-                <span className={styles.statValue}>{remainingCount}</span>
-                <span className={styles.statLabel}>Remaining</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 4. Video monitor */}
+          {/* Video monitor */}
           {monitoringConfig.video_monitoring && (
             <div className={styles.monitorCard}>
               <VideoMonitor
@@ -870,13 +859,23 @@ export default function InterviewPage() {
             </div>
           )}
 
-          {/* 5. Audio monitor */}
+          {/* Audio monitor */}
           {monitoringConfig.audio_monitoring && (
             <div className={styles.monitorCard}>
               <AudioMonitor analyserRef={analyserRef} active={audioActive} />
             </div>
           )}
         </aside>
+
+        {/* Floating toggle — visible on tablet/mobile to open left sidebar */}
+        <button
+          type="button"
+          className={styles.leftToggleBtn}
+          onClick={() => setLeftSidebarOpen((v) => !v)}
+          aria-label="Toggle progress panel"
+        >
+          ☰
+        </button>
       </div>
 
       {/* ── Modals ── */}
@@ -888,24 +887,18 @@ export default function InterviewPage() {
         size="sm"
         footer={
           <>
-            <Button
-              variant="secondary"
-              onClick={() => setShowSubmitConfirm(false)}
-            >
+            <Button variant="secondary" onClick={() => setShowSubmitConfirm(false)}>
               Review Answers
             </Button>
-            <Button
-              onClick={() => void handleFinishRound()}
-              isLoading={submitting}
-            >
+            <Button onClick={() => void handleFinishRound()} isLoading={submitting}>
               Submit
             </Button>
           </>
         }
       >
         <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
-          You've answered {answeredCount} of {questions.length} questions. Once
-          submitted, you cannot change your answers.
+          You&apos;ve answered {answeredCount} of {questions.length} questions. Once submitted, you
+          cannot change your answers.
         </p>
       </Modal>
 
@@ -914,9 +907,7 @@ export default function InterviewPage() {
         onClose={() => setShowMalpractice(false)}
         title="Warning: Suspicious Activity Detected"
         size="sm"
-        footer={
-          <Button onClick={() => setShowMalpractice(false)}>I Understand</Button>
-        }
+        footer={<Button onClick={() => setShowMalpractice(false)}>I Understand</Button>}
       >
         <div
           style={{
@@ -933,12 +924,11 @@ export default function InterviewPage() {
             {malpracticeType === "tab_switch"
               ? "tab switch"
               : malpracticeType === "audio_violation"
-              ? "noise / audio violation"
-              : "suspicious activity"}{" "}
+                ? "noise / audio violation"
+                : "suspicious activity"}{" "}
             has been detected and flagged ({malpracticeCount} violation
             {malpracticeCount !== 1 ? "s" : ""}). Please stay on this page.{" "}
-            {malpracticeCount >= 2 &&
-              "One more violation will result in automatic submission."}
+            {malpracticeCount >= 2 && "One more violation will result in automatic submission."}
           </p>
         </div>
       </Modal>
@@ -963,8 +953,7 @@ export default function InterviewPage() {
         }
       >
         <p style={{ fontSize: 14, color: "var(--text-secondary)", textAlign: "center" }}>
-          Your time for this round has expired. Your answers have been
-          automatically submitted.
+          Your time for this round has expired. Your answers have been automatically submitted.
         </p>
       </Modal>
     </div>

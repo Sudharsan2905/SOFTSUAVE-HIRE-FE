@@ -6,13 +6,12 @@ interface SpinnerProps {
   className?: string;
 }
 
-export function Spinner({ size = "md", className }: SpinnerProps) {
+export function Spinner({ size = "md", className }: Readonly<SpinnerProps>) {
   return (
-    <div
+    <output
       className={`${styles.spinner} ${styles[size]} ${className ?? ""}`}
-      role="status"
       aria-label="Loading"
-    />
+    ></output>
   );
 }
 

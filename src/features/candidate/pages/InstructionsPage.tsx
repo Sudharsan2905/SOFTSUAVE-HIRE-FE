@@ -1,15 +1,27 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styles from "./InstructionsPage.module.css";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { api } from "@/utils/api";
 import { Assessment } from "@/types";
-import { IconCamera, IconMic, IconMonitor, IconTime, IconShield, IconInfo } from "@/assets/icons";
+import {
+  IconCamera,
+  IconGlobe,
+  IconMic,
+  IconMonitor,
+  IconTime,
+  IconShield,
+  IconInfo,
+  IconRefresh,
+} from "@/assets/icons";
 import CandidateHeader from "@/features/candidate/components/CandidateHeader";
 import { useAppSelector } from "@/store/hooks";
 import { markAssessmentDone, saveSubmissionId } from "@/utils/assessmentSession";
+import { useInterviewSession } from "@/features/candidate/context/InterviewSessionContext";
 import toast from "react-hot-toast";
+
+type NetworkCheckStatus = "checking" | "connected" | "unstable" | "disconnected";
 
 export default function InstructionsPage() {
   const { shareLink } = useParams<{ shareLink: string }>();
@@ -18,26 +30,63 @@ export default function InstructionsPage() {
   const lastName = user?.last_name ? ` ${user.last_name}` : "";
   const candidateName = user ? `${user.first_name}${lastName}` : undefined;
 
+  const { startSession } = useInterviewSession();
+
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [videoGranted, setVideoGranted] = useState(false);
   const [audioGranted, setAudioGranted] = useState(false);
   const [checkingPermissions, setCheckingPermissions] = useState(false);
+  const [networkStatus, setNetworkStatus] = useState<NetworkCheckStatus>("checking");
+  const [checkingNetwork, setCheckingNetwork] = useState(false);
 
+  const checkNetwork = useCallback(async () => {
+    if (!shareLink) return;
+    setCheckingNetwork(true);
+    setNetworkStatus("checking");
+    try {
+      const { data } = await api.get(`/api/candidate/assessment/${shareLink}`);
+      setAssessment(data?.data || null);
+      setNetworkStatus("connected");
+    } catch {
+      setNetworkStatus(navigator.onLine ? "unstable" : "disconnected");
+    } finally {
+      setCheckingNetwork(false);
+    }
+  }, [shareLink]);
+
+  // Initial assessment load doubles as the first network health check
   useEffect(() => {
-    const fetch = async () => {
+    const load = async () => {
+      setIsLoading(true);
       try {
         const { data } = await api.get(`/api/candidate/assessment/${shareLink}`);
         setAssessment(data?.data || null);
+        setNetworkStatus("connected");
       } catch {
         toast.error("Assessment not found");
+        setNetworkStatus(navigator.onLine ? "unstable" : "disconnected");
       } finally {
         setIsLoading(false);
       }
     };
-    fetch();
+    void load();
   }, [shareLink]);
+
+  // Real-time browser connectivity updates
+  useEffect(() => {
+    const handleOnline = () => {
+      if (networkStatus !== "connected") setNetworkStatus("unstable");
+    };
+    const handleOffline = () => setNetworkStatus("disconnected");
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [networkStatus]);
 
   const requestPermissions = async () => {
     if (!assessment) return;
@@ -69,6 +118,7 @@ export default function InstructionsPage() {
 
   const canStart = (): boolean => {
     if (!assessment) return false;
+    if (networkStatus !== "connected") return false;
     const cfg = assessment.monitoring_config;
     if (cfg?.video_monitoring && !videoGranted) return false;
     if (cfg?.audio_monitoring && !audioGranted) return false;
@@ -78,7 +128,11 @@ export default function InstructionsPage() {
   const handleStart = async () => {
     if (!assessment) return;
     if (!canStart()) {
-      toast.error("Please grant the required device permissions first");
+      if (networkStatus !== "connected") {
+        toast.error("A stable network connection is required to start the assessment");
+      } else {
+        toast.error("Please grant the required device permissions first");
+      }
       return;
     }
     setStarting(true);
@@ -87,6 +141,9 @@ export default function InstructionsPage() {
       const submissionId = data.data?.id;
       // Persist submission ID so other pages can reference it without URL manipulation.
       if (shareLink && submissionId) saveSubmissionId(shareLink, submissionId);
+      // Start the WebSocket connection now so it is already established by the
+      // time InterviewPage mounts, avoiding a cold-connect on the first render.
+      if (submissionId) startSession(submissionId as string);
       // Use replace so the browser back button skips instructions and goes to entry.
       navigate(`/assessment/${shareLink}/interview/${submissionId}`, { replace: true });
     } catch (e: unknown) {
@@ -143,8 +200,24 @@ export default function InstructionsPage() {
   const needsAnyPermission = needsVideo || needsAudio;
   const allPermissionsGranted = (!needsVideo || videoGranted) && (!needsAudio || audioGranted);
 
+  const networkPillClass = {
+    checking: styles.pillPending,
+    connected: styles.pillGranted,
+    unstable: styles.pillWarning,
+    disconnected: styles.pillError,
+  }[networkStatus];
+
+  const networkLabel = {
+    checking: "Checking…",
+    connected: "Connected",
+    unstable: "Unstable",
+    disconnected: "Disconnected",
+  }[networkStatus];
+
   const startButtonLabel =
-    isMonitoring && !allPermissionsGranted
+    networkStatus !== "connected"
+      ? "Network Connection Required"
+      : isMonitoring && !allPermissionsGranted
       ? "Grant Required Access to Continue"
       : "Start Assessment";
 
@@ -194,6 +267,32 @@ export default function InstructionsPage() {
               <li>Once you submit a round, you cannot go back to change answers.</li>
               <li>Read each question carefully before answering.</li>
             </ul>
+          </div>
+
+          {/* ── Network connection check (always required) ── */}
+          <div className={styles.section}>
+            <h2 className={styles.sectionTitle}>Network Connection</h2>
+            <div className={styles.permissionSetup}>
+              <div className={styles.permissionRow}>
+                <p className={styles.permissionLabel}>Internet connectivity</p>
+                <div className={styles.permissionPills}>
+                  <span className={`${styles.pill} ${networkPillClass}`}>
+                    <IconGlobe size={12} />
+                    {networkLabel}
+                  </span>
+                </div>
+              </div>
+              {networkStatus !== "connected" && (
+                <Button
+                  variant="secondary"
+                  onClick={() => void checkNetwork()}
+                  isLoading={checkingNetwork}
+                  leftIcon={<IconRefresh size={16} />}
+                >
+                  Check Again
+                </Button>
+              )}
+            </div>
           </div>
 
           {isMonitoring && (
@@ -290,7 +389,7 @@ export default function InstructionsPage() {
               fullWidth
               onClick={handleStart}
               isLoading={starting}
-              disabled={isMonitoring && !allPermissionsGranted}
+              disabled={!canStart()}
             >
               {startButtonLabel}
             </Button>
