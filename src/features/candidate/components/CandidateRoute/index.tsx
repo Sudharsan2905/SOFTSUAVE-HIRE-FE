@@ -39,19 +39,12 @@ export function CandidateRoute() {
   const [statusLoading, setStatusLoading] = useState(false);
 
   const fetchStatus = useCallback(async () => {
-    if (
-      !shareLink ||
-      !isAuthenticated ||
-      user?.role !== UserRole.CANDIDATE ||
-      isCompletedPage
-    ) {
+    if (!shareLink || !isAuthenticated || user?.role !== UserRole.CANDIDATE || isCompletedPage) {
       return;
     }
     setStatusLoading(true);
     try {
-      const { data } = await api.get(
-        `/api/candidate/submission/status?share_link=${shareLink}`
-      );
+      const { data } = await api.get(`/api/candidate/submission/status?share_link=${shareLink}`);
       setSubmissionStatus(data.data ?? null);
     } catch {
       // Fail open — let the child page surface any real errors
@@ -68,9 +61,7 @@ export function CandidateRoute() {
   // ── 1. Auth checks ────────────────────────────────────────────────────────
 
   if (!isAuthenticated) {
-    const loginTarget = shareLink
-      ? `/candidate/login?share=${shareLink}`
-      : "/candidate/login";
+    const loginTarget = shareLink ? `/candidate/login?share=${shareLink}` : "/candidate/login";
     return <Navigate to={loginTarget} replace />;
   }
 
@@ -107,9 +98,7 @@ export function CandidateRoute() {
     const status = submissionStatus?.status;
 
     if (status === "completed") {
-      return (
-        <Navigate to={`/assessment/${shareLink ?? ""}/completed`} replace />
-      );
+      return <Navigate to={`/assessment/${shareLink ?? ""}/completed`} replace />;
     }
 
     if (status === "on_hold") {

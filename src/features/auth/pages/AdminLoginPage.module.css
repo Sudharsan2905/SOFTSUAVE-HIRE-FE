@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   padding: 40px 24px;
-  background: linear-gradient(135deg, #f7f2f2 0%, #fbf6f8 100%)
+  background: linear-gradient(135deg, #f7f2f2 0%, #fbf6f8 100%);
 }
 
 /* ---------- Floating card ---------- */
@@ -219,7 +219,7 @@
   text-align: center;
   color: #ffffff;
   padding-top: 36px;
-  top :-50px;
+  top: -50px;
 }
 .welcomeTitle {
   font-size: 30px;

@@ -56,9 +56,7 @@ function resolveStartButtonLabel(
 }
 
 function extractStartErrorMessage(e: unknown): string {
-  return (
-    (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? ""
-  );
+  return (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "";
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────

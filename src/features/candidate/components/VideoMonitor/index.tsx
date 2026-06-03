@@ -76,13 +76,7 @@ export function VideoMonitor({ videoRef, onWarning }: Readonly<VideoMonitorProps
       </div>
 
       <div className={styles.videoWrapper}>
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          playsInline
-          className={styles.video}
-        />
+        <video ref={videoRef} autoPlay muted playsInline className={styles.video} />
 
         <span className={badgeClass}>
           {status === "live" && <span className={styles.badgeDot} />}

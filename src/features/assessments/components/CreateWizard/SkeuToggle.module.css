@@ -67,7 +67,9 @@
   position: relative;
   z-index: 1;
   color: #52525b;
-  transition: color 200ms ease, text-shadow 200ms ease;
+  transition:
+    color 200ms ease,
+    text-shadow 200ms ease;
   pointer-events: none;
 }
 

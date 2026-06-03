@@ -1,12 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAppSelector } from "@/store";
-import {
-  IconQuestionBank,
-  IconAssessment,
-  IconLiveInterview,
-  IconUsers,
-} from "@/assets/icons";
+import { IconQuestionBank, IconAssessment, IconLiveInterview, IconUsers } from "@/assets/icons";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { WorkspaceSwitcher } from "@/components/layout/WorkspaceSwitcher";
 import { UserRole } from "@/types";
@@ -28,9 +23,7 @@ export function BottomNav() {
 
   const [tappedKey, setTappedKey] = useState<string | null>(null);
 
-  const assessmentsTo = activeWorkspace
-    ? `/workspaces/${activeWorkspace.id}/assessments`
-    : null;
+  const assessmentsTo = activeWorkspace ? `/workspaces/${activeWorkspace.id}/assessments` : null;
 
   const navItems: NavItem[] = [
     {

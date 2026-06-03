@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 export interface NeonLoaderProps {
   /**
@@ -24,13 +24,13 @@ export interface NeonLoaderProps {
 
 export const NeonLoader: React.FC<NeonLoaderProps> = ({
   size = 120,
-  text = 'Loading...',
+  text = "Loading...",
   speed = 3,
-  className = '',
+  className = "",
 }) => {
   // SVG paths outlining a perfect isometric cube structure
   const centerNode = { cx: 50, cy: 50 };
-  
+
   // Base structural paths (the wireframe)
   const baseOuterHexagon = "M 50 10 L 84.64 30 L 84.64 70 L 50 90 L 15.36 70 L 15.36 30 Z";
   const baseInnerY = "M 50 50 L 50 90 M 50 50 L 15.36 30 M 50 50 L 84.64 30";
@@ -46,7 +46,7 @@ export const NeonLoader: React.FC<NeonLoaderProps> = ({
   return (
     <div
       className={`flex flex-col items-center justify-center gap-6 ${className}`}
-      style={{ '--anim-speed': `${speed}s` } as React.CSSProperties}
+      style={{ "--anim-speed": `${speed}s` } as React.CSSProperties}
     >
       <div className="relative" style={{ width: size, height: size }}>
         <svg
@@ -173,12 +173,7 @@ export const NeonLoader: React.FC<NeonLoaderProps> = ({
           <path d={route3} pathLength="100" className="neon-route route-3" />
 
           {/* Glowing Center Node */}
-          <circle
-            cx={centerNode.cx}
-            cy={centerNode.cy}
-            r="2.5"
-            className="center-node"
-          />
+          <circle cx={centerNode.cx} cy={centerNode.cy} r="2.5" className="center-node" />
         </svg>
       </div>
 

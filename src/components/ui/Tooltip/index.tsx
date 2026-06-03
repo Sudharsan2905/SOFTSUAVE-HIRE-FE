@@ -19,14 +19,11 @@ interface TooltipPos {
   placement: Placement;
 }
 
-function mergeRefs<T>(
-  ...refs: Array<React.Ref<T> | null | undefined>
-): React.RefCallback<T> {
+function mergeRefs<T>(...refs: Array<React.Ref<T> | null | undefined>): React.RefCallback<T> {
   return (node) => {
     refs.forEach((ref) => {
       if (typeof ref === "function") ref(node);
-      else if (ref != null)
-        (ref as React.MutableRefObject<T | null>).current = node;
+      else if (ref) (ref as React.MutableRefObject<T | null>).current = node;
     });
   };
 }
@@ -143,13 +140,7 @@ export function Tooltip({
     if (!visible || !tipRef.current || !anchorRef.current) return;
     const rect = anchorRef.current.getBoundingClientRect();
     const tipRect = tipRef.current.getBoundingClientRect();
-    setPos(
-      computePosition(
-        rect,
-        { width: tipRect.width, height: tipRect.height },
-        placement
-      )
-    );
+    setPos(computePosition(rect, { width: tipRect.width, height: tipRect.height }, placement));
   }, [visible, placement]);
 
   // Dismiss on scroll
@@ -197,7 +188,8 @@ export function Tooltip({
   return (
     <>
       {child}
-      {visible && pos &&
+      {visible &&
+        pos &&
         createPortal(
           <div
             ref={tipRef}

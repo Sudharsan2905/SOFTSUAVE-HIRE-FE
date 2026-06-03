@@ -216,9 +216,7 @@ export default function QuestionsPage() {
     optIdx: number,
     patch: Partial<{ text: string; is_correct: boolean }>
   ) => {
-    setForms((prev) =>
-      prev.map((f, i) => patchOptionInForm(f, formIdx, i, optIdx, patch))
-    );
+    setForms((prev) => prev.map((f, i) => patchOptionInForm(f, formIdx, i, optIdx, patch)));
   };
 
   const handleSaveQuestions = async () => {
@@ -365,11 +363,7 @@ export default function QuestionsPage() {
   };
 
   // S2004: extracted from option input onChange (was 5+ levels deep)
-  const handleOptionCorrectChange = (
-    f: QuestionForm,
-    formIdx: number,
-    optIdx: number
-  ) => {
+  const handleOptionCorrectChange = (f: QuestionForm, formIdx: number, optIdx: number) => {
     const options = f.options.map((o, i) => {
       let is_correct: boolean;
       if (f.question_type === "mcq_single") {
@@ -467,7 +461,14 @@ export default function QuestionsPage() {
             </div>
           ))}
         </div>
-        {meta && <Pagination meta={meta} onPageChange={goToPage} pageSize={pageSize} onPageSizeChange={changePageSize} />}
+        {meta && (
+          <Pagination
+            meta={meta}
+            onPageChange={goToPage}
+            pageSize={pageSize}
+            onPageSizeChange={changePageSize}
+          />
+        )}
       </>
     );
   })();
@@ -593,9 +594,7 @@ export default function QuestionsPage() {
                     size={15}
                     className={`${styles.accordionChevron} ${expandedKeys.has(f._key) ? styles.accordionChevronOpen : ""}`}
                   />
-                  <span className={styles.accordionTitle}>
-                    {getAccordionTitle(f, idx)}
-                  </span>
+                  <span className={styles.accordionTitle}>{getAccordionTitle(f, idx)}</span>
                 </button>
                 {!selected && forms.length > 1 && (
                   <button
@@ -668,7 +667,10 @@ export default function QuestionsPage() {
                         </p>
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                           {f.options.map((opt, optIdx) => (
-                            <div key={opt.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <div
+                              key={opt.id}
+                              style={{ display: "flex", alignItems: "center", gap: 8 }}
+                            >
                               <input
                                 type={f.question_type === "mcq_single" ? "radio" : "checkbox"}
                                 checked={opt.is_correct}

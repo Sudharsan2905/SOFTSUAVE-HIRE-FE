@@ -12,7 +12,7 @@ interface UseAudioMonitoringOptions {
 }
 
 const COOLDOWN_MS = 30_000;
-const DEFAULT_THRESHOLD = 20;     // 0–255 average amplitude
+const DEFAULT_THRESHOLD = 20; // 0–255 average amplitude
 const DEFAULT_SUSTAINED_S = 10;
 
 export function useAudioMonitoring({
@@ -34,10 +34,9 @@ export function useAudioMonitoring({
   const reportViolation = useCallback(async () => {
     onViolation();
     try {
-      await api.post(
-        `/api/candidate/submission/${submissionId}/malpractice`,
-        { type: "audio_violation" }
-      );
+      await api.post(`/api/candidate/submission/${submissionId}/malpractice`, {
+        type: "audio_violation",
+      });
     } catch {
       // Silently ignore network errors
     }
@@ -94,8 +93,7 @@ export function useAudioMonitoring({
               const elapsed = (now - violationStartRef.current) / 1_000;
               if (elapsed >= sustainedSeconds) {
                 const cooldownOk =
-                  lastFiredRef.current === null ||
-                  now - lastFiredRef.current >= COOLDOWN_MS;
+                  lastFiredRef.current === null || now - lastFiredRef.current >= COOLDOWN_MS;
 
                 if (cooldownOk) {
                   lastFiredRef.current = now;

@@ -10,7 +10,9 @@
   background-color: var(--bg-surface);
   border-bottom: 1px solid var(--border-default);
   box-shadow: var(--shadow-xs);
-  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 /* ── Left: logo + brand name ──────────────────────────────────── */
@@ -92,7 +94,9 @@
   color: var(--text-secondary);
   cursor: pointer;
   flex-shrink: 0;
-  transition: background-color var(--transition-fast), color var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
 }
 .themeButton:hover {
   background-color: var(--bg-active);

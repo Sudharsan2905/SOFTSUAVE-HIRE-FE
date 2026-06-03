@@ -51,11 +51,7 @@ export function NoAccessPage({
 
         {/* Action */}
         {showBackButton && (
-          <Button
-            onClick={() => navigate(backTo)}
-            variant="secondary"
-            size="sm"
-          >
+          <Button onClick={() => navigate(backTo)} variant="secondary" size="sm">
             {backLabel}
           </Button>
         )}

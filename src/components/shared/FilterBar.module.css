@@ -23,8 +23,8 @@
 
   display: flex;
   align-items: center;
-  flex-wrap: wrap;            /* items wrap to next row instead of overflowing */
-  justify-content: flex-end;  /* right-align all controls on desktop */
+  flex-wrap: wrap; /* items wrap to next row instead of overflowing */
+  justify-content: flex-end; /* right-align all controls on desktop */
   gap: 8px;
   width: 100%;
   margin-bottom: 20px;
@@ -54,7 +54,9 @@
   background: var(--bg-surface);
   color: var(--text-tertiary);
   cursor: pointer;
-  transition: color var(--transition-fast), background var(--transition-fast),
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast),
     border-color var(--transition-fast);
 }
 .refreshBtn:hover {
@@ -66,7 +68,7 @@
 /* ── Search input ────────────────────────────────────────────── */
 .searchWrap {
   width: 220px;
-  flex-shrink: 1;   /* shrink on tight viewports instead of overflowing */
+  flex-shrink: 1; /* shrink on tight viewports instead of overflowing */
   min-width: 140px; /* but never below a usable width */
 }
 
@@ -103,7 +105,9 @@
   color: var(--text-tertiary);
   background: transparent;
   cursor: pointer;
-  transition: color var(--transition-fast), background var(--transition-fast);
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
   border-right: 1px solid var(--border-default);
 }
 .viewBtn:last-child {

@@ -21,8 +21,18 @@ import { IconChevronLeft, IconChevronRight } from "@/assets/icons";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const MONTHS = [
-  "January","February","March","April","May","June",
-  "July","August","September","October","November","December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 interface DatePickerProps {
@@ -63,7 +73,9 @@ export function DatePicker({
     : null;
 
   const [isOpen, setIsOpen] = useState(false);
-  const [viewDate, setViewDate] = useState<Date>(parsedValue ?? new Date(today.getFullYear() - 20, 0, 1));
+  const [viewDate, setViewDate] = useState<Date>(
+    parsedValue ?? new Date(today.getFullYear() - 20, 0, 1)
+  );
   const [popupStyle, setPopupStyle] = useState<React.CSSProperties>({});
   const [yearInput, setYearInput] = useState("");
   const [showYearInput, setShowYearInput] = useState(false);
@@ -84,9 +96,7 @@ export function DatePicker({
         left: rect.left,
         width: Math.max(rect.width, 280),
         zIndex: 9999,
-        ...(openUp
-          ? { bottom: window.innerHeight - rect.top + 4 }
-          : { top: rect.bottom + 4 }),
+        ...(openUp ? { bottom: window.innerHeight - rect.top + 4 } : { top: rect.bottom + 4 }),
       });
       if (parsedValue) setViewDate(startOfMonth(parsedValue));
     }
@@ -121,8 +131,9 @@ export function DatePicker({
     setViewDate(next);
   };
 
-  const canGoNext = isBefore(addMonths(startOfMonth(viewDate), 1), startOfMonth(today))
-    || (viewDate.getFullYear() === today.getFullYear() && viewDate.getMonth() < today.getMonth());
+  const canGoNext =
+    isBefore(addMonths(startOfMonth(viewDate), 1), startOfMonth(today)) ||
+    (viewDate.getFullYear() === today.getFullYear() && viewDate.getMonth() < today.getMonth());
 
   const handleYearSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,7 +239,9 @@ export function DatePicker({
                       max={today.getFullYear()}
                       autoFocus
                     />
-                    <button type="submit" className={styles.yearOk}>OK</button>
+                    <button type="submit" className={styles.yearOk}>
+                      OK
+                    </button>
                   </form>
                 ) : (
                   <>
@@ -279,7 +292,9 @@ export function DatePicker({
             {/* Weekday labels */}
             <div className={styles.weekdays}>
               {WEEKDAYS.map((d) => (
-                <span key={d} className={styles.weekday}>{d}</span>
+                <span key={d} className={styles.weekday}>
+                  {d}
+                </span>
               ))}
             </div>
 
@@ -351,9 +366,17 @@ export function DatePicker({
 
 function CalendarIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-      aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
       <line x1="16" y1="2" x2="16" y2="6" />
       <line x1="8" y1="2" x2="8" y2="6" />
@@ -361,4 +384,3 @@ function CalendarIcon() {
     </svg>
   );
 }
-

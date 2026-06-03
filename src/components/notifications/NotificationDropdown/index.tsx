@@ -37,7 +37,9 @@ function SkeletonItem({ id }: { readonly id: string }) {
 function EmptyState() {
   return (
     <li className={styles.empty}>
-      <span className={styles.emptyIcon} aria-hidden="true">🔔</span>
+      <span className={styles.emptyIcon} aria-hidden="true">
+        🔔
+      </span>
       <p className={styles.emptyText}>You&apos;re all caught up!</p>
       <p className={styles.emptySubtext}>No notifications yet.</p>
     </li>
@@ -104,11 +106,7 @@ export function NotificationDropdown({ anchorRef, onClose }: Props) {
   };
 
   return createPortal(
-    <div
-      ref={dropdownRef}
-      className={styles.dropdown}
-      style={{ top: pos.top, right: pos.right }}
-    >
+    <div ref={dropdownRef} className={styles.dropdown} style={{ top: pos.top, right: pos.right }}>
       {/* Header */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>

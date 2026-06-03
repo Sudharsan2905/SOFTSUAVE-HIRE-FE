@@ -73,12 +73,24 @@ export function useNetworkMonitoring({
   const getRemainingSecondsRef = useRef(getRemainingSeconds);
   const getCurrentQuestionIdxRef = useRef(getCurrentQuestionIdx);
 
-  useEffect(() => { onSessionStateRef.current = onSessionState; }, [onSessionState]);
-  useEffect(() => { onSessionOnHoldRef.current = onSessionOnHold; }, [onSessionOnHold]);
-  useEffect(() => { onResumeApprovedRef.current = onResumeApproved; }, [onResumeApproved]);
-  useEffect(() => { onTerminatedRef.current = onTerminated; }, [onTerminated]);
-  useEffect(() => { getRemainingSecondsRef.current = getRemainingSeconds; }, [getRemainingSeconds]);
-  useEffect(() => { getCurrentQuestionIdxRef.current = getCurrentQuestionIdx; }, [getCurrentQuestionIdx]);
+  useEffect(() => {
+    onSessionStateRef.current = onSessionState;
+  }, [onSessionState]);
+  useEffect(() => {
+    onSessionOnHoldRef.current = onSessionOnHold;
+  }, [onSessionOnHold]);
+  useEffect(() => {
+    onResumeApprovedRef.current = onResumeApproved;
+  }, [onResumeApproved]);
+  useEffect(() => {
+    onTerminatedRef.current = onTerminated;
+  }, [onTerminated]);
+  useEffect(() => {
+    getRemainingSecondsRef.current = getRemainingSeconds;
+  }, [getRemainingSeconds]);
+  useEffect(() => {
+    getCurrentQuestionIdxRef.current = getCurrentQuestionIdx;
+  }, [getCurrentQuestionIdx]);
 
   const stopHeartbeat = useCallback(() => {
     if (heartbeatRef.current) {
@@ -87,49 +99,67 @@ export function useNetworkMonitoring({
     }
   }, []);
 
-  const startHeartbeat = useCallback((ws: WebSocket) => {
-    stopHeartbeat();
-    heartbeatRef.current = setInterval(() => {
-      if (ws.readyState === WebSocket.OPEN) {
-        const remaining = getRemainingSecondsRef.current?.() ?? null;
-        const qIdx = getCurrentQuestionIdxRef.current?.() ?? 0;
-        ws.send(JSON.stringify({ type: "ping", remaining_seconds: remaining, current_question_idx: qIdx }));
-      }
-    }, WS_HEARTBEAT_INTERVAL_MS);
-  }, [stopHeartbeat]);
-
-  const handleMessage = useCallback((event: MessageEvent) => {
-    let msg: WsMessage;
-    try {
-      msg = JSON.parse(event.data as string) as WsMessage;
-    } catch {
-      return;
-    }
-
-    switch (msg.type) {
-      case "connected":
-        setNetworkStatus("connected");
-        if (msg.remaining_seconds !== undefined || msg.current_question_idx !== undefined) {
-          onSessionStateRef.current?.(msg.remaining_seconds ?? null, msg.current_question_idx ?? 0);
+  const startHeartbeat = useCallback(
+    (ws: WebSocket) => {
+      stopHeartbeat();
+      heartbeatRef.current = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          const remaining = getRemainingSecondsRef.current?.() ?? null;
+          const qIdx = getCurrentQuestionIdxRef.current?.() ?? 0;
+          ws.send(
+            JSON.stringify({
+              type: "ping",
+              remaining_seconds: remaining,
+              current_question_idx: qIdx,
+            })
+          );
         }
-        break;
-      case "pong":
-        if (networkStatus === "reconnecting") setNetworkStatus("connected");
-        break;
-      case "on_hold":
-        setNetworkStatus("on_hold");
-        onSessionOnHoldRef.current?.();
-        break;
-      case "resume_approved":
-        setNetworkStatus("connected");
-        onResumeApprovedRef.current?.(msg.remaining_seconds ?? null, msg.current_question_idx ?? 0);
-        break;
-      case "terminated":
-        setNetworkStatus("offline");
-        onTerminatedRef.current?.();
-        break;
-    }
-  }, [networkStatus]);
+      }, WS_HEARTBEAT_INTERVAL_MS);
+    },
+    [stopHeartbeat]
+  );
+
+  const handleMessage = useCallback(
+    (event: MessageEvent) => {
+      let msg: WsMessage;
+      try {
+        msg = JSON.parse(event.data as string) as WsMessage;
+      } catch {
+        return;
+      }
+
+      switch (msg.type) {
+        case "connected":
+          setNetworkStatus("connected");
+          if (msg.remaining_seconds !== undefined || msg.current_question_idx !== undefined) {
+            onSessionStateRef.current?.(
+              msg.remaining_seconds ?? null,
+              msg.current_question_idx ?? 0
+            );
+          }
+          break;
+        case "pong":
+          if (networkStatus === "reconnecting") setNetworkStatus("connected");
+          break;
+        case "on_hold":
+          setNetworkStatus("on_hold");
+          onSessionOnHoldRef.current?.();
+          break;
+        case "resume_approved":
+          setNetworkStatus("connected");
+          onResumeApprovedRef.current?.(
+            msg.remaining_seconds ?? null,
+            msg.current_question_idx ?? 0
+          );
+          break;
+        case "terminated":
+          setNetworkStatus("offline");
+          onTerminatedRef.current?.();
+          break;
+      }
+    },
+    [networkStatus]
+  );
 
   const connect = useCallback(() => {
     if (!submissionId || !accessToken || unmountedRef.current) return;
@@ -141,7 +171,10 @@ export function useNetworkMonitoring({
     wsRef.current = ws;
 
     ws.onopen = () => {
-      if (unmountedRef.current) { ws.close(); return; }
+      if (unmountedRef.current) {
+        ws.close();
+        return;
+      }
       retryCountRef.current = 0;
       setNetworkStatus("connected");
       setIsOnline(true);
@@ -223,7 +256,6 @@ export function useNetworkMonitoring({
         }
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submissionId, accessToken]);
 
   return { networkStatus, isOnline };

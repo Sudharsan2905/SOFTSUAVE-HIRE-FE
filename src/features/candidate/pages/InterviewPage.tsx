@@ -607,9 +607,7 @@ export default function InterviewPage() {
 
       <div className={styles.body}>
         {/* ── Left Sidebar ── */}
-        <aside
-          className={`${styles.leftSidebar} ${leftSidebarOpen ? styles.leftSidebarOpen : ""}`}
-        >
+        <aside className={`${styles.leftSidebar} ${leftSidebarOpen ? styles.leftSidebarOpen : ""}`}>
           {/* Progress header */}
           <div className={styles.progressHeader}>
             <p className={styles.progressHeaderLabel}>Assessment Progress</p>
@@ -669,10 +667,7 @@ export default function InterviewPage() {
                       {round.question_count} question{round.question_count !== 1 ? "s" : ""}
                     </p>
                     <div className={styles.roundMiniBar}>
-                      <div
-                        className={roundMiniBarClass}
-                        style={{ width: `${progress}%` }}
-                      />
+                      <div className={roundMiniBarClass} style={{ width: `${progress}%` }} />
                     </div>
                   </div>
                 );
@@ -682,9 +677,7 @@ export default function InterviewPage() {
 
           {/* Question navigation grid */}
           <div className={styles.questionNavSection}>
-            <p className={styles.sidebarSectionLabel}>
-              Questions — Round {roundData.round_number}
-            </p>
+            <p className={styles.sidebarSectionLabel}>Questions — Round {roundData.round_number}</p>
             <div className={styles.qGrid}>
               {questions.map((q, i) => {
                 const state = getQuestionButtonState(q, i, currentIdx, answers, visitedQuestions);
@@ -741,9 +734,7 @@ export default function InterviewPage() {
               Q{currentIdx + 1} of {questions.length}
             </span>
             {/* S3358: extract nested ternary for question type label */}
-            <span className={styles.qTypeChip}>
-              {getQuestionTypeLabel(currentQuestion.type)}
-            </span>
+            <span className={styles.qTypeChip}>{getQuestionTypeLabel(currentQuestion.type)}</span>
           </div>
 
           <div className={styles.questionCard}>
@@ -849,9 +840,7 @@ export default function InterviewPage() {
             <p className={styles.sidebarSectionLabel}>
               Time Remaining
               {!timerActive && networkStatus !== "connected" && (
-                <span
-                  style={{ fontSize: 11, color: "var(--warning-600, #d97706)", marginLeft: 6 }}
-                >
+                <span style={{ fontSize: 11, color: "var(--warning-600, #d97706)", marginLeft: 6 }}>
                   (paused)
                 </span>
               )}
@@ -881,20 +870,17 @@ export default function InterviewPage() {
               {monitoringConfig.video_monitoring && (
                 <div className={`${styles.monitorBadge} ${styles.monitorBadgeGreen}`}>
                   {/* S6772: explicit space after self-closing span */}
-                  <span className={styles.monitorBadgeDot} />{" "}
-                  Camera Active
+                  <span className={styles.monitorBadgeDot} /> Camera Active
                 </div>
               )}
               {monitoringConfig.audio_monitoring && (
                 <div className={`${styles.monitorBadge} ${styles.monitorBadgeGreen}`}>
                   {/* S6772: explicit space after self-closing span */}
-                  <span className={styles.monitorBadgeDot} />{" "}
-                  Mic Active
+                  <span className={styles.monitorBadgeDot} /> Mic Active
                 </div>
               )}
               <div className={`${styles.monitorBadge} ${networkBadgeClass}`}>
-                <span className={styles.monitorBadgeDot} />{" "}
-                {networkLabel}
+                <span className={styles.monitorBadgeDot} /> {networkLabel}
               </div>
             </div>
           </div>
@@ -970,10 +956,9 @@ export default function InterviewPage() {
         >
           <IconAlertTriangle size={40} color="var(--error-500)" />
           <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
-            {/* S3358: extract nested ternary for malpractice type label */}
-            A{" "}
-            {getMalpracticeTypeLabel(malpracticeType)}{" "}
-            has been detected and flagged ({malpracticeCount} violation
+            {/* S3358: extract nested ternary for malpractice type label */}A{" "}
+            {getMalpracticeTypeLabel(malpracticeType)} has been detected and flagged (
+            {malpracticeCount} violation
             {malpracticeCount !== 1 ? "s" : ""}). Please stay on this page.{" "}
             {malpracticeCount >= 2 && "One more violation will result in automatic submission."}
           </p>

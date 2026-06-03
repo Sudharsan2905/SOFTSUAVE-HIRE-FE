@@ -92,11 +92,7 @@ export function FilterBar({
       <div className={styles.searchRow}>
         {onRefresh && (
           <Tooltip content="Refresh" placement="top">
-            <button
-              className={styles.refreshBtn}
-              onClick={onRefresh}
-              aria-label="Refresh"
-            >
+            <button className={styles.refreshBtn} onClick={onRefresh} aria-label="Refresh">
               <IconRefresh size={16} />
             </button>
           </Tooltip>
@@ -190,17 +186,9 @@ export function FilterBar({
             variant="secondary"
             size="md"
             onClick={onSortOrderToggle}
-            leftIcon={
-              sortOrder === "asc" ? (
-                <IconSortAsc size={16} />
-              ) : (
-                <IconSortDesc size={16} />
-              )
-            }
+            leftIcon={sortOrder === "asc" ? <IconSortAsc size={16} /> : <IconSortDesc size={16} />}
           >
-            <span className={styles.btnLabel}>
-              {sortOrder === "asc" ? "ASC" : "DESC"}
-            </span>
+            <span className={styles.btnLabel}>{sortOrder === "asc" ? "ASC" : "DESC"}</span>
           </Button>
 
           {onViewModeChange && viewMode && (

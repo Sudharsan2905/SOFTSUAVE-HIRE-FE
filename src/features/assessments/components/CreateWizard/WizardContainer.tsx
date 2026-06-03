@@ -109,9 +109,10 @@ export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
       }
       onSuccess();
     } catch (e: unknown) {
-      const msg =
-        (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast.error(msg ?? (editMode ? "Failed to update assessment" : "Failed to create assessment"));
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(
+        msg ?? (editMode ? "Failed to update assessment" : "Failed to create assessment")
+      );
     } finally {
       setSaving(false);
     }
@@ -125,8 +126,7 @@ export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
 
   const finishLabel = editMode ? "Save Changes" : "Finish & Create";
 
-  const showWorkspaceSelector =
-    availableWorkspaces !== undefined && availableWorkspaces.length > 1;
+  const showWorkspaceSelector = availableWorkspaces !== undefined && availableWorkspaces.length > 1;
   const workspaceSelectorEmpty = showWorkspaceSelector && !selectedWorkspaceId;
 
   return (

@@ -8,7 +8,10 @@
   flex: 1;
   margin-left: var(--sidebar-width);
   min-height: 100vh;
-  overflow-x: hidden;
+  /* `clip` (not `hidden`) prevents horizontal overflow WITHOUT turning this
+     column into a scroll container — `overflow-x: hidden` would force
+     `overflow-y: auto`, which breaks the sticky AppHeader below. */
+  overflow-x: clip;
   display: flex;
   flex-direction: column;
   background: var(--bg-page);
