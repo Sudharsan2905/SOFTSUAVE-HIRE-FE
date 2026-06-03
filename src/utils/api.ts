@@ -70,7 +70,9 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError);
         store.dispatch(logout());
-        return Promise.reject(refreshError instanceof Error ? refreshError : new Error(String(refreshError)));
+        return Promise.reject(
+          refreshError instanceof Error ? refreshError : new Error(String(refreshError))
+        );
       } finally {
         isRefreshing = false;
       }

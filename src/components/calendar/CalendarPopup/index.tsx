@@ -30,11 +30,25 @@ interface Props {
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 const TIME_SLOTS = [
-  "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM",
-  "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM",
-  "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM",
-  "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM",
-  "05:00 PM", "05:30 PM", "06:00 PM",
+  "09:00 AM",
+  "09:30 AM",
+  "10:00 AM",
+  "10:30 AM",
+  "11:00 AM",
+  "11:30 AM",
+  "12:00 PM",
+  "12:30 PM",
+  "01:00 PM",
+  "01:30 PM",
+  "02:00 PM",
+  "02:30 PM",
+  "03:00 PM",
+  "03:30 PM",
+  "04:00 PM",
+  "04:30 PM",
+  "05:00 PM",
+  "05:30 PM",
+  "06:00 PM",
 ];
 
 export function CalendarPopup({ anchorRef, onClose }: Props) {
@@ -115,7 +129,11 @@ export function CalendarPopup({ anchorRef, onClose }: Props) {
         /* ── Interview Scheduler ── */
         <div className={styles.scheduler}>
           <div className={styles.schedulerHeader}>
-            <button className={styles.backBtn} onClick={resetScheduler} aria-label="Back to calendar">
+            <button
+              className={styles.backBtn}
+              onClick={resetScheduler}
+              aria-label="Back to calendar"
+            >
               <IconChevronLeft size={16} />
               <span>Back</span>
             </button>
@@ -126,13 +144,9 @@ export function CalendarPopup({ anchorRef, onClose }: Props) {
 
           <div className={styles.schedulerBody}>
             <p className={styles.schedulerTitle}>Schedule Interview</p>
-            <p className={styles.schedulerDate}>
-              {format(selectedDate, "EEEE, MMMM d, yyyy")}
-            </p>
+            <p className={styles.schedulerDate}>{format(selectedDate, "EEEE, MMMM d, yyyy")}</p>
 
-            {activeWorkspace && (
-              <p className={styles.workspaceBadge}>{activeWorkspace.name}</p>
-            )}
+            {activeWorkspace && <p className={styles.workspaceBadge}>{activeWorkspace.name}</p>}
 
             <div className={styles.formFields}>
               <Input
@@ -151,7 +165,9 @@ export function CalendarPopup({ anchorRef, onClose }: Props) {
               />
 
               <div className={styles.fieldGroup}>
-                <label htmlFor="time-slot-group" className={styles.fieldLabel}>Time Slot</label>
+                <label htmlFor="time-slot-group" className={styles.fieldLabel}>
+                  Time Slot
+                </label>
                 <div id="time-slot-group" className={styles.timeGrid}>
                   {TIME_SLOTS.map((slot) => (
                     <button
@@ -166,7 +182,9 @@ export function CalendarPopup({ anchorRef, onClose }: Props) {
               </div>
 
               <div className={styles.fieldGroup}>
-                <label htmlFor="interview-notes" className={styles.fieldLabel}>Notes (optional)</label>
+                <label htmlFor="interview-notes" className={styles.fieldLabel}>
+                  Notes (optional)
+                </label>
                 <textarea
                   id="interview-notes"
                   className={styles.notesInput}
@@ -199,9 +217,7 @@ export function CalendarPopup({ anchorRef, onClose }: Props) {
             >
               <IconChevronLeft size={16} />
             </button>
-            <span className={styles.monthLabel}>
-              {format(currentMonth, "MMMM yyyy")}
-            </span>
+            <span className={styles.monthLabel}>{format(currentMonth, "MMMM yyyy")}</span>
             <button
               className={styles.navBtn}
               onClick={() => setCurrentMonth((m) => addMonths(m, 1))}
@@ -233,10 +249,7 @@ export function CalendarPopup({ anchorRef, onClose }: Props) {
               const today = isToday(day);
 
               return (
-                <td
-                  key={format(day, "yyyy-MM-dd")}
-                  aria-selected={isSelected}
-                >
+                <td key={format(day, "yyyy-MM-dd")} aria-selected={isSelected}>
                   <button
                     className={[
                       styles.day,

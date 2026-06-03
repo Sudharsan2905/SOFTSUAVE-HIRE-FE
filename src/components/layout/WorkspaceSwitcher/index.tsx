@@ -553,11 +553,7 @@ export function WorkspaceSwitcher({ collapsed }: Readonly<{ collapsed?: boolean 
                       const initials = getMemberInitials(detail, m.email);
                       const color = getAvatarColor(displayName);
                       return (
-                        <Tooltip
-                          key={m.user_id}
-                          content={displayName}
-                          placement="top"
-                        >
+                        <Tooltip key={m.user_id} content={displayName} placement="top">
                           <div
                             className={styles.memberAvatar}
                             style={{ background: color, zIndex: 6 - i }}
@@ -725,7 +721,6 @@ export function WorkspaceSwitcher({ collapsed }: Readonly<{ collapsed?: boolean 
           This action cannot be undone.
         </p>
       </Modal>
-
     </>
   );
 }

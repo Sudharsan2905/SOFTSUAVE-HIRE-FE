@@ -141,7 +141,6 @@ export default function AssessmentsPage() {
     }
   };
 
-
   if (!activeWorkspace) {
     return (
       <div>
@@ -208,7 +207,10 @@ export default function AssessmentsPage() {
                 setShareUrl("");
               }}
               onClone={handleCloneClick}
-              onDelete={(assessment) => { setSelected(assessment); setShowDelete(true); }}
+              onDelete={(assessment) => {
+                setSelected(assessment);
+                setShowDelete(true);
+              }}
             />
           ))}
         </div>
@@ -294,7 +296,6 @@ export default function AssessmentsPage() {
         />
       )}
 
-
       {/* Share Modal */}
       <Modal
         isOpen={showShare}
@@ -304,9 +305,7 @@ export default function AssessmentsPage() {
       >
         {shareStep === "question" && (
           <div className={styles.shareQuestion}>
-            <p className={styles.shareQuestionTitle}>
-              Should this share link have an expiry?
-            </p>
+            <p className={styles.shareQuestionTitle}>Should this share link have an expiry?</p>
             <div className={styles.shareOptionBtns}>
               <button
                 className={styles.shareOptionBtn}
@@ -327,7 +326,9 @@ export default function AssessmentsPage() {
                 }}
               >
                 <p className={styles.shareOptionBtnTitle}>Yes — Set Expiry</p>
-                <p className={styles.shareOptionBtnDesc}>Restrict access to a specific date and time window</p>
+                <p className={styles.shareOptionBtnDesc}>
+                  Restrict access to a specific date and time window
+                </p>
               </button>
             </div>
           </div>
@@ -339,7 +340,10 @@ export default function AssessmentsPage() {
               ← Back
             </button>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <label htmlFor="share-from" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+              <label
+                htmlFor="share-from"
+                style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}
+              >
                 From Date &amp; Time
               </label>
               <input
@@ -361,7 +365,10 @@ export default function AssessmentsPage() {
               />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <label htmlFor="share-to" style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+              <label
+                htmlFor="share-to"
+                style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}
+              >
                 To Date &amp; Time
               </label>
               <input
@@ -370,7 +377,9 @@ export default function AssessmentsPage() {
                 value={shareExpireTo}
                 min={
                   shareExpireFrom
-                    ? new Date(new Date(shareExpireFrom).getTime() + 60000).toISOString().slice(0, 16)
+                    ? new Date(new Date(shareExpireFrom).getTime() + 60000)
+                        .toISOString()
+                        .slice(0, 16)
                     : new Date().toISOString().slice(0, 16)
                 }
                 onChange={(e) => setShareExpireTo(e.target.value)}
@@ -472,7 +481,10 @@ export default function AssessmentsPage() {
             <button
               className={styles.shareBackLink}
               style={{ marginTop: 12 }}
-              onClick={() => { setShareStep("question"); setShareUrl(""); }}
+              onClick={() => {
+                setShareStep("question");
+                setShareUrl("");
+              }}
             >
               ← Generate Different Link
             </button>

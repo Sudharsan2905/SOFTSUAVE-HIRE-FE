@@ -79,7 +79,8 @@ export function AppHeader() {
             alt="SoftSuave Hire"
           />
           <h2 className={styles.greeting}>
-            Welcome, <span className={styles.greetingName}>{user?.first_name ?? fullName ?? "Admin"}</span>
+            Welcome,{" "}
+            <span className={styles.greetingName}>{user?.first_name ?? fullName ?? "Admin"}</span>
           </h2>
           <p className={styles.date}>{today}</p>
         </div>
@@ -87,10 +88,7 @@ export function AppHeader() {
         {/* Right — actions */}
         <div className={styles.right}>
           {/* Notification bell */}
-          <Tooltip
-            content={notificationTooltip}
-            placement="bottom"
-          >
+          <Tooltip content={notificationTooltip} placement="bottom">
             <button
               ref={bellRef}
               className={styles.iconBtn}
@@ -161,10 +159,7 @@ export function AppHeader() {
                 </div>
 
                 <div className={styles.menuItems}>
-                  <button
-                    className={styles.menuItem}
-                    onClick={handleProfileClick}
-                  >
+                  <button className={styles.menuItem} onClick={handleProfileClick}>
                     <IconUsers size={15} />
                     <span>Edit Profile</span>
                   </button>
@@ -187,10 +182,7 @@ export function AppHeader() {
 
       {/* Notification dropdown (desktop) / redirects to /notifications on mobile */}
       {showNotifications && (
-        <NotificationDropdown
-          anchorRef={bellRef}
-          onClose={() => setShowNotifications(false)}
-        />
+        <NotificationDropdown anchorRef={bellRef} onClose={() => setShowNotifications(false)} />
       )}
 
       {/* Logout confirmation modal */}

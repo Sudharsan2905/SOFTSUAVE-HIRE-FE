@@ -42,9 +42,7 @@ export function Sidebar() {
   const { activeWorkspace } = useAppSelector((s) => s.workspace);
   const isSuperAdmin = user?.role === UserRole.SUPER_ADMIN;
 
-  const [collapsed, setCollapsed] = useState(
-    () => localStorage.getItem(COLLAPSED_KEY) === "true"
-  );
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSED_KEY) === "true");
 
   const effectiveWidth = collapsed ? COLLAPSED_WIDTH : DEFAULT_WIDTH;
 
@@ -71,10 +69,7 @@ export function Sidebar() {
           <img src={logoUrl} width="31" height="31" alt="SoftSuave Hire" />
         </div>
         {!collapsed && <span className={styles.logoText}>SoftSuave Hire</span>}
-        <Tooltip
-          content={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          placement="right"
-        >
+        <Tooltip content={collapsed ? "Expand sidebar" : "Collapse sidebar"} placement="right">
           <button
             className={styles.collapseBtn}
             onClick={toggleCollapse}
@@ -98,9 +93,7 @@ export function Sidebar() {
             <Tooltip content="Assessments" placement="right" disabled={!collapsed}>
               <NavLink
                 to={`/workspaces/${activeWorkspace.id}/assessments`}
-                className={({ isActive }) =>
-                  `${styles.navItem} ${isActive ? styles.active : ""}`
-                }
+                className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ""}`}
               >
                 <IconAssessment size={22} />
                 {!collapsed && <span>Assessments</span>}
@@ -115,9 +108,7 @@ export function Sidebar() {
             <Tooltip key={item.to} content={item.label} placement="right" disabled={!collapsed}>
               <NavLink
                 to={item.to}
-                className={({ isActive }) =>
-                  `${styles.navItem} ${isActive ? styles.active : ""}`
-                }
+                className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ""}`}
               >
                 {item.icon}
                 {!collapsed && <span>{item.label}</span>}
@@ -128,9 +119,7 @@ export function Sidebar() {
             <Tooltip content="Users" placement="right" disabled={!collapsed}>
               <NavLink
                 to="/users"
-                className={({ isActive }) =>
-                  `${styles.navItem} ${isActive ? styles.active : ""}`
-                }
+                className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ""}`}
               >
                 <IconUsers size={20} />
                 {!collapsed && <span>Users</span>}

@@ -19,7 +19,7 @@ import styles from "./DateRangePicker.module.css";
 
 export interface DateRange {
   from: string; // "YYYY-MM-DD" or ""
-  to: string;   // "YYYY-MM-DD" or ""
+  to: string; // "YYYY-MM-DD" or ""
 }
 
 interface DateRangePickerProps {
@@ -57,29 +57,38 @@ function getDayClassNames(
   const isFrom = !!(fromParsed && isSameDay(day, fromParsed));
   const isTo = !!(toParsed && isSameDay(day, toParsed));
   const isInRange = !!(
-    fromParsed && toParsed &&
-    isAfter(day, fromParsed) && isBefore(day, toParsed)
+    fromParsed &&
+    toParsed &&
+    isAfter(day, fromParsed) &&
+    isBefore(day, toParsed)
   );
   const isHoverRange = !!(
-    selectionPhase === "to" && fromParsed && hoverParsed &&
-    isAfter(day, fromParsed) && isBefore(day, hoverParsed)
+    selectionPhase === "to" &&
+    fromParsed &&
+    hoverParsed &&
+    isAfter(day, fromParsed) &&
+    isBefore(day, hoverParsed)
   );
   const isDisabled = !!(
-    selectionPhase === "to" && fromParsed &&
-    isBefore(day, fromParsed) && !isSameDay(day, fromParsed)
+    selectionPhase === "to" &&
+    fromParsed &&
+    isBefore(day, fromParsed) &&
+    !isSameDay(day, fromParsed)
   );
   const isToday = isSameDay(day, today);
   const isOutsideMonth = !isSameMonth(day, viewDate);
 
   return [
     styles.calDay,
-    (isFrom || isTo) ? styles.calDaySelected : "",
+    isFrom || isTo ? styles.calDaySelected : "",
     isInRange ? styles.calDayInRange : "",
     isHoverRange ? styles.calDayHoverRange : "",
     isToday && !isFrom && !isTo ? styles.calDayToday : "",
     isOutsideMonth ? styles.calDayOutside : "",
     isDisabled ? styles.calDayDisabled : "",
-  ].filter(Boolean).join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 export function DateRangePicker({
@@ -118,7 +127,10 @@ export function DateRangePicker({
   const handleDayClick = (day: Date) => {
     const dayStr = format(day, "yyyy-MM-dd");
     const fromParsed = value.from ? parseISO(value.from) : null;
-    if (selectionPhase === "from" || (fromParsed && isBefore(day, fromParsed) && !isSameDay(day, fromParsed))) {
+    if (
+      selectionPhase === "from" ||
+      (fromParsed && isBefore(day, fromParsed) && !isSameDay(day, fromParsed))
+    ) {
       onChange({ from: dayStr, to: "" });
       setSelectionPhase("to");
     } else {
@@ -181,7 +193,9 @@ export function DateRangePicker({
 
           <div className={styles.calGrid} aria-label={format(viewDate, "MMMM yyyy")}>
             {DAY_LABELS.map((d) => (
-              <div key={d} className={styles.calDayHeader}>{d}</div>
+              <div key={d} className={styles.calDayHeader}>
+                {d}
+              </div>
             ))}
             {days.map((day) => {
               const dayStr = format(day, "yyyy-MM-dd");
@@ -194,12 +208,22 @@ export function DateRangePicker({
                 (toParsed && isSameDay(day, toParsed))
               );
               const isDisabled = !!(
-                selectionPhase === "to" && fromParsed &&
-                isBefore(day, fromParsed) && !isSameDay(day, fromParsed)
+                selectionPhase === "to" &&
+                fromParsed &&
+                isBefore(day, fromParsed) &&
+                !isSameDay(day, fromParsed)
               );
 
               // Fix S3776: use extracted helper for class computation
-              const cls = getDayClassNames(day, fromParsed, toParsed, hoverParsed, selectionPhase, today, viewDate);
+              const cls = getDayClassNames(
+                day,
+                fromParsed,
+                toParsed,
+                hoverParsed,
+                selectionPhase,
+                today,
+                viewDate
+              );
 
               return (
                 <button
@@ -208,7 +232,9 @@ export function DateRangePicker({
                   className={cls}
                   onClick={() => !isDisabled && handleDayClick(day)}
                   disabled={isDisabled}
-                  onMouseEnter={() => selectionPhase === "to" && !isDisabled && setHoverDate(dayStr)}
+                  onMouseEnter={() =>
+                    selectionPhase === "to" && !isDisabled && setHoverDate(dayStr)
+                  }
                   onMouseLeave={() => setHoverDate("")}
                   aria-label={format(day, "PPP")}
                   aria-pressed={isSelected}

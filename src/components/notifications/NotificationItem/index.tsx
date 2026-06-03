@@ -11,8 +11,8 @@ interface Props {
 const TYPE_CONFIG: Record<Notification["type"], { color: string }> = {
   submission: { color: "var(--primary-500)" },
   assessment: { color: "var(--accent-500)" },
-  interview:  { color: "var(--success-500)" },
-  system:     { color: "var(--text-tertiary)" },
+  interview: { color: "var(--success-500)" },
+  system: { color: "var(--text-tertiary)" },
 };
 
 export function NotificationItem({ notification, onRead }: Props) {

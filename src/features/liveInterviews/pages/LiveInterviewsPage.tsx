@@ -138,7 +138,14 @@ export default function LiveInterviewsPage() {
             );
           })}
         </div>
-        {meta && <Pagination meta={meta} onPageChange={goToPage} pageSize={pageSize} onPageSizeChange={changePageSize} />}
+        {meta && (
+          <Pagination
+            meta={meta}
+            onPageChange={goToPage}
+            pageSize={pageSize}
+            onPageSizeChange={changePageSize}
+          />
+        )}
       </>
     );
   }

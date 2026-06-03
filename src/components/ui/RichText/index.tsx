@@ -46,9 +46,7 @@ function CodeBlock(props: Readonly<React.ComponentPropsWithoutRef<"code">>) {
 export function RichText({ children, className }: Readonly<RichTextProps>) {
   return (
     <div className={className} style={{ lineHeight: 1.6 }}>
-      <ReactMarkdown components={{ code: CodeBlock }}>
-        {children}
-      </ReactMarkdown>
+      <ReactMarkdown components={{ code: CodeBlock }}>{children}</ReactMarkdown>
     </div>
   );
 }

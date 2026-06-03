@@ -66,7 +66,9 @@
 }
 
 @media (max-width: 600px) {
-  .formGrid { grid-template-columns: 1fr; }
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ─── Shared info banner ───────────────────────────────────────────────────── */
@@ -232,7 +234,9 @@
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: border-color 0.12s ease, color 0.12s ease;
+  transition:
+    border-color 0.12s ease,
+    color 0.12s ease;
 }
 
 .pwBtn:hover:not(:disabled) {

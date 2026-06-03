@@ -18,10 +18,7 @@ export function SkeuToggle({ checked, onChange, label, disabled }: Readonly<Skeu
         disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}
       />
-      <div
-        aria-hidden="true"
-        className={`${styles.track} ${checked ? styles.checked : ""}`}
-      >
+      <div aria-hidden="true" className={`${styles.track} ${checked ? styles.checked : ""}`}>
         <span className={styles.offText}>OFF</span>
         <span className={styles.onText}>ON</span>
       </div>

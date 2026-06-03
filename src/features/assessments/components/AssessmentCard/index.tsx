@@ -21,7 +21,16 @@ interface DotsIcon {
 }
 function IconDots({ size = 16, color = "currentColor" }: Readonly<DotsIcon>) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <circle cx="12" cy="5" r="1" fill={color} stroke="none" />
       <circle cx="12" cy="12" r="1" fill={color} stroke="none" />
       <circle cx="12" cy="19" r="1" fill={color} stroke="none" />
@@ -39,7 +48,15 @@ interface Props {
   onDelete: (a: Assessment) => void;
 }
 
-export function AssessmentCard({ assessment: a, workspaceId, viewMode, onEdit, onShare, onClone, onDelete }: Readonly<Props>) {
+export function AssessmentCard({
+  assessment: a,
+  workspaceId,
+  viewMode,
+  onEdit,
+  onShare,
+  onClone,
+  onDelete,
+}: Readonly<Props>) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -59,7 +76,9 @@ export function AssessmentCard({ assessment: a, workspaceId, viewMode, onEdit, o
   const cardClass = [
     viewMode === "list" ? `${styles.card} ${styles.listCard}` : styles.card,
     menuOpen ? styles.cardMenuOpen : "",
-  ].filter(Boolean).join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className={cardClass}>
@@ -74,7 +93,9 @@ export function AssessmentCard({ assessment: a, workspaceId, viewMode, onEdit, o
         <div className={styles.badges}>
           <Badge variant={a.accessibility === "monitoring" ? "accent" : "default"}>
             {a.accessibility === "monitoring" ? (
-              <><IconShield size={10} /> Monitoring</>
+              <>
+                <IconShield size={10} /> Monitoring
+              </>
             ) : (
               "Normal"
             )}
@@ -87,8 +108,13 @@ export function AssessmentCard({ assessment: a, workspaceId, viewMode, onEdit, o
         {/* Three-dot action menu */}
         <div className={styles.menuWrap} ref={menuRef}>
           <button
-            className={[styles.menuTrigger, menuOpen ? styles.menuTriggerOpen : ""].filter(Boolean).join(" ")}
-            onClick={(e) => { e.preventDefault(); setMenuOpen((o) => !o); }}
+            className={[styles.menuTrigger, menuOpen ? styles.menuTriggerOpen : ""]
+              .filter(Boolean)
+              .join(" ")}
+            onClick={(e) => {
+              e.preventDefault();
+              setMenuOpen((o) => !o);
+            }}
             aria-label="Assessment actions"
           >
             <IconDots size={16} />
@@ -98,26 +124,42 @@ export function AssessmentCard({ assessment: a, workspaceId, viewMode, onEdit, o
             <div className={styles.dropdown} role="menu">
               <button
                 className={styles.menuItem}
-                onClick={(e) => { e.preventDefault(); setMenuOpen(false); onEdit(a); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMenuOpen(false);
+                  onEdit(a);
+                }}
               >
                 <IconEdit size={14} /> Edit
               </button>
               <button
                 className={styles.menuItem}
-                onClick={(e) => { e.preventDefault(); setMenuOpen(false); onShare(a); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMenuOpen(false);
+                  onShare(a);
+                }}
               >
                 <IconShare size={14} /> Share
               </button>
               <button
                 className={styles.menuItem}
-                onClick={(e) => { e.preventDefault(); setMenuOpen(false); onClone(a); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMenuOpen(false);
+                  onClone(a);
+                }}
               >
                 <IconClone size={14} /> Clone
               </button>
               <div className={styles.menuDivider} />
               <button
                 className={`${styles.menuItem} ${styles.menuItemDanger}`}
-                onClick={(e) => { e.preventDefault(); setMenuOpen(false); onDelete(a); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMenuOpen(false);
+                  onDelete(a);
+                }}
               >
                 <IconDelete size={14} /> Delete
               </button>
@@ -145,10 +187,7 @@ export function AssessmentCard({ assessment: a, workspaceId, viewMode, onEdit, o
       {/* Footer */}
       <div className={styles.footer}>
         <span className={styles.date}>{formatDate(a.created_at)}</span>
-        <Link
-          to={`/workspaces/${workspaceId}/assessments/${a.id}`}
-          className={styles.viewBtn}
-        >
+        <Link to={`/workspaces/${workspaceId}/assessments/${a.id}`} className={styles.viewBtn}>
           View Details <IconChevronRight size={12} />
         </Link>
       </div>

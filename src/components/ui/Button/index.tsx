@@ -66,10 +66,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     if (disabled || isLoading) {
       return (
         <Tooltip content={title}>
-          <span
-            style={{ display: "inline-flex", cursor: "not-allowed" }}
-            aria-label={title}
-          >
+          <span style={{ display: "inline-flex", cursor: "not-allowed" }} aria-label={title}>
             {React.cloneElement(btn, {
               style: { pointerEvents: "none", ...(rest.style ?? {}) },
             })}

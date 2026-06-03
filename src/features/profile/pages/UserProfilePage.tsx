@@ -15,8 +15,17 @@ import styles from "./UserProfilePage.module.css";
 
 function EditIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
       <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
     </svg>
@@ -25,8 +34,17 @@ function EditIcon() {
 
 function BackIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <polyline points="15 18 9 12 15 6" />
     </svg>
   );
@@ -34,8 +52,17 @@ function BackIcon() {
 
 function CheckIcon() {
   return (
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="11"
+      height="11"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <polyline points="20 6 9 17 4 12" />
     </svg>
   );
@@ -84,8 +111,7 @@ function buildBasePayload(
     payload.first_name = profileForm.first_name;
   if (profileForm.last_name !== (activeUser.last_name ?? ""))
     payload.last_name = profileForm.last_name;
-  if (profileForm.email !== activeUser.email)
-    payload.email = profileForm.email;
+  if (profileForm.email !== activeUser.email) payload.email = profileForm.email;
   if (
     profileForm.default_workspace_id &&
     profileForm.default_workspace_id !== activeUser.default_workspace_id
@@ -104,7 +130,10 @@ function buildAdminPayload(
   if (profileForm.is_active !== (activeUser.is_active !== false))
     payload.is_active = profileForm.is_active;
   const cmp = (a: string, b: string) => a.localeCompare(b);
-  const currentWsIds = (activeUser.workspaces ?? []).map((w) => w.id).sort(cmp).join(",");
+  const currentWsIds = (activeUser.workspaces ?? [])
+    .map((w) => w.id)
+    .sort(cmp)
+    .join(",");
   const newWsIds = [...profileForm.workspace_ids].sort(cmp).join(",");
   if (currentWsIds !== newWsIds) payload.workspace_ids = profileForm.workspace_ids;
   return payload;
@@ -140,9 +169,7 @@ function WorkspacePreferencesContent({
   if (editingAdminWs) {
     return (
       <div className={styles.wsAssignSection}>
-        <p className={styles.wsAssignHint}>
-          Select workspaces to assign to this user
-        </p>
+        <p className={styles.wsAssignHint}>Select workspaces to assign to this user</p>
         <div className={styles.wsGrid}>
           {allWorkspaces.map((ws) => {
             const checked = profileForm.workspace_ids.includes(ws.id);
@@ -169,9 +196,7 @@ function WorkspacePreferencesContent({
             <Select
               label="Default Workspace"
               value={profileForm.default_workspace_id}
-              onChange={(v) =>
-                setProfileForm((p) => ({ ...p, default_workspace_id: v }))
-              }
+              onChange={(v) => setProfileForm((p) => ({ ...p, default_workspace_id: v }))}
               options={allWorkspaces
                 .filter((ws) => profileForm.workspace_ids.includes(ws.id))
                 .map((ws) => ({ value: ws.id, label: ws.name }))}
@@ -188,9 +213,7 @@ function WorkspacePreferencesContent({
         <Select
           label="Default Workspace"
           value={profileForm.default_workspace_id}
-          onChange={(v) =>
-            setProfileForm((p) => ({ ...p, default_workspace_id: v }))
-          }
+          onChange={(v) => setProfileForm((p) => ({ ...p, default_workspace_id: v }))}
           options={wsOptions.map((ws) => ({ value: ws.id, label: ws.name }))}
         />
       </div>
@@ -277,7 +300,7 @@ export default function UserProfilePage() {
   // S3776 (line 44): Delegated form state construction to buildProfileFormState helper
   useEffect(() => {
     if (!activeUser) return;
-    const wsOptions = isSuperAdmin ? allWorkspaces : activeUser.workspaces ?? [];
+    const wsOptions = isSuperAdmin ? allWorkspaces : (activeUser.workspaces ?? []);
     setProfileForm(buildProfileFormState(activeUser, wsOptions));
   }, [activeUser, allWorkspaces, isSuperAdmin]);
 
@@ -285,7 +308,7 @@ export default function UserProfilePage() {
   const handleCancel = () => {
     setIsEditing(false);
     if (activeUser) {
-      const wsOptions = isSuperAdmin ? allWorkspaces : activeUser.workspaces ?? [];
+      const wsOptions = isSuperAdmin ? allWorkspaces : (activeUser.workspaces ?? []);
       setProfileForm(buildProfileFormState(activeUser, wsOptions));
     }
   };
@@ -297,9 +320,7 @@ export default function UserProfilePage() {
     try {
       const payload: Record<string, unknown> = {
         ...buildBasePayload(profileForm, activeUser),
-        ...(isViewingOther && isSuperAdmin
-          ? buildAdminPayload(profileForm, activeUser)
-          : {}),
+        ...(isViewingOther && isSuperAdmin ? buildAdminPayload(profileForm, activeUser) : {}),
       };
 
       if (Object.keys(payload).length === 0) {
@@ -393,7 +414,7 @@ export default function UserProfilePage() {
   const isActive = activeUser.is_active !== false;
 
   // S6606 (line 251): Replace || with ??
-  const wsOptions = isSuperAdmin ? allWorkspaces : activeUser.workspaces ?? [];
+  const wsOptions = isSuperAdmin ? allWorkspaces : (activeUser.workspaces ?? []);
   // S6606 (line 253): Replace || with ??
   const defaultWsName =
     wsOptions.find((ws) => ws.id === activeUser.default_workspace_id)?.name ?? "—";
@@ -419,9 +440,13 @@ export default function UserProfilePage() {
               <h1 className={styles.heroName}>{fullName || "—"}</h1>
               <p className={styles.heroMeta}>
                 <span>{activeUser.email}</span>
-                <span className={styles.heroDot} aria-hidden="true">·</span>
+                <span className={styles.heroDot} aria-hidden="true">
+                  ·
+                </span>
                 <span>{roleLabel}</span>
-                <span className={styles.heroDot} aria-hidden="true">·</span>
+                <span className={styles.heroDot} aria-hidden="true">
+                  ·
+                </span>
                 <span className={isActive ? styles.statusActive : styles.statusInactive}>
                   {isActive ? "Active" : "Inactive"}
                 </span>
@@ -440,11 +465,7 @@ export default function UserProfilePage() {
                   </Button>
                 </>
               ) : (
-                <Button
-                  size="sm"
-                  leftIcon={<EditIcon />}
-                  onClick={handleEdit}
-                >
+                <Button size="sm" leftIcon={<EditIcon />} onClick={handleEdit}>
                   Edit Profile
                 </Button>
               )}
@@ -455,7 +476,6 @@ export default function UserProfilePage() {
 
       {/* ── Content ── */}
       <div className={styles.content}>
-
         {/* Personal Information */}
         <div className={styles.card}>
           <h2 className={styles.cardTitle}>Personal Information</h2>
@@ -466,27 +486,21 @@ export default function UserProfilePage() {
                   label="First Name"
                   placeholder="Enter first name"
                   value={profileForm.first_name}
-                  onChange={(e) =>
-                    setProfileForm((p) => ({ ...p, first_name: e.target.value }))
-                  }
+                  onChange={(e) => setProfileForm((p) => ({ ...p, first_name: e.target.value }))}
                   showRequired
                 />
                 <Input
                   label="Last Name"
                   placeholder="Enter last name (optional)"
                   value={profileForm.last_name}
-                  onChange={(e) =>
-                    setProfileForm((p) => ({ ...p, last_name: e.target.value }))
-                  }
+                  onChange={(e) => setProfileForm((p) => ({ ...p, last_name: e.target.value }))}
                 />
                 <Input
                   label="Email Address"
                   type="email"
                   placeholder="Enter email"
                   value={profileForm.email}
-                  onChange={(e) =>
-                    setProfileForm((p) => ({ ...p, email: e.target.value }))
-                  }
+                  onChange={(e) => setProfileForm((p) => ({ ...p, email: e.target.value }))}
                   showRequired
                 />
               </>
@@ -605,11 +619,7 @@ export default function UserProfilePage() {
                     : "Update your password. You'll need your current password."}
                 </p>
               </div>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setShowPasswordModal(true)}
-              >
+              <Button variant="secondary" size="sm" onClick={() => setShowPasswordModal(true)}>
                 {isViewingOther ? "Reset Password" : "Change Password"}
               </Button>
             </div>
@@ -657,9 +667,7 @@ export default function UserProfilePage() {
               type={showPw.current ? "text" : "password"}
               placeholder="Enter current password"
               value={passwordForm.current_password}
-              onChange={(e) =>
-                setPasswordForm((p) => ({ ...p, current_password: e.target.value }))
-              }
+              onChange={(e) => setPasswordForm((p) => ({ ...p, current_password: e.target.value }))}
               showRequired
               autoComplete="current-password"
               rightElement={
@@ -675,9 +683,7 @@ export default function UserProfilePage() {
             type={showPw.new ? "text" : "password"}
             placeholder="Enter new password"
             value={passwordForm.new_password}
-            onChange={(e) =>
-              setPasswordForm((p) => ({ ...p, new_password: e.target.value }))
-            }
+            onChange={(e) => setPasswordForm((p) => ({ ...p, new_password: e.target.value }))}
             showRequired
             autoComplete="new-password"
             rightElement={
@@ -692,9 +698,7 @@ export default function UserProfilePage() {
             type={showPw.confirm ? "text" : "password"}
             placeholder="Confirm new password"
             value={passwordForm.confirm_password}
-            onChange={(e) =>
-              setPasswordForm((p) => ({ ...p, confirm_password: e.target.value }))
-            }
+            onChange={(e) => setPasswordForm((p) => ({ ...p, confirm_password: e.target.value }))}
             showRequired
             autoComplete="new-password"
             rightElement={
@@ -733,15 +737,31 @@ function ToggleVisBtn({
       }}
     >
       {show ? (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
           <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
           <line x1="1" y1="1" x2="23" y2="23" />
         </svg>
       ) : (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
           <circle cx="12" cy="12" r="3" />
         </svg>

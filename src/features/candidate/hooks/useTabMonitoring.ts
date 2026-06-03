@@ -18,10 +18,9 @@ export function useTabMonitoring({
     onViolation();
 
     try {
-      await api.post(
-        `/api/candidate/submission/${submissionId}/malpractice`,
-        { type: "tab_switch" }
-      );
+      await api.post(`/api/candidate/submission/${submissionId}/malpractice`, {
+        type: "tab_switch",
+      });
     } catch {
       // Silently ignore network errors so the UI keeps running
     }

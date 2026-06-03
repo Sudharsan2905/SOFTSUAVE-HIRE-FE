@@ -54,9 +54,7 @@ export const fetchNotifications = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const { data } = await api.get(
-        `/api/notifications?page=${page}&page_size=${pageSize}`
-      );
+      const { data } = await api.get(`/api/notifications?page=${page}&page_size=${pageSize}`);
       return data.data as {
         notifications: Record<string, unknown>[];
         pagination: PaginationMeta;
@@ -165,11 +163,6 @@ const notificationSlice = createSlice({
   },
 });
 
-export const {
-  markAsRead,
-  markAllAsRead,
-  addNotification,
-  clearNotifications,
-  resetFetchedFlag,
-} = notificationSlice.actions;
+export const { markAsRead, markAllAsRead, addNotification, clearNotifications, resetFetchedFlag } =
+  notificationSlice.actions;
 export default notificationSlice.reducer;

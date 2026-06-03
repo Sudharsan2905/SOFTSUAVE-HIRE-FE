@@ -28,7 +28,9 @@ export function ConnectionLostOverlay({ status }: Readonly<Props>) {
   else titleText = "Reconnecting…";
 
   let bodyText: string;
-  if (isOnHold) bodyText = "Your session has been placed on hold due to a network interruption. Please wait — an administrator will resume your interview.";
+  if (isOnHold)
+    bodyText =
+      "Your session has been placed on hold due to a network interruption. Please wait — an administrator will resume your interview.";
   else if (isOffline) bodyText = "Your internet connection was lost. Please check your network.";
   else bodyText = "Trying to reconnect to the interview server.";
 
@@ -44,14 +46,13 @@ export function ConnectionLostOverlay({ status }: Readonly<Props>) {
         {!isOnHold && <ReconnectingDots />}
 
         {!isOnHold && (
-          <p className={styles.hint}>
-            Your answers and progress are saved. The timer is paused.
-          </p>
+          <p className={styles.hint}>Your answers and progress are saved. The timer is paused.</p>
         )}
 
         {isOnHold && (
           <p className={styles.hint}>
-            Once an administrator resumes your session your timer and answers will be fully restored.
+            Once an administrator resumes your session your timer and answers will be fully
+            restored.
           </p>
         )}
       </div>

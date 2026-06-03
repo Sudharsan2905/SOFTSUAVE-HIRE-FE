@@ -59,7 +59,9 @@ export default function NotificationsPage() {
     if (notifications.length === 0) {
       return (
         <div className={styles.empty}>
-          <div className={styles.emptyIcon} aria-hidden="true">🔔</div>
+          <div className={styles.emptyIcon} aria-hidden="true">
+            🔔
+          </div>
           <p className={styles.emptyTitle}>No notifications</p>
           <p className={styles.emptySubtext}>
             You&apos;re all caught up! Check back later for updates.
@@ -90,9 +92,11 @@ export default function NotificationsPage() {
         title="Notifications"
         subtitle={subtitle}
         actions={
-          unreadCount > 0
-            ? <Button variant="secondary" size="sm" onClick={handleMarkAll}>Mark all as read</Button>
-            : undefined
+          unreadCount > 0 ? (
+            <Button variant="secondary" size="sm" onClick={handleMarkAll}>
+              Mark all as read
+            </Button>
+          ) : undefined
         }
       />
       <div className={styles.page}>{renderContent()}</div>
