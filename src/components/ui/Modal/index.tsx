@@ -50,15 +50,16 @@ export function Modal({
   return createPortal(
     <div
       className={styles.overlay}
-      onClick={disableBackdropClose ? undefined : onClose}
+      onClick={
+        disableBackdropClose
+          ? undefined
+          : (e) => {
+              if (e.target === e.currentTarget) onClose();
+            }
+      }
       aria-hidden="true"
     >
-      <dialog
-        open
-        className={clsx(styles.modal, styles[size], className)}
-        onClick={(e) => e.stopPropagation()}
-        aria-label={title}
-      >
+      <dialog open className={clsx(styles.modal, styles[size], className)} aria-label={title}>
         {(title || showClose) && (
           <div className={styles.header}>
             {title && <h2 className={styles.title}>{title}</h2>}

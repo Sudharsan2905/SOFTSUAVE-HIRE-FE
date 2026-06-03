@@ -39,6 +39,7 @@ const NotificationsPage = lazy(() => import("@/features/notifications/pages/Noti
 
 // Lazy-loaded candidate pages
 const AssessmentEntryPage = lazy(() => import("@/features/candidate/pages/AssessmentEntryPage"));
+const AssessmentAccessPage = lazy(() => import("@/features/candidate/pages/AssessmentAccessPage"));
 const CandidateDashboard = lazy(() =>
   import("@/features/candidate/pages/AssessmentEntryPage").then((m) => ({
     default: m.CandidateDashboard,
@@ -69,6 +70,8 @@ export default function App() {
 
         {/* Assessment flow — entry is public, protected pages require candidate auth */}
         <Route path="/assessment/:shareLink" element={<AssessmentEntryPage />} />
+        {/* Restricted entry for admin-scheduled candidates (no Google / no register) */}
+        <Route path="/assessment-access/:token" element={<AssessmentAccessPage />} />
         <Route element={<CandidateRoute />}>
           <Route path="/assessment/:shareLink/instructions" element={<InstructionsPage />} />
           <Route

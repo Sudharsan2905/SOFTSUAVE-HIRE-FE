@@ -20,6 +20,7 @@
   flex-direction: column;
   max-height: calc(100vh - 32px);
   width: 100%;
+  position: static;
   animation: slideUp 0.2s ease;
 }
 

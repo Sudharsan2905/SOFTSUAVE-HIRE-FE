@@ -58,106 +58,18 @@
   margin: 0 8px;
 }
 
-/* ─── Step 1 – Candidate Info ──────────────────────────────────────────────── */
-.candidateSearch {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.candidateCard {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  border: 1px solid var(--border-primary);
-  border-radius: 10px;
-  background: var(--bg-secondary);
-}
-
-.candidateAvatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 700;
-  color: #fff;
-  flex-shrink: 0;
-}
-
-.candidateInfo {
-  flex: 1;
-}
-
-.candidateName {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 2px;
-}
-
-.candidateMeta {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  margin: 0;
-}
-
-.candidateField {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-}
-
-.fieldItem {
-  flex: 1;
-  min-width: 140px;
-}
-
-.fieldLabel {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0 0 3px;
-}
-
-.fieldValue {
-  font-size: 13px;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-/* ─── Step 1 – New Candidate Form ─────────────────────────────────────────── */
-.createForm {
-  margin-top: 4px;
-  border: 1px solid var(--border-primary);
-  border-radius: 10px;
-  padding: 16px;
-}
-
+/* ─── Form grid (shared across steps) ─────────────────────────────────────── */
 .formGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin-top: 12px;
 }
 
 @media (max-width: 600px) {
   .formGrid { grid-template-columns: 1fr; }
 }
 
-/* ─── Step 2 – Monitoring Overrides ───────────────────────────────────────── */
-.monitoringSection {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
+/* ─── Shared info banner ───────────────────────────────────────────────────── */
 .inheritBanner {
   display: flex;
   align-items: flex-start;
@@ -170,6 +82,236 @@
   font-size: 12px;
   color: var(--primary-700, #1d4ed8);
   line-height: 1.5;
+}
+
+/* ─── Step 1 – Accordion candidate list ───────────────────────────────────── */
+.candidateList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.accordionCard {
+  border: 1px solid var(--border-primary);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-primary);
+  transition: border-color 0.15s ease;
+}
+
+.accordionCard:focus-within {
+  border-color: var(--primary-300);
+}
+
+.accordionCardError {
+  border-color: var(--error-300);
+}
+
+.accordionHeaderRow {
+  display: flex;
+  align-items: center;
+  background: var(--bg-secondary);
+  transition: background 0.12s ease;
+}
+
+.accordionHeaderRow:hover {
+  background: var(--bg-muted, var(--bg-secondary));
+}
+
+.accordionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.accordionChevron {
+  display: flex;
+  align-items: center;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  transition: color 0.12s ease;
+}
+
+.accordionHeaderRow:hover .accordionChevron {
+  color: var(--text-secondary);
+}
+
+.accordionTitle {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accordionHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-right: 14px;
+}
+
+.accordionErrorBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--error-500);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.accordionBody {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid var(--border-primary);
+}
+
+/* ─── Remove entry button (inside accordion header) ───────────────────────── */
+.removeEntryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--error-300);
+  background: none;
+  color: var(--error-600);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  white-space: nowrap;
+}
+
+.removeEntryBtn:hover {
+  background: var(--error-50, #fef2f2);
+}
+
+/* ─── Password field row ───────────────────────────────────────────────────── */
+.passwordRow {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.pwActions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 22px;
+}
+
+.pwBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.12s ease, color 0.12s ease;
+}
+
+.pwBtn:hover:not(:disabled) {
+  border-color: var(--primary-400);
+  color: var(--primary-600);
+}
+
+.pwBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pwBtnCopied {
+  border-color: var(--success-400);
+  color: var(--success-600);
+  background: var(--success-50, #f0fdf4);
+}
+
+.pwIconBtn {
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  transition: color 0.12s ease;
+}
+
+.pwIconBtn:hover {
+  color: var(--text-primary);
+}
+
+/* ─── Password strength bar ────────────────────────────────────────────────── */
+.strengthBar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.strengthSegment {
+  height: 3px;
+  flex: 1;
+  border-radius: 2px;
+  transition: background 0.2s ease;
+}
+
+.strengthLabel {
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 4px;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+/* ─── Per-entry validation error ───────────────────────────────────────────── */
+.entryError {
+  font-size: 12px;
+  color: var(--error-600);
+  margin: 0;
+  padding: 6px 10px;
+  background: var(--error-50, #fef2f2);
+  border-radius: 6px;
+  border-left: 3px solid var(--error-400);
+}
+
+/* ─── Add candidate row ────────────────────────────────────────────────────── */
+.addCandidateRow {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: 8px;
+}
+
+/* ─── Step 2 – Monitoring Overrides ───────────────────────────────────────── */
+.monitoringSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .toggleRow {
@@ -220,6 +362,25 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* ─── Time window ──────────────────────────────────────────────────────────── */
+.timeWindow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--border-primary);
+  margin-top: 12px;
+}
+
+.timeWindowLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin: 0 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
 }
 
 /* ─── Step 3 – Question Selection ─────────────────────────────────────────── */
@@ -376,26 +537,7 @@
   text-align: center;
 }
 
-/* ─── Time window ──────────────────────────────────────────────────────────── */
-.timeWindow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding: 14px 0 0;
-  border-top: 1px solid var(--border-primary);
-  margin-top: 12px;
-}
-
-.timeWindowLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-tertiary);
-  margin: 0 0 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-/* ─── Share link result ────────────────────────────────────────────────────── */
+/* ─── Step 4 – Share link result ──────────────────────────────────────────── */
 .shareLinkBox {
   display: flex;
   flex-direction: column;
@@ -435,4 +577,83 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ─── Multi-candidate link grid ────────────────────────────────────────────── */
+.linksGrid {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.linkEntry {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-primary);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+}
+
+.linkEntryMeta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.linkEntryName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.linkEntryEmail {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+/* ─── Failed entries ───────────────────────────────────────────────────────── */
+.failedList {
+  width: 100%;
+  border: 1px solid var(--error-300);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.failedListTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--error-700);
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--error-50, #fef2f2);
+  border-bottom: 1px solid var(--error-200);
+}
+
+.failedEntry {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--error-100);
+  font-size: 12px;
+}
+
+.failedEntry:last-child {
+  border-bottom: none;
+}
+
+.failedEntryName {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.failedEntryError {
+  color: var(--error-600);
+  text-align: right;
 }
