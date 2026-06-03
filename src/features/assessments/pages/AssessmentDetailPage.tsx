@@ -5,11 +5,10 @@ import styles from "./AssessmentDetailPage.module.css";
 import { Header } from "@/components/layout/Header";
 import { FilterBar } from "@/components/shared/FilterBar";
 import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
 import { Pagination } from "@/components/ui/Pagination";
 import { Spinner } from "@/components/ui/Spinner";
 import { Badge, StatusBadge } from "@/components/ui/Badge";
-import { IconDownload, IconEye, IconRefresh, IconChevronLeft, IconAssessment } from "@/assets/icons";
+import { IconDownload, IconEye, IconChevronLeft, IconAssessment } from "@/assets/icons";
 import { Tooltip } from "@/components/ui/Tooltip";
 import type { DateRange } from "@/components/datetime/DateRangePicker";
 import { api } from "@/utils/api";
@@ -59,10 +58,7 @@ export default function AssessmentDetailPage() {
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [status, setStatus] = useState("");
   const [assessment, setAssessment] = useState<Assessment | null>(null);
-  const [selected, setSelected] = useState<SubmissionWithCandidate | null>(null);
-  const [showDetail, setShowDetail] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
-  const [regranting, setRegranting] = useState<string | null>(null);
   const [resuming, setResuming] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
@@ -75,7 +71,9 @@ export default function AssessmentDetailPage() {
     api
       .get(`/api/workspaces/${workspaceId}/assessments/${id}`)
       .then(({ data }) => setAssessment(data.data ?? null))
-      .catch(() => { /* non-critical — schedule button stays disabled */ });
+      .catch(() => {
+        /* non-critical — schedule button stays disabled */
+      });
   }, [workspaceId, id]);
 
   const fetchSubmissions = useCallback(async () => {
@@ -127,21 +125,6 @@ export default function AssessmentDetailPage() {
     }
   };
 
-  const handleReaccess = async (submissionId: string) => {
-    setRegranting(submissionId);
-    try {
-      await api.post(
-        `/api/workspaces/${workspaceId}/assessments/${id}/submissions/${submissionId}/reaccess`
-      );
-      toast.success("Access granted — candidate can re-enter the assessment");
-      fetchSubmissions();
-    } catch {
-      toast.error("Failed to grant access");
-    } finally {
-      setRegranting(null);
-    }
-  };
-
   const handleExport = async () => {
     setExporting(true);
     try {
@@ -168,11 +151,6 @@ export default function AssessmentDetailPage() {
     } finally {
       setExporting(false);
     }
-  };
-
-  const openDetail = (sub: SubmissionWithCandidate) => {
-    setSelected(sub);
-    setShowDetail(true);
   };
 
   let content: React.ReactNode;
@@ -203,7 +181,7 @@ export default function AssessmentDetailPage() {
                 <th>Score</th>
                 <th>Round</th>
                 <th>Started</th>
-                <th>Actions</th>
+                <th style={{ textAlign: "center" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -242,32 +220,21 @@ export default function AssessmentDetailPage() {
                       {formatDateTime(sub.started_at)}
                     </td>
                     <td>
-                      <div style={{ display: "flex", gap: 6 }}>
+                      <div style={{ display: "flex", justifyContent: "center", gap: 6 }}>
                         <Tooltip content="View Details" placement="top">
                           <button
                             className={styles.actionBtn}
-                            onClick={() => openDetail(sub)}
+                            onClick={() =>
+                              navigate(
+                                `/workspaces/${workspaceId}/assessments/${id}/submissions/${sub.id}`,
+                                { state: { submission: sub } }
+                              )
+                            }
                             aria-label="View submission details"
                           >
                             <IconEye size={14} />
                           </button>
                         </Tooltip>
-                        {(sub.status === "completed" || sub.status === "malpractice") && (
-                          <Tooltip content="Grant Re-access" placement="top">
-                            <button
-                              className={`${styles.actionBtn} ${styles.reaccess}`}
-                              onClick={() => void handleReaccess(sub.id)}
-                              aria-label="Grant re-access"
-                              disabled={regranting === sub.id}
-                            >
-                              {regranting === sub.id ? (
-                                <Spinner size="sm" />
-                              ) : (
-                                <IconRefresh size={14} />
-                              )}
-                            </button>
-                          </Tooltip>
-                        )}
                         {sub.status === "on_hold" && (
                           <Tooltip content="Resume Interview" placement="top">
                             <button
@@ -292,7 +259,14 @@ export default function AssessmentDetailPage() {
             </tbody>
           </table>
         </div>
-        {meta && <Pagination meta={meta} onPageChange={goToPage} pageSize={pageSize} onPageSizeChange={changePageSize} />}
+        {meta && (
+          <Pagination
+            meta={meta}
+            onPageChange={goToPage}
+            pageSize={pageSize}
+            onPageSizeChange={changePageSize}
+          />
+        )}
       </>
     );
   }
@@ -357,122 +331,6 @@ export default function AssessmentDetailPage() {
           onSuccess={fetchSubmissions}
         />
       )}
-
-      <Modal
-        isOpen={showDetail}
-        onClose={() => setShowDetail(false)}
-        title="Submission Details"
-        size="lg"
-      >
-        {selected && (
-          <div className={styles.detailContent}>
-            <div className={styles.detailHeader}>
-              <div
-                className={styles.avatar}
-                style={{
-                  background: getAvatarColor(
-                    selected.candidate
-                      ? getFullName(
-                          selected.candidate as { first_name: string; last_name?: string }
-                        )
-                      : ""
-                  ),
-                }}
-              >
-                {getInitials(
-                  selected.candidate
-                    ? getFullName(selected.candidate as { first_name: string; last_name?: string })
-                    : "U"
-                )}
-              </div>
-              <div>
-                <p style={{ fontWeight: 600, fontSize: 15 }}>
-                  {selected.candidate
-                    ? getFullName(selected.candidate as { first_name: string; last_name?: string })
-                    : ""}
-                </p>
-                <p style={{ fontSize: 13, color: "var(--text-tertiary)" }}>
-                  {selected.candidate?.email}
-                </p>
-              </div>
-              <StatusBadge status={selected.status} />
-              {selected.score_percentage !== undefined && selected.score_percentage !== null && (
-                <span style={{ marginLeft: "auto" }}>
-                  <Badge variant={percentageBadgeColor(selected.score_percentage)}>
-                    {selected.score_percentage.toFixed(1)}%
-                  </Badge>
-                </span>
-              )}
-            </div>
-
-            {selected.malpractice_flags && selected.malpractice_flags.length > 0 && (
-              <div className={styles.malpracticeBox}>
-                <p style={{ fontWeight: 600, color: "var(--error-600)", marginBottom: 6 }}>
-                  Malpractice Flags ({selected.malpractice_flags.length})
-                </p>
-                {selected.malpractice_flags.map((flag) => (
-                  <div key={`${flag.type}-${flag.flagged_at}`} className={styles.flagItem}>
-                    <span>{flag.type}</span>
-                    <span style={{ color: "var(--text-tertiary)", fontSize: 11 }}>
-                      {formatDateTime(flag.flagged_at)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {selected.rounds?.map((round) => (
-              <div key={round.round_number} className={styles.roundSection}>
-                <h4
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    marginBottom: 10,
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  Round {round.round_number}
-                </h4>
-                {Object.entries(round.answers ?? {}).map(([qId, answer]) => (
-                  <div key={qId} className={styles.answerItem}>
-                    <p style={{ fontSize: 13, color: "var(--text-primary)", marginBottom: 4 }}>
-                      Q: {qId}
-                    </p>
-                    <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-                      A: {Array.isArray(answer) ? answer.join(", ") : String(answer || "—")}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ))}
-
-            {selected.screenshots && selected.screenshots.length > 0 && (
-              <div>
-                <p style={{ fontWeight: 600, fontSize: 13, marginBottom: 10 }}>
-                  Screenshots ({selected.screenshots.length})
-                </p>
-                <div className={styles.screenshotGrid}>
-                  {selected.screenshots.map((s, i) => (
-                    <div key={s.taken_at}>
-                      <div className={styles.screenshotBox}>Screenshot {i + 1}</div>
-                      <p
-                        style={{
-                          fontSize: 11,
-                          color: "var(--text-tertiary)",
-                          textAlign: "center",
-                          marginTop: 4,
-                        }}
-                      >
-                        {formatDateTime(s.taken_at)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </Modal>
     </div>
   );
 }

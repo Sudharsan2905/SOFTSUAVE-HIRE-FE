@@ -116,6 +116,18 @@ export const IconCheck = icon(<polyline points="20 6 9 17 4 12" />);
 export const IconChevronDown = icon(<polyline points="6 9 12 15 18 9" />);
 export const IconChevronRight = icon(<polyline points="9 18 15 12 9 6" />);
 export const IconChevronLeft = icon(<polyline points="15 18 9 12 15 6" />);
+export const IconChevronsRight = icon(
+  <>
+    <path d="m6 17 5-5-5-5" />
+    <path d="m13 17 5-5-5-5" />
+  </>
+);
+export const IconChevronsLeft = icon(
+  <>
+    <path d="m18 17-5-5 5-5" />
+    <path d="m11 17-5-5 5-5" />
+  </>
+);
 export const IconSettings = icon(
   <>
     <circle cx="12" cy="12" r="3" />
@@ -383,5 +395,50 @@ export const IconDotsVertical = icon(
     <circle cx="12" cy="5" r="1.3" fill="currentColor" stroke="none" />
     <circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none" />
     <circle cx="12" cy="19" r="1.3" fill="currentColor" stroke="none" />
+  </>
+);
+
+/* ── Candidate detail tab icons (path-only) ── */
+// "Over All" — a layout/overview pane.
+export const IconOverview = icon(
+  <>
+    <path d="M4 5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5z" />
+    <path d="M4 9h16" />
+    <path d="M9 9v11" />
+  </>
+);
+// "Rounds" — stacked layers for the successive rounds.
+export const IconRounds = icon(
+  <>
+    <path d="M12 3 3 7.5l9 4.5 9-4.5L12 3z" />
+    <path d="m3 12 9 4.5 9-4.5" />
+    <path d="m3 16.5 9 4.5 9-4.5" />
+  </>
+);
+// "Malpractice" — a shield with an alert mark.
+export const IconMalpractice = icon(
+  <>
+    <path d="M12 3 5 6v5c0 4.5 3 7.6 7 9 4-1.4 7-4.5 7-9V6l-7-3z" />
+    <path d="M12 8.5v4" />
+    <path d="M12 15.5h.01" />
+  </>
+);
+// "Screenshots" — a capture/crop frame.
+export const IconScreenshot = icon(
+  <>
+    <path d="M4 8V5a1 1 0 0 1 1-1h3" />
+    <path d="M16 4h3a1 1 0 0 1 1 1v3" />
+    <path d="M20 16v3a1 1 0 0 1-1 1h-3" />
+    <path d="M8 20H5a1 1 0 0 1-1-1v-3" />
+    <path d="M9 12h6" />
+  </>
+);
+// "Resume" — a filled play triangle.
+export const IconPlay = icon(<path fill="currentColor" stroke="none" d="M8 5v14l11-7z" />);
+// "Terminate" — a power symbol.
+export const IconPower = icon(
+  <>
+    <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+    <path d="M12 2v10" />
   </>
 );

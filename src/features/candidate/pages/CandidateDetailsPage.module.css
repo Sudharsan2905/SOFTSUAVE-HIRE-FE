@@ -1,0 +1,234 @@
+.page {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 10px 0 0 0;
+  /* Pull up under the header, but keep the admin content area's side padding so
+     the card and version dropdown have breathing room from the viewport edges. */
+  margin: -25px 0px 0;
+}
+
+@media (max-width: 1024px) {
+  .page {
+    margin: -24px 0 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .page {
+    margin: -16px 0 0;
+  }
+}
+
+/* ---- Open / close buttons: hidden on laptop, shown in drawer mode below ---- */
+.openBtn,
+.closeBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.openBtn:hover,
+.closeBtn:hover {
+  color: var(--text-primary);
+  border-color: var(--primary-400);
+}
+
+/* Backdrop is only ever a thing in drawer mode. */
+.backdrop {
+  display: none;
+}
+
+.cardWrapper {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.tabsArea {
+  flex: 1;
+  min-width: 0;
+}
+
+.card {
+  width: 100%;
+  max-width: 320px;
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  transition:
+    box-shadow var(--transition-base),
+    transform var(--transition-base);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.banner {
+  height: 76px;
+  background: linear-gradient(135deg, var(--primary-500), var(--accent-500));
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 24px 20px;
+  margin-top: -38px;
+}
+
+.avatar {
+  width: 76px;
+  height: 76px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  border: 3px solid var(--bg-elevated);
+  box-shadow: var(--shadow-sm);
+}
+
+.name {
+  margin-top: 12px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.email {
+  margin-top: 3px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  text-align: center;
+  word-break: break-word;
+}
+
+.details {
+  margin: 0;
+  padding: 4px 24px 22px;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 0;
+  font-size: 13px;
+  border-top: 1px solid var(--border-default);
+}
+
+.label {
+  margin: 0;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.value {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 600;
+  text-align: right;
+  word-break: break-word;
+}
+
+/* ===========================================================
+   Tablet & mobile (< 1024px): the profile card becomes a
+   slide-in drawer. An open button reveals it; the close
+   button and the click-outside backdrop dismiss it.
+
+   Kept last in the file so these overrides win the cascade
+   over the base .card rules above on small viewports.
+   =========================================================== */
+@media (max-width: 1023px) {
+  /* Float the open button into the top bar so it shares the row with the
+     right-aligned version dropdown. Taking it out of flow also lets the tabs
+     and content below reclaim the full width on the left. */
+  .openBtn {
+    display: flex;
+    position: absolute;
+    top: 12px;
+    left: 0;
+    z-index: 1;
+  }
+
+  .closeBtn {
+    display: flex;
+    align-self: flex-end;
+    width: 32px;
+    height: 32px;
+    margin-bottom: 12px;
+  }
+
+  /* Overlay everything — including the sticky header and sidebar — so the
+     drawer and its backdrop sit on top instead of sliding underneath. */
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    background: rgba(15, 23, 42, 0.45);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity var(--transition-base),
+      visibility var(--transition-base);
+  }
+
+  .backdropOpen {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .cardWrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: calc(var(--z-modal) + 1);
+    width: min(360px, 90vw);
+    /* Page-tone gutter around the card so it floats with breathing room. */
+    padding: 16px;
+    overflow-y: auto;
+    background: var(--bg-page);
+    box-shadow: var(--shadow-xl);
+    transform: translateX(-100%);
+    transition: transform var(--transition-base);
+  }
+
+  .cardWrapperOpen {
+    transform: translateX(0);
+  }
+
+  /* Let the card fill the drawer width but keep its own rounded frame so it
+     reads as a floating card with margin around it. */
+  .card {
+    max-width: none;
+  }
+
+  .card:hover {
+    transform: none;
+  }
+}
