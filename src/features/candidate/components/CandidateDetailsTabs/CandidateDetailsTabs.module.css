@@ -1,0 +1,380 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tabBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--text-primary);
+  border-color: var(--primary-400);
+}
+
+.tabActive {
+  color: var(--primary-700);
+  background: var(--bg-active);
+  border-color: var(--primary-500);
+}
+
+.tabContent {
+  padding: 16px 4px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* ── Status summary (Over All tab) ───────────────────────────────────────── */
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.statusCard {
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+}
+
+.statusCardTitle {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* 3 columns → the six stats fall naturally into the two rows described. */
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px 20px;
+  margin: 0;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.statLabel {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+.statValue {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 3px 11px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.statusCompleted {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* Action bar after the Over All + rounds cards. */
+.statusActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Tablet: two stats per row. */
+@media (max-width: 768px) {
+  .statGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Mobile: keep two stats per row, and lay the tabs out three per row with the
+   icon stacked above its label so the longer labels still fit. */
+@media (max-width: 480px) {
+  .statGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .statusCard {
+    padding: 14px 14px;
+  }
+
+  /* Icon-only tab bar — all four fit in a single row. */
+  .tabBar {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .tab {
+    justify-content: center;
+    gap: 0;
+    padding: 12px 0;
+  }
+
+  /* Hide the visible label; the button's aria-label keeps the accessible name. */
+  .tabLabel {
+    display: none;
+  }
+
+  /* Slightly larger glyph for a comfortable tap target. */
+  .tab svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Stack the action buttons full-width. */
+  .statusActions {
+    flex-direction: column;
+  }
+
+  .statusActions > button {
+    width: 100%;
+  }
+}
+
+/* ── Rounds review (Rounds tab) ──────────────────────────────────────────── */
+.rounds {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.round {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.roundHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.roundTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.roundMeta {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.questionList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.questionCard {
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+}
+
+.questionHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.questionNo {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary-700);
+  background: var(--bg-active);
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+}
+
+.questionType {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+}
+
+.questionText {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* ── MCQ options ──────────────────────────────────────────────────────────── */
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+
+.optionCorrect {
+  color: #15803d;
+  font-weight: 600;
+  background: var(--success-50, #f0fdf4);
+  border-color: #86efac;
+}
+
+.optionWrong {
+  color: #b91c1c;
+  font-weight: 600;
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.optionDot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+}
+
+.optionDotCorrect {
+  background: var(--success-600, #16a34a);
+}
+
+.optionDotWrong {
+  background: #dc2626;
+}
+
+.optionText {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+/* ── Candidate answer (MCQ footer) ───────────────────────────────────────── */
+.answerLine {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.answerLineLabel {
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.answerCorrect {
+  color: #15803d;
+  font-weight: 600;
+}
+
+.answerWrong {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+/* ── Descriptive answers ─────────────────────────────────────────────────── */
+.textAnswers {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.answerBlock {
+  padding: 12px 14px;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+
+.answerBlockCorrect {
+  background: var(--success-50, #f0fdf4);
+  border-color: #86efac;
+}
+
+.answerBlockLabel {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+}
+
+.answerBlockCorrect .answerBlockLabel {
+  color: #15803d;
+}
+
+.answerBlockText {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 480px) {
+  .questionCard {
+    padding: 14px 14px;
+  }
+}

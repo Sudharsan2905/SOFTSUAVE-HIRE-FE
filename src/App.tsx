@@ -32,6 +32,7 @@ const AssessmentsPage = lazy(() => import("@/features/assessments/pages/Assessme
 const AssessmentDetailPage = lazy(
   () => import("@/features/assessments/pages/AssessmentDetailPage")
 );
+const CandidateDetailsPage = lazy(() => import("@/features/candidate/pages/CandidateDetailsPage"));
 const LiveInterviewsPage = lazy(() => import("@/features/liveInterviews/pages/LiveInterviewsPage"));
 const UsersPage = lazy(() => import("@/features/users/pages/UsersPage"));
 const UserProfilePage = lazy(() => import("@/features/profile/pages/UserProfilePage"));
@@ -102,6 +103,10 @@ export default function App() {
           <Route
             path="/workspaces/:workspaceId/assessments/:id"
             element={<AssessmentDetailPage />}
+          />
+          <Route
+            path="/workspaces/:workspaceId/assessments/:id/submissions/:submissionId"
+            element={<CandidateDetailsPage />}
           />
           <Route
             element={
