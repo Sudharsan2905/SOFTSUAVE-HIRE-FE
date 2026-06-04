@@ -199,6 +199,60 @@
   border-color: var(--error-200, #fecaca);
 }
 
+/* ── Assessment overview / progress section ──────────────────────────────── */
+.progressSection {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: 24px 32px;
+}
+
+.progressSection h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 14px;
+}
+
+.roundsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.roundItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 14px;
+  background: var(--bg-muted);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.roundBadge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary-700, #1d4ed8);
+  background: var(--primary-50, #eff6ff);
+  border: 1px solid var(--primary-200, #bfdbfe);
+  border-radius: 999px;
+  padding: 2px 10px;
+  flex-shrink: 0;
+}
+
+/* ── Do Not Disturb tip card ─────────────────────────────────────────────── */
+.dndTip {
+  background: var(--warning-50, #fffbeb);
+  border: 1.5px solid var(--warning-200, #fde68a);
+  border-radius: var(--radius-xl);
+  padding: 14px 20px;
+  font-size: 14px;
+  color: var(--warning-800, #92400e);
+  line-height: 1.6;
+}
+
 /* ── Footer / start button ───────────────────────────────────────────────── */
 .footer {
   background: var(--bg-surface);

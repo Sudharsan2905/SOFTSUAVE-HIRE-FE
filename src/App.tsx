@@ -33,7 +33,7 @@ const AssessmentDetailPage = lazy(
   () => import("@/features/assessments/pages/AssessmentDetailPage")
 );
 const CandidateDetailsPage = lazy(() => import("@/features/candidate/pages/CandidateDetailsPage"));
-const LiveInterviewsPage = lazy(() => import("@/features/liveInterviews/pages/LiveInterviewsPage"));
+const LiveMonitoringPage = lazy(() => import("@/features/liveMonitoring/pages/LiveMonitoringPage"));
 const UsersPage = lazy(() => import("@/features/users/pages/UsersPage"));
 const UserProfilePage = lazy(() => import("@/features/profile/pages/UserProfilePage"));
 const NotificationsPage = lazy(() => import("@/features/notifications/pages/NotificationsPage"));
@@ -97,7 +97,7 @@ export default function App() {
           <Route path="/question-bank" element={<CategoriesPage />} />
           <Route path="/question-bank/:categoryId" element={<QuestionsPage />} />
           <Route path="/workspaces/:workspaceId/assessments" element={<AssessmentsPage />} />
-          <Route path="/live-interviews" element={<LiveInterviewsPage />} />
+          <Route path="/live-interviews" element={<LiveMonitoringPage />} />
           <Route path="/profile" element={<UserProfilePage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route
@@ -106,6 +106,10 @@ export default function App() {
           />
           <Route
             path="/workspaces/:workspaceId/assessments/:id/submissions/:submissionId"
+            element={<CandidateDetailsPage />}
+          />
+          <Route
+            path="/workspaces/:workspaceId/assessments/:assessmentId/candidates/:candidateId"
             element={<CandidateDetailsPage />}
           />
           <Route

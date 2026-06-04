@@ -154,9 +154,20 @@ export type SubmissionStatus =
   | "on_hold"
   | "terminated";
 
-export interface MalpracticeFlag {
-  type: string;
-  flagged_at: string;
+export type MalpracticeType =
+  | 'tab_switch' | 'fullscreen_exit' | 'screen_share_stop' | 'devtools_open'
+  | 'copy_paste' | 'keyboard_shortcut' | 'multiple_faces' | 'face_absence'
+  | 'eye_direction' | 'background_noise' | 'audio_violation' | 'speaking';
+
+export interface MalpracticeEvent {
+  type: MalpracticeType;
+  timestamp: string;
+  round: number;
+  screen_image_url: string | null;
+  face_image_url: string | null;
+  screen_video_url: string | null;
+  audio_clip_url: string | null;
+  is_terminal: boolean;
 }
 
 export interface RoundData {
@@ -183,7 +194,8 @@ export interface Submission {
   score_percentage?: number;
   screenshots: Screenshot[];
   is_malpractice: boolean;
-  malpractice_flags?: MalpracticeFlag[];
+  malpractice_data: MalpracticeEvent[];
+  malpractice_count: number;
   malpractice_reason?: string;
   reaccess_count: number;
   started_at: string;
@@ -312,4 +324,67 @@ export interface FilterState {
   sort_order: SortOrder;
   page: number;
   page_size: number;
+}
+
+// ─── Candidate Details ────────────────────────────────────────────────────────
+
+export interface VersionSummary {
+  version: number;
+  status: SubmissionStatus;
+  percentage: number;
+  started_at: string | null;
+  ended_at: string | null;
+  reaccess_reason: string | null;
+}
+
+export interface QuestionAnswer {
+  question_id: string;
+  question_text: string;
+  question_type: QuestionType;
+  options: { id: string; text: string; is_correct: boolean | null }[];
+  candidate_answer: string | string[];
+  is_correct: boolean | null;
+}
+
+export interface RoundResult {
+  round_number: number;
+  score: number;
+  percentage: number;
+  started_at: string | null;
+  completed_at: string | null;
+  question_answers: QuestionAnswer[];
+}
+
+export interface CandidateSubmissionDetail {
+  candidate: {
+    id: string; first_name: string; last_name: string; email: string;
+    phone: string | null; gender: string | null; dob: string | null;
+    institution: string | null; location: string | null;
+  };
+  submission_id: string;
+  status: SubmissionStatus;
+  score: number;
+  percentage: number;
+  malpractice_count: number;
+  reaccess_count: number;
+  started_at: string | null;
+  completed_at: string | null;
+  current_version: number;
+  available_versions: VersionSummary[];
+  rounds: RoundResult[];
+  malpractice_events: MalpracticeEvent[];
+  screenshots: { url: string; round: number; taken_at: string }[];
+}
+
+// ─── Share Links ──────────────────────────────────────────────────────────────
+
+export interface ShareLink {
+  id: string;
+  share_type: 'expirable' | 'custom';
+  label: string | null;
+  share_link: string;
+  start_time: string | null;
+  end_time: string | null;
+  is_active: boolean;
+  created_at: string;
 }

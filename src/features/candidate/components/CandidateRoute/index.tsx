@@ -122,6 +122,17 @@ export function CandidateRoute() {
         />
       );
     }
+
+    if (status === "malpractice") {
+      return (
+        <NoAccessPage
+          title="Assessment Ended — Policy Violation"
+          description="Your assessment session was ended due to repeated policy violations. Please contact the administrator if you believe this is an error or to request re-access."
+          showBackButton={false}
+          icon={IconAlertTriangle}
+        />
+      );
+    }
   }
 
   // ── 3. Authenticated candidate with allowed status → render children ──────

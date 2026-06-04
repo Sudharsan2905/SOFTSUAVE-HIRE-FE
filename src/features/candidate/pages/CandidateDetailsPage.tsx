@@ -1,126 +1,207 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import styles from "./CandidateDetailsPage.module.css";
-import { clsx, getAvatarColor, getInitials } from "@/utils/helpers";
-import { IconChevronsLeft, IconChevronsRight } from "@/assets/icons";
+import { getAvatarColor, getInitials } from "@/utils/helpers";
+import { IconMail } from "@/assets/icons";
 import { CandidateDetailsTabs } from "@/features/candidate/components/CandidateDetailsTabs";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Spinner } from "@/components/ui/Spinner";
+import type { CandidateSubmissionDetail, SubmissionStatus } from "@/types";
+import { api } from "@/utils/api";
+import { getStatusLabel } from "@/constants/statusColors";
 
-interface CandidateField {
-  label: string;
-  value: string;
-}
-
-// Static placeholder data — to be wired to the real submission later.
-const CANDIDATE = {
-  firstName: "Sudharsan",
-  lastName: "Senthil",
-  email: "sudharsan.1234@gmail.com",
-  phone: "+91 9876543210",
-  gender: "Male",
-  dateOfBirth: "12 Jan 2000",
-  college: "Anna University",
-  collegeCity: "Chennai",
+const STATUS_VARIANT: Record<
+  SubmissionStatus,
+  "default" | "primary" | "success" | "warning" | "error" | "accent"
+> = {
+  pending: "default",
+  in_progress: "primary",
+  completed: "success",
+  malpractice: "error",
+  on_hold: "warning",
+  terminated: "default",
 };
 
-const FULL_NAME = `${CANDIDATE.firstName} ${CANDIDATE.lastName}`;
+function PhoneIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.19a16 16 0 0 0 5.9 5.9l.7-.7a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+    </svg>
+  );
+}
 
-const CANDIDATE_FIELDS: ReadonlyArray<CandidateField> = [
-  { label: "Phone", value: CANDIDATE.phone },
-  { label: "Gender", value: CANDIDATE.gender },
-  { label: "Date of Birth", value: CANDIDATE.dateOfBirth },
-  { label: "College / Institution", value: CANDIDATE.college },
-  { label: "College City", value: CANDIDATE.collegeCity },
-];
+function MapPinIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
 
 export default function CandidateDetailsPage() {
-  // Drawer state only governs tablet/mobile. On laptop the card is always shown
-  // in-flow via CSS, so the open/close buttons and this state are irrelevant there.
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const { workspaceId, assessmentId, candidateId } = useParams<{
+    workspaceId: string;
+    assessmentId: string;
+    candidateId: string;
+  }>();
 
-  const closeDrawer = () => setIsDrawerOpen(false);
+  const [data, setData] = useState<CandidateSubmissionDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedVersion, setSelectedVersion] = useState<string>("current");
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
-  // While the drawer is open: close on Escape and lock background scroll.
+  const fetchSubmission = useCallback(
+    async (version: string) => {
+      if (!workspaceId || !assessmentId || !candidateId) return;
+      setIsLoading(true);
+      setError(null);
+      try {
+        const resp = await api.get(
+          `/api/workspaces/${workspaceId}/assessments/${assessmentId}/candidates/${candidateId}/submission`,
+          { params: { version } }
+        );
+        setData(resp.data.data);
+      } catch (err: any) {
+        setError(err.response?.data?.message ?? "Failed to load candidate data");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [workspaceId, assessmentId, candidateId]
+  );
+
   useEffect(() => {
-    if (!isDrawerOpen) return;
+    fetchSubmission(selectedVersion);
+  }, [selectedVersion, fetchSubmission]);
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setIsDrawerOpen(false);
-    };
+  const handleVersionChange = (version: string) => {
+    setSelectedVersion(version);
+  };
 
-    document.addEventListener("keydown", handleKeyDown);
-    document.body.style.overflow = "hidden";
+  const handleDownloadPdf = useCallback(async () => {
+    if (!workspaceId || !assessmentId || !data?.submission_id) return;
+    setDownloadingPdf(true);
+    try {
+      const resp = await api.get(
+        `/api/workspaces/${workspaceId}/assessments/${assessmentId}/submissions/${data.submission_id}/pdf`,
+        { responseType: "blob" }
+      );
+      const url = URL.createObjectURL(resp.data as Blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `submission_${data.submission_id}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // error handled by API interceptor
+    } finally {
+      setDownloadingPdf(false);
+    }
+  }, [workspaceId, assessmentId, data?.submission_id]);
 
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "";
-    };
-  }, [isDrawerOpen]);
+  if (isLoading) {
+    return (
+      <div className={styles.loadingWrap}>
+        <Spinner />
+      </div>
+    );
+  }
 
-  // Growing past the drawer breakpoint switches back to the always-visible
-  // laptop layout — drop any leftover open state so scroll lock is released.
-  useEffect(() => {
-    const desktop = window.matchMedia("(min-width: 1024px)");
-    const handleChange = (event: MediaQueryListEvent) => {
-      if (event.matches) setIsDrawerOpen(false);
-    };
+  if (error || !data) {
+    return (
+      <div className={styles.errorWrap}>
+        {error ?? "Candidate data not found"}
+      </div>
+    );
+  }
 
-    desktop.addEventListener("change", handleChange);
-    return () => desktop.removeEventListener("change", handleChange);
-  }, []);
+  const { candidate } = data;
+  const fullName = `${candidate.first_name} ${candidate.last_name}`;
 
   return (
     <div className={styles.page}>
-      {/* Open button — tablet/mobile only (hidden on laptop via CSS). */}
-      <button
-        type="button"
-        className={styles.openBtn}
-        onClick={() => setIsDrawerOpen(true)}
-        aria-label="Show candidate profile"
-      >
-        <IconChevronsRight size={16} />
-      </button>
-
-      {/* Click-outside backdrop — tablet/mobile only. */}
-      <div
-        className={clsx(styles.backdrop, isDrawerOpen && styles.backdropOpen)}
-        onClick={closeDrawer}
-        aria-hidden="true"
-      />
-
-      <aside className={clsx(styles.cardWrapper, isDrawerOpen && styles.cardWrapperOpen)}>
-        {/* Close button — tablet/mobile only (hidden on laptop via CSS). */}
-        <button
-          type="button"
-          className={styles.closeBtn}
-          onClick={closeDrawer}
-          aria-label="Hide candidate profile"
-        >
-          <IconChevronsLeft size={16} />
-        </button>
-
-        <article className={styles.card}>
-          <div className={styles.banner} />
-
-          <div className={styles.identity}>
-            <div className={styles.avatar} style={{ background: getAvatarColor(FULL_NAME) }}>
-              {getInitials(FULL_NAME)}
-            </div>
-            <h2 className={styles.name}>{FULL_NAME}</h2>
-            <p className={styles.email}>{CANDIDATE.email}</p>
+      <article className={styles.profileCard} aria-label="Candidate profile">
+        <div className={styles.profileInner}>
+          <div
+            className={styles.avatar}
+            style={{ background: getAvatarColor(fullName) }}
+            aria-hidden="true"
+          >
+            {getInitials(fullName)}
           </div>
 
-          <dl className={styles.details}>
-            {CANDIDATE_FIELDS.map((field) => (
-              <div key={field.label} className={styles.row}>
-                <dt className={styles.label}>{field.label}</dt>
-                <dd className={styles.value}>{field.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </article>
-      </aside>
+          <div className={styles.identity}>
+            <div className={styles.nameRow}>
+              <h1 className={styles.name}>{fullName}</h1>
+              <Badge variant={STATUS_VARIANT[data.status] ?? "default"} dot>
+                {getStatusLabel(data.status)}
+              </Badge>
+            </div>
+
+            <div className={styles.contactRow} aria-label="Contact information">
+              {candidate.email && (
+                <span className={styles.contactItem}>
+                  <IconMail size={14} aria-hidden="true" />
+                  <span>{candidate.email}</span>
+                </span>
+              )}
+              {candidate.phone && (
+                <span className={styles.contactItem}>
+                  <PhoneIcon />
+                  <span>{candidate.phone}</span>
+                </span>
+              )}
+              {candidate.location && (
+                <span className={styles.contactItem}>
+                  <MapPinIcon />
+                  <span>{candidate.location}</span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className={styles.profileActions}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleDownloadPdf}
+              isLoading={downloadingPdf}
+            >
+              Download PDF
+            </Button>
+          </div>
+        </div>
+      </article>
 
       <div className={styles.tabsArea}>
-        <CandidateDetailsTabs />
+        <CandidateDetailsTabs
+          data={data}
+          selectedVersion={selectedVersion}
+          onVersionChange={handleVersionChange}
+        />
       </div>
     </div>
   );

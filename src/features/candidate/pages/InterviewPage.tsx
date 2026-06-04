@@ -6,7 +6,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Spinner } from "@/components/ui/Spinner";
 import { api } from "@/utils/api";
 import { CandidateQuestion, MonitoringConfig, RoundConfig } from "@/types";
-import { IconAlertTriangle } from "@/assets/icons";
+
 import { RichText } from "@/components/ui/RichText";
 import CandidateHeader from "@/features/candidate/components/CandidateHeader";
 import { VideoMonitor } from "@/features/candidate/components/VideoMonitor";
@@ -14,6 +14,13 @@ import { AudioMonitor } from "@/features/candidate/components/AudioMonitor";
 import { ConnectionLostOverlay } from "@/features/candidate/components/ConnectionLostOverlay";
 import { useTabMonitoring } from "@/features/candidate/hooks/useTabMonitoring";
 import { useAudioMonitoring } from "@/features/candidate/hooks/useAudioMonitoring";
+import { useVideoMonitoring } from "@/features/candidate/hooks/useVideoMonitoring";
+import { useScreenMonitoring } from "@/features/candidate/hooks/useScreenMonitoring";
+import { useDevtoolsMonitoring } from "@/features/candidate/hooks/useDevtoolsMonitoring";
+import { useMalpracticeCoordinator } from "@/features/candidate/hooks/useMalpracticeCoordinator";
+import { useRoundTimer } from "@/features/candidate/hooks/useRoundTimer";
+import { useAnswerSync } from "@/features/candidate/hooks/useAnswerSync";
+import { MalpracticeWarningModal } from "@/features/candidate/components/MalpracticeWarningModal";
 import { useInterviewSession } from "@/features/candidate/context/InterviewSessionContext";
 import { useAppSelector } from "@/store/hooks";
 import { markAssessmentDone } from "@/utils/assessmentSession";
@@ -121,12 +128,6 @@ function getQuestionTypeLabel(type: string): string {
   return "Single Choice";
 }
 
-function getMalpracticeTypeLabel(malpracticeType: string): string {
-  if (malpracticeType === "tab_switch") return "tab switch";
-  if (malpracticeType === "audio_violation") return "noise / audio violation";
-  return "suspicious activity";
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function InterviewPage() {
@@ -147,13 +148,9 @@ export default function InterviewPage() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<AnswerMap>({});
   const [visitedQuestions, setVisitedQuestions] = useState<Set<string>>(new Set());
-  const [timeLeft, setTimeLeft] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
-  const [showMalpractice, setShowMalpractice] = useState(false);
   const [showTimeExpired, setShowTimeExpired] = useState(false);
-  const [malpracticeCount, setMalpracticeCount] = useState(0);
-  const [malpracticeType, setMalpracticeType] = useState("tab_switch");
 
   // ── Assessment / rounds state ───────────────────────────────────────────────
   const [assessmentRounds, setAssessmentRounds] = useState<RoundConfig[]>([]);
@@ -167,25 +164,43 @@ export default function InterviewPage() {
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
 
   // ── Refs ────────────────────────────────────────────────────────────────────
-  // S4325: useRef<HTMLVideoElement>(null) already returns RefObject<HTMLVideoElement>; assertion removed
   const videoRef = useRef<HTMLVideoElement>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const screenshotIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const answerSyncRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const submittingRef = useRef(false);
   const finishRoundRef = useRef<(autoSubmit?: boolean) => Promise<void>>(async () => {
     /* placeholder */
   });
-  const timeLeftRef = useRef(timeLeft);
   const currentIdxRef = useRef(0);
 
   useEffect(() => {
     submittingRef.current = submitting;
   }, [submitting]);
-  useEffect(() => {
-    timeLeftRef.current = timeLeft;
-  }, [timeLeft]);
+
+  // ── Timer (extracted hook) ──────────────────────────────────────────────────
+  const handleTimerExpiry = useCallback(() => {
+    if (!submittingRef.current) {
+      void finishRoundRef.current(true).then(() => {
+        setShowTimeExpired(true);
+      });
+    }
+  }, []);
+
+  const {
+    setTimeLeft,
+    timeLeftRef,
+    isLowTime,
+    formattedTime,
+  } = useRoundTimer({
+    initialSeconds: 0,
+    active: timerActive,
+    onExpired: handleTimerExpiry,
+  });
+
+  // ── Answer sync (extracted hook) ────────────────────────────────────────────
+  const { setAnswer: syncAnswerToServer, flushPending } = useAnswerSync({
+    submissionId: submissionId ?? "",
+  });
 
   // ── Shared WebSocket session ────────────────────────────────────────────────
   const { networkStatus, sessionSubmissionId, startSession, registerCallbacks } =
@@ -296,7 +311,7 @@ export default function InterviewPage() {
       if (rd) {
         setRoundData(rd);
         const initialTime = remainingSeconds ?? (rd.max_duration_minutes || 30) * 60;
-        setTimeLeft(initialTime);
+        setTimeLeft(initialTime); // hook setter — resets the countdown
         setMonitoringConfig(cfg);
         if (questionIdx > 0 && questionIdx < rd.questions.length) {
           setCurrentIdx(questionIdx);
@@ -318,30 +333,13 @@ export default function InterviewPage() {
     void loadData();
   }, [loadData]);
 
-  // ── Answer sync ─────────────────────────────────────────────────────────────
-  const syncAnswer = useCallback(
-    (questionId: string, answer: string | string[]) => {
-      if (answerSyncRef.current) clearTimeout(answerSyncRef.current);
-      answerSyncRef.current = setTimeout(async () => {
-        try {
-          await api.post(`/api/candidate/submission/${submissionId}/answer`, {
-            question_id: questionId,
-            answer,
-          });
-        } catch {
-          /* silent */
-        }
-      }, 500);
-    },
-    [submissionId]
-  );
-
+  // ── Answer sync (delegates debounced API call to useAnswerSync hook) ─────────
   const setAnswer = useCallback(
     (questionId: string, answer: string | string[]) => {
       setAnswers((prev) => ({ ...prev, [questionId]: answer }));
-      syncAnswer(questionId, answer);
+      syncAnswerToServer(questionId, answer);
     },
-    [syncAnswer]
+    [syncAnswerToServer]
   );
 
   const roundDataRef = useRef<InterviewRoundData | null>(null);
@@ -380,11 +378,7 @@ export default function InterviewPage() {
       setSubmitting(true);
       submittingRef.current = true;
       setShowSubmitConfirm(false);
-
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
+      flushPending(); // ensure all pending answer saves are flushed before submit
 
       try {
         const { data } = await api.post(`/api/candidate/submission/${submissionId}/finish-round`);
@@ -414,38 +408,25 @@ export default function InterviewPage() {
     finishRoundRef.current = handleFinishRound;
   }, [handleFinishRound]);
 
-  // ── Malpractice handler ─────────────────────────────────────────────────────
-  const handleMalpractice = useCallback(
-    async (type: string) => {
-      setMalpracticeCount((prev) => {
-        const newCount = prev + 1;
-        if (newCount >= 3) {
-          setTimeout(() => {
-            setShowMalpractice(false);
-            void finishRoundRef.current(true);
-          }, 0);
-        }
-        return newCount;
-      });
-      setMalpracticeType(type);
-      setShowMalpractice(true);
-
-      try {
-        await api.post(`/api/candidate/submission/${submissionId}/malpractice`, { type });
-      } catch {
-        /* silent */
-      }
-    },
-    [submissionId]
-  );
+  // ── Malpractice coordinator (server-authoritative 3-strike system) ───────────
+  const { flagViolation } = useMalpracticeCoordinator({
+    submissionId: submissionId ?? "",
+    monitoringConfig: monitoringConfig as MonitoringConfig,
+    onTerminated: useCallback(() => {
+      // Auto-submit on terminal malpractice then redirect
+      setTimeout(() => {
+        void finishRoundRef.current(true);
+      }, 500);
+    }, []),
+  });
 
   // ── Tab monitoring ──────────────────────────────────────────────────────────
   useTabMonitoring({
     enabled: monitoringConfig.tab_monitoring ?? false,
     submissionId: submissionId ?? "",
     onViolation: useCallback(() => {
-      void handleMalpractice("tab_switch");
-    }, [handleMalpractice]),
+      void flagViolation({ type: "tab_switch" });
+    }, [flagViolation]),
   });
 
   // ── Audio monitoring ────────────────────────────────────────────────────────
@@ -454,9 +435,75 @@ export default function InterviewPage() {
     submissionId: submissionId ?? "",
     analyserRef,
     onViolation: useCallback(() => {
-      void handleMalpractice("audio_violation");
-    }, [handleMalpractice]),
+      void flagViolation({ type: "audio_violation" });
+    }, [flagViolation]),
   });
+
+  // ── Video monitoring (MediaPipe face detection) ─────────────────────────────
+  useVideoMonitoring({
+    enabled: monitoringConfig.video_monitoring ?? false,
+    videoRef,
+    onViolation: useCallback((type) => {
+      void flagViolation({ type });
+    }, [flagViolation]),
+  });
+
+  // ── Screen monitoring (fullscreen + screen-share-stop) ──────────────────────
+  useScreenMonitoring({
+    enabled: monitoringConfig.tab_monitoring ?? false,
+    onViolation: useCallback((type) => {
+      void flagViolation({ type });
+    }, [flagViolation]),
+  });
+
+  // ── DevTools monitoring ─────────────────────────────────────────────────────
+  useDevtoolsMonitoring({
+    enabled: monitoringConfig.tab_monitoring ?? false,
+    onViolation: useCallback((type) => {
+      void flagViolation({ type });
+    }, [flagViolation]),
+  });
+
+  // ── Copy / paste / shortcut blocking ────────────────────────────────────────
+  useEffect(() => {
+    const BLOCKED_META_KEYS = new Set(["c", "v", "x", "a", "p"]);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "F12") {
+        e.preventDefault();
+        toast.error("This site does not allow these actions");
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && BLOCKED_META_KEYS.has(e.key.toLowerCase())) {
+        // Allow Ctrl+A / Ctrl+C / Ctrl+V inside essay textarea
+        const target = e.target as HTMLElement;
+        if (target.tagName === "TEXTAREA" && ["a", "c", "v"].includes(e.key.toLowerCase())) return;
+        e.preventDefault();
+        toast.error("This site does not allow these actions");
+        void flagViolation({ type: "keyboard_shortcut" });
+      }
+    };
+
+    const handleClipboard = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement;
+      // Allow paste inside essay textarea
+      if (target.tagName === "TEXTAREA" && e.type === "paste") return;
+      e.preventDefault();
+      toast.error("This site does not allow these actions");
+      void flagViolation({ type: "copy_paste" });
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("copy", handleClipboard);
+    document.addEventListener("paste", handleClipboard);
+    document.addEventListener("cut", handleClipboard);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("copy", handleClipboard);
+      document.removeEventListener("paste", handleClipboard);
+      document.removeEventListener("cut", handleClipboard);
+    };
+  }, [flagViolation]);
 
   // ── Camera stream ───────────────────────────────────────────────────────────
   useEffect(() => {
@@ -483,38 +530,6 @@ export default function InterviewPage() {
       setAudioActive(true);
     }
   }, [monitoringConfig.audio_monitoring]);
-
-  // ── Timer expiry handler (extracted to reduce nesting depth, S2004) ──────────
-  const handleTimerExpiry = useCallback(() => {
-    if (!submittingRef.current) {
-      void finishRoundRef.current(true).then(() => {
-        setShowTimeExpired(true);
-      });
-    }
-  }, []);
-
-  // ── Countdown timer ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!roundData || !timerActive) return;
-    timerRef.current = setInterval(() => {
-      setTimeLeft((t) => {
-        timeLeftRef.current = t - 1;
-        if (t <= 1) {
-          clearInterval(timerRef.current!);
-          timerRef.current = null;
-          handleTimerExpiry();
-          return 0;
-        }
-        return t - 1;
-      });
-    }, 1000);
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    };
-  }, [roundData, timerActive, handleTimerExpiry]);
 
   // ── Screenshot capture ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -587,8 +602,7 @@ export default function InterviewPage() {
   const currentQuestion = questions[currentIdx];
   const answeredCount = Object.keys(answers).length;
   const remainingCount = questions.length - answeredCount;
-  const isLowTime = timeLeft < 120;
-  const { hh, mm, ss } = formatHMS(timeLeft);
+  const { hh, mm, ss } = formattedTime;
 
   const networkBadgeClass =
     networkStatus === "connected" ? styles.monitorBadgeGreen : styles.monitorBadgeOrange;
@@ -890,7 +904,7 @@ export default function InterviewPage() {
             <div className={styles.monitorCard}>
               <VideoMonitor
                 videoRef={videoRef}
-                onWarning={() => void handleMalpractice("camera_occlusion")}
+                onWarning={() => void flagViolation({ type: "face_absence" })}
               />
             </div>
           )}
@@ -938,32 +952,8 @@ export default function InterviewPage() {
         </p>
       </Modal>
 
-      <Modal
-        isOpen={showMalpractice}
-        onClose={() => setShowMalpractice(false)}
-        title="Warning: Suspicious Activity Detected"
-        size="sm"
-        footer={<Button onClick={() => setShowMalpractice(false)}>I Understand</Button>}
-      >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 12,
-            textAlign: "center",
-          }}
-        >
-          <IconAlertTriangle size={40} color="var(--error-500)" />
-          <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
-            {/* S3358: extract nested ternary for malpractice type label */}A{" "}
-            {getMalpracticeTypeLabel(malpracticeType)} has been detected and flagged (
-            {malpracticeCount} violation
-            {malpracticeCount !== 1 ? "s" : ""}). Please stay on this page.{" "}
-            {malpracticeCount >= 2 && "One more violation will result in automatic submission."}
-          </p>
-        </div>
-      </Modal>
+      {/* Malpractice warning — driven by proctoringSlice via MalpracticeWarningModal */}
+      <MalpracticeWarningModal />
 
       <Modal
         isOpen={showTimeExpired}

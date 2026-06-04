@@ -1,0 +1,287 @@
+/* ─── Tab bar ────────────────────────────────────────────────────────────────── */
+.tabBar {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--border-primary);
+  margin-bottom: 20px;
+}
+
+.tabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+  white-space: nowrap;
+  margin-bottom: -1px; /* overlap border-bottom of tabBar */
+}
+
+.tabBtn:hover {
+  color: var(--text-primary);
+}
+
+.tabBtnActive {
+  color: var(--primary-600);
+  border-bottom-color: var(--primary-600);
+  font-weight: 600;
+}
+
+.tabIcon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ─── Tab content wrapper ────────────────────────────────────────────────────── */
+.tabContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ─── Info banner ────────────────────────────────────────────────────────────── */
+.infoBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--primary-50, #eff6ff);
+  border: 1px solid var(--primary-200, #bfdbfe);
+  font-size: 12px;
+  color: var(--primary-700, #1d4ed8);
+  line-height: 1.55;
+}
+
+.infoBanner svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ─── Link row ───────────────────────────────────────────────────────────────── */
+.linkRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.linkRowLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.linkRowInput {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.linkField {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Time grid (temporary tab) ─────────────────────────────────────────────── */
+.timeGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 580px) {
+  .timeGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fieldLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+/* ─── Generate row ───────────────────────────────────────────────────────────── */
+.generateRow {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ─── Result box ─────────────────────────────────────────────────────────────── */
+.resultBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--success-300, #86efac);
+  background: var(--success-50, #f0fdf4);
+}
+
+.resultLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--success-700, #15803d);
+  margin: 0;
+}
+
+/* ─── Monitoring toggles (custom tab) ───────────────────────────────────────── */
+.monitoringSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--border-primary);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-primary);
+  background: var(--bg-primary);
+  transition: background 0.1s ease;
+}
+
+.toggleRow:last-child {
+  border-bottom: none;
+}
+
+.toggleRow:hover {
+  background: var(--bg-secondary);
+}
+
+.toggleMeta {
+  flex: 1;
+  min-width: 0;
+}
+
+.toggleLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 2px;
+}
+
+.toggleHint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin: 0;
+}
+
+/* ─── Screenshot sub-options ─────────────────────────────────────────────────── */
+.screenshotOptions {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px dashed var(--border-primary);
+  background: var(--bg-secondary);
+}
+
+/* ─── Existing custom links section ─────────────────────────────────────────── */
+.existingLinksSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-primary);
+  margin-top: 4px;
+}
+
+.existingLinksTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.emptyHint {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: 16px 0;
+}
+
+/* ─── Custom link cards ──────────────────────────────────────────────────────── */
+.customLinksList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.customLinkCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-primary);
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  transition: border-color 0.12s ease;
+}
+
+.customLinkCard:hover {
+  border-color: var(--primary-300);
+}
+
+.customLinkCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.customLinkCardLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Active pill ────────────────────────────────────────────────────────────── */
+.activePill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  background: var(--bg-muted, var(--border-primary));
+  color: var(--text-tertiary);
+}
+
+.activePillOn {
+  background: var(--success-100, #dcfce7);
+  color: var(--success-700, #15803d);
+}

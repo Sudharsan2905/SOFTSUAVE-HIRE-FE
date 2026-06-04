@@ -4,6 +4,27 @@
   gap: 16px;
 }
 
+/* Sticky wrapper — holds the version toolbar + tab bar so both stay visible
+   while the candidate profile scrolls away. z-index sits just below the app
+   header (--z-header: 95) so dropdowns rendered by child elements layer correctly. */
+.stickyNav {
+  position: sticky;
+  top: var(--header-height);
+  z-index: 89;
+  background: var(--bg-page);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0 10px;
+  /* Extend a hair beyond the card's edge so the background fully covers content
+     scrolling beneath on narrow viewports. */
+  margin: 0 -1px;
+  padding-left: 1px;
+  padding-right: 1px;
+  border-bottom: 1.5px solid var(--border-default);
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.06);
+}
+
 .toolbar {
   display: flex;
   justify-content: flex-end;
@@ -129,6 +150,11 @@
   .statGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .stickyNav {
+    padding: 10px 0 8px;
+    gap: 8px;
+  }
 }
 
 /* Mobile: keep two stats per row, and lay the tabs out three per row with the
@@ -141,6 +167,12 @@
 
   .statusCard {
     padding: 14px 14px;
+  }
+
+  /* Sticky nav: hide the toolbar (version select) on mobile to save vertical
+     space; the icon-only tab bar fits comfortably in a single row. */
+  .stickyNav .toolbar {
+    display: none;
   }
 
   /* Icon-only tab bar — all four fit in a single row. */

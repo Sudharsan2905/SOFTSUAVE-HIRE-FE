@@ -1,0 +1,186 @@
+.pageRoot {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Left list panel ── */
+.listPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-y: auto;
+  transition: flex 0.25s ease;
+}
+
+.listPanelNarrow {
+  flex: 0 0 420px;
+  border-right: 1px solid var(--border-color, #e2e8f0);
+}
+
+.centered {
+  display: flex;
+  justify-content: center;
+  padding: 60px;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 60px 20px;
+  color: var(--text-muted, #94a3b8);
+  text-align: center;
+}
+
+.empty p {
+  font-size: 14px;
+  margin: 0;
+  color: var(--text-secondary, #475569);
+}
+
+.empty span {
+  font-size: 12px;
+}
+
+/* ── Session list ── */
+.sessionList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 8px 0;
+}
+
+.sessionCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+  width: 100%;
+}
+
+.sessionCard:hover {
+  background: var(--bg-muted, #f8fafc);
+}
+
+.sessionCardSelected {
+  background: var(--color-primary-light, #eef2ff);
+  border-left: 3px solid var(--color-primary, #6366f1);
+}
+
+.cardLeft {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.liveRing {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2px solid #fff;
+  animation: livePulse 2s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.cardBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.assessment {
+  font-size: 12px;
+  color: var(--text-secondary, #475569);
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  font-size: 11px;
+  color: var(--text-muted, #94a3b8);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.malBadge {
+  color: var(--color-warning, #f59e0b);
+  font-weight: 600;
+}
+
+.cardRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.watchLabel {
+  font-size: 11px;
+  color: var(--color-primary, #6366f1);
+  font-weight: 600;
+}
+
+/* ── Right stream panel ── */
+.streamPanel {
+  flex: 0 0 560px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+@media (max-width: 1024px) {
+  .listPanelNarrow {
+    flex: 0 0 320px;
+  }
+  .streamPanel {
+    flex: 1;
+  }
+}

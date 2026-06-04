@@ -410,6 +410,25 @@ export default function InstructionsPage() {
             </div>
           )}
 
+          <section className={styles.progressSection}>
+            <h3>Assessment Overview</h3>
+            <div className={styles.roundsList}>
+              {assessment.rounds.map((round) => (
+                <div key={round.round_number} className={styles.roundItem}>
+                  <span className={styles.roundBadge}>Round {round.round_number}</span>
+                  <span>{round.question_count} questions</span>
+                  <span>{round.max_duration_minutes} min</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {assessment.accessibility === 'monitoring' && (
+            <div className={styles.dndTip}>
+              <strong>Tip:</strong> Enable Do Not Disturb mode on your device to avoid interruptions during the assessment.
+            </div>
+          )}
+
           <div className={styles.footer}>
             <Button
               size="lg"
