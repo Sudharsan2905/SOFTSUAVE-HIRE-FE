@@ -33,6 +33,8 @@ interface UseNetworkMonitoringOptions {
   onResumeApproved?: (remainingSeconds: number | null, questionIdx: number) => void;
   /** Called when the session is terminated by admin */
   onTerminated?: () => void;
+  /** Called when an admin sends a warning message to the candidate */
+  onAdminWarning?: (message: string) => void;
   /** Live getter for current remaining seconds (called each heartbeat) */
   getRemainingSeconds?: () => number;
   /** Live getter for current question index (called each heartbeat) */
@@ -51,6 +53,7 @@ export function useNetworkMonitoring({
   onSessionOnHold,
   onResumeApproved,
   onTerminated,
+  onAdminWarning,
   getRemainingSeconds,
   getCurrentQuestionIdx,
 }: UseNetworkMonitoringOptions): UseNetworkMonitoringResult {
@@ -70,6 +73,7 @@ export function useNetworkMonitoring({
   const onSessionOnHoldRef = useRef(onSessionOnHold);
   const onResumeApprovedRef = useRef(onResumeApproved);
   const onTerminatedRef = useRef(onTerminated);
+  const onAdminWarningRef = useRef(onAdminWarning);
   const getRemainingSecondsRef = useRef(getRemainingSeconds);
   const getCurrentQuestionIdxRef = useRef(getCurrentQuestionIdx);
 
@@ -85,6 +89,9 @@ export function useNetworkMonitoring({
   useEffect(() => {
     onTerminatedRef.current = onTerminated;
   }, [onTerminated]);
+  useEffect(() => {
+    onAdminWarningRef.current = onAdminWarning;
+  }, [onAdminWarning]);
   useEffect(() => {
     getRemainingSecondsRef.current = getRemainingSeconds;
   }, [getRemainingSeconds]);
@@ -155,6 +162,9 @@ export function useNetworkMonitoring({
         case "terminated":
           setNetworkStatus("offline");
           onTerminatedRef.current?.();
+          break;
+        case "admin_warning":
+          if (msg.message) onAdminWarningRef.current?.(msg.message);
           break;
       }
     },

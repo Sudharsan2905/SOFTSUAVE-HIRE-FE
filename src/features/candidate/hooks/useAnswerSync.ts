@@ -1,6 +1,6 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef } from "react";
 
-import api from '@/utils/api';
+import api from "@/utils/api";
 
 type Answer = string | string[];
 type AnswerMap = Record<string, Answer>;
@@ -16,7 +16,7 @@ interface UseAnswerSyncReturn {
   flushPending: () => void;
 }
 
-import type React from 'react';
+import type React from "react";
 
 /**
  * Manages candidate answers with debounced server sync.
@@ -41,7 +41,7 @@ export function useAnswerSync({
         // silent — answers are best-effort synced; the user can re-answer
       }
     },
-    [submissionId],
+    [submissionId]
   );
 
   const setAnswer = useCallback(
@@ -56,7 +56,7 @@ export function useAnswerSync({
         void syncToServer(questionId, answer);
       }, debounceMs);
     },
-    [syncToServer, debounceMs],
+    [syncToServer, debounceMs]
   );
 
   const flushPending = useCallback(() => {

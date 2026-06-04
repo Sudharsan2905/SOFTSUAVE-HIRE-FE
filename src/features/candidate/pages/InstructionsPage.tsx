@@ -423,9 +423,10 @@ export default function InstructionsPage() {
             </div>
           </section>
 
-          {assessment.accessibility === 'monitoring' && (
+          {assessment.accessibility === "monitoring" && (
             <div className={styles.dndTip}>
-              <strong>Tip:</strong> Enable Do Not Disturb mode on your device to avoid interruptions during the assessment.
+              <strong>Tip:</strong> Enable Do Not Disturb mode on your device to avoid interruptions
+              during the assessment.
             </div>
           )}
 

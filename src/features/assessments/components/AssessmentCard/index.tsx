@@ -4,7 +4,6 @@ import styles from "./AssessmentCard.module.css";
 import { Badge } from "@/components/ui/Badge";
 import {
   IconEdit,
-  IconShare,
   IconClone,
   IconDelete,
   IconTime,
@@ -43,7 +42,6 @@ interface Props {
   workspaceId: string;
   viewMode: "grid" | "list";
   onEdit: (a: Assessment) => void;
-  onShare: (a: Assessment) => void;
   onClone: (a: Assessment) => void;
   onDelete: (a: Assessment) => void;
 }
@@ -53,7 +51,6 @@ export function AssessmentCard({
   workspaceId,
   viewMode,
   onEdit,
-  onShare,
   onClone,
   onDelete,
 }: Readonly<Props>) {
@@ -131,16 +128,6 @@ export function AssessmentCard({
                 }}
               >
                 <IconEdit size={14} /> Edit
-              </button>
-              <button
-                className={styles.menuItem}
-                onClick={(e) => {
-                  e.preventDefault();
-                  setMenuOpen(false);
-                  onShare(a);
-                }}
-              >
-                <IconShare size={14} /> Share
               </button>
               <button
                 className={styles.menuItem}

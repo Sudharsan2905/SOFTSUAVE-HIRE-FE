@@ -13,7 +13,12 @@ import {
   IconPlay,
   IconPower,
 } from "@/assets/icons";
-import type { CandidateSubmissionDetail, QuestionAnswer, RoundResult, MalpracticeEvent } from "@/types";
+import type {
+  CandidateSubmissionDetail,
+  QuestionAnswer,
+  RoundResult,
+  MalpracticeEvent,
+} from "@/types";
 import { getStatusLabel } from "@/constants/statusColors";
 
 interface CandidateDetailsTabsProps {
@@ -48,7 +53,12 @@ function StatusSummary({ data }: Readonly<{ data: CandidateSubmissionDetail }>) 
           <div className={styles.statItem}>
             <dt className={styles.statLabel}>Status</dt>
             <dd className={styles.statValue}>
-              <span className={clsx(styles.statusPill, styles[`status${data.status.replace(/_([a-z])/g, (_, c) => c.toUpperCase())}`])}>
+              <span
+                className={clsx(
+                  styles.statusPill,
+                  styles[`status${data.status.replace(/_([a-z])/g, (_, c) => c.toUpperCase())}`]
+                )}
+              >
                 {statusLabel}
               </span>
             </dd>
@@ -76,17 +86,13 @@ function StatusSummary({ data }: Readonly<{ data: CandidateSubmissionDetail }>) 
           {data.started_at && (
             <div className={styles.statItem}>
               <dt className={styles.statLabel}>Started At</dt>
-              <dd className={styles.statValue}>
-                {new Date(data.started_at).toLocaleString()}
-              </dd>
+              <dd className={styles.statValue}>{new Date(data.started_at).toLocaleString()}</dd>
             </div>
           )}
           {data.completed_at && (
             <div className={styles.statItem}>
               <dt className={styles.statLabel}>Completed At</dt>
-              <dd className={styles.statValue}>
-                {new Date(data.completed_at).toLocaleString()}
-              </dd>
+              <dd className={styles.statValue}>{new Date(data.completed_at).toLocaleString()}</dd>
             </div>
           )}
         </dl>
@@ -114,10 +120,7 @@ function toCandidateAnswerArray(value: string | string[]): string[] {
   return value ? [value] : [];
 }
 
-function QuestionReview({
-  index,
-  qa,
-}: Readonly<{ index: number; qa: QuestionAnswer }>) {
+function QuestionReview({ index, qa }: Readonly<{ index: number; qa: QuestionAnswer }>) {
   const isMcq = qa.question_type === "mcq_single" || qa.question_type === "mcq_multi";
   const candidateAnswers = toCandidateAnswerArray(qa.candidate_answer);
 
@@ -129,8 +132,8 @@ function QuestionReview({
           {qa.question_type === "mcq_single"
             ? "Multiple Choice"
             : qa.question_type === "mcq_multi"
-            ? "Multiple Select"
-            : "Descriptive"}
+              ? "Multiple Select"
+              : "Descriptive"}
         </span>
         {qa.is_correct !== null && (
           <span
@@ -251,31 +254,19 @@ function MalpracticeTab({ events }: Readonly<{ events: MalpracticeEvent[] }>) {
             {event.face_image_url && (
               <div className={styles.mediaItem}>
                 <span className={styles.mediaLabel}>Face Capture</span>
-                <img
-                  src={event.face_image_url}
-                  alt="Face capture"
-                  className={styles.mediaImage}
-                />
+                <img src={event.face_image_url} alt="Face capture" className={styles.mediaImage} />
               </div>
             )}
             {event.screen_video_url && (
               <div className={styles.mediaItem}>
                 <span className={styles.mediaLabel}>Screen Recording</span>
-                <video
-                  src={event.screen_video_url}
-                  controls
-                  className={styles.mediaVideo}
-                />
+                <video src={event.screen_video_url} controls className={styles.mediaVideo} />
               </div>
             )}
             {event.audio_clip_url && (
               <div className={styles.mediaItem}>
                 <span className={styles.mediaLabel}>Audio Clip</span>
-                <audio
-                  src={event.audio_clip_url}
-                  controls
-                  className={styles.mediaAudio}
-                />
+                <audio src={event.audio_clip_url} controls className={styles.mediaAudio} />
               </div>
             )}
           </div>

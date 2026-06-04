@@ -1,5 +1,5 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { MalpracticeType } from '../../types';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { MalpracticeType } from "../../types";
 
 interface ProctoringState {
   malpracticeCount: number;
@@ -16,13 +16,13 @@ const initialState: ProctoringState = {
   totalMalpracticeLimit: 3,
   lastViolationType: null,
   isWarningVisible: false,
-  warningMessage: '',
+  warningMessage: "",
   isTerminated: false,
   terminationReason: null,
 };
 
 const proctoringSlice = createSlice({
-  name: 'proctoring',
+  name: "proctoring",
   initialState,
   reducers: {
     setMalpracticeCount(state, action: PayloadAction<number>) {

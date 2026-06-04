@@ -1,7 +1,7 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from "react";
 
-import api from '@/utils/api';
-import { CandidateQuestion, MonitoringConfig, RoundConfig } from '@/types';
+import api from "@/utils/api";
+import { CandidateQuestion, MonitoringConfig, RoundConfig } from "@/types";
 
 export interface InterviewRoundData {
   round_number: number;
@@ -33,7 +33,7 @@ interface UseInterviewSessionReturn extends LoadedRoundState {
   navigateTo: (idx: number) => void;
 }
 
-import type React from 'react';
+import type React from "react";
 
 /**
  * Loads and manages the data layer for an interview session:
@@ -83,10 +83,7 @@ export function useInterviewSession({
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [roundResult, assessment] = await Promise.all([
-        fetchRound(),
-        fetchAssessment(),
-      ]);
+      const [roundResult, assessment] = await Promise.all([fetchRound(), fetchAssessment()]);
 
       if (roundResult.round) {
         setRound(roundResult.round);
@@ -123,7 +120,7 @@ export function useInterviewSession({
       setCurrentIdx(idx);
       currentIdxRef.current = idx;
     },
-    [round, markVisited],
+    [round, markVisited]
   );
 
   return {

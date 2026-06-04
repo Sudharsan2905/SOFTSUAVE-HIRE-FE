@@ -12,6 +12,7 @@ export interface SessionCallbacks {
   onSessionOnHold: () => void;
   onResumeApproved: (remainingSeconds: number | null, questionIdx: number) => void;
   onTerminated: () => void;
+  onAdminWarning: (message: string) => void;
   getRemainingSeconds: () => number;
   getCurrentQuestionIdx: () => number;
 }
@@ -51,6 +52,7 @@ export function InterviewSessionProvider({ children }: Readonly<{ children: Reac
   const onSessionOnHoldRef = useRef<SessionCallbacks["onSessionOnHold"] | null>(null);
   const onResumeApprovedRef = useRef<SessionCallbacks["onResumeApproved"] | null>(null);
   const onTerminatedRef = useRef<SessionCallbacks["onTerminated"] | null>(null);
+  const onAdminWarningRef = useRef<SessionCallbacks["onAdminWarning"] | null>(null);
   const getRemainingSecondsRef = useRef<SessionCallbacks["getRemainingSeconds"]>(() => 0);
   const getCurrentQuestionIdxRef = useRef<SessionCallbacks["getCurrentQuestionIdx"]>(() => 0);
 
@@ -67,6 +69,7 @@ export function InterviewSessionProvider({ children }: Readonly<{ children: Reac
       []
     ),
     onTerminated: useCallback(() => onTerminatedRef.current?.(), []),
+    onAdminWarning: useCallback((msg: string) => onAdminWarningRef.current?.(msg), []),
     getRemainingSeconds: useCallback(() => getRemainingSecondsRef.current(), []),
     getCurrentQuestionIdx: useCallback(() => getCurrentQuestionIdxRef.current(), []),
   });
@@ -80,6 +83,7 @@ export function InterviewSessionProvider({ children }: Readonly<{ children: Reac
     if (callbacks.onSessionOnHold) onSessionOnHoldRef.current = callbacks.onSessionOnHold;
     if (callbacks.onResumeApproved) onResumeApprovedRef.current = callbacks.onResumeApproved;
     if (callbacks.onTerminated) onTerminatedRef.current = callbacks.onTerminated;
+    if (callbacks.onAdminWarning) onAdminWarningRef.current = callbacks.onAdminWarning;
     if (callbacks.getRemainingSeconds)
       getRemainingSecondsRef.current = callbacks.getRemainingSeconds;
     if (callbacks.getCurrentQuestionIdx)

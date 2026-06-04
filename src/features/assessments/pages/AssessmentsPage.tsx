@@ -200,12 +200,6 @@ export default function AssessmentsPage() {
               workspaceId={workspaceId!}
               viewMode={viewMode}
               onEdit={handleEditClick}
-              onShare={(assessment) => {
-                setSelected(assessment);
-                setShowShare(true);
-                setShareStep("question");
-                setShareUrl("");
-              }}
               onClone={handleCloneClick}
               onDelete={(assessment) => {
                 setSelected(assessment);

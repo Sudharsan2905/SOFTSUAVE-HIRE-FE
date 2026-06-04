@@ -1,11 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from "react";
 
-import { RemoteTrack, Track } from 'livekit-client';
+import { RemoteTrack, Track } from "livekit-client";
 
-import { Button } from '@/components/ui/Button';
-import { Spinner } from '@/components/ui/Spinner';
+import { Button } from "@/components/ui/Button";
+import { Spinner } from "@/components/ui/Spinner";
 
-import styles from './CandidateStreamPanel.module.css';
+import styles from "./CandidateStreamPanel.module.css";
 
 interface LiveSession {
   submission_id: string;
@@ -24,6 +24,7 @@ interface CandidateStreamPanelProps {
   onTerminate: (submissionId: string) => void;
   onResume: (submissionId: string) => void;
   onClose: () => void;
+  onWarnCandidate: (submissionId: string, message: string) => void;
 }
 
 export function CandidateStreamPanel({
@@ -33,8 +34,11 @@ export function CandidateStreamPanel({
   onTerminate,
   onResume,
   onClose,
+  onWarnCandidate,
 }: CandidateStreamPanelProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [warnMessage, setWarnMessage] = useState("");
+  const [showWarnInput, setShowWarnInput] = useState(false);
 
   useEffect(() => {
     if (!videoRef.current || !screenTrack) return;
@@ -49,6 +53,14 @@ export function CandidateStreamPanel({
   const elapsedMins = session.started_at
     ? Math.floor((Date.now() - new Date(session.started_at).getTime()) / 60000)
     : 0;
+
+  function handleSendWarning() {
+    const trimmed = warnMessage.trim();
+    if (!trimmed) return;
+    onWarnCandidate(session.submission_id, trimmed);
+    setWarnMessage("");
+    setShowWarnInput(false);
+  }
 
   return (
     <div className={styles.panel}>
@@ -77,29 +89,50 @@ export function CandidateStreamPanel({
             <span>Candidate may not have enabled screen sharing</span>
           </div>
         ) : (
-          <video
-            ref={videoRef}
-            className={styles.video}
-            autoPlay
-            playsInline
-            muted
-          />
+          <video ref={videoRef} className={styles.video} autoPlay playsInline muted />
         )}
       </div>
 
+      {showWarnInput && (
+        <div className={styles.warnInputArea}>
+          <input
+            className={styles.warnInput}
+            type="text"
+            placeholder="Type a warning message…"
+            value={warnMessage}
+            onChange={(e) => setWarnMessage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSendWarning();
+            }}
+            autoFocus
+          />
+          <div className={styles.warnInputActions}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowWarnInput(false);
+                setWarnMessage("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSendWarning} disabled={!warnMessage.trim()}>
+              Send
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className={styles.actions}>
-        {session.status === 'on_hold' && (
-          <Button
-            variant="secondary"
-            onClick={() => onResume(session.submission_id)}
-          >
+        {session.status === "on_hold" && (
+          <Button variant="secondary" onClick={() => onResume(session.submission_id)}>
             Resume Session
           </Button>
         )}
-        <Button
-          variant="danger"
-          onClick={() => onTerminate(session.submission_id)}
-        >
+        <Button variant="secondary" onClick={() => setShowWarnInput((v) => !v)}>
+          {showWarnInput ? "Cancel Warn" : "Warn Candidate"}
+        </Button>
+        <Button variant="danger" onClick={() => onTerminate(session.submission_id)}>
           Terminate
         </Button>
       </div>
