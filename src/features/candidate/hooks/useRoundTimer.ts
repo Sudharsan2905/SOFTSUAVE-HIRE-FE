@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 interface UseRoundTimerOptions {
   initialSeconds: number;
@@ -14,7 +14,7 @@ interface UseRoundTimerReturn {
   formattedTime: { hh: string; mm: string; ss: string };
 }
 
-import type React from 'react';
+import type React from "react";
 
 const LOW_TIME_THRESHOLD_SECONDS = 120;
 
@@ -23,9 +23,9 @@ function formatHMS(totalSeconds: number) {
   const m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
   return {
-    hh: h.toString().padStart(2, '0'),
-    mm: m.toString().padStart(2, '0'),
-    ss: s.toString().padStart(2, '0'),
+    hh: h.toString().padStart(2, "0"),
+    mm: m.toString().padStart(2, "0"),
+    ss: s.toString().padStart(2, "0"),
   };
 }
 

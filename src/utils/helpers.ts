@@ -5,6 +5,7 @@ export function getFullName(user: { first_name: string; last_name?: string }): s
 }
 
 export function getAvatarColor(name: string): string {
+  if (!name) return AVATAR_COLORS[0];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -13,6 +14,7 @@ export function getAvatarColor(name: string): string {
 }
 
 export function getInitials(name: string): string {
+  if (!name) return "?";
   return name
     .split(" ")
     .map((n) => n[0])

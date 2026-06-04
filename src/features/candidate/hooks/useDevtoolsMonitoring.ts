@@ -1,5 +1,5 @@
-import { useEffect, useRef, useCallback } from 'react';
-import { MalpracticeType } from '../../../types';
+import { useEffect, useRef, useCallback } from "react";
+import { MalpracticeType } from "../../../types";
 
 interface UseDevtoolsMonitoringOptions {
   enabled: boolean;
@@ -14,19 +14,20 @@ export function useDevtoolsMonitoring({ enabled, onViolation }: UseDevtoolsMonit
     const now = performance.now();
     if (now - lastFlagTime.current > COOLDOWN_MS) {
       lastFlagTime.current = now;
-      onViolation('devtools_open');
+      onViolation("devtools_open");
     }
   }, [onViolation]);
 
   useEffect(() => {
     if (!enabled) return;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let devtools: any;
     let cleanup: (() => void) | undefined;
 
     const init = async () => {
       try {
-        devtools = (await import('devtools-detect')).default;
+        devtools = (await import("devtools-detect")).default;
         const handler = () => {
           if (devtools.isOpen) flag();
         };
@@ -40,8 +41,8 @@ export function useDevtoolsMonitoring({ enabled, onViolation }: UseDevtoolsMonit
           const heightDiff = window.outerHeight - window.innerHeight;
           if (widthDiff > threshold || heightDiff > threshold) flag();
         };
-        window.addEventListener('resize', sizeHandler);
-        cleanup = () => window.removeEventListener('resize', sizeHandler);
+        window.addEventListener("resize", sizeHandler);
+        cleanup = () => window.removeEventListener("resize", sizeHandler);
       }
     };
 

@@ -1,10 +1,10 @@
-import React from 'react';
+import React from "react";
 
-import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
-import { RoundConfig } from '@/types';
+import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { RoundConfig } from "@/types";
 
-import styles from './RoundInstructions.module.css';
+import styles from "./RoundInstructions.module.css";
 
 interface RoundInstructionsProps {
   isOpen: boolean;
@@ -25,9 +25,10 @@ export function RoundInstructions({
 
   const durationHours = Math.floor(roundConfig.max_duration_minutes / 60);
   const durationMins = roundConfig.max_duration_minutes % 60;
-  const durationLabel = durationHours > 0
-    ? `${durationHours}h ${durationMins > 0 ? `${durationMins}m` : ''}`
-    : `${durationMins} minutes`;
+  const durationLabel =
+    durationHours > 0
+      ? `${durationHours}h ${durationMins > 0 ? `${durationMins}m` : ""}`
+      : `${durationMins} minutes`;
 
   return (
     <Modal
@@ -35,11 +36,7 @@ export function RoundInstructions({
       onClose={onStart}
       title={`Round ${roundNumber} — Instructions`}
       size="md"
-      footer={
-        <Button onClick={onStart}>
-          Start Round {roundNumber}
-        </Button>
-      }
+      footer={<Button onClick={onStart}>Start Round {roundNumber}</Button>}
     >
       <div className={styles.container}>
         <div className={styles.progressRow}>
@@ -50,11 +47,11 @@ export function RoundInstructions({
                 i + 1 < roundNumber
                   ? styles.stepDone
                   : i + 1 === roundNumber
-                  ? styles.stepActive
-                  : styles.stepPending
+                    ? styles.stepActive
+                    : styles.stepPending
               }`}
             >
-              <div className={styles.stepCircle}>{i + 1 < roundNumber ? '✓' : i + 1}</div>
+              <div className={styles.stepCircle}>{i + 1 < roundNumber ? "✓" : i + 1}</div>
               <span className={styles.stepLabel}>Round {i + 1}</span>
             </div>
           ))}
@@ -72,7 +69,9 @@ export function RoundInstructions({
           </div>
           <div className={styles.statDivider} />
           <div className={styles.stat}>
-            <span className={styles.statValue}>{roundNumber}/{totalRounds}</span>
+            <span className={styles.statValue}>
+              {roundNumber}/{totalRounds}
+            </span>
             <span className={styles.statLabel}>Round</span>
           </div>
         </div>

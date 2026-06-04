@@ -53,19 +53,6 @@ interface AssessmentData {
 
 type AnswerMap = Record<string, string | string[]>;
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function formatHMS(totalSeconds: number): { hh: string; mm: string; ss: string } {
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
-  const s = totalSeconds % 60;
-  return {
-    hh: h.toString().padStart(2, "0"),
-    mm: m.toString().padStart(2, "0"),
-    ss: s.toString().padStart(2, "0"),
-  };
-}
-
 // ─── Pure helper functions (extracted to reduce component complexity) ─────────
 
 type QBtnState = "answered" | "visited" | "active" | "default";
@@ -151,6 +138,7 @@ export default function InterviewPage() {
   const [submitting, setSubmitting] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [showTimeExpired, setShowTimeExpired] = useState(false);
+  const [adminWarningMessage, setAdminWarningMessage] = useState<string | null>(null);
 
   // ── Assessment / rounds state ───────────────────────────────────────────────
   const [assessmentRounds, setAssessmentRounds] = useState<RoundConfig[]>([]);
@@ -186,12 +174,7 @@ export default function InterviewPage() {
     }
   }, []);
 
-  const {
-    setTimeLeft,
-    timeLeftRef,
-    isLowTime,
-    formattedTime,
-  } = useRoundTimer({
+  const { setTimeLeft, timeLeftRef, isLowTime, formattedTime } = useRoundTimer({
     initialSeconds: 0,
     active: timerActive,
     onExpired: handleTimerExpiry,
@@ -236,6 +219,9 @@ export default function InterviewPage() {
       onTerminated: () => {
         toast.error("Your session has been terminated by an administrator.");
         setTimeout(() => navigate(`/assessment/${shareLink ?? ""}`), 2000);
+      },
+      onAdminWarning: (message: string) => {
+        setAdminWarningMessage(message);
       },
       getRemainingSeconds: () => timeLeftRef.current,
       getCurrentQuestionIdx: () => currentIdxRef.current,
@@ -443,25 +429,34 @@ export default function InterviewPage() {
   useVideoMonitoring({
     enabled: monitoringConfig.video_monitoring ?? false,
     videoRef,
-    onViolation: useCallback((type) => {
-      void flagViolation({ type });
-    }, [flagViolation]),
+    onViolation: useCallback(
+      (type) => {
+        void flagViolation({ type });
+      },
+      [flagViolation]
+    ),
   });
 
   // ── Screen monitoring (fullscreen + screen-share-stop) ──────────────────────
   useScreenMonitoring({
     enabled: monitoringConfig.tab_monitoring ?? false,
-    onViolation: useCallback((type) => {
-      void flagViolation({ type });
-    }, [flagViolation]),
+    onViolation: useCallback(
+      (type) => {
+        void flagViolation({ type });
+      },
+      [flagViolation]
+    ),
   });
 
   // ── DevTools monitoring ─────────────────────────────────────────────────────
   useDevtoolsMonitoring({
     enabled: monitoringConfig.tab_monitoring ?? false,
-    onViolation: useCallback((type) => {
-      void flagViolation({ type });
-    }, [flagViolation]),
+    onViolation: useCallback(
+      (type) => {
+        void flagViolation({ type });
+      },
+      [flagViolation]
+    ),
   });
 
   // ── Copy / paste / shortcut blocking ────────────────────────────────────────
@@ -954,6 +949,16 @@ export default function InterviewPage() {
 
       {/* Malpractice warning — driven by proctoringSlice via MalpracticeWarningModal */}
       <MalpracticeWarningModal />
+
+      <Modal
+        isOpen={adminWarningMessage !== null}
+        onClose={() => setAdminWarningMessage(null)}
+        title="Message from Administrator"
+        size="sm"
+        footer={<Button onClick={() => setAdminWarningMessage(null)}>Acknowledge</Button>}
+      >
+        <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>{adminWarningMessage}</p>
+      </Modal>
 
       <Modal
         isOpen={showTimeExpired}

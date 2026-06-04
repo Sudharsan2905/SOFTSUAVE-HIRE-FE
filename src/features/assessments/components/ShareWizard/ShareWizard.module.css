@@ -266,6 +266,67 @@
   white-space: nowrap;
 }
 
+/* ─── Social share ───────────────────────────────────────────────────────────── */
+.socialShareSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.socialShareLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.socialShareButtons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.socialBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  background: var(--social-bg, #6b7280);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.1s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.socialBtn:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.socialBtn:active {
+  transform: translateY(0);
+}
+
+.socialBtnLabel {
+  font-size: 12px;
+}
+
+@media (max-width: 480px) {
+  .socialBtnLabel {
+    display: none;
+  }
+  .socialBtn {
+    padding: 8px;
+  }
+}
+
 /* ─── Active pill ────────────────────────────────────────────────────────────── */
 .activePill {
   display: inline-flex;

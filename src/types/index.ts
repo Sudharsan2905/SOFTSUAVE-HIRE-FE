@@ -245,7 +245,8 @@ export type WsMessageType =
   | "resume_approved"
   | "terminated"
   | "pong"
-  | "error";
+  | "error"
+  | "admin_warning";
 
 export interface WsMessage {
   type: WsMessageType;

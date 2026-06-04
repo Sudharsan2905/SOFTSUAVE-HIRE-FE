@@ -1,11 +1,12 @@
-import { useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
-import { dismissWarning } from '../../../../store/slices/proctoringSlice';
-import styles from './MalpracticeWarningModal.module.css';
+import { useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "../../../../store/hooks";
+import { dismissWarning } from "../../../../store/slices/proctoringSlice";
+import styles from "./MalpracticeWarningModal.module.css";
 
 export function MalpracticeWarningModal() {
   const dispatch = useAppDispatch();
-  const { isWarningVisible, warningMessage, malpracticeCount, totalMalpracticeLimit } = useAppSelector(s => s.proctoring);
+  const { isWarningVisible, warningMessage, malpracticeCount, totalMalpracticeLimit } =
+    useAppSelector((s) => s.proctoring);
 
   useEffect(() => {
     if (!isWarningVisible) return;

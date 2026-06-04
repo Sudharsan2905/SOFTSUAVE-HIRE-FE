@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   LocalVideoTrack,
@@ -9,9 +9,9 @@ import {
   RoomEvent,
   Track,
   createLocalScreenTracks,
-} from 'livekit-client';
+} from "livekit-client";
 
-import api from '@/utils/api';
+import api from "@/utils/api";
 
 // ─── Candidate publisher (screen track only) ──────────────────────────────────
 
@@ -47,10 +47,8 @@ export function useLiveKitPublisher({
   const startPublishing = useCallback(async () => {
     if (!enabled || isPublishing) return;
     try {
-      const { data } = await api.post(
-        `/candidate/submission/${submissionId}/livekit-token`,
-      );
-      const { token, room: roomName } = data.data;
+      const { data } = await api.post(`/candidate/submission/${submissionId}/livekit-token`);
+      const { token } = data.data;
 
       const room = new Room();
       roomRef.current = room;
@@ -66,7 +64,7 @@ export function useLiveKitPublisher({
         source: Track.Source.ScreenShare,
       });
 
-      screenTrackRef.current.mediaStreamTrack.addEventListener('ended', () => {
+      screenTrackRef.current.mediaStreamTrack.addEventListener("ended", () => {
         stopPublishing();
         onScreenShareStop?.();
       });
@@ -87,6 +85,10 @@ export function useLiveKitPublisher({
 }
 
 // ─── Admin viewer (subscribe to one candidate's screen track) ─────────────────
+//
+// Design: connect ONCE per workspaceId (all candidates share the same room).
+// Switching targetSubmissionId only re-filters which participant's track to show
+// — no room disconnect/reconnect on every candidate click.
 
 interface ViewerOptions {
   workspaceId: string | null;
@@ -98,73 +100,93 @@ interface ViewerState {
   isConnected: boolean;
 }
 
-export function useLiveKitViewer({
-  workspaceId,
-  targetSubmissionId,
-}: ViewerOptions): ViewerState {
+function findScreenTrack(room: Room, submissionId: string): RemoteTrack | null {
+  const identity = `candidate-${submissionId}`;
+  for (const participant of room.remoteParticipants.values()) {
+    if (participant.identity !== identity) continue;
+    for (const pub of participant.trackPublications.values()) {
+      if (pub.track?.source === Track.Source.ScreenShare) return pub.track;
+    }
+  }
+  return null;
+}
+
+export function useLiveKitViewer({ workspaceId, targetSubmissionId }: ViewerOptions): ViewerState {
   const roomRef = useRef<Room | null>(null);
   const [screenTrack, setScreenTrack] = useState<RemoteTrack | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  // Keep a ref so track-subscription handlers always see the latest target
+  const targetRef = useRef(targetSubmissionId);
 
-  const disconnect = useCallback(() => {
-    roomRef.current?.disconnect();
-    roomRef.current = null;
-    setScreenTrack(null);
-    setIsConnected(false);
-  }, []);
+  useEffect(() => {
+    targetRef.current = targetSubmissionId;
+  }, [targetSubmissionId]);
 
-  const connectAndSubscribe = useCallback(async () => {
-    if (!workspaceId || !targetSubmissionId) return;
+  // ── Connect once per workspaceId ───────────────────────────────────────────
+  useEffect(() => {
+    if (!workspaceId) return;
 
-    disconnect();
+    let active = true;
+    const room = new Room();
+    roomRef.current = room;
 
-    try {
-      const { data } = await api.post('/live-interviews/livekit-token', {
-        workspace_id: workspaceId,
-      });
-      const { token } = data.data;
+    room.on(RoomEvent.Connected, () => {
+      if (!active) return;
+      setIsConnected(true);
+      // Resolve any track already published before we connected
+      if (targetRef.current) {
+        setScreenTrack(findScreenTrack(room, targetRef.current));
+      }
+    });
 
-      const room = new Room();
-      roomRef.current = room;
+    room.on(RoomEvent.Disconnected, () => {
+      setIsConnected(false);
+      setScreenTrack(null);
+    });
 
-      room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack, _pub: RemoteTrackPublication, participant: RemoteParticipant) => {
+    room.on(
+      RoomEvent.TrackSubscribed,
+      (track: RemoteTrack, _pub: RemoteTrackPublication, participant: RemoteParticipant) => {
         if (
-          participant.identity === `candidate-${targetSubmissionId}` &&
+          targetRef.current &&
+          participant.identity === `candidate-${targetRef.current}` &&
           track.source === Track.Source.ScreenShare
         ) {
           setScreenTrack(track);
         }
+      }
+    );
+
+    room.on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack) => {
+      setScreenTrack((prev) => (prev === track ? null : prev));
+    });
+
+    api
+      .post("/live-interviews/livekit-token", { workspace_id: workspaceId })
+      .then(({ data }) => {
+        if (!active) return;
+        const liveKitHost = import.meta.env.VITE_LIVEKIT_HOST as string;
+        return room.connect(liveKitHost, data.data.token as string);
+      })
+      .catch(() => {
+        /* connection failed — isConnected stays false */
       });
 
-      room.on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack) => {
-        setScreenTrack((prev) => (prev === track ? null : prev));
-      });
+    return () => {
+      active = false;
+      room.disconnect();
+      roomRef.current = null;
+      setScreenTrack(null);
+      setIsConnected(false);
+    };
+  }, [workspaceId]);
 
-      room.on(RoomEvent.Connected, () => setIsConnected(true));
-      room.on(RoomEvent.Disconnected, () => setIsConnected(false));
-
-      const liveKitHost = import.meta.env.VITE_LIVEKIT_HOST as string;
-      await room.connect(liveKitHost, token);
-
-      // Find existing track if participant is already in room
-      room.remoteParticipants.forEach((participant: RemoteParticipant) => {
-        if (participant.identity === `candidate-${targetSubmissionId}`) {
-          participant.trackPublications.forEach((pub: RemoteTrackPublication) => {
-            if (pub.track?.source === Track.Source.ScreenShare) {
-              setScreenTrack(pub.track);
-            }
-          });
-        }
-      });
-    } catch {
-      disconnect();
-    }
-  }, [workspaceId, targetSubmissionId, disconnect]);
-
+  // ── Switch displayed track when target changes (no reconnect) ─────────────
   useEffect(() => {
-    connectAndSubscribe();
-    return disconnect;
-  }, [connectAndSubscribe, disconnect]);
+    const room = roomRef.current;
+    if (!room || !isConnected) return;
+    setScreenTrack(targetSubmissionId ? findScreenTrack(room, targetSubmissionId) : null);
+  }, [targetSubmissionId, isConnected]);
 
   return { screenTrack, isConnected };
 }

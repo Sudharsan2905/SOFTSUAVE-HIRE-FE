@@ -84,8 +84,10 @@ export default function CandidateDetailsPage() {
           { params: { version } }
         );
         setData(resp.data.data);
-      } catch (err: any) {
-        setError(err.response?.data?.message ?? "Failed to load candidate data");
+      } catch (err: unknown) {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message;
+        setError(msg ?? "Failed to load candidate data");
       } finally {
         setIsLoading(false);
       }
@@ -131,11 +133,7 @@ export default function CandidateDetailsPage() {
   }
 
   if (error || !data) {
-    return (
-      <div className={styles.errorWrap}>
-        {error ?? "Candidate data not found"}
-      </div>
-    );
+    return <div className={styles.errorWrap}>{error ?? "Candidate data not found"}</div>;
   }
 
   const { candidate } = data;
