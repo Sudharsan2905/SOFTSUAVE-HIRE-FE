@@ -1,64 +1,43 @@
 import { useEffect, useRef, useCallback } from "react";
 import { MalpracticeType } from "../../../types";
 
+const COOLDOWN_MS = 10_000;
+
 interface UseScreenMonitoringOptions {
   enabled: boolean;
   onViolation: (type: MalpracticeType) => void;
 }
 
-export function useScreenMonitoring({ enabled, onViolation }: UseScreenMonitoringOptions) {
+interface UseScreenMonitoringReturn {
+  startScreenShare: () => Promise<MediaStream | null>;
+  stopScreenShare: () => void;
+  screenStream: React.MutableRefObject<MediaStream | null>;
+}
+
+export function useScreenMonitoring({
+  enabled,
+  onViolation,
+}: UseScreenMonitoringOptions): UseScreenMonitoringReturn {
   const screenStreamRef = useRef<MediaStream | null>(null);
-  const isFullscreen = useRef(false);
   const lastViolationRef = useRef<number>(0);
-  const COOLDOWN_MS = 10000;
-
-  const flag = useCallback(
-    (type: MalpracticeType) => {
-      const now = performance.now();
-      if (now - lastViolationRef.current > COOLDOWN_MS) {
-        lastViolationRef.current = now;
-        onViolation(type);
-      }
-    },
-    [onViolation]
-  );
-
-  // Fullscreen enforcement
+  const onViolationRef = useRef(onViolation);
   useEffect(() => {
-    if (!enabled) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let screenfull: any;
+    onViolationRef.current = onViolation;
+  });
 
-    const init = async () => {
-      try {
-        screenfull = (await import("screenfull")).default;
-        if (!screenfull.isEnabled) return;
+  const flag = useCallback((type: MalpracticeType) => {
+    const now = performance.now();
+    if (now - lastViolationRef.current > COOLDOWN_MS) {
+      lastViolationRef.current = now;
+      onViolationRef.current(type);
+    }
+  }, []);
 
-        const handleChange = () => {
-          const nowFull = screenfull.isFullscreen;
-          if (isFullscreen.current && !nowFull) {
-            flag("fullscreen_exit");
-          }
-          isFullscreen.current = nowFull;
-        };
+  const stopScreenShare = useCallback(() => {
+    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+    screenStreamRef.current = null;
+  }, []);
 
-        screenfull.on("change", handleChange);
-        await screenfull.request(document.documentElement);
-        isFullscreen.current = screenfull.isFullscreen;
-
-        return () => screenfull.off("change", handleChange);
-      } catch {
-        /* screenfull unavailable or denied */
-      }
-    };
-
-    const cleanup = init();
-    return () => {
-      cleanup.then((fn) => fn?.());
-    };
-  }, [enabled, flag]);
-
-  // Screen share capture for LiveKit (separate from fullscreen)
   const startScreenShare = useCallback(async (): Promise<MediaStream | null> => {
     if (!enabled) return null;
     try {
@@ -76,11 +55,6 @@ export function useScreenMonitoring({ enabled, onViolation }: UseScreenMonitorin
       return null;
     }
   }, [enabled, flag]);
-
-  const stopScreenShare = useCallback(() => {
-    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
-    screenStreamRef.current = null;
-  }, []);
 
   useEffect(() => {
     return () => stopScreenShare();

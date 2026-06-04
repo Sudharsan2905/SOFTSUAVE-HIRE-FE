@@ -19,11 +19,14 @@ import CandidateHeader from "@/features/candidate/components/CandidateHeader";
 import { useAppSelector } from "@/store/hooks";
 import { markAssessmentDone, saveSubmissionId } from "@/utils/assessmentSession";
 import { useInterviewSession } from "@/features/candidate/context/InterviewSessionContext";
+import { storeMonitoringStreams } from "@/features/candidate/services/screenCaptureStore";
 import toast from "react-hot-toast";
 
 type NetworkCheckStatus = "checking" | "connected" | "unstable" | "disconnected";
 
-// ── Module-level helpers (keep component cognitive complexity low) ─────────────
+const DEVTOOLS_SIZE_THRESHOLD = 160;
+
+// ── Module-level helpers ──────────────────────────────────────────────────────
 
 function buildPermissionMessage(needsVideo: boolean, needsAudio: boolean): string {
   if (needsVideo && needsAudio) return "Camera and microphone access granted";
@@ -31,17 +34,26 @@ function buildPermissionMessage(needsVideo: boolean, needsAudio: boolean): strin
   return "Microphone access granted";
 }
 
+function isDevToolsCurrentlyOpen(): boolean {
+  return (
+    window.outerWidth - window.innerWidth > DEVTOOLS_SIZE_THRESHOLD ||
+    window.outerHeight - window.innerHeight > DEVTOOLS_SIZE_THRESHOLD
+  );
+}
+
 function isAssessmentReady(
   assessment: Assessment | null,
   networkStatus: NetworkCheckStatus,
   videoGranted: boolean,
-  audioGranted: boolean
+  audioGranted: boolean,
+  screenGranted: boolean
 ): boolean {
   if (!assessment) return false;
   if (networkStatus !== "connected") return false;
   const cfg = assessment.monitoring_config;
   if (cfg?.video_monitoring && !videoGranted) return false;
   if (cfg?.audio_monitoring && !audioGranted) return false;
+  if (cfg?.screenshot_enabled && !screenGranted) return false;
   return true;
 }
 
@@ -75,7 +87,9 @@ export default function InstructionsPage() {
   const [starting, setStarting] = useState(false);
   const [videoGranted, setVideoGranted] = useState(false);
   const [audioGranted, setAudioGranted] = useState(false);
+  const [screenGranted, setScreenGranted] = useState(false);
   const [checkingPermissions, setCheckingPermissions] = useState(false);
+  const [checkingScreen, setCheckingScreen] = useState(false);
   const [networkStatus, setNetworkStatus] = useState<NetworkCheckStatus>("checking");
   const [checkingNetwork, setCheckingNetwork] = useState(false);
 
@@ -94,7 +108,6 @@ export default function InstructionsPage() {
     }
   }, [shareLink]);
 
-  // Initial assessment load doubles as the first network health check
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
@@ -112,7 +125,6 @@ export default function InstructionsPage() {
     void load();
   }, [shareLink]);
 
-  // Real-time browser connectivity updates
   useEffect(() => {
     const handleOnline = () => {
       if (networkStatus !== "connected") setNetworkStatus("unstable");
@@ -137,12 +149,21 @@ export default function InstructionsPage() {
         video: needsVideo,
         audio: needsAudio,
       });
-      // Stop all tracks immediately — we only needed the permission grant
-      stream.getTracks().forEach((t) => t.stop());
-
-      if (needsVideo) setVideoGranted(true);
-      if (needsAudio) setAudioGranted(true);
-
+      // Separate camera and audio tracks into individual streams for later use
+      if (needsVideo) {
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) {
+          storeMonitoringStreams({ camera: new MediaStream([videoTrack]) });
+          setVideoGranted(true);
+        }
+      }
+      if (needsAudio) {
+        const audioTrack = stream.getAudioTracks()[0];
+        if (audioTrack) {
+          storeMonitoringStreams({ audio: new MediaStream([audioTrack]) });
+          setAudioGranted(true);
+        }
+      }
       toast.success(buildPermissionMessage(needsVideo, needsAudio));
     } catch {
       toast.error("Please allow the required device access to proceed");
@@ -151,11 +172,34 @@ export default function InstructionsPage() {
     }
   };
 
+  const requestScreenAccess = async () => {
+    setCheckingScreen(true);
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: false,
+      });
+      storeMonitoringStreams({ screen: stream });
+      setScreenGranted(true);
+      toast.success("Screen access granted");
+    } catch {
+      toast.error("Screen sharing access is required to proceed");
+    } finally {
+      setCheckingScreen(false);
+    }
+  };
+
   const canStart = (): boolean =>
-    isAssessmentReady(assessment, networkStatus, videoGranted, audioGranted);
+    isAssessmentReady(assessment, networkStatus, videoGranted, audioGranted, screenGranted);
 
   const handleStart = async () => {
     if (!assessment) return;
+
+    if (isDevToolsCurrentlyOpen()) {
+      toast.error("Please close Developer Tools before starting the assessment");
+      return;
+    }
+
     if (!canStart()) {
       if (networkStatus !== "connected") {
         toast.error("A stable network connection is required to start the assessment");
@@ -164,20 +208,16 @@ export default function InstructionsPage() {
       }
       return;
     }
+
     setStarting(true);
     try {
       const { data } = await api.post(`/api/candidate/assessment/${shareLink}/start`);
       const submissionId = data.data?.id;
-      // Persist submission ID so other pages can reference it without URL manipulation.
       if (shareLink && submissionId) saveSubmissionId(shareLink, submissionId);
-      // Start the WebSocket connection now so it is already established by the
-      // time InterviewPage mounts, avoiding a cold-connect on the first render.
       if (submissionId) startSession(submissionId as string);
-      // Use replace so the browser back button skips instructions and goes to entry.
       navigate(`/assessment/${shareLink}/interview/${submissionId}`, { replace: true });
     } catch (e: unknown) {
       const msg = extractStartErrorMessage(e);
-      // Backend signals the candidate already finished — redirect them to the done screen.
       if (msg.toLowerCase().includes("already completed")) {
         if (shareLink) markAssessmentDone(shareLink);
         navigate(`/assessment/${shareLink}/completed`, { replace: true });
@@ -191,42 +231,28 @@ export default function InstructionsPage() {
 
   if (isLoading)
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-        }}
-      >
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
         <Spinner size="lg" />
       </div>
     );
 
   if (!assessment)
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-          color: "var(--text-tertiary)",
-        }}
-      >
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", color: "var(--text-tertiary)" }}>
         Assessment not found or link is invalid.
       </div>
     );
 
   const isMonitoring = assessment.accessibility === "monitoring";
   const totalQuestions = assessment.rounds?.reduce((s, r) => s + (r.question_count || 0), 0) || 0;
-  const totalMinutes =
-    assessment.rounds?.reduce((s, r) => s + (r.max_duration_minutes || 0), 0) || 0;
+  const totalMinutes = assessment.rounds?.reduce((s, r) => s + (r.max_duration_minutes || 0), 0) || 0;
 
   const needsVideo = isMonitoring && (assessment.monitoring_config?.video_monitoring ?? false);
   const needsAudio = isMonitoring && (assessment.monitoring_config?.audio_monitoring ?? false);
+  const needsScreen = isMonitoring && (assessment.monitoring_config?.screenshot_enabled ?? false);
   const needsAnyPermission = needsVideo || needsAudio;
-  const allPermissionsGranted = (!needsVideo || videoGranted) && (!needsAudio || audioGranted);
+  const cameraMicGranted = (!needsVideo || videoGranted) && (!needsAudio || audioGranted);
+  const allPermissionsGranted = cameraMicGranted && (!needsScreen || screenGranted);
 
   const networkPillClass = {
     checking: styles.pillPending,
@@ -242,11 +268,7 @@ export default function InstructionsPage() {
     disconnected: "Disconnected",
   }[networkStatus];
 
-  const startButtonLabel = resolveStartButtonLabel(
-    networkStatus,
-    isMonitoring,
-    allPermissionsGranted
-  );
+  const startButtonLabel = resolveStartButtonLabel(networkStatus, isMonitoring, allPermissionsGranted);
 
   return (
     <div className={styles.page}>
@@ -289,14 +311,15 @@ export default function InstructionsPage() {
             <h2 className={styles.sectionTitle}>General Instructions</h2>
             <ul className={styles.list}>
               <li>Ensure you have a stable internet connection throughout the assessment.</li>
-              <li>Do not refresh the page or navigate away — your progress may be lost.</li>
+              <li>The interview runs in fullscreen mode — do not exit fullscreen.</li>
+              <li>Do not open Developer Tools at any point during the assessment.</li>
               <li>Each round has a time limit. The assessment auto-submits when time runs out.</li>
               <li>Once you submit a round, you cannot go back to change answers.</li>
               <li>Read each question carefully before answering.</li>
             </ul>
           </div>
 
-          {/* ── Network connection check (always required) ── */}
+          {/* Network check */}
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Network Connection</h2>
             <div className={styles.permissionSetup}>
@@ -361,9 +384,9 @@ export default function InstructionsPage() {
                 )}
                 {assessment.monitoring_config?.screenshot_enabled && (
                   <div className={styles.monitorCard}>
-                    <IconShield size={24} color="var(--accent-400, #a78bfa)" />
+                    <IconMonitor size={24} color="var(--accent-400, #a78bfa)" />
                     <div>
-                      <p className={styles.monitorTitle}>Screenshots Enabled</p>
+                      <p className={styles.monitorTitle}>Screen Capture Required</p>
                       <p className={styles.monitorDesc}>
                         Periodic screenshots of your screen will be captured during the assessment.
                       </p>
@@ -395,7 +418,7 @@ export default function InstructionsPage() {
                       )}
                     </div>
                   </div>
-                  {!allPermissionsGranted && (
+                  {!cameraMicGranted && (
                     <Button
                       variant="secondary"
                       onClick={requestPermissions}
@@ -403,6 +426,34 @@ export default function InstructionsPage() {
                       leftIcon={<IconCamera size={16} />}
                     >
                       Request Access
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {needsScreen && (
+                <div className={styles.permissionSetup}>
+                  <div className={styles.permissionRow}>
+                    <p className={styles.permissionLabel}>
+                      {needsAnyPermission ? "Step 2: Grant Screen Access" : "Step 1: Grant Screen Access"}
+                    </p>
+                    <div className={styles.permissionPills}>
+                      <span
+                        className={`${styles.pill} ${screenGranted ? styles.pillGranted : styles.pillPending}`}
+                      >
+                        <IconMonitor size={12} />
+                        {screenGranted ? "Screen granted" : "Screen pending"}
+                      </span>
+                    </div>
+                  </div>
+                  {!screenGranted && (
+                    <Button
+                      variant="secondary"
+                      onClick={requestScreenAccess}
+                      isLoading={checkingScreen}
+                      leftIcon={<IconMonitor size={16} />}
+                    >
+                      Share Screen
                     </Button>
                   )}
                 </div>

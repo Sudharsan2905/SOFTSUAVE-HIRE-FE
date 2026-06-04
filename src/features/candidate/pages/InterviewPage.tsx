@@ -6,7 +6,6 @@ import { Modal } from "@/components/ui/Modal";
 import { Spinner } from "@/components/ui/Spinner";
 import { api } from "@/utils/api";
 import { CandidateQuestion, MonitoringConfig, RoundConfig } from "@/types";
-
 import { RichText } from "@/components/ui/RichText";
 import CandidateHeader from "@/features/candidate/components/CandidateHeader";
 import { VideoMonitor } from "@/features/candidate/components/VideoMonitor";
@@ -20,10 +19,13 @@ import { useDevtoolsMonitoring } from "@/features/candidate/hooks/useDevtoolsMon
 import { useMalpracticeCoordinator } from "@/features/candidate/hooks/useMalpracticeCoordinator";
 import { useRoundTimer } from "@/features/candidate/hooks/useRoundTimer";
 import { useAnswerSync } from "@/features/candidate/hooks/useAnswerSync";
+import { useFullscreenEnforcement } from "@/features/candidate/hooks/useFullscreenEnforcement";
+import { useScreenCapture } from "@/features/candidate/hooks/useScreenCapture";
 import { MalpracticeWarningModal } from "@/features/candidate/components/MalpracticeWarningModal";
 import { useInterviewSession } from "@/features/candidate/context/InterviewSessionContext";
 import { useAppSelector } from "@/store/hooks";
 import { markAssessmentDone } from "@/utils/assessmentSession";
+import { takeCameraStream } from "@/features/candidate/services/screenCaptureStore";
 import toast from "react-hot-toast";
 
 // ─── Local types ──────────────────────────────────────────────────────────────
@@ -53,7 +55,7 @@ interface AssessmentData {
 
 type AnswerMap = Record<string, string | string[]>;
 
-// ─── Pure helper functions (extracted to reduce component complexity) ─────────
+// ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 type QBtnState = "answered" | "visited" | "active" | "default";
 
@@ -139,6 +141,7 @@ export default function InterviewPage() {
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [showTimeExpired, setShowTimeExpired] = useState(false);
   const [adminWarningMessage, setAdminWarningMessage] = useState<string | null>(null);
+  const [fullscreenBlocked, setFullscreenBlocked] = useState(false);
 
   // ── Assessment / rounds state ───────────────────────────────────────────────
   const [assessmentRounds, setAssessmentRounds] = useState<RoundConfig[]>([]);
@@ -156,16 +159,19 @@ export default function InterviewPage() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const screenshotIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const submittingRef = useRef(false);
-  const finishRoundRef = useRef<(autoSubmit?: boolean) => Promise<void>>(async () => {
-    /* placeholder */
-  });
+  const finishRoundRef = useRef<(autoSubmit?: boolean) => Promise<void>>(async () => {});
   const currentIdxRef = useRef(0);
+  const roundDataRef = useRef<InterviewRoundData | null>(null);
 
   useEffect(() => {
     submittingRef.current = submitting;
   }, [submitting]);
 
-  // ── Timer (extracted hook) ──────────────────────────────────────────────────
+  useEffect(() => {
+    roundDataRef.current = roundData;
+  }, [roundData]);
+
+  // ── Timer ───────────────────────────────────────────────────────────────────
   const handleTimerExpiry = useCallback(() => {
     if (!submittingRef.current) {
       void finishRoundRef.current(true).then(() => {
@@ -180,12 +186,12 @@ export default function InterviewPage() {
     onExpired: handleTimerExpiry,
   });
 
-  // ── Answer sync (extracted hook) ────────────────────────────────────────────
+  // ── Answer sync ─────────────────────────────────────────────────────────────
   const { setAnswer: syncAnswerToServer, flushPending } = useAnswerSync({
     submissionId: submissionId ?? "",
   });
 
-  // ── Shared WebSocket session ────────────────────────────────────────────────
+  // ── WebSocket session ───────────────────────────────────────────────────────
   const { networkStatus, sessionSubmissionId, startSession, registerCallbacks } =
     useInterviewSession();
 
@@ -267,11 +273,9 @@ export default function InterviewPage() {
     return data.data as AssessmentData;
   }, [shareLink]);
 
-  // ── loadData error handler (extracted to reduce loadData complexity) ─────────
   const handleLoadError = useCallback(
     (e: unknown) => {
       const status = (e as { response?: { status?: number } })?.response?.status;
-      // S6606: replace || with ?? for message extraction
       const msg =
         (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "";
 
@@ -297,7 +301,7 @@ export default function InterviewPage() {
       if (rd) {
         setRoundData(rd);
         const initialTime = remainingSeconds ?? (rd.max_duration_minutes || 30) * 60;
-        setTimeLeft(initialTime); // hook setter — resets the countdown
+        setTimeLeft(initialTime);
         setMonitoringConfig(cfg);
         if (questionIdx > 0 && questionIdx < rd.questions.length) {
           setCurrentIdx(questionIdx);
@@ -305,9 +309,7 @@ export default function InterviewPage() {
         }
       }
 
-      if (assessment?.rounds) {
-        setAssessmentRounds(assessment.rounds);
-      }
+      if (assessment?.rounds) setAssessmentRounds(assessment.rounds);
     } catch (e: unknown) {
       handleLoadError(e);
     } finally {
@@ -319,7 +321,7 @@ export default function InterviewPage() {
     void loadData();
   }, [loadData]);
 
-  // ── Answer sync (delegates debounced API call to useAnswerSync hook) ─────────
+  // ── Answer sync ─────────────────────────────────────────────────────────────
   const setAnswer = useCallback(
     (questionId: string, answer: string | string[]) => {
       setAnswers((prev) => ({ ...prev, [questionId]: answer }));
@@ -328,12 +330,7 @@ export default function InterviewPage() {
     [syncAnswerToServer]
   );
 
-  const roundDataRef = useRef<InterviewRoundData | null>(null);
-  useEffect(() => {
-    roundDataRef.current = roundData;
-  }, [roundData]);
-
-  // ── Navigation helpers ──────────────────────────────────────────────────────
+  // ── Navigation ──────────────────────────────────────────────────────────────
   const markVisited = useCallback((questionId: string) => {
     setVisitedQuestions((prev) => {
       if (prev.has(questionId)) return prev;
@@ -364,7 +361,7 @@ export default function InterviewPage() {
       setSubmitting(true);
       submittingRef.current = true;
       setShowSubmitConfirm(false);
-      flushPending(); // ensure all pending answer saves are flushed before submit
+      flushPending();
 
       try {
         const { data } = await api.post(`/api/candidate/submission/${submissionId}/finish-round`);
@@ -394,22 +391,35 @@ export default function InterviewPage() {
     finishRoundRef.current = handleFinishRound;
   }, [handleFinishRound]);
 
-  // ── Malpractice coordinator (server-authoritative 3-strike system) ───────────
+  // ── Malpractice coordinator ─────────────────────────────────────────────────
   const { flagViolation } = useMalpracticeCoordinator({
     submissionId: submissionId ?? "",
     monitoringConfig: monitoringConfig as MonitoringConfig,
     onTerminated: useCallback(() => {
-      // Auto-submit on terminal malpractice then redirect
       setTimeout(() => {
         void finishRoundRef.current(true);
       }, 500);
     }, []),
   });
 
+  // ── Fullscreen enforcement ──────────────────────────────────────────────────
+  const { isFullscreen, requestFullscreen } = useFullscreenEnforcement({
+    enabled: !isLoading,
+    onExit: useCallback(() => {
+      void flagViolation({ type: "fullscreen_exit" });
+      setFullscreenBlocked(true);
+    }, [flagViolation]),
+  });
+
+  useEffect(() => {
+    if (isFullscreen && fullscreenBlocked) {
+      setFullscreenBlocked(false);
+    }
+  }, [isFullscreen, fullscreenBlocked]);
+
   // ── Tab monitoring ──────────────────────────────────────────────────────────
   useTabMonitoring({
     enabled: monitoringConfig.tab_monitoring ?? false,
-    submissionId: submissionId ?? "",
     onViolation: useCallback(() => {
       void flagViolation({ type: "tab_switch" });
     }, [flagViolation]),
@@ -418,14 +428,13 @@ export default function InterviewPage() {
   // ── Audio monitoring ────────────────────────────────────────────────────────
   useAudioMonitoring({
     enabled: monitoringConfig.audio_monitoring ?? false,
-    submissionId: submissionId ?? "",
     analyserRef,
     onViolation: useCallback(() => {
       void flagViolation({ type: "audio_violation" });
     }, [flagViolation]),
   });
 
-  // ── Video monitoring (MediaPipe face detection) ─────────────────────────────
+  // ── Video monitoring ────────────────────────────────────────────────────────
   useVideoMonitoring({
     enabled: monitoringConfig.video_monitoring ?? false,
     videoRef,
@@ -437,7 +446,7 @@ export default function InterviewPage() {
     ),
   });
 
-  // ── Screen monitoring (fullscreen + screen-share-stop) ──────────────────────
+  // ── Screen monitoring (screen_share_stop only) ──────────────────────────────
   useScreenMonitoring({
     enabled: monitoringConfig.tab_monitoring ?? false,
     onViolation: useCallback(
@@ -459,105 +468,114 @@ export default function InterviewPage() {
     ),
   });
 
-  // ── Copy / paste / shortcut blocking ────────────────────────────────────────
+  // ── Copy / paste / shortcut blocking (toast only — NOT malpractice) ─────────
   useEffect(() => {
-    const BLOCKED_META_KEYS = new Set(["c", "v", "x", "a", "p"]);
+    const BLOCKED_CTRL_KEYS = new Set(["p", "x"]);
+    const ALLOWED_IN_TEXTAREA = new Set(["a", "c", "v"]);
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "F12") {
         e.preventDefault();
-        toast.error("This site does not allow these actions");
+        toast.error("Developer Tools are not allowed during the assessment");
         return;
       }
-      if ((e.ctrlKey || e.metaKey) && BLOCKED_META_KEYS.has(e.key.toLowerCase())) {
-        // Allow Ctrl+A / Ctrl+C / Ctrl+V inside essay textarea
-        const target = e.target as HTMLElement;
-        if (target.tagName === "TEXTAREA" && ["a", "c", "v"].includes(e.key.toLowerCase())) return;
+      if ((e.ctrlKey || e.metaKey) && BLOCKED_CTRL_KEYS.has(e.key.toLowerCase())) {
         e.preventDefault();
-        toast.error("This site does not allow these actions");
-        void flagViolation({ type: "keyboard_shortcut" });
+        toast.error("This action is not allowed during the assessment");
+      }
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        ALLOWED_IN_TEXTAREA.has(e.key.toLowerCase()) &&
+        (e.target as HTMLElement).tagName !== "TEXTAREA"
+      ) {
+        e.preventDefault();
+        toast.error("Copy/paste is not allowed during the assessment");
       }
     };
 
     const handleClipboard = (e: ClipboardEvent) => {
       const target = e.target as HTMLElement;
-      // Allow paste inside essay textarea
       if (target.tagName === "TEXTAREA" && e.type === "paste") return;
       e.preventDefault();
-      toast.error("This site does not allow these actions");
-      void flagViolation({ type: "copy_paste" });
+      const action = e.type === "copy" ? "Copy" : e.type === "paste" ? "Paste" : "Cut";
+      toast.error(`${action} action is not allowed on this page`);
+    };
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      toast.error("Right-click is not allowed during the assessment");
     };
 
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("copy", handleClipboard);
     document.addEventListener("paste", handleClipboard);
     document.addEventListener("cut", handleClipboard);
+    document.addEventListener("contextmenu", handleContextMenu);
+
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("copy", handleClipboard);
       document.removeEventListener("paste", handleClipboard);
       document.removeEventListener("cut", handleClipboard);
+      document.removeEventListener("contextmenu", handleContextMenu);
     };
-  }, [flagViolation]);
+  }, []);
 
-  // ── Camera stream ───────────────────────────────────────────────────────────
+  // ── Camera stream (uses pre-obtained stream from InstructionsPage if available) ──
   useEffect(() => {
     if (!monitoringConfig.video_monitoring) return;
+    let cancelled = false;
     let stream: MediaStream | null = null;
-    const startCamera = async () => {
+
+    const setup = async () => {
+      const stored = takeCameraStream();
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
+        stream = stored ?? (await navigator.mediaDevices.getUserMedia({ video: true }));
       } catch {
-        /* camera optional */
+        return;
       }
+      if (cancelled) {
+        if (!stored) stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
+      if (videoRef.current) videoRef.current.srcObject = stream;
     };
-    void startCamera();
+
+    void setup();
+
     return () => {
+      cancelled = true;
       stream?.getTracks().forEach((t) => t.stop());
     };
   }, [monitoringConfig.video_monitoring]);
 
   useEffect(() => {
-    if (monitoringConfig.audio_monitoring) {
-      setAudioActive(true);
-    }
+    if (monitoringConfig.audio_monitoring) setAudioActive(true);
   }, [monitoringConfig.audio_monitoring]);
 
-  // ── Screenshot capture ──────────────────────────────────────────────────────
+  // ── Screen capture for screenshots ─────────────────────────────────────────
+  const { captureFrame, isCapturing: isScreenCapturing } = useScreenCapture();
+
   useEffect(() => {
     if (!monitoringConfig.screenshot_enabled || !submissionId) return;
+    if (!isScreenCapturing) return;
 
-    const intervalMs = (monitoringConfig.screenshot_interval_minutes ?? 0.5) * 60 * 1000;
+    const intervalMs = (monitoringConfig.screenshot_interval_minutes ?? 0.5) * 60 * 1_000;
 
-    screenshotIntervalRef.current = setInterval(async () => {
-      const video = videoRef.current;
-      // S6582: use optional chaining instead of `video && video.videoWidth`
-      if (!video?.videoWidth) return;
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth || 320;
-        canvas.height = video.videoHeight || 240;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-        ctx.drawImage(video, 0, 0);
-        canvas.toBlob(
-          async (blob) => {
-            if (!blob) return;
-            const fd = new FormData();
-            fd.append("file", blob, "screenshot.jpg");
-            await api.post(`/api/candidate/submission/${submissionId}/screenshot`, fd, {
-              headers: { "Content-Type": "multipart/form-data" },
-            });
-          },
-          "image/jpeg",
-          0.7
-        );
-      } catch {
-        /* silent */
-      }
+    screenshotIntervalRef.current = setInterval(() => {
+      void (async () => {
+        try {
+          const blob = await captureFrame();
+          if (!blob) return;
+          const fd = new FormData();
+          fd.append("file", blob, "screenshot.jpg");
+          await api.post(`/api/candidate/submission/${submissionId}/screenshot`, fd, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+        } catch {
+          /* silent — screenshot failure does not interrupt interview */
+        }
+      })();
     }, intervalMs);
 
     return () => {
@@ -570,6 +588,8 @@ export default function InterviewPage() {
     monitoringConfig.screenshot_enabled,
     monitoringConfig.screenshot_interval_minutes,
     submissionId,
+    isScreenCapturing,
+    captureFrame,
   ]);
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -608,16 +628,12 @@ export default function InterviewPage() {
 
   return (
     <div className={styles.page}>
-      {/* Network overlay */}
       <ConnectionLostOverlay status={networkStatus} />
-
-      {/* Header */}
       <CandidateHeader candidateName={candidateName} />
 
       <div className={styles.body}>
         {/* ── Left Sidebar ── */}
         <aside className={`${styles.leftSidebar} ${leftSidebarOpen ? styles.leftSidebarOpen : ""}`}>
-          {/* Progress header */}
           <div className={styles.progressHeader}>
             <p className={styles.progressHeaderLabel}>Assessment Progress</p>
             <p className={styles.progressRoundTitle}>
@@ -646,14 +662,12 @@ export default function InterviewPage() {
             </div>
           </div>
 
-          {/* Round list (multi-round assessments only) */}
           {assessmentRounds.length > 0 && (
             <div className={styles.roundListSection}>
               <p className={styles.sidebarSectionLabel}>Rounds</p>
               {assessmentRounds.map((round) => {
                 const isActive = round.round_number === roundData.round_number;
                 const isCompleted = round.round_number < roundData.round_number;
-                // S3358: extract nested ternaries to named variables
                 let progress: number;
                 if (isActive) progress = (answeredCount / questions.length) * 100;
                 else if (isCompleted) progress = 100;
@@ -673,7 +687,7 @@ export default function InterviewPage() {
                       </span>
                     </div>
                     <p className={styles.roundCardMeta}>
-                      {round.question_count} question{round.question_count !== 1 ? "s" : ""}
+                      {round.question_count} question{round.question_count === 1 ? "" : "s"}
                     </p>
                     <div className={styles.roundMiniBar}>
                       <div className={roundMiniBarClass} style={{ width: `${progress}%` }} />
@@ -684,7 +698,6 @@ export default function InterviewPage() {
             </div>
           )}
 
-          {/* Question navigation grid */}
           <div className={styles.questionNavSection}>
             <p className={styles.sidebarSectionLabel}>Questions — Round {roundData.round_number}</p>
             <div className={styles.qGrid}>
@@ -726,7 +739,6 @@ export default function InterviewPage() {
           </div>
         </aside>
 
-        {/* Backdrop — closes left sidebar on tap outside (tablet/mobile) */}
         {leftSidebarOpen && (
           <div
             className={styles.leftSidebarBackdrop}
@@ -742,7 +754,6 @@ export default function InterviewPage() {
             <span className={styles.questionCounter}>
               Q{currentIdx + 1} of {questions.length}
             </span>
-            {/* S3358: extract nested ternary for question type label */}
             <span className={styles.qTypeChip}>{getQuestionTypeLabel(currentQuestion.type)}</span>
           </div>
 
@@ -752,7 +763,6 @@ export default function InterviewPage() {
 
               {currentQuestion.type === "mcq_single" && (
                 <div className={styles.options}>
-                  {/* S6479: use opt.text as key instead of array index */}
                   {currentQuestion.options?.map((opt) => {
                     const selected = answers[currentQuestion.id] === opt.text;
                     return (
@@ -776,11 +786,10 @@ export default function InterviewPage() {
 
               {currentQuestion.type === "mcq_multiple" && (
                 <div className={styles.options}>
-                  {/* S6479: use opt.text as key instead of array index */}
                   {currentQuestion.options?.map((opt) => {
-                    const selected = ((answers[currentQuestion.id] as string[]) || []).includes(
-                      opt.text
-                    );
+                    const selected = (
+                      (answers[currentQuestion.id] as string[]) || []
+                    ).includes(opt.text);
                     return (
                       <label
                         key={opt.text}
@@ -810,7 +819,7 @@ export default function InterviewPage() {
                   <textarea
                     className={styles.essayBox}
                     placeholder="Write your answer here..."
-                    value={(answers[currentQuestion.id] as string) || ""}
+                    value={answers[currentQuestion.id] || ""}
                     onChange={(e) => setAnswer(currentQuestion.id, e.target.value)}
                     rows={10}
                   />
@@ -844,7 +853,6 @@ export default function InterviewPage() {
 
         {/* ── Right Sidebar ── */}
         <aside className={styles.rightSidebar}>
-          {/* Timer */}
           <div className={`${styles.timerCard} ${isLowTime ? styles.timerLow : ""}`}>
             <p className={styles.sidebarSectionLabel}>
               Time Remaining
@@ -872,20 +880,25 @@ export default function InterviewPage() {
             </div>
           </div>
 
-          {/* Monitoring status badges */}
           <div className={styles.monitoringStatus}>
             <p className={styles.sidebarSectionLabel}>Monitoring</p>
             <div className={styles.monitorBadgeList}>
               {monitoringConfig.video_monitoring && (
                 <div className={`${styles.monitorBadge} ${styles.monitorBadgeGreen}`}>
-                  {/* S6772: explicit space after self-closing span */}
                   <span className={styles.monitorBadgeDot} /> Camera Active
                 </div>
               )}
               {monitoringConfig.audio_monitoring && (
                 <div className={`${styles.monitorBadge} ${styles.monitorBadgeGreen}`}>
-                  {/* S6772: explicit space after self-closing span */}
                   <span className={styles.monitorBadgeDot} /> Mic Active
+                </div>
+              )}
+              {monitoringConfig.screenshot_enabled && (
+                <div
+                  className={`${styles.monitorBadge} ${isScreenCapturing ? styles.monitorBadgeGreen : styles.monitorBadgeOrange}`}
+                >
+                  <span className={styles.monitorBadgeDot} />{" "}
+                  {isScreenCapturing ? "Screen Capture Active" : "Screen Capture Inactive"}
                 </div>
               )}
               <div className={`${styles.monitorBadge} ${networkBadgeClass}`}>
@@ -894,7 +907,6 @@ export default function InterviewPage() {
             </div>
           </div>
 
-          {/* Video monitor */}
           {monitoringConfig.video_monitoring && (
             <div className={styles.monitorCard}>
               <VideoMonitor
@@ -904,7 +916,6 @@ export default function InterviewPage() {
             </div>
           )}
 
-          {/* Audio monitor */}
           {monitoringConfig.audio_monitoring && (
             <div className={styles.monitorCard}>
               <AudioMonitor analyserRef={analyserRef} active={audioActive} />
@@ -912,7 +923,6 @@ export default function InterviewPage() {
           )}
         </aside>
 
-        {/* Floating toggle — visible on tablet/mobile to open left sidebar */}
         <button
           type="button"
           className={styles.leftToggleBtn}
@@ -930,6 +940,7 @@ export default function InterviewPage() {
         onClose={() => setShowSubmitConfirm(false)}
         title="Submit Round?"
         size="sm"
+        disableBackdropClose
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowSubmitConfirm(false)}>
@@ -947,7 +958,6 @@ export default function InterviewPage() {
         </p>
       </Modal>
 
-      {/* Malpractice warning — driven by proctoringSlice via MalpracticeWarningModal */}
       <MalpracticeWarningModal />
 
       <Modal
@@ -955,6 +965,7 @@ export default function InterviewPage() {
         onClose={() => setAdminWarningMessage(null)}
         title="Message from Administrator"
         size="sm"
+        disableBackdropClose
         footer={<Button onClick={() => setAdminWarningMessage(null)}>Acknowledge</Button>}
       >
         <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>{adminWarningMessage}</p>
@@ -968,6 +979,7 @@ export default function InterviewPage() {
         }}
         title="Time's Up"
         size="sm"
+        disableBackdropClose
         footer={
           <Button
             onClick={() => {
@@ -981,6 +993,27 @@ export default function InterviewPage() {
       >
         <p style={{ fontSize: 14, color: "var(--text-secondary)", textAlign: "center" }}>
           Your time for this round has expired. Your answers have been automatically submitted.
+        </p>
+      </Modal>
+
+      {/* Fullscreen enforcement modal — blocks all interaction until fullscreen is restored */}
+      <Modal
+        isOpen={fullscreenBlocked}
+        onClose={() => void requestFullscreen()}
+        title="Fullscreen Required"
+        size="sm"
+        showClose={false}
+        disableBackdropClose
+        disableEscapeKey
+        footer={
+          <Button fullWidth onClick={() => void requestFullscreen()}>
+            Return to Fullscreen
+          </Button>
+        }
+      >
+        <p style={{ fontSize: 14, color: "var(--text-secondary)", textAlign: "center" }}>
+          You must remain in fullscreen mode during the interview. Exiting fullscreen has been
+          recorded as a violation. Click the button below to resume.
         </p>
       </Modal>
     </div>

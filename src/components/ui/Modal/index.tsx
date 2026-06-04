@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import styles from "./Modal.module.css";
 import { clsx } from "@/utils/helpers";
@@ -14,6 +14,7 @@ interface ModalProps {
   footer?: React.ReactNode;
   className?: string;
   disableBackdropClose?: boolean;
+  disableEscapeKey?: boolean;
 }
 
 export function Modal({
@@ -26,12 +27,15 @@ export function Modal({
   footer,
   className,
   disableBackdropClose = false,
+  disableEscapeKey = false,
 }: ModalProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
   const handleEsc = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !disableEscapeKey) onClose();
     },
-    [onClose]
+    [onClose, disableEscapeKey]
   );
 
   useEffect(() => {
@@ -45,21 +49,28 @@ export function Modal({
     };
   }, [isOpen, handleEsc]);
 
+  useEffect(() => {
+    if (!isOpen || disableBackdropClose) return;
+    const handleMouseDown = (e: MouseEvent) => {
+      if (dialogRef.current && !dialogRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [isOpen, disableBackdropClose, onClose]);
+
   if (!isOpen) return null;
 
   return createPortal(
-    <div
-      className={styles.overlay}
-      onClick={
-        disableBackdropClose
-          ? undefined
-          : (e) => {
-              if (e.target === e.currentTarget) onClose();
-            }
-      }
-      aria-hidden="true"
-    >
-      <dialog open className={clsx(styles.modal, styles[size], className)} aria-label={title}>
+    <div className={styles.overlay}>
+      <dialog
+        ref={dialogRef}
+        open
+        className={clsx(styles.modal, styles[size], className)}
+        aria-modal="true"
+        aria-label={title}
+      >
         {(title || showClose) && (
           <div className={styles.header}>
             {title && <h2 className={styles.title}>{title}</h2>}

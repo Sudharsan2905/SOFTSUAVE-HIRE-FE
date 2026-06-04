@@ -1,50 +1,34 @@
-import { useEffect, useCallback } from "react";
-import { api } from "@/utils/api";
+import { useEffect, useCallback, useRef } from "react";
 
 interface UseTabMonitoringOptions {
   enabled: boolean;
-  submissionId: string;
   onViolation: () => void;
 }
 
-export function useTabMonitoring({
-  enabled,
-  submissionId,
-  onViolation,
-}: UseTabMonitoringOptions): void {
-  const handleViolation = useCallback(async () => {
+export function useTabMonitoring({ enabled, onViolation }: UseTabMonitoringOptions): void {
+  const onViolationRef = useRef(onViolation);
+  useEffect(() => {
+    onViolationRef.current = onViolation;
+  });
+
+  const handleViolation = useCallback(() => {
     if (!enabled) return;
-
-    onViolation();
-
-    try {
-      await api.post(`/api/candidate/submission/${submissionId}/malpractice`, {
-        type: "tab_switch",
-      });
-    } catch {
-      // Silently ignore network errors so the UI keeps running
-    }
-  }, [enabled, submissionId, onViolation]);
+    onViolationRef.current();
+  }, [enabled]);
 
   useEffect(() => {
     if (!enabled) return;
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        handleViolation();
-      }
-    };
-
-    const handleBlur = () => {
-      handleViolation();
+      if (document.visibilityState === "hidden") handleViolation();
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("blur", handleBlur);
+    window.addEventListener("blur", handleViolation);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("blur", handleViolation);
     };
   }, [enabled, handleViolation]);
 }

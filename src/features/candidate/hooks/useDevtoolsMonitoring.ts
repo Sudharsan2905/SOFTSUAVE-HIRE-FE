@@ -1,52 +1,73 @@
 import { useEffect, useRef, useCallback } from "react";
 import { MalpracticeType } from "../../../types";
 
+const COOLDOWN_MS = 10_000;
+const POLL_INTERVAL_MS = 1_500;
+const SIZE_THRESHOLD = 160;
+
 interface UseDevtoolsMonitoringOptions {
   enabled: boolean;
   onViolation: (type: MalpracticeType) => void;
 }
 
-export function useDevtoolsMonitoring({ enabled, onViolation }: UseDevtoolsMonitoringOptions) {
+function isSizeDevtoolsOpen(): boolean {
+  return (
+    window.outerWidth - window.innerWidth > SIZE_THRESHOLD ||
+    window.outerHeight - window.innerHeight > SIZE_THRESHOLD
+  );
+}
+
+export function useDevtoolsMonitoring({
+  enabled,
+  onViolation,
+}: UseDevtoolsMonitoringOptions): void {
   const lastFlagTime = useRef<number>(0);
-  const COOLDOWN_MS = 30000; // 30s between flags
+  const onViolationRef = useRef(onViolation);
+  useEffect(() => {
+    onViolationRef.current = onViolation;
+  });
 
   const flag = useCallback(() => {
     const now = performance.now();
     if (now - lastFlagTime.current > COOLDOWN_MS) {
       lastFlagTime.current = now;
-      onViolation("devtools_open");
+      onViolationRef.current("devtools_open");
     }
-  }, [onViolation]);
+  }, []);
 
   useEffect(() => {
     if (!enabled) return;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let devtools: any;
-    let cleanup: (() => void) | undefined;
+    let eventCleanup: (() => void) | undefined;
+    let pollHandle: ReturnType<typeof setInterval> | null = null;
 
     const init = async () => {
+      if (isSizeDevtoolsOpen()) flag();
+
+      pollHandle = setInterval(() => {
+        if (isSizeDevtoolsOpen()) flag();
+      }, POLL_INTERVAL_MS);
+
       try {
-        devtools = (await import("devtools-detect")).default;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const devtools = (await import("devtools-detect")).default as any;
+        if (devtools.isOpen) flag();
+
         const handler = () => {
           if (devtools.isOpen) flag();
         };
-        window.addEventListener(devtools.eventName, handler);
-        cleanup = () => window.removeEventListener(devtools.eventName, handler);
+        globalThis.addEventListener(devtools.eventName, handler);
+        eventCleanup = () => globalThis.removeEventListener(devtools.eventName, handler);
       } catch {
-        // devtools-detect not available — fallback: size-based heuristic
-        const sizeHandler = () => {
-          const threshold = 160;
-          const widthDiff = window.outerWidth - window.innerWidth;
-          const heightDiff = window.outerHeight - window.innerHeight;
-          if (widthDiff > threshold || heightDiff > threshold) flag();
-        };
-        window.addEventListener("resize", sizeHandler);
-        cleanup = () => window.removeEventListener("resize", sizeHandler);
+        /* devtools-detect unavailable — polling covers detection */
       }
     };
 
-    init();
-    return () => cleanup?.();
+    void init();
+
+    return () => {
+      if (pollHandle !== null) clearInterval(pollHandle);
+      eventCleanup?.();
+    };
   }, [enabled, flag]);
 }

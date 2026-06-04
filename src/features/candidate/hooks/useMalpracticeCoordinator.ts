@@ -24,14 +24,14 @@ const VIOLATION_MESSAGES: Record<MalpracticeType, string> = {
 };
 
 // Per-type first-warning tracking (video/audio use 2-strike rule)
-const TWO_STRIKE_TYPES: MalpracticeType[] = [
+const TWO_STRIKE_TYPES = new Set<MalpracticeType>([
   "face_absence",
   "multiple_faces",
   "eye_direction",
   "audio_violation",
   "speaking",
   "background_noise",
-];
+]);
 
 interface MalpracticeEventPayload {
   type: MalpracticeType;
@@ -61,18 +61,16 @@ export function useMalpracticeCoordinator({
     async (event: MalpracticeEventPayload) => {
       if (isFlagging.current) return; // debounce concurrent flags
 
-      // Two-strike rule for video/audio types
-      if (TWO_STRIKE_TYPES.includes(event.type)) {
-        if (!firstWarningIssued.current[event.type]) {
-          firstWarningIssued.current[event.type] = true;
-          dispatch(
-            setLastViolation({
-              type: event.type,
-              message: `Warning: ${VIOLATION_MESSAGES[event.type]}`,
-            })
-          );
-          return; // first occurrence is warning only
-        }
+      // Two-strike rule: first occurrence is warning only
+      if (TWO_STRIKE_TYPES.has(event.type) && !firstWarningIssued.current[event.type]) {
+        firstWarningIssued.current[event.type] = true;
+        dispatch(
+          setLastViolation({
+            type: event.type,
+            message: `Warning: ${VIOLATION_MESSAGES[event.type]}`,
+          })
+        );
+        return;
       }
 
       isFlagging.current = true;
@@ -93,7 +91,7 @@ export function useMalpracticeCoordinator({
         }
 
         const response = await api.post(
-          `/candidate/submission/${submissionId}/malpractice`,
+          `/api/candidate/submission/${submissionId}/malpractice`,
           formData,
           { headers: { "Content-Type": "multipart/form-data" } }
         );

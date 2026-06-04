@@ -40,7 +40,6 @@ const NotificationsPage = lazy(() => import("@/features/notifications/pages/Noti
 
 // Lazy-loaded candidate pages
 const AssessmentEntryPage = lazy(() => import("@/features/candidate/pages/AssessmentEntryPage"));
-// const AssessmentAccessPage = lazy(() => import("@/features/candidate/pages/AssessmentAccessPage"));
 const CandidateDashboard = lazy(() =>
   import("@/features/candidate/pages/AssessmentEntryPage").then((m) => ({
     default: m.CandidateDashboard,
@@ -101,10 +100,6 @@ export default function App() {
           <Route
             path="/workspaces/:workspaceId/assessments/:id"
             element={<AssessmentDetailPage />}
-          />
-          <Route
-            path="/workspaces/:workspaceId/assessments/:id/submissions/:submissionId"
-            element={<CandidateDetailsPage />}
           />
           <Route
             path="/workspaces/:workspaceId/assessments/:assessmentId/candidates/:candidateId"
