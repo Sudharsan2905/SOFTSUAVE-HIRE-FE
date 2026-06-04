@@ -787,9 +787,9 @@ export default function InterviewPage() {
               {currentQuestion.type === "mcq_multiple" && (
                 <div className={styles.options}>
                   {currentQuestion.options?.map((opt) => {
-                    const selected = (
-                      (answers[currentQuestion.id] as string[]) || []
-                    ).includes(opt.text);
+                    const selected = ((answers[currentQuestion.id] as string[]) || []).includes(
+                      opt.text
+                    );
                     return (
                       <label
                         key={opt.text}

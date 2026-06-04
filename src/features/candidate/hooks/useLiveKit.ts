@@ -79,9 +79,7 @@ export function useLiveKitPublisher({
         const source =
           track.kind === Track.Kind.Video ? Track.Source.Camera : Track.Source.Microphone;
         const name =
-          track.kind === Track.Kind.Video
-            ? `camera-${submissionId}`
-            : `mic-${submissionId}`;
+          track.kind === Track.Kind.Video ? `camera-${submissionId}` : `mic-${submissionId}`;
         await room.localParticipant.publishTrack(track, { name, source });
       }
 

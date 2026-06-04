@@ -54,8 +54,7 @@ export function useAudioMonitoring({
     const start = async () => {
       try {
         const stored = takeAudioStream();
-        const stream =
-          stored ?? (await navigator.mediaDevices.getUserMedia({ audio: true }));
+        const stream = stored ?? (await navigator.mediaDevices.getUserMedia({ audio: true }));
         if (cancelled) {
           if (!stored) stream.getTracks().forEach((t) => t.stop());
           return;

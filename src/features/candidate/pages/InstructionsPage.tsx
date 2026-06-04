@@ -231,21 +231,37 @@ export default function InstructionsPage() {
 
   if (isLoading)
     return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+        }}
+      >
         <Spinner size="lg" />
       </div>
     );
 
   if (!assessment)
     return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", color: "var(--text-tertiary)" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+          color: "var(--text-tertiary)",
+        }}
+      >
         Assessment not found or link is invalid.
       </div>
     );
 
   const isMonitoring = assessment.accessibility === "monitoring";
   const totalQuestions = assessment.rounds?.reduce((s, r) => s + (r.question_count || 0), 0) || 0;
-  const totalMinutes = assessment.rounds?.reduce((s, r) => s + (r.max_duration_minutes || 0), 0) || 0;
+  const totalMinutes =
+    assessment.rounds?.reduce((s, r) => s + (r.max_duration_minutes || 0), 0) || 0;
 
   const needsVideo = isMonitoring && (assessment.monitoring_config?.video_monitoring ?? false);
   const needsAudio = isMonitoring && (assessment.monitoring_config?.audio_monitoring ?? false);
@@ -268,7 +284,11 @@ export default function InstructionsPage() {
     disconnected: "Disconnected",
   }[networkStatus];
 
-  const startButtonLabel = resolveStartButtonLabel(networkStatus, isMonitoring, allPermissionsGranted);
+  const startButtonLabel = resolveStartButtonLabel(
+    networkStatus,
+    isMonitoring,
+    allPermissionsGranted
+  );
 
   return (
     <div className={styles.page}>
@@ -435,7 +455,9 @@ export default function InstructionsPage() {
                 <div className={styles.permissionSetup}>
                   <div className={styles.permissionRow}>
                     <p className={styles.permissionLabel}>
-                      {needsAnyPermission ? "Step 2: Grant Screen Access" : "Step 1: Grant Screen Access"}
+                      {needsAnyPermission
+                        ? "Step 2: Grant Screen Access"
+                        : "Step 1: Grant Screen Access"}
                     </p>
                     <div className={styles.permissionPills}>
                       <span

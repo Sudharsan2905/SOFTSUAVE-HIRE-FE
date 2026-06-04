@@ -5,8 +5,7 @@ const DETECTION_INTERVAL_MS = 700;
 const FACE_ABSENCE_THRESHOLD_MS = 3_000;
 const VIOLATION_COOLDOWN_MS = 15_000;
 const MIN_DETECTION_CONFIDENCE = 0.55;
-const MEDIAPIPE_WASM =
-  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm";
+const MEDIAPIPE_WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm";
 const FACE_MODEL =
   "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite";
 
