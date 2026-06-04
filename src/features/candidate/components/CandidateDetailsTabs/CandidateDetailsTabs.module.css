@@ -4,71 +4,99 @@
   gap: 16px;
 }
 
-/* Sticky wrapper — holds the version toolbar + tab bar so both stay visible
-   while the candidate profile scrolls away. z-index sits just below the app
-   header (--z-header: 95) so dropdowns rendered by child elements layer correctly. */
-.stickyNav {
-  position: sticky;
-  top: var(--header-height);
-  z-index: 89;
-  background: var(--bg-page);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px 0 10px;
-  /* Extend a hair beyond the card's edge so the background fully covers content
-     scrolling beneath on narrow viewports. */
-  margin: 0 -1px;
-  padding-left: 1px;
-  padding-right: 1px;
-  border-bottom: 1.5px solid var(--border-default);
-  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.06);
+/* Merged card — holds the tab bar and the active panel as one rounded card. */
+.card {
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
 }
 
-.toolbar {
+/* Tab-bar header — top of the card, with a divider beneath separating it from
+   the panel content. Sticks beneath the app header while the panel scrolls. */
+.stickyNav {
+  position: sticky;
+  /* Pin just below the sticky AppHeader (64px) so the tab bar stays visible
+     as the panel content scrolls past it. */
+  top: var(--header-height);
+  z-index: 20;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  padding: 0 12px;
+  /* Opaque fill + matching top radius so scrolling content doesn't show
+     through the bar or poke past the card's rounded top corners. */
+  background: var(--bg-elevated);
+  border-top-left-radius: var(--radius-xl);
+  border-top-right-radius: var(--radius-xl);
+  border-bottom: 1.5px solid var(--border-default);
 }
 
 .tabBar {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 4px;
+  /* Fill the header row so the mobile 4-column grid spreads evenly instead of
+     bunching the icons on the left. */
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
+/* Underline-style tabs — no pill; the active tab is marked by an orange
+   underline that overlaps the header divider. Hover/active use brand orange. */
 .tab {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
+  padding: 14px 16px;
   font-size: 14px;
   font-weight: 500;
   color: var(--text-secondary);
-  background: var(--bg-surface);
-  border: 1.5px solid var(--border-default);
-  border-radius: var(--radius-md);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1.5px; /* overlap the .stickyNav divider */
   cursor: pointer;
   transition:
     color var(--transition-fast),
-    border-color var(--transition-fast),
-    background var(--transition-fast);
+    border-color var(--transition-fast);
 }
 
 .tab:hover {
-  color: var(--text-primary);
-  border-color: var(--primary-400);
+  color: var(--brand-orange);
 }
 
 .tabActive {
-  color: var(--primary-700);
-  background: var(--bg-active);
-  border-color: var(--primary-500);
+  color: var(--brand-orange);
+  font-weight: 600;
+  border-bottom-color: var(--brand-orange);
 }
 
 .tabContent {
-  padding: 16px 4px;
+  display: flex;
+  flex-direction: column;
+  /* Bottom gap so the pinned action bar sits clear of the card's edge. */
+  padding: 20px 20px 28px;
+  /* Fill the rest of the viewport so short panels (e.g. empty states) still
+     reach the bottom of the screen. ~300px ≈ app header + page header +
+     profile card + the tab bar that sit above this content. */
+  min-height: calc(100vh - 300px);
   font-size: 14px;
   color: var(--text-secondary);
+}
+
+/* Shared empty-state message for tabs with no data (rounds, malpractice, screenshots). */
+.emptyPlaceholder {
+  margin: 0;
+  /* Center the message in the middle of the tall panel. The min-height mirrors
+     .tabContent's min-height minus its 20px top/bottom padding (300 + 40). */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 340px);
+  padding: 32px 16px;
+  text-align: center;
+  font-size: 16px;
+  color: var(--text-tertiary);
 }
 
 /* ── Status summary (Over All tab) ───────────────────────────────────────── */
@@ -76,13 +104,12 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  flex: 1; /* fill the tab panel so the action bar can pin to the bottom */
 }
 
 .statusCard {
-  background: var(--bg-elevated);
-  border: 1.5px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  padding: 16px 18px;
+  /* Plain content inside the merged card — no separate card chrome. */
+  padding: 0;
 }
 
 .statusCardTitle {
@@ -143,6 +170,7 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 12px;
+  margin-top: auto; /* pin the action buttons to the bottom of the card */
 }
 
 /* Tablet: two stats per row. */
@@ -152,7 +180,7 @@
   }
 
   .stickyNav {
-    padding: 10px 0 8px;
+    padding: 10px 12px;
     gap: 8px;
   }
 }
@@ -165,14 +193,9 @@
     gap: 14px;
   }
 
-  .statusCard {
-    padding: 14px 14px;
-  }
-
-  /* Sticky nav: hide the toolbar (version select) on mobile to save vertical
-     space; the icon-only tab bar fits comfortably in a single row. */
-  .stickyNav .toolbar {
-    display: none;
+  /* Tighter panel padding on small screens (statusCard itself has none). */
+  .tabContent {
+    padding: 14px;
   }
 
   /* Icon-only tab bar — all four fit in a single row. */
@@ -213,7 +236,42 @@
 .rounds {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
+}
+
+/* Per-round sub-tabs — underline nav style (mirrors the main tab bar), sits
+   above the active round panel with a full-width divider beneath. */
+.roundTabBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 1.5px solid var(--border-default);
+}
+
+.roundTab {
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  /* Pull the underline down so it overlaps the bar's divider line. */
+  margin-bottom: -1.5px;
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.roundTab:hover {
+  color: var(--brand-orange);
+}
+
+.roundTabActive {
+  color: var(--brand-orange);
+  font-weight: 600;
+  border-bottom-color: var(--brand-orange);
 }
 
 .round {
@@ -224,9 +282,17 @@
 
 .roundHead {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.roundHeadInfo {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
 }
 
 .roundTitle {
@@ -258,25 +324,14 @@
 .questionHead {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.questionNo {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--primary-700);
-  background: var(--bg-active);
-  padding: 2px 10px;
-  border-radius: var(--radius-full);
-}
-
-.questionType {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-tertiary);
+/* Correctness pill sits at the far right of the badge row. */
+.correctnessBadge {
+  margin-left: auto;
 }
 
 .questionText {
@@ -408,5 +463,297 @@
 @media (max-width: 480px) {
   .questionCard {
     padding: 14px 14px;
+  }
+}
+
+/* ── Malpractice events (Malpractice tab) ────────────────────────────────── */
+.mpWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Horizontal scroll keeps the wide table usable on narrow viewports. */
+.mpTableScroll {
+  width: 100%;
+  overflow-x: auto;
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+}
+
+.mpTable {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.mpTable thead th {
+  text-align: left;
+  padding: 14px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  border-bottom: 1.5px solid var(--border-default);
+  white-space: nowrap;
+}
+
+.mpTable tbody td {
+  padding: 12px 16px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-default);
+  color: var(--text-secondary);
+}
+
+.mpTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.mpTable tbody tr:hover {
+  background: var(--bg-active);
+}
+
+.mpNo {
+  width: 40px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.mpType {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--warning-600);
+  white-space: nowrap;
+}
+
+.mpType svg {
+  flex-shrink: 0;
+}
+
+.mpDesc {
+  min-width: 200px;
+  max-width: 300px;
+  line-height: 1.5;
+}
+
+.mpEmpty {
+  color: var(--text-tertiary);
+}
+
+/* Image thumbnail trigger — opens the preview modal. */
+.mpThumb {
+  display: inline-flex;
+  padding: 0;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.mpThumb:hover {
+  border-color: var(--primary-400);
+  transform: scale(1.05);
+}
+
+.mpThumb img {
+  display: block;
+  width: 56px;
+  height: 44px;
+  object-fit: cover;
+}
+
+/* Circular button used for video (play) and audio. */
+.mpMediaBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--radius-full);
+  color: var(--warning-600);
+  background: var(--warning-50);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.mpMediaBtn:hover {
+  transform: scale(1.08);
+}
+
+.mpMediaBtnActive {
+  color: #fff;
+  background: var(--warning-600);
+}
+
+.mpTime {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.mpDate {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mpClock {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+/* Footer: result count + pager. */
+.mpFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.mpCount {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.mpPager {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mpPageNav,
+.mpPageBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.mpPageNav:hover:not(:disabled),
+.mpPageBtn:hover {
+  color: var(--action-color);
+  border-color: var(--action-color);
+}
+
+.mpPageNav:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mpPageBtnActive {
+  color: #fff;
+  background: var(--action-color);
+  border-color: var(--action-color);
+}
+
+/* Media inside the preview modals. */
+.mpPreviewImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+}
+
+.mpPreviewVideo {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  background: #000;
+  border-radius: var(--radius-md);
+}
+
+@media (max-width: 480px) {
+  .mpFooter {
+    justify-content: center;
+  }
+}
+
+/* ── Screenshots gallery (Screenshots tab) ───────────────────────────────── */
+.screenshotGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.screenshotItem {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.screenshotItem:hover {
+  border-color: var(--primary-400);
+  box-shadow: var(--shadow-md);
+}
+
+.screenshotImage {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: var(--bg-muted);
+  border-bottom: 1.5px solid var(--border-default);
+}
+
+.screenshotCaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+}
+
+.screenshotRound {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.screenshotTime {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .screenshotGrid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
   }
 }

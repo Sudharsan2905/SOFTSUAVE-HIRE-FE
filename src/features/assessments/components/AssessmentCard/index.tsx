@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import styles from "./AssessmentCard.module.css";
 import { Badge } from "@/components/ui/Badge";

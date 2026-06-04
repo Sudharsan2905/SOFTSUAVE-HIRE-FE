@@ -186,7 +186,7 @@ export default function CategoriesPage() {
               <h3 className={styles.catName}>{cat.name}</h3>
               <p className={styles.catDesc}>{cat.description || " "}</p>
               <div className={styles.cardFooter}>
-                <Badge variant="primary">{cat.question_count} questions</Badge>
+                <Badge variant="brand">{cat.question_count} questions</Badge>
                 <span className={styles.dateText}>{formatDate(cat.created_at)}</span>
               </div>
 
@@ -198,7 +198,7 @@ export default function CategoriesPage() {
                 <span className={styles.listName}>{cat.name}</span>
                 <span className={styles.listDesc}>{cat.description}</span>
                 <div className={styles.listMeta}>
-                  <Badge variant="primary">{cat.question_count} questions</Badge>
+                  <Badge variant="brand">{cat.question_count} questions</Badge>
                   <span className={styles.listDate}>{formatDate(cat.created_at)}</span>
                 </div>
                 <div className={styles.listActions}>

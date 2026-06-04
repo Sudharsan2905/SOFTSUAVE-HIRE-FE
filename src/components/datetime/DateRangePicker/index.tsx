@@ -14,7 +14,7 @@ import {
   startOfDay,
   addMonths,
 } from "date-fns";
-import { IconChevronDown, IconChevronLeft, IconChevronRight } from "@/assets/icons";
+import { IconCalendar, IconChevronDown, IconChevronLeft, IconChevronRight } from "@/assets/icons";
 import styles from "./DateRangePicker.module.css";
 
 export interface DateRange {
@@ -164,7 +164,10 @@ export function DateRangePicker({
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <span className={isPlaceholder ? styles.triggerPlaceholder : ""}>{triggerLabel}</span>
+        <span className={styles.triggerLeft}>
+          <IconCalendar size={15} className={styles.calendarIcon} />
+          <span className={isPlaceholder ? styles.triggerPlaceholder : ""}>{triggerLabel}</span>
+        </span>
         <IconChevronDown size={14} />
       </button>
 

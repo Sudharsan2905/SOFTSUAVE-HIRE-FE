@@ -15,6 +15,22 @@
   --accent-500: #8b5cf6;
   --accent-600: #7c3aed;
 
+  /* Brand orange — echoes the logo gradient (#FF6C3A → #FF0042). Used for
+     selected / active accents (dropdown selection, view switcher). A touch
+     deeper than the logo's top stop so text stays legible on light tints. */
+  --brand-orange: #f4511e;
+  --brand-orange-soft: #fff1ec;
+
+  /* Logo accent — orange→red gradient taken from the app logo. */
+  --logo-color: #ff6c3a;
+  --logo-color-end: #ff0042;
+  --logo-gradient: linear-gradient(180deg, #ff6c3a 0%, #ff0042 100%);
+  --logo-tint: rgba(255, 108, 58, 0.1);
+
+  /* Primary action accent — primary buttons and pagination across every page. */
+  --action-color: #ff423d;
+  --action-color-hover: #e5352f;
+
   --success-50: #f0fdf4;
   --success-500: #22c55e;
   --success-600: #16a34a;
@@ -35,6 +51,8 @@
 
   /* Light Mode */
   --bg-page: #f8fafc;
+  /* Page background gradient — applied to every page's content area + body. */
+  --bg-page-gradient: linear-gradient(135deg, #f7f2f2 0%, #fbf6f8 100%);
   --bg-surface: #ffffff;
   --bg-elevated: #ffffff;
   --bg-muted: #f1f5f9;
@@ -102,6 +120,8 @@
 
 [data-theme="dark"] {
   --bg-page: #0b0f19;
+  /* Keep dark mode solid — the light gradient would wash out the dark theme. */
+  --bg-page-gradient: #0b0f19;
   --bg-surface: #1e293b;
   --bg-elevated: #293548;
   --bg-muted: #1e293b;
@@ -113,6 +133,11 @@
   --option-correct-border: rgba(34, 197, 94, 0.3);
   --bg-hover: #293548;
   --bg-active: rgba(37, 99, 255, 0.15);
+
+  /* Brand orange — lightened for contrast on dark surfaces; soft tint
+     becomes a translucent orange so it reads on the darker background. */
+  --brand-orange: #ff7043;
+  --brand-orange-soft: rgba(244, 81, 30, 0.18);
 
   --border-default: #334155;
   --border-strong: #475569;

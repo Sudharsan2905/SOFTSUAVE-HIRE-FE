@@ -142,16 +142,21 @@
 }
 
 .avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-md);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 700;
-  color: #fff;
+  color: var(--brand-orange);
+  background: #ffd9c7;
   flex-shrink: 0;
+}
+
+[data-theme="dark"] .avatar {
+  background: rgba(244, 81, 30, 0.28);
 }
 
 .userInfo {
@@ -224,14 +229,19 @@
 .menuAvatar {
   width: 38px;
   height: 38px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 13px;
   font-weight: 700;
-  color: #fff;
+  color: var(--brand-orange);
+  background: #ffd9c7;
   flex-shrink: 0;
+}
+
+[data-theme="dark"] .menuAvatar {
+  background: rgba(244, 81, 30, 0.28);
 }
 
 .menuUserInfo {

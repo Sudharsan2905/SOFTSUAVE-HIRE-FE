@@ -40,16 +40,16 @@
 }
 .navBtn:hover:not(:disabled),
 .pageBtn:hover {
-  border-color: var(--primary-500);
-  color: var(--primary-600);
+  border-color: var(--action-color);
+  color: var(--action-color);
 }
 .navBtn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 .pageBtn.active {
-  background: var(--primary-600);
-  border-color: var(--primary-600);
+  background: var(--action-color);
+  border-color: var(--action-color);
   color: #fff;
 }
 .ellipsis {

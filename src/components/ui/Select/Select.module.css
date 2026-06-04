@@ -33,11 +33,11 @@
   gap: 8px;
 }
 .trigger:hover:not(:disabled) {
-  border-color: var(--primary-400);
+  border-color: var(--brand-orange);
 }
 .triggerOpen {
-  border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px rgba(37, 99, 255, 0.12);
+  border-color: var(--brand-orange);
+  box-shadow: 0 0 0 3px rgba(244, 81, 30, 0.18);
 }
 .hasError {
   border-color: var(--error-500) !important;
@@ -117,19 +117,19 @@
   text-align: left;
 }
 .option:hover {
-  background: var(--bg-muted);
+  background: var(--brand-orange-soft);
 }
 .optionActive {
-  color: var(--primary-600);
+  color: var(--brand-orange);
   font-weight: 500;
-  background: var(--bg-active);
+  background: var(--brand-orange-soft);
 }
 .optionActive:hover {
-  background: var(--bg-active);
+  background: var(--brand-orange-soft);
 }
 
 .optionCheck {
-  color: var(--primary-600);
+  color: var(--brand-orange);
   flex-shrink: 0;
 }
 

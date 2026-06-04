@@ -24,7 +24,7 @@ body {
   font-size: 14px;
   line-height: 1.5;
   color: var(--text-primary);
-  background-color: var(--bg-page);
+  background: var(--bg-page-gradient);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition:

@@ -43,6 +43,11 @@
   background: #f5f3ff;
   color: var(--accent-600);
 }
+/* Brand orange — tokens already adapt to light/dark, so no theme override. */
+.brand {
+  background: var(--brand-orange-soft);
+  color: var(--brand-orange);
+}
 
 [data-theme="dark"] .default {
   background: rgba(255, 255, 255, 0.08);

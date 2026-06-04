@@ -597,15 +597,16 @@ export default function QuestionsPage() {
                   <span className={styles.accordionTitle}>{getAccordionTitle(f, idx)}</span>
                 </button>
                 {!selected && forms.length > 1 && (
-                  <button
-                    type="button"
-                    className={`${styles.iconBtn} ${styles.danger}`}
-                    onClick={() => handleRemoveForm(idx, f._key)}
-                    title="Remove question"
-                    aria-label="Remove question"
-                  >
-                    <IconDelete size={14} />
-                  </button>
+                  <Tooltip content="Remove question">
+                    <button
+                      type="button"
+                      className={`${styles.iconBtn} ${styles.danger}`}
+                      onClick={() => handleRemoveForm(idx, f._key)}
+                      aria-label="Remove question"
+                    >
+                      <IconDelete size={14} />
+                    </button>
+                  </Tooltip>
                 )}
               </div>
 

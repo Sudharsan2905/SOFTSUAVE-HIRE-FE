@@ -7,6 +7,7 @@ import styles from "./AdminLoginPage.module.css";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { adminLogin } from "@/store/slices/authSlice";
 import { Button } from "@/components/ui/Button";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { IconMail, IconLock, IconEye, IconEyeOff } from "@/assets/icons";
 import logoUrl from "@/assets/favicon.svg";
 import { UserRole } from "@/types";
@@ -81,15 +82,16 @@ export default function AdminLoginPage() {
                   autoComplete="current-password"
                   {...register("password")}
                 />
-                <button
-                  type="button"
-                  className={styles.fieldIconBtn}
-                  onClick={() => setShowPass(!showPass)}
-                  aria-label={showPass ? "Hide password" : "Show password"}
-                  title={showPass ? "Hide password" : "Show password"}
-                >
-                  {showPass ? <IconEyeOff size={15} /> : <IconEye size={15} />}
-                </button>
+                <Tooltip content={showPass ? "Hide password" : "Show password"}>
+                  <button
+                    type="button"
+                    className={styles.fieldIconBtn}
+                    onClick={() => setShowPass(!showPass)}
+                    aria-label={showPass ? "Hide password" : "Show password"}
+                  >
+                    {showPass ? <IconEyeOff size={15} /> : <IconEye size={15} />}
+                  </button>
+                </Tooltip>
               </div>
               {errors.password && <p className={styles.error}>{errors.password.message}</p>}
 

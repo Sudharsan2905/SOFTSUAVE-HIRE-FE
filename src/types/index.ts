@@ -155,9 +155,18 @@ export type SubmissionStatus =
   | "terminated";
 
 export type MalpracticeType =
-  | 'tab_switch' | 'fullscreen_exit' | 'screen_share_stop' | 'devtools_open'
-  | 'copy_paste' | 'keyboard_shortcut' | 'multiple_faces' | 'face_absence'
-  | 'eye_direction' | 'background_noise' | 'audio_violation' | 'speaking';
+  | "tab_switch"
+  | "fullscreen_exit"
+  | "screen_share_stop"
+  | "devtools_open"
+  | "copy_paste"
+  | "keyboard_shortcut"
+  | "multiple_faces"
+  | "face_absence"
+  | "eye_direction"
+  | "background_noise"
+  | "audio_violation"
+  | "speaking";
 
 export interface MalpracticeEvent {
   type: MalpracticeType;
@@ -341,6 +350,7 @@ export interface QuestionAnswer {
   question_id: string;
   question_text: string;
   question_type: QuestionType;
+  complexity?: Complexity;
   options: { id: string; text: string; is_correct: boolean | null }[];
   candidate_answer: string | string[];
   is_correct: boolean | null;
@@ -357,9 +367,15 @@ export interface RoundResult {
 
 export interface CandidateSubmissionDetail {
   candidate: {
-    id: string; first_name: string; last_name: string; email: string;
-    phone: string | null; gender: string | null; dob: string | null;
-    institution: string | null; location: string | null;
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string | null;
+    gender: string | null;
+    dob: string | null;
+    institution: string | null;
+    location: string | null;
   };
   submission_id: string;
   status: SubmissionStatus;
@@ -380,7 +396,7 @@ export interface CandidateSubmissionDetail {
 
 export interface ShareLink {
   id: string;
-  share_type: 'expirable' | 'custom';
+  share_type: "expirable" | "custom";
   label: string | null;
   share_link: string;
   start_time: string | null;

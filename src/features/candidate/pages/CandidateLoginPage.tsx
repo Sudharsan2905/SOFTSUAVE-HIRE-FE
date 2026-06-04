@@ -10,6 +10,7 @@ import { useAppDispatch } from "@/store";
 import { candidateLogin, setAuthData } from "@/store/slices/authSlice";
 import { api } from "@/utils/api";
 import { IconUser, IconLock, IconEye, IconEyeOff } from "@/assets/icons";
+import { Tooltip } from "@/components/ui/Tooltip";
 import logoUrl from "@/assets/favicon.svg";
 import toast from "react-hot-toast";
 
@@ -138,15 +139,16 @@ export default function CandidateLoginPage() {
                   autoComplete="current-password"
                   {...register("password")}
                 />
-                <button
-                  type="button"
-                  className={styles.fieldIconBtn}
-                  onClick={() => setShowPass((p) => !p)}
-                  aria-label={showPass ? "Hide password" : "Show password"}
-                  title={showPass ? "Hide password" : "Show password"}
-                >
-                  {showPass ? <IconEyeOff size={16} /> : <IconEye size={16} />}
-                </button>
+                <Tooltip content={showPass ? "Hide password" : "Show password"}>
+                  <button
+                    type="button"
+                    className={styles.fieldIconBtn}
+                    onClick={() => setShowPass((p) => !p)}
+                    aria-label={showPass ? "Hide password" : "Show password"}
+                  >
+                    {showPass ? <IconEyeOff size={16} /> : <IconEye size={16} />}
+                  </button>
+                </Tooltip>
               </div>
               {errors.password && <p className={styles.error}>{errors.password.message}</p>}
 

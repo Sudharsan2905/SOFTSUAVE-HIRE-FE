@@ -16,7 +16,7 @@
 }
 
 .button:focus-visible {
-  box-shadow: 0 0 0 3px rgba(37, 99, 255, 0.3);
+  box-shadow: 0 0 0 3px rgba(244, 81, 30, 0.3);
 }
 
 .button:disabled {
@@ -43,13 +43,13 @@
 
 /* Variants */
 .primary {
-  background: var(--primary-600);
+  background: var(--action-color);
   color: #fff;
-  border-color: var(--primary-600);
+  border-color: var(--action-color);
 }
 .primary:hover:not(:disabled) {
-  background: var(--primary-700);
-  border-color: var(--primary-700);
+  background: var(--action-color-hover);
+  border-color: var(--action-color-hover);
 }
 
 .secondary {

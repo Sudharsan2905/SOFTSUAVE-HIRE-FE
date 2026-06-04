@@ -1,6 +1,8 @@
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  /* 3 cards per row on desktop; minmax(0, …) lets cells shrink instead of
+     overflowing. Stepped down to 2 / 1 columns at the breakpoints below. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 .list {
@@ -222,9 +224,16 @@
   font-size: 11px;
 }
 
+/* ── Grid: 2 columns on tablets / narrow laptops ───────────────────────── */
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* ── List-mode responsive (<640px) ──────────────────────────────────────── */
 @media (max-width: 639px) {
-  /* Grid: enforce single column so 280px cards never overflow narrow phones */
+  /* Grid: enforce single column so cards never overflow narrow phones */
   .grid {
     grid-template-columns: 1fr;
   }

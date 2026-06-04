@@ -23,7 +23,7 @@
   overflow: hidden;
 }
 .card:hover {
-  border-color: var(--primary-400);
+  border-color: var(--brand-orange);
   box-shadow: var(--shadow-md);
 }
 
