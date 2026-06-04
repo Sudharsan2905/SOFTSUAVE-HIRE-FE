@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { ComplexityBadge } from "@/components/ui/Badge";
 import { Spinner } from "@/components/ui/Spinner";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { IconSearch, IconDrag, IconCheck, IconDelete } from "@/assets/icons";
 import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -110,9 +111,11 @@ export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Reado
                 <p className={styles.qText}>{q.question_text}</p>
               </div>
             </div>
-            <button className={styles.addBtn} title="Add to round">
-              <IconCheck size={13} />
-            </button>
+            <Tooltip content="Add to round">
+              <button className={styles.addBtn} aria-label="Add to round">
+                <IconCheck size={13} />
+              </button>
+            </Tooltip>
           </button>
         ))}
       </div>

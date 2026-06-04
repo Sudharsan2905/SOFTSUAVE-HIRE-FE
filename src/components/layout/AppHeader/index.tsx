@@ -6,7 +6,7 @@ import logoUrl from "@/assets/favicon.svg";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { logout } from "@/store/slices/authSlice";
 import { toggleTheme } from "@/store/slices/uiSlice";
-import { getFullName, getInitials, getAvatarColor } from "@/utils/helpers";
+import { getFullName, getInitials } from "@/utils/helpers";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import {
   IconBell,
@@ -33,7 +33,6 @@ export function AppHeader() {
 
   const fullName = user ? getFullName(user) : "";
   const initials = fullName ? getInitials(fullName) : "U";
-  const avatarColor = fullName ? getAvatarColor(fullName) : "#2563eb";
   const roleLabel = user?.role === UserRole.SUPER_ADMIN ? "Super Admin" : "Admin";
   const today = format(new Date(), "EEE, dd MMM yyyy");
 
@@ -132,7 +131,7 @@ export function AppHeader() {
               aria-expanded={showProfileMenu}
               aria-haspopup="menu"
             >
-              <div className={styles.avatar} style={{ background: avatarColor }} aria-hidden="true">
+              <div className={styles.avatar} aria-hidden="true">
                 {initials}
               </div>
               <div className={styles.userInfo}>
@@ -149,9 +148,7 @@ export function AppHeader() {
             {showProfileMenu && (
               <div className={styles.profileMenu} role="menu" aria-label="User options">
                 <div className={styles.profileMenuHeader}>
-                  <div className={styles.menuAvatar} style={{ background: avatarColor }}>
-                    {initials}
-                  </div>
+                  <div className={styles.menuAvatar}>{initials}</div>
                   <div className={styles.menuUserInfo}>
                     <span className={styles.menuUserName}>{fullName || "Admin"}</span>
                     <span className={styles.menuUserEmail}>{user?.email}</span>

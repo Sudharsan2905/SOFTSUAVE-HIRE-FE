@@ -2,7 +2,15 @@ import React from "react";
 import styles from "./Badge.module.css";
 import { clsx } from "@/utils/helpers";
 
-type BadgeVariant = "default" | "primary" | "success" | "warning" | "error" | "info" | "accent";
+type BadgeVariant =
+  | "default"
+  | "primary"
+  | "success"
+  | "warning"
+  | "error"
+  | "info"
+  | "accent"
+  | "brand";
 
 interface BadgeProps {
   children: React.ReactNode;

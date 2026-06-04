@@ -29,13 +29,19 @@
   padding: 24px 28px;
 }
 
+/* Avatar in column 1 spanning both rows; name on top-right, contacts beneath it.
+   On mobile the avatar drops to row 1 only and the contact row spans full width. */
 .profileInner {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 20px;
+  row-gap: 10px;
   align-items: center;
-  gap: 20px;
 }
 
 .avatar {
+  grid-column: 1;
+  grid-row: 1 / 3;
   width: 64px;
   height: 64px;
   border-radius: var(--radius-full);
@@ -45,13 +51,6 @@
   justify-content: center;
   font-size: 22px;
   font-weight: 700;
-  color: #fff;
-  box-shadow: var(--shadow-sm);
-}
-
-.identity {
-  flex: 1;
-  min-width: 0;
 }
 
 .nameRow {
@@ -59,7 +58,6 @@
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 10px;
 }
 
 .name {
@@ -97,6 +95,20 @@
 .profileActions {
   flex-shrink: 0;
   align-self: flex-start;
+}
+
+/* ── Version control (in page header) ────────────────────────────────────────── */
+.versionControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.versionLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 /* ── Tabs area ───────────────────────────────────────────────────────────────── */
@@ -154,19 +166,16 @@
   }
 
   .profileInner {
-    flex-wrap: wrap;
-    gap: 12px;
+    column-gap: 12px;
+    row-gap: 12px;
   }
 
+  /* Avatar sits beside the name + status only … */
   .avatar {
+    grid-row: 1;
     width: 48px;
     height: 48px;
     font-size: 16px;
-  }
-
-  .identity {
-    flex: 1;
-    min-width: 0;
   }
 
   .name {
@@ -174,11 +183,12 @@
   }
 
   .nameRow {
-    margin-bottom: 8px;
     gap: 8px;
   }
 
+  /* … and the contacts drop below, spanning the full width from the card's left edge. */
   .contactRow {
+    grid-column: 1 / -1;
     flex-direction: column;
     align-items: flex-start;
     gap: 6px;

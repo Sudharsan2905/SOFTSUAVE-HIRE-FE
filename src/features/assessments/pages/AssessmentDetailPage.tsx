@@ -9,7 +9,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { Spinner } from "@/components/ui/Spinner";
 import { Badge, StatusBadge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
-import { IconDownload, IconEye, IconChevronLeft, IconAssessment } from "@/assets/icons";
+import { IconDownload, IconChevronLeft, IconCircleInfo, IconShare } from "@/assets/icons";
 import { Tooltip } from "@/components/ui/Tooltip";
 import type { DateRange } from "@/components/datetime/DateRangePicker";
 import { api } from "@/utils/api";
@@ -77,7 +77,10 @@ export default function AssessmentDetailPage() {
   const debouncedSearch = useDebounce(search, 300);
 
   // Re-access modal state
-  const [reaccessModal, setReaccessModal] = useState<{ submissionId: string; candidateId: string } | null>(null);
+  const [reaccessModal, setReaccessModal] = useState<{
+    submissionId: string;
+    candidateId: string;
+  } | null>(null);
   const [reaccessReason, setReaccessReason] = useState("");
   const [reaccessCategory, setReaccessCategory] = useState("other");
   const [reaccessSubmitting, setReaccessSubmitting] = useState(false);
@@ -272,7 +275,9 @@ export default function AssessmentDetailPage() {
                 const candidateId = sub.candidate?.id ?? "";
                 const subStatus = sub.status;
                 // Use centralized status colors
-                const statusConfig = getStatusColor(subStatus as Parameters<typeof getStatusColor>[0]);
+                const statusConfig = getStatusColor(
+                  subStatus as Parameters<typeof getStatusColor>[0]
+                );
                 void statusConfig; // available for future inline use
                 void getStatusLabel; // imported for potential future use
 
@@ -307,21 +312,6 @@ export default function AssessmentDetailPage() {
                     </td>
                     <td>
                       <div style={{ display: "flex", justifyContent: "center", gap: 6 }}>
-                        <Tooltip content="View Details" placement="top">
-                          <button
-                            className={styles.actionBtn}
-                            onClick={() =>
-                              navigate(
-                                `/workspaces/${workspaceId}/assessments/${id}/submissions/${sub.id}`,
-                                { state: { submission: sub } }
-                              )
-                            }
-                            aria-label="View submission details"
-                          >
-                            <IconEye size={14} />
-                          </button>
-                        </Tooltip>
-
                         {/* on_hold: Resume + Terminate */}
                         {subStatus === "on_hold" && (
                           <>
@@ -416,33 +406,20 @@ export default function AssessmentDetailPage() {
                           </Tooltip>
                         )}
 
-                        {/* completed: Re-access + View Details */}
-                        {subStatus === "completed" && (
-                          <>
-                            <Tooltip content="Re-access" placement="top">
-                              <button
-                                className={`${styles.actionBtn} ${styles.reaccess}`}
-                                onClick={() => openReaccessModal(sub.id, candidateId)}
-                                aria-label="Grant re-access"
-                              >
-                                <span style={{ fontSize: 13 }}>↺</span>
-                              </button>
-                            </Tooltip>
-                            <Tooltip content="Candidate Details" placement="top">
-                              <button
-                                className={`${styles.actionBtn} ${styles.viewDetails}`}
-                                onClick={() =>
-                                  navigate(
-                                    `/workspaces/${workspaceId}/assessments/${id}/candidates/${candidateId}`
-                                  )
-                                }
-                                aria-label="View candidate details"
-                              >
-                                <span style={{ fontSize: 13 }}>👤</span>
-                              </button>
-                            </Tooltip>
-                          </>
-                        )}
+                        {/* All statuses: Candidate Details */}
+                        <Tooltip content="Candidate Details" placement="top">
+                          <button
+                            className={`${styles.actionBtn} ${styles.viewDetails}`}
+                            onClick={() =>
+                              navigate(
+                                `/workspaces/${workspaceId}/assessments/${id}/candidates/${candidateId}`
+                              )
+                            }
+                            aria-label="View candidate details"
+                          >
+                            <IconCircleInfo size={20} />
+                          </button>
+                        </Tooltip>
                       </div>
                     </td>
                   </tr>
@@ -472,13 +449,6 @@ export default function AssessmentDetailPage() {
           <div style={{ display: "flex", gap: 8 }}>
             <Button
               variant="secondary"
-              leftIcon={<IconChevronLeft size={16} />}
-              onClick={() => navigate(-1)}
-            >
-              Back
-            </Button>
-            <Button
-              variant="secondary"
               leftIcon={<IconDownload size={16} />}
               onClick={handleExport}
               isLoading={exporting}
@@ -486,7 +456,7 @@ export default function AssessmentDetailPage() {
               Export
             </Button>
             <Button
-              leftIcon={<IconAssessment size={16} />}
+              leftIcon={<IconShare size={14} />}
               onClick={() => setShowSchedule(true)}
               disabled={!assessment}
             >
@@ -495,6 +465,21 @@ export default function AssessmentDetailPage() {
           </div>
         }
       />
+
+      <button
+        onClick={() => navigate(`/workspaces/${workspaceId}/assessments`)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+          color: "var(--text-secondary)",
+          fontSize: 13,
+          marginBottom: 16,
+          cursor: "pointer",
+        }}
+      >
+        <IconChevronLeft size={14} /> Back to Assessments
+      </button>
 
       <FilterBar
         search={search}

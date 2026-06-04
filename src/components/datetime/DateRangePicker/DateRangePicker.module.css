@@ -26,7 +26,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 8px 12px;
+  height: 38px; /* match Input/Select control height */
+  padding: 0 12px;
   border: 1.5px solid var(--border-default);
   border-radius: var(--radius-md);
   background: var(--bg-surface);
@@ -40,7 +41,7 @@
 }
 
 .trigger:hover:not(:disabled) {
-  border-color: var(--primary-400);
+  border-color: var(--brand-orange);
 }
 
 .trigger:disabled {
@@ -49,6 +50,20 @@
 }
 
 .triggerPlaceholder {
+  color: var(--text-tertiary);
+}
+
+/* Calendar icon + label grouped on the left; chevron stays on the right. */
+.triggerLeft {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.calendarIcon {
+  flex-shrink: 0;
   color: var(--text-tertiary);
 }
 
@@ -100,9 +115,9 @@
 }
 
 .calNavBtn:hover {
-  border-color: var(--primary-400);
-  background: var(--primary-50);
-  color: var(--primary-600);
+  border-color: var(--brand-orange);
+  background: var(--brand-orange-soft);
+  color: var(--brand-orange);
 }
 
 .calTitle {
@@ -144,29 +159,29 @@
 }
 
 .calDay:hover:not(:disabled) {
-  background: var(--primary-50);
-  color: var(--primary-600);
+  background: var(--brand-orange-soft);
+  color: var(--brand-orange);
 }
 
 .calDayToday {
   font-weight: 700;
-  color: var(--primary-600);
+  color: var(--brand-orange);
 }
 
 .calDaySelected {
-  background: var(--primary-600) !important;
+  background: var(--brand-orange) !important;
   color: #fff !important;
   border-radius: var(--radius-sm);
 }
 
 .calDayInRange {
-  background: var(--primary-50);
-  color: var(--primary-700);
+  background: var(--brand-orange-soft);
+  color: var(--brand-orange);
   border-radius: 0;
 }
 
 .calDayHoverRange {
-  background: var(--primary-50);
+  background: var(--brand-orange-soft);
   opacity: 0.7;
   border-radius: 0;
 }
@@ -198,7 +213,7 @@
 
 .calClearBtn {
   font-size: 12px;
-  color: var(--primary-600);
+  color: var(--brand-orange);
   background: none;
   border: none;
   cursor: pointer;

@@ -24,10 +24,17 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap; /* items wrap to next row instead of overflowing */
-  justify-content: flex-end; /* right-align all controls on desktop */
-  gap: 8px;
+  justify-content: flex-end; /* push every control to the right end of the bar */
+  gap: 16px;
+  /* Full-width card — spans the row; controls cluster at the right end. */
   width: 100%;
+  max-width: 100%;
   margin-bottom: 20px;
+  padding: 18px 14px;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 /*
@@ -60,9 +67,9 @@
     border-color var(--transition-fast);
 }
 .refreshBtn:hover {
-  color: var(--text-primary);
-  background: var(--bg-muted);
-  border-color: var(--border-strong);
+  color: var(--brand-orange);
+  background: var(--bg-surface);
+  border-color: var(--brand-orange);
 }
 
 /* ── Search input ────────────────────────────────────────────── */
@@ -114,24 +121,49 @@
   border-right: none;
 }
 .viewBtn:hover {
-  color: var(--text-primary);
-  background: var(--bg-muted);
+  color: var(--brand-orange);
+  background: var(--brand-orange-soft);
 }
+/* Active view uses the brand orange (logo color); the tokens adapt to
+   light/dark automatically, so no per-theme override is needed. */
 .viewActive {
-  color: var(--primary-600);
-  background: var(--primary-50);
+  color: var(--brand-orange);
+  background: var(--brand-orange-soft);
 }
 .viewActive:hover {
-  color: var(--primary-700);
-  background: var(--primary-50);
+  color: var(--brand-orange);
+  background: var(--brand-orange-soft);
 }
-[data-theme="dark"] .viewActive {
-  color: var(--primary-400);
-  background: rgba(37, 99, 255, 0.15);
+
+/* ── Unified focus ring ──────────────────────────────────────────
+   Every control in the bar shows the same coral focus border as the
+   search Input (see Input.module.css). The coral values are theme-
+   neutral, so the ring stays clearly visible in both light and dark
+   mode. Field-style controls (search, dropdown, the view pill) light
+   up on focus-within — i.e. on click; the standalone icon/label
+   buttons use :focus-visible so the ring is keyboard-only.            */
+.refreshBtn:focus-visible,
+.utilities > button:focus-visible,
+.viewToggle:focus-within,
+.filterSelect:focus-within button {
+  outline: none;
+  border-color: #fb4d3d;
+  box-shadow: 0 0 0 2px rgba(251, 77, 61, 0.45);
 }
-[data-theme="dark"] .viewActive:hover {
-  color: var(--primary-300);
-  background: rgba(37, 99, 255, 0.2);
+
+/* The pill already carries the ring, so drop the inner buttons' outline. */
+.viewBtn:focus,
+.viewBtn:focus-visible {
+  outline: none;
+}
+
+/* Hover for the bar's standalone buttons (Sort, Export). Scoped to the toolbar.
+   No background fill on hover — only an orange border accent. The bg is pinned
+   to the resting surface so the base secondary grey hover doesn't show through. */
+.utilities > button:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border-color: var(--brand-orange);
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -141,6 +173,9 @@
   .filterBar {
     flex-wrap: wrap;
     gap: 10px;
+    /* Full-width card on mobile instead of a shrink-to-fit right-aligned one. */
+    width: 100%;
+    margin-left: 0;
   }
 
   /* Row 1: [Refresh?] [Search — consumes remaining width] */
@@ -173,7 +208,9 @@
   }
   .midMulti .filterDrops {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    /* minmax(0, …) lets the cells shrink below the dropdowns' min-content so
+       they never push past the viewport on narrow screens. */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 8px;
     width: 100%;
   }
@@ -184,6 +221,7 @@
   .midMulti .filterSelect,
   .midMulti .datePickerWrap {
     width: 100%;
+    min-width: 0; /* override the desktop min-widths so cells can shrink */
   }
   .midMulti .utilities {
     display: flex;
@@ -219,5 +257,15 @@
   /* Icon-only on mobile — text labels add no value at this width */
   .btnLabel {
     display: none;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Small phones (<480px) — stack the filter dropdowns one per row so
+   nothing is ever clipped by the narrow viewport.
+   ════════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .midMulti .filterDrops {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

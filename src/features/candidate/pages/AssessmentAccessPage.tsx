@@ -9,6 +9,7 @@ import { candidateLogin } from "@/store/slices/authSlice";
 import { api } from "@/utils/api";
 import { IconUser, IconLock, IconEye, IconEyeOff } from "@/assets/icons";
 import { Spinner } from "@/components/ui/Spinner";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { LinkStatusScreen, LinkStatus } from "@/features/candidate/components/LinkStatusScreen";
 import { UserRole } from "@/types";
 import { isAssessmentDone } from "@/utils/assessmentSession";
@@ -159,15 +160,16 @@ export default function AssessmentAccessPage() {
                   autoComplete="current-password"
                   {...register("password")}
                 />
-                <button
-                  type="button"
-                  className={styles.fieldIconBtn}
-                  onClick={() => setShowPass((p) => !p)}
-                  aria-label={showPass ? "Hide password" : "Show password"}
-                  title={showPass ? "Hide password" : "Show password"}
-                >
-                  {showPass ? <IconEyeOff size={16} /> : <IconEye size={16} />}
-                </button>
+                <Tooltip content={showPass ? "Hide password" : "Show password"}>
+                  <button
+                    type="button"
+                    className={styles.fieldIconBtn}
+                    onClick={() => setShowPass((p) => !p)}
+                    aria-label={showPass ? "Hide password" : "Show password"}
+                  >
+                    {showPass ? <IconEyeOff size={16} /> : <IconEye size={16} />}
+                  </button>
+                </Tooltip>
               </div>
               {errors.password && <p className={styles.error}>{errors.password.message}</p>}
               {errors.root && <p className={styles.error}>{errors.root.message}</p>}
