@@ -24,7 +24,7 @@ import { getStatusLabel } from "@/constants/statusColors";
 interface CandidateDetailsTabsProps {
   data: CandidateSubmissionDetail;
   selectedVersion: string;
-  onVersionChange: (version: string) => void;
+  onVersionChange?: (version: string) => void;
 }
 
 interface DetailTab {

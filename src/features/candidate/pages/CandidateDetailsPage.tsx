@@ -4,7 +4,8 @@ import styles from "./CandidateDetailsPage.module.css";
 import { getAvatarColor, getInitials } from "@/utils/helpers";
 import { IconMail } from "@/assets/icons";
 import { CandidateDetailsTabs } from "@/features/candidate/components/CandidateDetailsTabs";
-import { Button } from "@/components/ui/Button";
+import { Header } from "@/components/layout/Header";
+import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
 import { Spinner } from "@/components/ui/Spinner";
 import type { CandidateSubmissionDetail, SubmissionStatus } from "@/types";
@@ -71,7 +72,7 @@ export default function CandidateDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedVersion, setSelectedVersion] = useState<string>("current");
-  const [downloadingPdf, setDownloadingPdf] = useState(false);
+  // const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const fetchSubmission = useCallback(
     async (version: string) => {
@@ -103,27 +104,6 @@ export default function CandidateDetailsPage() {
     setSelectedVersion(version);
   };
 
-  const handleDownloadPdf = useCallback(async () => {
-    if (!workspaceId || !assessmentId || !data?.submission_id) return;
-    setDownloadingPdf(true);
-    try {
-      const resp = await api.get(
-        `/api/workspaces/${workspaceId}/assessments/${assessmentId}/submissions/${data.submission_id}/pdf`,
-        { responseType: "blob" }
-      );
-      const url = URL.createObjectURL(resp.data as Blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `submission_${data.submission_id}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      // error handled by API interceptor
-    } finally {
-      setDownloadingPdf(false);
-    }
-  }, [workspaceId, assessmentId, data?.submission_id]);
-
   if (isLoading) {
     return (
       <div className={styles.loadingWrap}>
@@ -137,69 +117,74 @@ export default function CandidateDetailsPage() {
   }
 
   const { candidate } = data;
-  const fullName = `${candidate.first_name} ${candidate.last_name}`;
+  const fullName = `${candidate.first_name} ${candidate.last_name}`.trim() || "--";
+  const avatarColor = getAvatarColor(fullName);
+
+  const versionOptions = [
+    { value: "current", label: "Latest" },
+    ...data.available_versions.map((v) => ({
+      value: String(v.version),
+      label: `Version ${v.version}`,
+    })),
+  ];
 
   return (
-    <div className={styles.page}>
-      <article className={styles.profileCard} aria-label="Candidate profile">
-        <div className={styles.profileInner}>
-          <div
-            className={styles.avatar}
-            style={{ background: getAvatarColor(fullName) }}
-            aria-hidden="true"
-          >
-            {getInitials(fullName)}
+    <div>
+      <Header
+        title="Candidate Details"
+        subtitle="View and analyze candidate information and interview progress"
+        actions={
+          <div className={styles.versionControl}>
+            <span className={styles.versionLabel}>Version</span>
+            <Select
+              options={versionOptions}
+              value={selectedVersion}
+              onChange={handleVersionChange}
+              fullWidth={false}
+              style={{ width: 190 }}
+            />
           </div>
+        }
+      />
 
-          <div className={styles.identity}>
+      <div className={styles.page}>
+        <article className={styles.profileCard} aria-label="Candidate profile">
+          <div className={styles.profileInner}>
+            <div
+              className={styles.avatar}
+              style={{ background: `${avatarColor}1f`, color: avatarColor }}
+              aria-hidden="true"
+            >
+              {getInitials(fullName)}
+            </div>
+
             <div className={styles.nameRow}>
-              <h1 className={styles.name}>{fullName}</h1>
-              <Badge variant={STATUS_VARIANT[data.status] ?? "default"} dot>
+              <h2 className={styles.name}>{fullName}</h2>
+              <Badge variant={STATUS_VARIANT[data.status] ?? "default"}>
                 {getStatusLabel(data.status)}
               </Badge>
             </div>
 
             <div className={styles.contactRow} aria-label="Contact information">
-              {candidate.email && (
-                <span className={styles.contactItem}>
-                  <IconMail size={14} aria-hidden="true" />
-                  <span>{candidate.email}</span>
-                </span>
-              )}
-              {candidate.phone && (
-                <span className={styles.contactItem}>
-                  <PhoneIcon />
-                  <span>{candidate.phone}</span>
-                </span>
-              )}
-              {candidate.location && (
-                <span className={styles.contactItem}>
-                  <MapPinIcon />
-                  <span>{candidate.location}</span>
-                </span>
-              )}
+              <span className={styles.contactItem}>
+                <IconMail size={14} aria-hidden="true" />
+                <span>{candidate.email || "--"}</span>
+              </span>
+              <span className={styles.contactItem}>
+                <PhoneIcon />
+                <span>{candidate.phone || "--"}</span>
+              </span>
+              <span className={styles.contactItem}>
+                <MapPinIcon />
+                <span>{candidate.location || "--"}</span>
+              </span>
             </div>
           </div>
+        </article>
 
-          <div className={styles.profileActions}>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleDownloadPdf}
-              isLoading={downloadingPdf}
-            >
-              Download PDF
-            </Button>
-          </div>
+        <div className={styles.tabsArea}>
+          <CandidateDetailsTabs data={data} selectedVersion={selectedVersion} />
         </div>
-      </article>
-
-      <div className={styles.tabsArea}>
-        <CandidateDetailsTabs
-          data={data}
-          selectedVersion={selectedVersion}
-          onVersionChange={handleVersionChange}
-        />
       </div>
     </div>
   );
