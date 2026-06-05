@@ -2,7 +2,8 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { store } from "@/store";
 import { logout, setTokens } from "@/store/slices/authSlice";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+// Empty string → axios uses relative URLs (proxy/ngrok mode). Non-empty → direct absolute URL (local dev).
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
 
 export const api = axios.create({
   baseURL: BASE_URL,

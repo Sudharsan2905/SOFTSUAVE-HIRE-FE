@@ -90,7 +90,10 @@ function useAdminWebSocket(onEvent: (event: Record<string, unknown>) => void) {
 
     function connect() {
       if (!active) return;
-      const wsBase = (import.meta.env.VITE_WS_URL as string | undefined) ?? "ws://localhost:8000";
+      const envWs = import.meta.env.VITE_WS_URL as string | undefined;
+      const wsBase =
+        envWs ||
+        `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}`;
       const ws = new WebSocket(`${wsBase}/api/ws/admin?token=${token}`);
       wsRef.current = ws;
       sendRef.current = (data) => {

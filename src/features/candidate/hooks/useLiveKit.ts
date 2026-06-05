@@ -52,7 +52,9 @@ export function useLiveKitPublisher({
 
       const room = new Room();
       roomRef.current = room;
-      const liveKitHost = import.meta.env.VITE_LIVEKIT_HOST as string;
+      const liveKitHost =
+        (import.meta.env.VITE_LIVEKIT_HOST as string | undefined) ||
+        `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/livekit`;
       await room.connect(liveKitHost, token);
 
       // Screen share (requires user-gesture context — called post-consent)
@@ -168,7 +170,9 @@ export function useLiveKitViewer({ workspaceId, targetSubmissionId }: ViewerOpti
       .post("/live-interviews/livekit-token", { workspace_id: workspaceId })
       .then(({ data }) => {
         if (!active) return;
-        const liveKitHost = import.meta.env.VITE_LIVEKIT_HOST as string;
+        const liveKitHost =
+          (import.meta.env.VITE_LIVEKIT_HOST as string | undefined) ||
+          `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/livekit`;
         return room.connect(liveKitHost, data.data.token as string);
       })
       .catch(() => {});

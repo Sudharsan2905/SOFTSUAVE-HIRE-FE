@@ -174,8 +174,11 @@ export function useNetworkMonitoring({
   const connect = useCallback(() => {
     if (!submissionId || !accessToken || unmountedRef.current) return;
 
-    const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-    const url = `${apiBase.replace(/^https/, "wss").replace(/^http/, "ws")}/api/ws/interview/${submissionId}?token=${accessToken}`;
+    const apiBase = import.meta.env.VITE_API_BASE_URL as string | undefined;
+    const wsBase = apiBase
+      ? apiBase.replace(/^https/, "wss").replace(/^http/, "ws")
+      : `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}`;
+    const url = `${wsBase}/api/ws/interview/${submissionId}?token=${accessToken}`;
 
     const ws = new WebSocket(url);
     wsRef.current = ws;
