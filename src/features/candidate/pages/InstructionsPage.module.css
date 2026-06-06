@@ -118,7 +118,7 @@
 
 .monitorCard {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   padding: 14px;
   background: var(--bg-muted);
@@ -259,6 +259,35 @@
   border: 1.5px solid var(--border-default);
   border-radius: var(--radius-xl);
   padding: 24px 32px;
+}
+
+/* ── Screen instruction modal content ────────────────────────────────────── */
+.modalContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 10px;
+  color: var(--text-secondary);
+}
+.modalDesc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  text-align: center;
+}
+
+.modalSteps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 20px;
+}
+
+.modalSteps li {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
 }
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */

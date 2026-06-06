@@ -22,7 +22,6 @@ export function useFullscreenEnforcement({
   onExit,
 }: UseFullscreenEnforcementOptions): UseFullscreenEnforcementReturn {
   const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
-  const wasFullscreenRef = useRef(!!document.fullscreenElement);
   const onExitRef = useRef(onExit);
 
   useEffect(() => {
@@ -34,26 +33,50 @@ export function useFullscreenEnforcement({
     try {
       await document.documentElement.requestFullscreen({ navigationUI: "hide" });
     } catch {
-      /* browser may deny — modal stays visible so user can retry */
+      /* browser may deny — recovery modal handles re-entry */
     }
+  }, []);
+
+  // Exit fullscreen when the interview component unmounts (navigation away)
+  useEffect(() => {
+    return () => {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    };
   }, []);
 
   useEffect(() => {
     if (!enabled) return;
 
+    let cancelled = false;
+
     const handleChange = () => {
       const nowFullscreen = !!document.fullscreenElement;
       setIsFullscreen(nowFullscreen);
-      if (wasFullscreenRef.current && !nowFullscreen) {
+      if (!nowFullscreen) {
         onExitRef.current?.();
       }
-      wasFullscreenRef.current = nowFullscreen;
     };
 
     FS_EVENTS.forEach((ev) => document.addEventListener(ev, handleChange));
-    void requestFullscreen();
+
+    // Attempt fullscreen on load/refresh; if denied, surface the recovery modal
+    const tryEnforce = async () => {
+      if (cancelled) return;
+      await requestFullscreen();
+      if (!cancelled && !document.fullscreenElement) {
+        onExitRef.current?.();
+      }
+    };
+
+    const timeout = setTimeout(() => {
+      void tryEnforce();
+    }, 300);
 
     return () => {
+      cancelled = true;
+      clearTimeout(timeout);
       FS_EVENTS.forEach((ev) => document.removeEventListener(ev, handleChange));
     };
   }, [enabled, requestFullscreen]);
