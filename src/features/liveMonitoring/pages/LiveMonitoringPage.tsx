@@ -108,8 +108,18 @@ function useAdminWebSocket(onEvent: (event: Record<string, unknown>) => void) {
       active = false;
       stopTimers();
       sendRef.current = null;
-      wsRef.current?.close();
+      const ws = wsRef.current;
       wsRef.current = null;
+      if (ws) {
+        ws.onmessage = null;
+        ws.onopen = null;
+        ws.onclose = null;
+        if (ws.readyState === WebSocket.CONNECTING) {
+          ws.addEventListener("open", () => ws.close());
+        } else {
+          ws.close();
+        }
+      }
     };
   }, [token]);
 

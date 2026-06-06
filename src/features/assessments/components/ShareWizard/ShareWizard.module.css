@@ -22,7 +22,7 @@
     color 0.15s ease,
     border-color 0.15s ease;
   white-space: nowrap;
-  margin-bottom: -1px; /* overlap border-bottom of tabBar */
+  margin-bottom: -1px;
 }
 
 .tabBtn:hover {
@@ -54,7 +54,7 @@
   align-items: flex-start;
   gap: 8px;
   padding: 10px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-md, 8px);
   background: var(--primary-50, #eff6ff);
   border: 1px solid var(--primary-200, #bfdbfe);
   font-size: 12px;
@@ -67,31 +67,100 @@
   margin-top: 1px;
 }
 
-/* ─── Link row ───────────────────────────────────────────────────────────────── */
-.linkRow {
+/* ─── Permanent tab — URL card ───────────────────────────────────────────────── */
+.urlCard {
+  padding: 12px 14px;
+  border-radius: var(--radius-lg, 12px);
+  border: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+}
+
+.urlCardField {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  outline: none;
+  font-family: inherit;
+  cursor: text;
+}
+
+/* ─── Permanent tab — stacked action buttons ─────────────────────────────────── */
+.permanentActions {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
-.linkRowLabel {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.linkRowInput {
+.permanentBtn {
   display: flex;
-  gap: 6px;
   align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: var(--radius-md, 8px);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  text-decoration: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.1s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 
+.permanentBtn:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.permanentBtn:active {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.permanentBtnPrimary {
+  background: var(--brand-orange);
+  color: #fff;
+  border-color: var(--brand-orange);
+}
+
+.permanentBtnCopied {
+  background: var(--success-600, #16a34a);
+  border-color: var(--success-600, #16a34a);
+}
+
+.permanentBtnWhatsapp {
+  background: #25d366;
+  color: #0b4619;
+  border-color: #25d366;
+}
+
+.permanentBtnEmail {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-primary);
+}
+
+.permanentBtnEmail:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+  opacity: 1;
+}
+
+/* ─── Link field (reused in existing custom link cards) ──────────────────────── */
 .linkField {
   flex: 1;
   min-width: 0;
   padding: 9px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md, 8px);
   border: 1px solid var(--border-primary);
   font-size: 12px;
   color: var(--text-secondary);
@@ -99,17 +168,19 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: inherit;
+  outline: none;
 }
 
-/* ─── Time grid (temporary tab) ─────────────────────────────────────────────── */
-.timeGrid {
+/* ─── Date range grid ────────────────────────────────────────────────────────── */
+.dateGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
 @media (max-width: 580px) {
-  .timeGrid {
+  .dateGrid {
     grid-template-columns: 1fr;
   }
 }
@@ -122,46 +193,86 @@
   margin-bottom: 6px;
 }
 
-/* ─── Generate row ───────────────────────────────────────────────────────────── */
-.generateRow {
-  display: flex;
-  justify-content: flex-end;
+/* ─── Accordion ──────────────────────────────────────────────────────────────── */
+.accordion {
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
 }
 
-/* ─── Result box ─────────────────────────────────────────────────────────────── */
-.resultBox {
+.accordionTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.accordionTrigger:hover {
+  background: var(--bg-hover);
+}
+
+.accordionTrigger:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: -2px;
+}
+
+.accordionTriggerMeta {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px;
-  border-radius: 10px;
-  border: 1px solid var(--success-300, #86efac);
-  background: var(--success-50, #f0fdf4);
+  gap: 2px;
 }
 
-.resultLabel {
-  font-size: 12px;
+.accordionTitle {
+  font-size: 13px;
   font-weight: 600;
-  color: var(--success-700, #15803d);
-  margin: 0;
+  color: var(--text-primary);
 }
 
-/* ─── Monitoring toggles (custom tab) ───────────────────────────────────────── */
+.accordionSubtitle {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.accordionChevron {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  transition: transform 0.2s ease;
+}
+
+.accordionChevronOpen {
+  transform: rotate(180deg);
+}
+
+.accordionBody {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.3s ease-out;
+}
+
+.accordionBodyOpen {
+  max-height: 800px;
+}
+
+/* ─── Monitoring toggles ─────────────────────────────────────────────────────── */
 .monitoringSection {
   display: flex;
   flex-direction: column;
   gap: 0;
-  border: 1px solid var(--border-primary);
-  border-radius: 10px;
-  overflow: hidden;
+  border-top: 1px solid var(--border-primary);
 }
 
 .toggleRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border-primary);
   background: var(--bg-primary);
   transition: background 0.1s ease;
@@ -173,6 +284,15 @@
 
 .toggleRow:hover {
   background: var(--bg-secondary);
+}
+
+.toggleIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
 }
 
 .toggleMeta {
@@ -195,7 +315,7 @@
 
 /* ─── Screenshot sub-options ─────────────────────────────────────────────────── */
 .screenshotOptions {
-  padding: 12px 14px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -203,12 +323,18 @@
   background: var(--bg-secondary);
 }
 
+/* ─── Generate row ───────────────────────────────────────────────────────────── */
+.generateRow {
+  display: flex;
+  justify-content: flex-end;
+}
+
 /* ─── Existing custom links section ─────────────────────────────────────────── */
 .existingLinksSection {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding-top: 4px;
+  padding-top: 8px;
   border-top: 1px solid var(--border-primary);
   margin-top: 4px;
 }
@@ -237,112 +363,66 @@
 .customLinkCard {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px 14px;
+  gap: 10px;
+  padding: 14px;
   border: 1px solid var(--border-primary);
-  border-radius: 10px;
+  border-radius: var(--radius-lg, 12px);
   background: var(--bg-secondary);
-  transition: border-color 0.12s ease;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 .customLinkCard:hover {
   border-color: var(--primary-300);
+  box-shadow: var(--shadow-sm);
 }
 
-.customLinkCardHeader {
+.customLinkCardMeta {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .customLinkCardLabel {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
-  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* ─── Social share ───────────────────────────────────────────────────────────── */
-.socialShareSection {
+.customLinkCardDates {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.socialShareLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.socialShareButtons {
-  display: flex;
-  gap: 8px;
   flex-wrap: wrap;
+  gap: 12px;
 }
 
-.socialBtn {
-  display: inline-flex;
+.customLinkDate {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
-  border-radius: 8px;
-  background: var(--social-bg, #6b7280);
-  color: #fff;
+  gap: 4px;
   font-size: 12px;
-  font-weight: 500;
-  text-decoration: none;
-  transition:
-    opacity 0.15s ease,
-    transform 0.1s ease;
-  white-space: nowrap;
-  flex-shrink: 0;
+  color: var(--text-secondary);
 }
 
-.socialBtn:hover {
-  opacity: 0.85;
-  transform: translateY(-1px);
-}
-
-.socialBtn:active {
-  transform: translateY(0);
-}
-
-.socialBtnLabel {
-  font-size: 12px;
-}
-
-@media (max-width: 480px) {
-  .socialBtnLabel {
-    display: none;
-  }
-  .socialBtn {
-    padding: 8px;
-  }
-}
-
-/* ─── Active pill ────────────────────────────────────────────────────────────── */
-.activePill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 99px;
-  font-size: 10px;
+.customLinkDateLabel {
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  flex-shrink: 0;
-  background: var(--bg-muted, var(--border-primary));
   color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
-.activePillOn {
-  background: var(--success-100, #dcfce7);
-  color: var(--success-700, #15803d);
+.customLinkCardUrl {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.customLinkActions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
 }

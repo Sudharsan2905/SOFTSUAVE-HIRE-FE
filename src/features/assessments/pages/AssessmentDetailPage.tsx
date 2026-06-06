@@ -275,9 +275,7 @@ export default function AssessmentDetailPage() {
                 const candidateId = sub.candidate?.id ?? "";
                 const subStatus = sub.status;
                 // Use centralized status colors
-                const statusConfig = getStatusColor(
-                  subStatus as Parameters<typeof getStatusColor>[0]
-                );
+                const statusConfig = getStatusColor(subStatus);
                 void statusConfig; // available for future inline use
                 void getStatusLabel; // imported for potential future use
 
