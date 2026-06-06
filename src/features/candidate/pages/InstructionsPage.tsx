@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styles from "./InstructionsPage.module.css";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import { Spinner } from "@/components/ui/Spinner";
 import { api } from "@/utils/api";
 import { Assessment } from "@/types";
@@ -14,6 +15,7 @@ import {
   IconShield,
   IconInfo,
   IconRefresh,
+  IconWarning,
 } from "@/assets/icons";
 import CandidateHeader from "@/features/candidate/components/CandidateHeader";
 import { useAppSelector } from "@/store/hooks";
@@ -36,8 +38,8 @@ function buildPermissionMessage(needsVideo: boolean, needsAudio: boolean): strin
 
 function isDevToolsCurrentlyOpen(): boolean {
   return (
-    window.outerWidth - window.innerWidth > DEVTOOLS_SIZE_THRESHOLD ||
-    window.outerHeight - window.innerHeight > DEVTOOLS_SIZE_THRESHOLD
+    globalThis.outerWidth - globalThis.innerWidth > DEVTOOLS_SIZE_THRESHOLD ||
+    globalThis.outerHeight - globalThis.innerHeight > DEVTOOLS_SIZE_THRESHOLD
   );
 }
 
@@ -90,6 +92,7 @@ export default function InstructionsPage() {
   const [screenGranted, setScreenGranted] = useState(false);
   const [checkingPermissions, setCheckingPermissions] = useState(false);
   const [checkingScreen, setCheckingScreen] = useState(false);
+  const [showScreenInstructionModal, setShowScreenInstructionModal] = useState(false);
   const [networkStatus, setNetworkStatus] = useState<NetworkCheckStatus>("checking");
   const [checkingNetwork, setCheckingNetwork] = useState(false);
 
@@ -130,11 +133,11 @@ export default function InstructionsPage() {
       if (networkStatus !== "connected") setNetworkStatus("unstable");
     };
     const handleOffline = () => setNetworkStatus("disconnected");
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
+    globalThis.addEventListener("online", handleOnline);
+    globalThis.addEventListener("offline", handleOffline);
     return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
+      globalThis.removeEventListener("online", handleOnline);
+      globalThis.removeEventListener("offline", handleOffline);
     };
   }, [networkStatus]);
 
@@ -176,9 +179,23 @@ export default function InstructionsPage() {
     setCheckingScreen(true);
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
+        video: {
+          displaySurface: "monitor",
+        },
         audio: false,
       });
+
+      const videoTrack = stream.getVideoTracks()[0];
+      const { displaySurface } = videoTrack.getSettings() as MediaTrackSettings & {
+        displaySurface?: string;
+      };
+
+      if (displaySurface !== "monitor") {
+        stream.getTracks().forEach((t) => t.stop());
+        setShowScreenInstructionModal(true);
+        return;
+      }
+
       storeMonitoringStreams({ screen: stream });
       setScreenGranted(true);
       toast.success("Screen access granted");
@@ -201,10 +218,10 @@ export default function InstructionsPage() {
     }
 
     if (!canStart()) {
-      if (networkStatus !== "connected") {
-        toast.error("A stable network connection is required to start the assessment");
-      } else {
+      if (networkStatus === "connected") {
         toast.error("Please grant the required device permissions first");
+      } else {
+        toast.error("A stable network connection is required to start the assessment");
       }
       return;
     }
@@ -516,6 +533,49 @@ export default function InstructionsPage() {
           </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={showScreenInstructionModal}
+        onClose={() => setShowScreenInstructionModal(false)}
+        title="Entire Screen Required"
+        disableBackdropClose={true}
+        size="md"
+        footer={
+          <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+            <Button variant="secondary" onClick={() => setShowScreenInstructionModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              leftIcon={<IconMonitor size={16} />}
+              onClick={() => {
+                setShowScreenInstructionModal(false);
+                void requestScreenAccess();
+              }}
+            >
+              Try Again
+            </Button>
+          </div>
+        }
+      >
+        <div className={styles.modalContent}>
+          {<IconWarning size={50} />}
+          <p className={styles.modalDesc}>
+            You shared a window or browser tab instead of your entire screen. This assessment
+            requires full-screen monitoring.
+          </p>
+        </div>
+        <ol className={styles.modalSteps}>
+          <li>
+            1. Click <strong>Try Again</strong> below.
+          </li>
+          <li>
+            2. In the browser dialog, open the <strong>Entire Screen</strong> tab.
+          </li>
+          <li>
+            3. Select your monitor and click <strong>Share</strong>.
+          </li>
+        </ol>
+      </Modal>
     </div>
   );
 }

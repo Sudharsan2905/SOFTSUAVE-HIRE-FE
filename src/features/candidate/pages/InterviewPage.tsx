@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styles from "./InterviewPage.module.css";
 import { Button } from "@/components/ui/Button";
@@ -142,6 +142,7 @@ export default function InterviewPage() {
   const [showTimeExpired, setShowTimeExpired] = useState(false);
   const [adminWarningMessage, setAdminWarningMessage] = useState<string | null>(null);
   const [fullscreenBlocked, setFullscreenBlocked] = useState(false);
+  const [screenShareBlocked, setScreenShareBlocked] = useState(false);
 
   // ── Assessment / rounds state ───────────────────────────────────────────────
   const [assessmentRounds, setAssessmentRounds] = useState<RoundConfig[]>([]);
@@ -156,6 +157,7 @@ export default function InterviewPage() {
 
   // ── Refs ────────────────────────────────────────────────────────────────────
   const videoRef = useRef<HTMLVideoElement>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const screenshotIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const submittingRef = useRef(false);
@@ -525,10 +527,10 @@ export default function InterviewPage() {
   useEffect(() => {
     if (!monitoringConfig.video_monitoring) return;
     let cancelled = false;
-    let stream: MediaStream | null = null;
 
     const setup = async () => {
       const stored = takeCameraStream();
+      let stream: MediaStream | null = null;
       try {
         stream = stored ?? (await navigator.mediaDevices.getUserMedia({ video: true }));
       } catch {
@@ -538,6 +540,7 @@ export default function InterviewPage() {
         if (!stored) stream.getTracks().forEach((t) => t.stop());
         return;
       }
+      cameraStreamRef.current = stream;
       if (videoRef.current) videoRef.current.srcObject = stream;
     };
 
@@ -545,16 +548,44 @@ export default function InterviewPage() {
 
     return () => {
       cancelled = true;
-      stream?.getTracks().forEach((t) => t.stop());
+      cameraStreamRef.current?.getTracks().forEach((t) => t.stop());
+      cameraStreamRef.current = null;
     };
   }, [monitoringConfig.video_monitoring]);
+
+  // Rebind camera stream after round transitions — the video element remounts when
+  // roundData goes null -> non-null, losing its srcObject.
+  useEffect(() => {
+    const stream = cameraStreamRef.current;
+    if (!stream || !videoRef.current) return;
+    if (videoRef.current.srcObject !== stream) {
+      videoRef.current.srcObject = stream;
+      videoRef.current.play().catch(() => {});
+    }
+  }, [roundData]);
 
   useEffect(() => {
     if (monitoringConfig.audio_monitoring) setAudioActive(true);
   }, [monitoringConfig.audio_monitoring]);
 
   // ── Screen capture for screenshots ─────────────────────────────────────────
-  const { captureFrame, isCapturing: isScreenCapturing } = useScreenCapture();
+  const {
+    captureFrame,
+    isCapturing: isScreenCapturing,
+    isInitialized: isScreenCaptureInitialized,
+    startScreenCapture,
+  } = useScreenCapture();
+
+  // Block the interview when screenshot monitoring is required but the stream is gone
+  useEffect(() => {
+    if (!monitoringConfig.screenshot_enabled) return;
+    if (!isScreenCaptureInitialized) return;
+    if (!isScreenCapturing) setScreenShareBlocked(true);
+  }, [monitoringConfig.screenshot_enabled, isScreenCaptureInitialized, isScreenCapturing]);
+
+  useEffect(() => {
+    if (isScreenCapturing && screenShareBlocked) setScreenShareBlocked(false);
+  }, [isScreenCapturing, screenShareBlocked]);
 
   useEffect(() => {
     if (!monitoringConfig.screenshot_enabled || !submissionId) return;
@@ -993,6 +1024,32 @@ export default function InterviewPage() {
       >
         <p style={{ fontSize: 14, color: "var(--text-secondary)", textAlign: "center" }}>
           Your time for this round has expired. Your answers have been automatically submitted.
+        </p>
+      </Modal>
+
+      {/* Screen share recovery modal — blocks when screenshot monitoring loses its stream */}
+      <Modal
+        isOpen={screenShareBlocked}
+        onClose={() => void startScreenCapture()}
+        title="Screen Sharing Required"
+        size="sm"
+        showClose={false}
+        disableBackdropClose
+        disableEscapeKey
+        footer={
+          <Button
+            fullWidth
+            onClick={() => {
+              void startScreenCapture();
+            }}
+          >
+            Share Screen Again
+          </Button>
+        }
+      >
+        <p style={{ fontSize: 14, color: "var(--text-secondary)", textAlign: "center" }}>
+          Screen sharing has stopped or is unavailable. This assessment requires continuous screen
+          monitoring. Click the button below and share your entire screen to resume.
         </p>
       </Modal>
 
