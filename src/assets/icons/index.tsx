@@ -397,6 +397,33 @@ export const IconDotsVertical = icon(
     <circle cx="12" cy="19" r="1.3" fill="currentColor" stroke="none" />
   </>
 );
+export const IconClock = icon(
+  <>
+    <circle cx="12" cy="12" r="9" />
+    <polyline points="12 7 12 12 15.5 14" />
+  </>
+);
+// Timeout/countdown clock — most of the dial is solid, with a dashed arc at the
+// top-left to convey elapsing time.
+export const IconTimeout = icon(
+  <>
+    <path d="M12 3A9 9 0 1 1 4.5 7" />
+    <path d="M4.5 7A9 9 0 0 1 12 3" strokeDasharray="1.8 2.2" />
+    <polyline points="12 7.5 12 12 15.5 14" />
+  </>
+);
+export const IconLink = icon(
+  <>
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+  </>
+);
+export const IconArrowRight = icon(
+  <>
+    <line x1="5" y1="12" x2="19" y2="12" />
+    <polyline points="13 6 19 12 13 18" />
+  </>
+);
 
 /* ── Candidate detail tab icons (path-only) ── */
 // "Over All" — a layout/overview pane.

@@ -5,7 +5,18 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Toggle } from "@/components/ui/Toggle";
 import { Select } from "@/components/ui/Select";
-import { IconCopy, IconCheck, IconDelete, IconGlobe, IconShield } from "@/assets/icons";
+import { DateTimePicker } from "@/components/datetime/DateTimePicker";
+import {
+  IconCopy,
+  IconCheck,
+  IconDelete,
+  IconGlobe,
+  IconShield,
+  IconClock,
+  IconTimeout,
+  IconArrowRight,
+  IconLink,
+} from "@/assets/icons";
 import { api } from "@/utils/api";
 import { ShareLink, MonitoringOverrides } from "@/types";
 import toast from "react-hot-toast";
@@ -213,7 +224,7 @@ function Accordion({ title, subtitle, children }: Readonly<AccordionProps>) {
     <div className={styles.accordion}>
       <button
         type="button"
-        className={styles.accordionTrigger}
+        className={clsx(styles.accordionTrigger, open && styles.accordionTriggerOpen)}
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
       >
@@ -477,34 +488,28 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
 
       {/* Validity date range */}
       <div className={styles.dateGrid}>
-        <div>
-          <label htmlFor="custom-link-from-time" className={styles.fieldLabel}>
-            From Date &amp; Time
-          </label>
-          <Input
-            id="custom-link-from-time"
-            type="datetime-local"
-            value={startTime}
-            onChange={(e) => {
-              setStartTime(e.target.value);
-            }}
-          />
-        </div>
-        <div>
-          <label htmlFor="custom-link-to-time" className={styles.fieldLabel}>
-            To Date &amp; Time
-          </label>
-          <Input
-            id="custom-link-to-time"
-            type="datetime-local"
-            value={endTime}
-            onChange={(e) => {
-              setEndTime(e.target.value);
-              setEndError("");
-            }}
-            error={endError}
-          />
-        </div>
+        <DateTimePicker
+          id="custom-link-from-time"
+          label="From Date & Time"
+          placeholder="mm/dd/yyyy --:-- --"
+          value={startTime}
+          onChange={(v) => {
+            setStartTime(v);
+            setEndError("");
+          }}
+        />
+        <DateTimePicker
+          id="custom-link-to-time"
+          label="To Date & Time"
+          placeholder="mm/dd/yyyy --:-- --"
+          value={endTime}
+          min={startTime}
+          onChange={(v) => {
+            setEndTime(v);
+            setEndError("");
+          }}
+          error={endError}
+        />
       </div>
 
       {/* Monitoring accordion */}
@@ -600,37 +605,60 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
               const fullUrl = `${globalThis.location.origin}/assessment/${link.share_link}`;
               return (
                 <div key={link.id} className={styles.customLinkCard}>
-                  <div className={styles.customLinkCardMeta}>
+                  {/* Header: clock + label, with the expiry highlighted */}
+                  <div className={styles.customLinkCardHead}>
+                    <IconLink size={18} className={styles.customLinkIcon} />
                     <span className={styles.customLinkCardLabel}>
                       {link.label ?? "Unlabelled link"}
-                    </span>
-                    <div className={styles.customLinkCardDates}>
-                      {link.start_time && (
-                        <span className={styles.customLinkDate}>
-                          <span className={styles.customLinkDateLabel}>From</span>
-                          {formatDate(link.start_time)}
-                        </span>
-                      )}
                       {link.end_time && (
-                        <span className={styles.customLinkDate}>
-                          <span className={styles.customLinkDateLabel}>To</span>
-                          {formatDate(link.end_time)}
-                        </span>
+                        <>
+                          {" – "}
+                          <strong>{formatDate(link.end_time)}</strong>
+                        </>
                       )}
-                      <span className={styles.customLinkDate}>
-                        <span className={styles.customLinkDateLabel}>Created</span>
-                        {formatDate(link.created_at)}
-                      </span>
-                    </div>
+                    </span>
                   </div>
-                  <div className={styles.customLinkCardUrl}>
-                    <input
-                      className={styles.linkField}
-                      readOnly
-                      value={fullUrl}
-                      aria-label={link.label ?? "Custom share link"}
-                    />
-                    <div className={styles.customLinkActions}>
+
+                  {/* Date meta */}
+                  <div className={styles.customLinkCardDates}>
+                    {(link.start_time || link.end_time) && (
+                      <div className={styles.customLinkDateRow}>
+                        {link.start_time && (
+                          <span className={styles.customLinkDate}>
+                            <IconClock size={15} className={styles.customLinkClock} />
+                            <span className={styles.customLinkDateLabel}>From</span>
+                            {formatDate(link.start_time)}
+                          </span>
+                        )}
+                        {link.start_time && link.end_time && (
+                          <IconArrowRight size={15} className={styles.customLinkArrow} />
+                        )}
+                        {link.end_time && (
+                          <span className={styles.customLinkDate}>
+                            <span className={styles.customLinkDateLabel}>To</span>
+                            {formatDate(link.end_time)}
+                            <IconTimeout size={15} className={styles.customLinkClock} />
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* URL field */}
+                  <input
+                    className={styles.linkField}
+                    readOnly
+                    value={fullUrl}
+                    aria-label={link.label ?? "Custom share link"}
+                  />
+
+                  {/* Footer: created date on the left, actions on the right */}
+                  <div className={styles.customLinkActions}>
+                    <span className={styles.customLinkCreated}>
+                      <span className={styles.customLinkDateLabel}>Created</span>
+                      {formatDate(link.created_at)}
+                    </span>
+                    <div className={styles.customLinkActionBtns}>
                       <CopyButton text={fullUrl} />
                       <Button
                         variant="danger"

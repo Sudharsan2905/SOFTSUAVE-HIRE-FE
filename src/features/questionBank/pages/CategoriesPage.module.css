@@ -1,8 +1,22 @@
 /* ── Layout containers ── */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  /* Fixed 3-column grid for the grid view. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
+}
+
+/* Drop to two, then one column on smaller screens. */
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .list {
   display: flex;
@@ -115,6 +129,7 @@
   margin-bottom: 14px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   min-height: 36px;
