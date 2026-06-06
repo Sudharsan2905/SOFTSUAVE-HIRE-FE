@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Toggle } from "@/components/ui/Toggle";
 import { Select } from "@/components/ui/Select";
-import { IconCopy, IconCheck, IconDelete, IconGlobe, IconTime, IconShield } from "@/assets/icons";
+import { IconCopy, IconCheck, IconDelete, IconGlobe, IconShield } from "@/assets/icons";
 import { api } from "@/utils/api";
 import { ShareLink, MonitoringOverrides } from "@/types";
 import toast from "react-hot-toast";
@@ -26,13 +26,150 @@ interface ShareWizardModalProps {
 
 // ─── Tab IDs ──────────────────────────────────────────────────────────────────
 
-type TabId = "permanent" | "temporary" | "custom";
+type TabId = "permanent" | "custom";
 
 const TABS: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: "permanent", label: "Permanent Link", icon: <IconGlobe size={15} /> },
-  { id: "temporary", label: "Temporary Link", icon: <IconTime size={15} /> },
-  { id: "custom", label: "Custom Monitoring", icon: <IconShield size={15} /> },
+  { id: "custom", label: "Custom Link", icon: <IconShield size={15} /> },
 ];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function formatDate(iso: string | null): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+// ─── Inline icons ─────────────────────────────────────────────────────────────
+
+function IconChevronDown({ className }: Readonly<{ className?: string }>) {
+  return (
+    <svg
+      className={className}
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
+function IconTabMonitor() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="2" y="3" width="20" height="14" rx="2" />
+      <path d="M8 21h8M12 17v4" />
+    </svg>
+  );
+}
+
+function IconMic() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8" />
+    </svg>
+  );
+}
+
+function IconVideoCamera() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M23 7 16 12 23 17z" />
+      <rect x="1" y="5" width="15" height="14" rx="2" />
+    </svg>
+  );
+}
+
+function IconScreenCapture() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z" />
+      <circle cx="12" cy="13" r="3" />
+    </svg>
+  );
+}
+
+function WhatsAppIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.103 1.51 5.833L.057 23.428a.5.5 0 0 0 .611.611l5.648-1.453A11.94 11.94 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.854 9.854 0 0 1-5.031-1.378l-.36-.214-3.733.96.993-3.648-.235-.374A9.855 9.855 0 0 1 2.1 12C2.1 6.533 6.533 2.1 12 2.1c5.468 0 9.9 4.432 9.9 9.9 0 5.467-4.432 9.9-9.9 9.9z" />
+    </svg>
+  );
+}
+
+function EmailIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+    </svg>
+  );
+}
 
 // ─── Copy button (shared) ─────────────────────────────────────────────────────
 
@@ -61,138 +198,63 @@ function CopyButton({ text }: Readonly<{ text: string }>) {
   );
 }
 
-// ─── Link display row ─────────────────────────────────────────────────────────
+// ─── Accordion ────────────────────────────────────────────────────────────────
 
-function LinkRow({
-  url,
-  label,
-  onRevoke,
-}: Readonly<{ url: string; label?: string; onRevoke?: () => void }>) {
+interface AccordionProps {
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}
+
+function Accordion({ title, subtitle, children }: Readonly<AccordionProps>) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <div className={styles.linkRow}>
-      {label && <p className={styles.linkRowLabel}>{label}</p>}
-      <div className={styles.linkRowInput}>
-        <input
-          className={styles.linkField}
-          readOnly
-          value={url}
-          aria-label={label ?? "Share link"}
+    <div className={styles.accordion}>
+      <button
+        type="button"
+        className={styles.accordionTrigger}
+        onClick={() => setOpen((prev) => !prev)}
+        aria-expanded={open}
+      >
+        <div className={styles.accordionTriggerMeta}>
+          <span className={styles.accordionTitle}>{title}</span>
+          <span className={styles.accordionSubtitle}>{subtitle}</span>
+        </div>
+        <IconChevronDown
+          className={clsx(styles.accordionChevron, open && styles.accordionChevronOpen)}
         />
-        <CopyButton text={url} />
-        {onRevoke && (
-          <Button
-            variant="danger"
-            size="sm"
-            leftIcon={<IconDelete size={13} />}
-            onClick={onRevoke}
-            title="Revoke this link"
-          >
-            Revoke
-          </Button>
-        )}
-      </div>
+      </button>
+      <div className={clsx(styles.accordionBody, open && styles.accordionBodyOpen)}>{children}</div>
     </div>
   );
 }
 
-// ─── Social share ─────────────────────────────────────────────────────────────
+// ─── Monitoring toggle row ────────────────────────────────────────────────────
 
-const SOCIAL_PLATFORMS = [
-  {
-    id: "whatsapp",
-    label: "WhatsApp",
-    bg: "#25D366",
-    href: (url: string) => `https://wa.me/?text=${encodeURIComponent(url)}`,
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-        <path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.103 1.51 5.833L.057 23.428a.5.5 0 0 0 .611.611l5.648-1.453A11.94 11.94 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.854 9.854 0 0 1-5.031-1.378l-.36-.214-3.733.96.993-3.648-.235-.374A9.855 9.855 0 0 1 2.1 12C2.1 6.533 6.533 2.1 12 2.1c5.468 0 9.9 4.432 9.9 9.9 0 5.467-4.432 9.9-9.9 9.9z" />
-      </svg>
-    ),
-  },
-  {
-    id: "telegram",
-    label: "Telegram",
-    bg: "#0088CC",
-    href: (url: string) => `https://t.me/share/url?url=${encodeURIComponent(url)}`,
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.32 13.617l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.828.942z" />
-      </svg>
-    ),
-  },
-  {
-    id: "email",
-    label: "Email",
-    bg: "#6B7280",
-    href: (url: string, name: string) =>
-      `mailto:?subject=${encodeURIComponent(`Assessment Invitation: ${name}`)}&body=${encodeURIComponent(`You have been invited to take an assessment.\n\nClick the link below to get started:\n${url}`)}`,
-    icon: (
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <rect x="2" y="4" width="20" height="16" rx="2" />
-        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-      </svg>
-    ),
-  },
-  {
-    id: "linkedin",
-    label: "LinkedIn",
-    bg: "#0A66C2",
-    href: (url: string) =>
-      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-      </svg>
-    ),
-  },
-  {
-    id: "twitter",
-    label: "X (Twitter)",
-    bg: "#000000",
-    href: (url: string, name: string) =>
-      `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Take the "${name}" assessment`)}&url=${encodeURIComponent(url)}`,
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.261 5.632 5.903-5.632zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-      </svg>
-    ),
-  },
-] as const;
+interface MonitoringToggleRowProps {
+  icon: React.ReactNode;
+  label: string;
+  hint: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}
 
-function SocialShareRow({
-  url,
-  assessmentName,
-}: Readonly<{ url: string; assessmentName: string }>) {
+function MonitoringToggleRow({
+  icon,
+  label,
+  hint,
+  checked,
+  onChange,
+}: Readonly<MonitoringToggleRowProps>) {
   return (
-    <div className={styles.socialShareSection}>
-      <span className={styles.socialShareLabel}>Share via</span>
-      <div className={styles.socialShareButtons}>
-        {SOCIAL_PLATFORMS.map((p) => (
-          <a
-            key={p.id}
-            href={p.href(url, assessmentName)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.socialBtn}
-            style={{ "--social-bg": p.bg } as React.CSSProperties}
-            title={p.label}
-            aria-label={`Share via ${p.label}`}
-          >
-            {p.icon}
-            <span className={styles.socialBtnLabel}>{p.label}</span>
-          </a>
-        ))}
+    <div className={styles.toggleRow}>
+      <div className={styles.toggleIcon}>{icon}</div>
+      <div className={styles.toggleMeta}>
+        <p className={styles.toggleLabel}>{label}</p>
+        <p className={styles.toggleHint}>{hint}</p>
       </div>
+      <Toggle checked={checked} onChange={onChange} />
     </div>
   );
 }
@@ -203,169 +265,86 @@ function PermanentTab({
   shareLink,
   assessmentName,
 }: Readonly<{ shareLink: string; assessmentName: string }>) {
+  const [copied, setCopied] = useState(false);
   const fullUrl = `${globalThis.location.origin}/assessment/${shareLink}`;
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(fullUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Copy failed — please copy manually.");
+    }
+  };
+
+  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(fullUrl)}`;
+  const emailSubject = encodeURIComponent(`Assessment Invitation: ${assessmentName}`);
+  const emailBody = encodeURIComponent(
+    `You have been invited to take an assessment.\n\nClick the link below to get started:\n${fullUrl}`
+  );
+  const emailHref = `mailto:?subject=${emailSubject}&body=${emailBody}`;
 
   return (
     <div className={styles.tabContent}>
       <div className={styles.infoBanner}>
         <IconGlobe size={14} />
-        <span>Permanent Link — never expires, uses default monitoring settings</span>
+        <span>This link never expires and uses the default monitoring settings.</span>
       </div>
-      <LinkRow url={fullUrl} />
-      <SocialShareRow url={fullUrl} assessmentName={assessmentName} />
+
+      <div className={styles.urlCard}>
+        <input
+          className={styles.urlCardField}
+          readOnly
+          value={fullUrl}
+          aria-label="Permanent share link"
+        />
+      </div>
+
+      <div className={styles.permanentActions}>
+        <button
+          type="button"
+          className={clsx(
+            styles.permanentBtn,
+            styles.permanentBtnPrimary,
+            copied && styles.permanentBtnCopied
+          )}
+          onClick={() => void handleCopy()}
+        >
+          {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
+          <span>{copied ? "Link Copied!" : "Copy Link"}</span>
+        </button>
+
+        <a
+          href={whatsappHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={clsx(styles.permanentBtn, styles.permanentBtnWhatsapp)}
+        >
+          <WhatsAppIcon />
+          <span>Share via WhatsApp</span>
+        </a>
+
+        <a href={emailHref} className={clsx(styles.permanentBtn, styles.permanentBtnEmail)}>
+          <EmailIcon />
+          <span>Share via Email</span>
+        </a>
+      </div>
     </div>
   );
 }
 
-// ─── Tab 2: Temporary Link ────────────────────────────────────────────────────
+// ─── Tab 2: Custom Link ───────────────────────────────────────────────────────
 
-interface TemporaryTabProps {
+interface CustomLinkTabProps {
   assessmentId: string;
   workspaceId: string;
-  assessmentName: string;
 }
 
-function TemporaryTab({ assessmentId, workspaceId, assessmentName }: Readonly<TemporaryTabProps>) {
+function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProps>) {
+  const [linkLabel, setLinkLabel] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [generating, setGenerating] = useState(false);
-  const [generatedLink, setGeneratedLink] = useState<string | null>(null);
-  const [startError, setStartError] = useState("");
-  const [endError, setEndError] = useState("");
-
-  const validate = (): boolean => {
-    let ok = true;
-    if (!startTime) {
-      setStartError("Start time is required");
-      ok = false;
-    } else {
-      setStartError("");
-    }
-    if (!endTime) {
-      setEndError("End time is required");
-      ok = false;
-    } else if (startTime && new Date(endTime) <= new Date(startTime)) {
-      setEndError("End time must be after start time");
-      ok = false;
-    } else {
-      setEndError("");
-    }
-    return ok;
-  };
-
-  const handleGenerate = async () => {
-    if (!validate()) return;
-    setGenerating(true);
-    try {
-      const { data } = await api.post(
-        `/api/workspaces/${workspaceId}/assessments/${assessmentId}/shares`,
-        {
-          share_type: "expirable",
-          start_time: new Date(startTime).toISOString(),
-          end_time: new Date(endTime).toISOString(),
-        }
-      );
-      const link: string = data.data?.share_link ?? data.data?.link ?? "";
-      const fullUrl = `${globalThis.location.origin}/assessment/${link}`;
-      setGeneratedLink(fullUrl);
-      toast.success("Temporary link generated");
-    } catch (e: unknown) {
-      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast.error(msg ?? "Failed to generate temporary link");
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  return (
-    <div className={styles.tabContent}>
-      <div className={styles.infoBanner}>
-        <IconTime size={14} />
-        <span>
-          Temporary link — valid only within the specified time window. Candidates cannot access the
-          assessment outside this window.
-        </span>
-      </div>
-
-      <div className={styles.timeGrid}>
-        <div>
-          <label className={styles.fieldLabel}>Start Time</label>
-          <Input
-            type="datetime-local"
-            value={startTime}
-            onChange={(e) => {
-              setStartTime(e.target.value);
-              setStartError("");
-              setGeneratedLink(null);
-            }}
-            error={startError}
-          />
-        </div>
-        <div>
-          <label className={styles.fieldLabel}>End Time</label>
-          <Input
-            type="datetime-local"
-            value={endTime}
-            onChange={(e) => {
-              setEndTime(e.target.value);
-              setEndError("");
-              setGeneratedLink(null);
-            }}
-            error={endError}
-          />
-        </div>
-      </div>
-
-      <div className={styles.generateRow}>
-        <Button onClick={() => void handleGenerate()} isLoading={generating}>
-          Generate Link
-        </Button>
-      </div>
-
-      {generatedLink && (
-        <div className={styles.resultBox}>
-          <p className={styles.resultLabel}>Generated link — share with candidates:</p>
-          <LinkRow url={generatedLink} />
-          <SocialShareRow url={generatedLink} assessmentName={assessmentName} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Tab 3: Custom Monitoring Link ────────────────────────────────────────────
-
-interface MonitoringToggleRowProps {
-  label: string;
-  hint: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}
-
-function MonitoringToggleRow({
-  label,
-  hint,
-  checked,
-  onChange,
-}: Readonly<MonitoringToggleRowProps>) {
-  return (
-    <div className={styles.toggleRow}>
-      <div className={styles.toggleMeta}>
-        <p className={styles.toggleLabel}>{label}</p>
-        <p className={styles.toggleHint}>{hint}</p>
-      </div>
-      <Toggle checked={checked} onChange={onChange} />
-    </div>
-  );
-}
-
-interface CustomTabProps {
-  assessmentId: string;
-  workspaceId: string;
-}
-
-function CustomTab({ assessmentId, workspaceId }: Readonly<CustomTabProps>) {
-  const [linkLabel, setLinkLabel] = useState("");
   const [monitoring, setMonitoring] = useState<MonitoringOverrides>({
     tab_monitoring: true,
     audio_monitoring: true,
@@ -379,8 +358,12 @@ function CustomTab({ assessmentId, workspaceId }: Readonly<CustomTabProps>) {
   const [loadingLinks, setLoadingLinks] = useState(true);
   const [revoking, setRevoking] = useState<string | null>(null);
   const [labelError, setLabelError] = useState("");
+  const [endError, setEndError] = useState("");
 
-  const set = <K extends keyof MonitoringOverrides>(key: K, value: MonitoringOverrides[K]) => {
+  const setMonitoringKey = <K extends keyof MonitoringOverrides>(
+    key: K,
+    value: MonitoringOverrides[K]
+  ) => {
     setMonitoring((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -403,26 +386,45 @@ function CustomTab({ assessmentId, workspaceId }: Readonly<CustomTabProps>) {
     void fetchCustomLinks();
   }, [fetchCustomLinks]);
 
-  const handleGenerate = async () => {
-    if (!linkLabel.trim()) {
+  const validate = (): boolean => {
+    let ok = true;
+    if (linkLabel.trim()) {
+      setLabelError("");
+    } else {
       setLabelError("Label is required");
-      return;
+      ok = false;
     }
-    setLabelError("");
+    if (startTime && endTime && new Date(endTime) <= new Date(startTime)) {
+      setEndError("End time must be after start time");
+      ok = false;
+    } else {
+      setEndError("");
+    }
+    return ok;
+  };
+
+  const handleGenerate = async () => {
+    if (!validate()) return;
     setGenerating(true);
     try {
+      const payload: Record<string, unknown> = {
+        share_type: "custom",
+        label: linkLabel.trim(),
+        monitoring_overrides: monitoring,
+      };
+      if (startTime) payload.start_time = new Date(startTime).toISOString();
+      if (endTime) payload.end_time = new Date(endTime).toISOString();
+
       const { data } = await api.post(
         `/api/workspaces/${workspaceId}/assessments/${assessmentId}/shares`,
-        {
-          share_type: "custom",
-          label: linkLabel.trim(),
-          monitoring_overrides: monitoring,
-        }
+        payload
       );
       const newLink: ShareLink = data.data;
       setExistingLinks((prev) => [newLink, ...prev]);
       setLinkLabel("");
-      toast.success("Custom monitoring link generated");
+      setStartTime("");
+      setEndTime("");
+      toast.success("Custom link generated");
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
       toast.error(msg ?? "Failed to generate custom link");
@@ -451,86 +453,133 @@ function CustomTab({ assessmentId, workspaceId }: Readonly<CustomTabProps>) {
 
   return (
     <div className={styles.tabContent}>
+      {/* Info banner */}
       <div className={styles.infoBanner}>
         <IconShield size={14} />
         <span>
-          Custom monitoring link — override proctoring settings for a specific context (e.g., remote
-          office, low-bandwidth environment).
+          Custom links are valid only within the selected time window and can optionally override
+          monitoring settings.
         </span>
       </div>
 
       {/* Label */}
       <Input
         label="Link Label"
-        placeholder='e.g., "Remote office — no proctoring"'
+        placeholder='e.g. "Remote office — low bandwidth"'
         value={linkLabel}
         onChange={(e) => {
           setLinkLabel(e.target.value);
           setLabelError("");
         }}
         error={labelError}
-        hint="Helps you identify this link later"
+        hint="Helps identify this link later"
       />
 
-      {/* Monitoring toggles */}
-      <div className={styles.monitoringSection}>
-        <MonitoringToggleRow
-          label="Tab Monitoring"
-          hint="Flag malpractice on tab or window switch"
-          checked={monitoring.tab_monitoring ?? true}
-          onChange={(v) => set("tab_monitoring", v)}
-        />
-        <MonitoringToggleRow
-          label="Audio Monitoring"
-          hint="Detect sustained background audio or speech"
-          checked={monitoring.audio_monitoring ?? true}
-          onChange={(v) => set("audio_monitoring", v)}
-        />
-        <MonitoringToggleRow
-          label="Video Monitoring"
-          hint="Live camera feed checked for face presence"
-          checked={monitoring.video_monitoring ?? true}
-          onChange={(v) => set("video_monitoring", v)}
-        />
-        <MonitoringToggleRow
-          label="Screenshot Capture"
-          hint="Periodic screenshots uploaded during the session"
-          checked={monitoring.screenshot_enabled ?? true}
-          onChange={(v) => set("screenshot_enabled", v)}
-        />
-
-        {effectiveScreenshot && (
-          <div className={styles.screenshotOptions}>
-            <Select
-              label="Screenshot mode"
-              options={[
-                { value: "time_interval", label: "Time interval" },
-                { value: "count", label: "Total count" },
-              ]}
-              value={monitoring.screenshot_mode ?? "time_interval"}
-              onChange={(v) => set("screenshot_mode", v as "time_interval" | "count")}
-            />
-            {(monitoring.screenshot_mode ?? "time_interval") === "time_interval" ? (
-              <Input
-                label="Interval (minutes)"
-                type="number"
-                min={1}
-                value={monitoring.screenshot_interval_minutes ?? 5}
-                onChange={(e) => set("screenshot_interval_minutes", Number(e.target.value))}
-              />
-            ) : (
-              <Input
-                label="Total screenshots"
-                type="number"
-                min={1}
-                value={monitoring.screenshot_count ?? 10}
-                onChange={(e) => set("screenshot_count", Number(e.target.value))}
-              />
-            )}
-          </div>
-        )}
+      {/* Validity date range */}
+      <div className={styles.dateGrid}>
+        <div>
+          <label htmlFor="custom-link-from-time" className={styles.fieldLabel}>
+            From Date &amp; Time
+          </label>
+          <Input
+            id="custom-link-from-time"
+            type="datetime-local"
+            value={startTime}
+            onChange={(e) => {
+              setStartTime(e.target.value);
+            }}
+          />
+        </div>
+        <div>
+          <label htmlFor="custom-link-to-time" className={styles.fieldLabel}>
+            To Date &amp; Time
+          </label>
+          <Input
+            id="custom-link-to-time"
+            type="datetime-local"
+            value={endTime}
+            onChange={(e) => {
+              setEndTime(e.target.value);
+              setEndError("");
+            }}
+            error={endError}
+          />
+        </div>
       </div>
 
+      {/* Monitoring accordion */}
+      <Accordion
+        title="Override Monitoring Settings (Optional)"
+        subtitle="Choose different monitoring settings for this custom link"
+      >
+        <div className={styles.monitoringSection}>
+          <MonitoringToggleRow
+            icon={<IconTabMonitor />}
+            label="Tab Monitoring"
+            hint="Flag malpractice on tab or window switch"
+            checked={monitoring.tab_monitoring ?? true}
+            onChange={(v) => setMonitoringKey("tab_monitoring", v)}
+          />
+          <MonitoringToggleRow
+            icon={<IconMic />}
+            label="Audio Monitoring"
+            hint="Detect sustained background audio or speech"
+            checked={monitoring.audio_monitoring ?? true}
+            onChange={(v) => setMonitoringKey("audio_monitoring", v)}
+          />
+          <MonitoringToggleRow
+            icon={<IconVideoCamera />}
+            label="Video Monitoring"
+            hint="Live camera feed checked for face presence"
+            checked={monitoring.video_monitoring ?? true}
+            onChange={(v) => setMonitoringKey("video_monitoring", v)}
+          />
+          <MonitoringToggleRow
+            icon={<IconScreenCapture />}
+            label="Screenshot Capture"
+            hint="Periodic screenshots uploaded during the session"
+            checked={monitoring.screenshot_enabled ?? true}
+            onChange={(v) => setMonitoringKey("screenshot_enabled", v)}
+          />
+
+          {effectiveScreenshot && (
+            <div className={styles.screenshotOptions}>
+              <Select
+                label="Screenshot mode"
+                options={[
+                  { value: "time_interval", label: "Time interval" },
+                  { value: "count", label: "Total count" },
+                ]}
+                value={monitoring.screenshot_mode ?? "time_interval"}
+                onChange={(v) =>
+                  setMonitoringKey("screenshot_mode", v as "time_interval" | "count")
+                }
+              />
+              {(monitoring.screenshot_mode ?? "time_interval") === "time_interval" ? (
+                <Input
+                  label="Interval (minutes)"
+                  type="number"
+                  min={1}
+                  value={monitoring.screenshot_interval_minutes ?? 5}
+                  onChange={(e) =>
+                    setMonitoringKey("screenshot_interval_minutes", Number(e.target.value))
+                  }
+                />
+              ) : (
+                <Input
+                  label="Total screenshots"
+                  type="number"
+                  min={1}
+                  value={monitoring.screenshot_count ?? 10}
+                  onChange={(e) => setMonitoringKey("screenshot_count", Number(e.target.value))}
+                />
+              )}
+            </div>
+          )}
+        </div>
+      </Accordion>
+
+      {/* Generate button */}
       <div className={styles.generateRow}>
         <Button onClick={() => void handleGenerate()} isLoading={generating}>
           Generate Link
@@ -541,44 +590,59 @@ function CustomTab({ assessmentId, workspaceId }: Readonly<CustomTabProps>) {
       <div className={styles.existingLinksSection}>
         <h4 className={styles.existingLinksTitle}>Existing Custom Links</h4>
 
-        {loadingLinks ? (
-          <p className={styles.emptyHint}>Loading...</p>
-        ) : existingLinks.length === 0 ? (
+        {loadingLinks && <p className={styles.emptyHint}>Loading...</p>}
+        {!loadingLinks && existingLinks.length === 0 && (
           <p className={styles.emptyHint}>No custom links yet. Generate one above.</p>
-        ) : (
+        )}
+        {!loadingLinks && existingLinks.length > 0 && (
           <div className={styles.customLinksList}>
             {existingLinks.map((link) => {
               const fullUrl = `${globalThis.location.origin}/assessment/${link.share_link}`;
               return (
                 <div key={link.id} className={styles.customLinkCard}>
-                  <div className={styles.customLinkCardHeader}>
+                  <div className={styles.customLinkCardMeta}>
                     <span className={styles.customLinkCardLabel}>
                       {link.label ?? "Unlabelled link"}
                     </span>
-                    <span
-                      className={clsx(styles.activePill, link.is_active && styles.activePillOn)}
-                    >
-                      {link.is_active ? "Active" : "Inactive"}
-                    </span>
+                    <div className={styles.customLinkCardDates}>
+                      {link.start_time && (
+                        <span className={styles.customLinkDate}>
+                          <span className={styles.customLinkDateLabel}>From</span>
+                          {formatDate(link.start_time)}
+                        </span>
+                      )}
+                      {link.end_time && (
+                        <span className={styles.customLinkDate}>
+                          <span className={styles.customLinkDateLabel}>To</span>
+                          {formatDate(link.end_time)}
+                        </span>
+                      )}
+                      <span className={styles.customLinkDate}>
+                        <span className={styles.customLinkDateLabel}>Created</span>
+                        {formatDate(link.created_at)}
+                      </span>
+                    </div>
                   </div>
-                  <div className={styles.linkRowInput}>
+                  <div className={styles.customLinkCardUrl}>
                     <input
                       className={styles.linkField}
                       readOnly
                       value={fullUrl}
                       aria-label={link.label ?? "Custom share link"}
                     />
-                    <CopyButton text={fullUrl} />
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      leftIcon={<IconDelete size={13} />}
-                      onClick={() => void handleRevoke(link.id)}
-                      isLoading={revoking === link.id}
-                      title="Revoke this link"
-                    >
-                      Revoke
-                    </Button>
+                    <div className={styles.customLinkActions}>
+                      <CopyButton text={fullUrl} />
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        leftIcon={<IconDelete size={13} />}
+                        onClick={() => void handleRevoke(link.id)}
+                        isLoading={revoking === link.id}
+                        title="Revoke this link"
+                      >
+                        Revoke
+                      </Button>
+                    </div>
                   </div>
                 </div>
               );
@@ -618,15 +682,8 @@ export function ShareWizardModal({ isOpen, onClose, assessment }: Readonly<Share
         {activeTab === "permanent" && (
           <PermanentTab shareLink={assessment.share_link} assessmentName={assessment.name} />
         )}
-        {activeTab === "temporary" && (
-          <TemporaryTab
-            assessmentId={assessment.id}
-            workspaceId={assessment.workspace_id}
-            assessmentName={assessment.name}
-          />
-        )}
         {activeTab === "custom" && (
-          <CustomTab assessmentId={assessment.id} workspaceId={assessment.workspace_id} />
+          <CustomLinkTab assessmentId={assessment.id} workspaceId={assessment.workspace_id} />
         )}
       </div>
     </Modal>
