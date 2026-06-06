@@ -1,6 +1,5 @@
 import { useState, type ComponentType, type ReactNode } from "react";
 import styles from "./CandidateDetailsTabs.module.css";
-import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { RichText } from "@/components/ui/RichText";
 import { clsx } from "@/utils/helpers";
@@ -23,8 +22,6 @@ import { getStatusLabel } from "@/constants/statusColors";
 
 interface CandidateDetailsTabsProps {
   data: CandidateSubmissionDetail;
-  selectedVersion: string;
-  onVersionChange?: (version: string) => void;
 }
 
 interface DetailTab {
@@ -201,23 +198,50 @@ function QuestionReview({ index, qa }: Readonly<{ index: number; qa: QuestionAns
 }
 
 function RoundsReview({ rounds }: Readonly<{ rounds: RoundResult[] }>) {
+  const [activeRound, setActiveRound] = useState(() => rounds[0]?.round_number ?? null);
+
+  if (rounds.length === 0) {
+    return <p className={styles.emptyPlaceholder}>No rounds recorded for this candidate.</p>;
+  }
+
+  const selected = rounds.find((r) => r.round_number === activeRound) ?? rounds[0];
+
   return (
     <div className={styles.rounds}>
-      {rounds.map((round) => (
-        <section key={round.round_number} className={styles.round}>
-          <div className={styles.roundHead}>
-            <h3 className={styles.roundTitle}>Round {round.round_number}</h3>
-            <span className={styles.roundMeta}>
-              {round.question_answers.length} Questions &nbsp;·&nbsp; {round.percentage}%
-            </span>
+      {/* Round selector tabs — one per round in the response. */}
+      <div className={styles.roundTabBar} role="tablist" aria-label="Rounds">
+        {rounds.map((round) => (
+          <button
+            key={round.round_number}
+            type="button"
+            role="tab"
+            aria-selected={round.round_number === selected.round_number}
+            className={clsx(
+              styles.roundTab,
+              round.round_number === selected.round_number && styles.roundTabActive
+            )}
+            onClick={() => setActiveRound(round.round_number)}
+          >
+            Round {round.round_number}
+          </button>
+        ))}
+      </div>
+
+      <section className={styles.round}>
+        <div className={styles.roundHead}>
+          <div className={styles.roundHeadInfo}>
+            <h3 className={styles.roundTitle}>Round {selected.round_number}</h3>
           </div>
-          <div className={styles.questionList}>
-            {round.question_answers.map((qa, index) => (
-              <QuestionReview key={qa.question_id} index={index} qa={qa} />
-            ))}
-          </div>
-        </section>
-      ))}
+          <span className={styles.roundMeta}>
+            {selected.question_answers.length} Questions &nbsp;·&nbsp; {selected.percentage}%
+          </span>
+        </div>
+        <div className={styles.questionList}>
+          {selected.question_answers.map((qa, index) => (
+            <QuestionReview key={qa.question_id} index={index} qa={qa} />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
@@ -308,22 +332,10 @@ function ScreenshotsTab({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function CandidateDetailsTabs({
-  data,
-  selectedVersion,
-  onVersionChange,
-}: CandidateDetailsTabsProps) {
+export function CandidateDetailsTabs({ data }: CandidateDetailsTabsProps) {
   const [activeTabId, setActiveTabId] = useState(TABS[0].id);
 
   const activeTab = TABS.find((tab) => tab.id === activeTabId) ?? TABS[0];
-
-  const versionOptions = [
-    { value: "current", label: "Latest" },
-    ...data.available_versions.map((v) => ({
-      value: String(v.version),
-      label: `Version ${v.version}`,
-    })),
-  ];
 
   let panelContent: ReactNode;
   if (activeTab.id === "overall") {
@@ -339,16 +351,6 @@ export function CandidateDetailsTabs({
   return (
     <section className={styles.panel}>
       <div className={styles.stickyNav}>
-        <div className={styles.toolbar}>
-          <Select
-            options={versionOptions}
-            value={selectedVersion}
-            onChange={onVersionChange}
-            fullWidth={false}
-            style={{ width: 170 }}
-          />
-        </div>
-
         <div className={styles.tabBar} role="tablist" aria-label="Candidate detail sections">
           {TABS.map((tab) => (
             <button

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import styles from "./CandidateDetailsPage.module.css";
 import { getAvatarColor, getInitials } from "@/utils/helpers";
-import { IconMail } from "@/assets/icons";
+import { IconMail, IconChevronLeft } from "@/assets/icons";
 import { CandidateDetailsTabs } from "@/features/candidate/components/CandidateDetailsTabs";
 import { Header } from "@/components/layout/Header";
 import { Select } from "@/components/ui/Select";
@@ -67,6 +67,7 @@ export default function CandidateDetailsPage() {
     assessmentId: string;
     candidateId: string;
   }>();
+  const navigate = useNavigate();
 
   const [data, setData] = useState<CandidateSubmissionDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -147,6 +148,21 @@ export default function CandidateDetailsPage() {
         }
       />
 
+      <button
+        onClick={() => navigate(`/workspaces/${workspaceId}/assessments/${assessmentId}`)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+          color: "var(--text-secondary)",
+          fontSize: 13,
+          marginBottom: 16,
+          cursor: "pointer",
+        }}
+      >
+        <IconChevronLeft size={14} /> Back to Assessment
+      </button>
+
       <div className={styles.page}>
         <article className={styles.profileCard} aria-label="Candidate profile">
           <div className={styles.profileInner}>
@@ -183,7 +199,7 @@ export default function CandidateDetailsPage() {
         </article>
 
         <div className={styles.tabsArea}>
-          <CandidateDetailsTabs data={data} selectedVersion={selectedVersion} />
+          <CandidateDetailsTabs data={data} />
         </div>
       </div>
     </div>
