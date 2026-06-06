@@ -401,11 +401,12 @@ export const IconDotsVertical = icon(
 /* ── Candidate detail tab icons (path-only) ── */
 // "Over All" — a layout/overview pane.
 export const IconOverview = icon(
-  <>
-    <path d="M4 5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5z" />
-    <path d="M4 9h16" />
-    <path d="M9 9v11" />
-  </>
+  <path
+    fill="currentColor"
+    stroke="none"
+    d="M120-840h320v320H120v-320Zm80 80v160-160Zm320-80h320v320H520v-320Zm80 80v160-160ZM120-440h320v320H120v-320Zm80 80v160-160Zm440-80h80v120h120v80H720v120h-80v-120H520v-80h120v-120Zm-40-320v160h160v-160H600Zm-400 0v160h160v-160H200Zm0 400v160h160v-160H200Z"
+  />,
+  "0 -960 960 960"
 );
 // "Rounds" — stacked layers for the successive rounds.
 export const IconRounds = icon(
@@ -417,21 +418,21 @@ export const IconRounds = icon(
 );
 // "Malpractice" — a shield with an alert mark.
 export const IconMalpractice = icon(
-  <>
-    <path d="M12 3 5 6v5c0 4.5 3 7.6 7 9 4-1.4 7-4.5 7-9V6l-7-3z" />
-    <path d="M12 8.5v4" />
-    <path d="M12 15.5h.01" />
-  </>
+  <path
+    fill="currentColor"
+    stroke="none"
+    d="M480-80q-139-35-229.5-159.5T160-516v-244l320-120 320 120v244q0 152-90.5 276.5T480-80Zm0-84q104-33 172-132t68-220v-189l-240-90-240 90v189q0 121 68 220t172 132Zm0-316Z"
+  />,
+  "0 -960 960 960"
 );
-// "Screenshots" — a capture/crop frame.
+// "Screenshots" — an image frame.
 export const IconScreenshot = icon(
-  <>
-    <path d="M4 8V5a1 1 0 0 1 1-1h3" />
-    <path d="M16 4h3a1 1 0 0 1 1 1v3" />
-    <path d="M20 16v3a1 1 0 0 1-1 1h-3" />
-    <path d="M8 20H5a1 1 0 0 1-1-1v-3" />
-    <path d="M9 12h6" />
-  </>
+  <path
+    fill="currentColor"
+    stroke="none"
+    d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm40-80h480L570-480 450-320l-90-120-120 160Zm-40 80v-560 560Z"
+  />,
+  "0 -960 960 960"
 );
 // "Resume" — a filled play triangle.
 export const IconPlay = icon(<path fill="currentColor" stroke="none" d="M8 5v14l11-7z" />);

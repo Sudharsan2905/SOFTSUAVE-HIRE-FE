@@ -1,7 +1,12 @@
+/* One merged card: the tab-bar header sits on top, a divider separates it from
+   the active panel content below — header and body share a single rounded card. */
 .panel {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Merged card — holds the tab bar and the active panel as one rounded card. */
@@ -76,10 +81,12 @@
   flex-direction: column;
   /* Bottom gap so the pinned action bar sits clear of the card's edge. */
   padding: 20px 20px 28px;
-  /* Fill the rest of the viewport so short panels (e.g. empty states) still
-     reach the bottom of the screen. ~300px ≈ app header + page header +
-     profile card + the tab bar that sit above this content. */
-  min-height: calc(100vh - 300px);
+  /* Lock the content area to the visible frame height (~300px ≈ app header +
+     page header + profile card + the tab bar that sit above this content) and
+     scroll internally when the content overflows, keeping the tab-bar header
+     fixed at the top of the card. */
+  height: calc(100vh - 300px);
+  overflow-y: auto;
   font-size: 14px;
   color: var(--text-secondary);
 }
@@ -171,6 +178,8 @@
   justify-content: flex-end;
   gap: 12px;
   margin-top: auto; /* pin the action buttons to the bottom of the card */
+  padding-top: 16px;
+  border-top: 1.5px solid var(--border-default); /* divider above the action bar */
 }
 
 /* Tablet: two stats per row. */
