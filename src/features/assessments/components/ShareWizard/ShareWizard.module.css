@@ -157,12 +157,12 @@
 
 /* ─── Link field (reused in existing custom link cards) ──────────────────────── */
 .linkField {
-  flex: 1;
+  width: 100%;
   min-width: 0;
-  padding: 9px 12px;
+  padding: 11px 14px;
   border-radius: var(--radius-md, 8px);
-  border: 1px solid var(--border-primary);
-  font-size: 12px;
+  border: 1px solid var(--border-default);
+  font-size: 13px;
   color: var(--text-secondary);
   background: var(--bg-secondary);
   overflow: hidden;
@@ -198,6 +198,7 @@
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-lg, 12px);
   overflow: hidden;
+  background: var(--bg-hover);
 }
 
 .accordionTrigger {
@@ -214,8 +215,9 @@
   transition: background 0.15s ease;
 }
 
-.accordionTrigger:hover {
-  background: var(--bg-hover);
+/* Divider beneath the header, shown only while the accordion is expanded. */
+.accordionTriggerOpen {
+  border-bottom: 1px solid var(--border-default);
 }
 
 .accordionTrigger:focus-visible {
@@ -265,7 +267,6 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  border-top: 1px solid var(--border-primary);
 }
 
 .toggleRow {
@@ -317,7 +318,6 @@
 .screenshotOptions {
   padding: 12px 16px;
   display: flex;
-  flex-direction: column;
   gap: 10px;
   border-top: 1px dashed var(--border-primary);
   background: var(--bg-secondary);
@@ -363,66 +363,112 @@
 .customLinkCard {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px;
-  border: 1px solid var(--border-primary);
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-lg, 12px);
-  background: var(--bg-secondary);
+  background: var(--bg-elevated, #fff);
   transition:
     border-color 0.12s ease,
     box-shadow 0.12s ease;
 }
 
 .customLinkCard:hover {
-  border-color: var(--primary-300);
+  border-color: var(--border-strong);
   box-shadow: var(--shadow-sm);
 }
 
-.customLinkCardMeta {
+/* Header row: clock icon + label, with a divider beneath. */
+.customLinkCardHead {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.customLinkClock {
+  flex-shrink: 0;
+  color: var(--text-primary);
+}
+
+/* Header chain/link icon — light blue. */
+.customLinkIcon {
+  flex-shrink: 0;
+  color: var(--primary-600);
 }
 
 .customLinkCardLabel {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 500;
   color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.customLinkCardLabel strong {
+  font-weight: 700;
+}
+
 .customLinkCardDates {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* FROM → TO sit on one line; the arrow separates them. */
+.customLinkDateRow {
+  display: flex;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px 96px;
 }
 
 .customLinkDate {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
+  gap: 8px;
+  font-size: 14px;
   color: var(--text-secondary);
 }
 
 .customLinkDateLabel {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
 }
 
-.customLinkCardUrl {
-  display: flex;
-  gap: 6px;
-  align-items: center;
+.customLinkArrow {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
 }
 
 .customLinkActions {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Created date, sits at the bottom-left of the card — small/subtle. */
+.customLinkCreated {
+  display: flex;
+  align-items: center;
   gap: 6px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.customLinkCreated .customLinkDateLabel {
+  font-size: 10px;
+}
+
+.customLinkActionBtns {
+  display: flex;
+  gap: 8px;
   flex-shrink: 0;
 }

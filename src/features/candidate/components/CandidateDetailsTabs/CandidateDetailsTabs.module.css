@@ -81,12 +81,8 @@
   flex-direction: column;
   /* Bottom gap so the pinned action bar sits clear of the card's edge. */
   padding: 20px 20px 28px;
-  /* Lock the content area to the visible frame height (~300px ≈ app header +
-     page header + profile card + the tab bar that sit above this content) and
-     scroll internally when the content overflows, keeping the tab-bar header
-     fixed at the top of the card. */
-  height: calc(100vh - 300px);
-  overflow-y: auto;
+  /* Content grows with its data and the whole page scrolls; the .stickyNav
+     tab bar stays pinned beneath the app header via position: sticky. */
   font-size: 14px;
   color: var(--text-secondary);
 }
