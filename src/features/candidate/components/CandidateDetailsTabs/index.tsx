@@ -2,6 +2,7 @@ import { useState, type ComponentType, type ReactNode } from "react";
 import styles from "./CandidateDetailsTabs.module.css";
 import { Button } from "@/components/ui/Button";
 import { RichText } from "@/components/ui/RichText";
+import { Modal } from "@/components/ui/Modal";
 import { clsx } from "@/utils/helpers";
 import {
   IconOverview,
@@ -11,7 +12,17 @@ import {
   IconRefresh,
   IconPlay,
   IconPower,
+  IconUsers,
+  IconUser,
+  IconEye,
+  IconCopy,
+  IconExternalLink,
+  IconMonitor,
+  IconMic,
+  IconChevronLeft,
+  IconChevronRight,
 } from "@/assets/icons";
+import type { MalpracticeType } from "@/types";
 import type {
   CandidateSubmissionDetail,
   QuestionAnswer,
@@ -248,54 +259,293 @@ function RoundsReview({ rounds }: Readonly<{ rounds: RoundResult[] }>) {
 
 // ─── Malpractice Tab ─────────────────────────────────────────────────────────
 
+interface MalpracticeMeta {
+  label: string;
+  description: string;
+  Icon: ComponentType<{ size?: number | string }>;
+}
+
+// Human-readable label, description and glyph for every detected event type.
+const MALPRACTICE_META: Record<MalpracticeType, MalpracticeMeta> = {
+  tab_switch: {
+    label: "Tab Switch",
+    description: "Candidate switched to another tab/application",
+    Icon: IconExternalLink,
+  },
+  fullscreen_exit: {
+    label: "Fullscreen Exit",
+    description: "Candidate exited fullscreen mode",
+    Icon: IconMonitor,
+  },
+  screen_share_stop: {
+    label: "Screen Share Stopped",
+    description: "Screen sharing was stopped during the interview",
+    Icon: IconMonitor,
+  },
+  devtools_open: {
+    label: "Developer Tools",
+    description: "Browser developer tools were opened",
+    Icon: IconMonitor,
+  },
+  copy_paste: {
+    label: "Copy Paste",
+    description: "Content copied and pasted during the interview",
+    Icon: IconCopy,
+  },
+  keyboard_shortcut: {
+    label: "Keyboard Shortcut",
+    description: "A restricted keyboard shortcut was used",
+    Icon: IconCopy,
+  },
+  multiple_faces: {
+    label: "Multiple Face",
+    description: "Multiple faces were detected in the frame",
+    Icon: IconUsers,
+  },
+  face_absence: {
+    label: "Looking Away",
+    description: "Candidate was not looking at the screen",
+    Icon: IconUser,
+  },
+  eye_direction: {
+    label: "Looking Away",
+    description: "Candidate was not looking at the screen",
+    Icon: IconEye,
+  },
+  background_noise: {
+    label: "Background Noise",
+    description: "Background noise was detected during the interview",
+    Icon: IconMic,
+  },
+  audio_violation: {
+    label: "Audio Violation",
+    description: "An audio violation was detected during the interview",
+    Icon: IconMic,
+  },
+  speaking: {
+    label: "Another Person",
+    description: "Another person was detected speaking in the background",
+    Icon: IconUsers,
+  },
+};
+
+const FALLBACK_MALPRACTICE_META: MalpracticeMeta = {
+  label: "Malpractice",
+  description: "A monitoring violation was detected during the interview",
+  Icon: IconMalpractice,
+};
+
+const MALPRACTICE_PAGE_SIZE = 8;
+
+type MediaPreview =
+  | { kind: "image"; url: string; title: string }
+  | { kind: "video"; url: string; title: string }
+  | { kind: "audio"; url: string; title: string };
+
 function MalpracticeTab({ events }: Readonly<{ events: MalpracticeEvent[] }>) {
+  const [page, setPage] = useState(1);
+  const [preview, setPreview] = useState<MediaPreview | null>(null);
+
   if (events.length === 0) {
     return <p className={styles.emptyPlaceholder}>No malpractice events recorded.</p>;
   }
 
+  const totalPages = Math.ceil(events.length / MALPRACTICE_PAGE_SIZE);
+  const safePage = Math.min(page, totalPages);
+  const start = (safePage - 1) * MALPRACTICE_PAGE_SIZE;
+  const pageEvents = events.slice(start, start + MALPRACTICE_PAGE_SIZE);
+
   return (
-    <div className={styles.malpracticeList}>
-      {events.map((event, index) => (
-        <article key={index} className={styles.malpracticeCard}>
-          <div className={styles.malpracticeHead}>
-            <span className={styles.malpracticeType}>{event.type.replace(/_/g, " ")}</span>
-            <span className={styles.malpracticeRound}>Round {event.round}</span>
-            <span className={styles.malpracticeTimestamp}>
-              {new Date(event.timestamp).toLocaleString()}
-            </span>
+    <div className={styles.mpWrap}>
+      <div className={styles.mpTableScroll}>
+        <table className={styles.mpTable}>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Face Image</th>
+              <th>Screen Image</th>
+              <th>Screen Video</th>
+              <th>Audio</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pageEvents.map((event, i) => {
+              const meta = MALPRACTICE_META[event.type] ?? FALLBACK_MALPRACTICE_META;
+              // Backend may override the label/description; the icon is always local.
+              const label = event.label ?? meta.label;
+              const description = event.description ?? meta.description;
+              const rowNo = start + i + 1;
+              const when = new Date(event.timestamp);
+              const { face_image_url, screen_image_url, screen_video_url, audio_clip_url } = event;
+              return (
+                <tr key={`${event.type}-${event.timestamp}-${rowNo}`}>
+                  <td className={styles.mpNo}>{rowNo}</td>
+                  <td>
+                    <span className={styles.mpType}>
+                      <meta.Icon size={16} />
+                      {label}
+                    </span>
+                  </td>
+                  <td className={styles.mpDesc}>{description}</td>
+                  <td>
+                    {face_image_url ? (
+                      <button
+                        type="button"
+                        className={styles.mpThumb}
+                        onClick={() =>
+                          setPreview({
+                            kind: "image",
+                            url: face_image_url,
+                            title: `${label} — Face Capture`,
+                          })
+                        }
+                      >
+                        <img src={face_image_url} alt="Face capture" />
+                      </button>
+                    ) : (
+                      <span className={styles.mpEmpty}>—</span>
+                    )}
+                  </td>
+                  <td>
+                    {screen_image_url ? (
+                      <button
+                        type="button"
+                        className={styles.mpThumb}
+                        onClick={() =>
+                          setPreview({
+                            kind: "image",
+                            url: screen_image_url,
+                            title: `${label} — Screen Capture`,
+                          })
+                        }
+                      >
+                        <img src={screen_image_url} alt="Screen capture" />
+                      </button>
+                    ) : (
+                      <span className={styles.mpEmpty}>—</span>
+                    )}
+                  </td>
+                  <td>
+                    {screen_video_url ? (
+                      <button
+                        type="button"
+                        className={styles.mpMediaBtn}
+                        aria-label="Play screen recording"
+                        onClick={() =>
+                          setPreview({
+                            kind: "video",
+                            url: screen_video_url,
+                            title: `${label} — Screen Recording`,
+                          })
+                        }
+                      >
+                        <IconPlay size={16} />
+                      </button>
+                    ) : (
+                      <span className={styles.mpEmpty}>—</span>
+                    )}
+                  </td>
+                  <td>
+                    {audio_clip_url ? (
+                      <button
+                        type="button"
+                        className={styles.mpMediaBtn}
+                        aria-label="Play audio clip"
+                        onClick={() =>
+                          setPreview({
+                            kind: "audio",
+                            url: audio_clip_url,
+                            title: `${label} — Audio Clip`,
+                          })
+                        }
+                      >
+                        <IconMic size={16} />
+                      </button>
+                    ) : (
+                      <span className={styles.mpEmpty}>—</span>
+                    )}
+                  </td>
+                  <td>
+                    <span className={styles.mpTime}>
+                      <span className={styles.mpDate}>
+                        {when.toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </span>
+                      <span className={styles.mpClock}>
+                        {when.toLocaleTimeString("en-US", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className={styles.mpFooter}>
+        <span className={styles.mpCount}>
+          Showing {start + 1} to {start + pageEvents.length} of {events.length} events
+        </span>
+        {totalPages > 1 && (
+          <div className={styles.mpPager}>
+            <button
+              type="button"
+              className={styles.mpPageNav}
+              disabled={safePage === 1}
+              onClick={() => setPage(safePage - 1)}
+              aria-label="Previous page"
+            >
+              <IconChevronLeft size={16} />
+            </button>
+            {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((p) => (
+              <button
+                key={p}
+                type="button"
+                className={clsx(styles.mpPageBtn, p === safePage && styles.mpPageBtnActive)}
+                onClick={() => setPage(p)}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              type="button"
+              className={styles.mpPageNav}
+              disabled={safePage === totalPages}
+              onClick={() => setPage(safePage + 1)}
+              aria-label="Next page"
+            >
+              <IconChevronRight size={16} />
+            </button>
           </div>
-          <div className={styles.malpracticeMedia}>
-            {event.screen_image_url && (
-              <div className={styles.mediaItem}>
-                <span className={styles.mediaLabel}>Screen Capture</span>
-                <img
-                  src={event.screen_image_url}
-                  alt="Screen capture"
-                  className={styles.mediaImage}
-                />
-              </div>
-            )}
-            {event.face_image_url && (
-              <div className={styles.mediaItem}>
-                <span className={styles.mediaLabel}>Face Capture</span>
-                <img src={event.face_image_url} alt="Face capture" className={styles.mediaImage} />
-              </div>
-            )}
-            {event.screen_video_url && (
-              <div className={styles.mediaItem}>
-                <span className={styles.mediaLabel}>Screen Recording</span>
-                <video src={event.screen_video_url} controls className={styles.mediaVideo} />
-              </div>
-            )}
-            {event.audio_clip_url && (
-              <div className={styles.mediaItem}>
-                <span className={styles.mediaLabel}>Audio Clip</span>
-                <audio src={event.audio_clip_url} controls className={styles.mediaAudio} />
-              </div>
-            )}
-          </div>
-        </article>
-      ))}
+        )}
+      </div>
+
+      <Modal
+        isOpen={preview !== null}
+        onClose={() => setPreview(null)}
+        title={preview?.title}
+        size="lg"
+      >
+        {preview?.kind === "image" && (
+          <img src={preview.url} alt={preview.title} className={styles.mpPreviewImage} />
+        )}
+        {preview?.kind === "video" && (
+          <video src={preview.url} controls autoPlay className={styles.mpPreviewVideo} />
+        )}
+        {preview?.kind === "audio" && (
+          <audio src={preview.url} controls autoPlay style={{ width: "100%" }} />
+        )}
+      </Modal>
     </div>
   );
 }
@@ -305,6 +555,8 @@ function MalpracticeTab({ events }: Readonly<{ events: MalpracticeEvent[] }>) {
 function ScreenshotsTab({
   screenshots,
 }: Readonly<{ screenshots: CandidateSubmissionDetail["screenshots"] }>) {
+  const [preview, setPreview] = useState<MediaPreview | null>(null);
+
   if (screenshots.length === 0) {
     return <p className={styles.emptyPlaceholder}>No screenshots captured.</p>;
   }
@@ -313,11 +565,25 @@ function ScreenshotsTab({
     <div className={styles.screenshotGrid}>
       {screenshots.map((screenshot, index) => (
         <figure key={index} className={styles.screenshotItem}>
-          <img
-            src={screenshot.url}
-            alt={`Screenshot from Round ${screenshot.round}`}
-            className={styles.screenshotImage}
-          />
+          <button
+            type="button"
+            className={styles.screenshotButton}
+            onClick={() =>
+              setPreview({
+                kind: "image",
+                url: screenshot.url,
+                title: `Round ${screenshot.round} — ${new Date(
+                  screenshot.taken_at
+                ).toLocaleString()}`,
+              })
+            }
+          >
+            <img
+              src={screenshot.url}
+              alt={`Screenshot from Round ${screenshot.round}`}
+              className={styles.screenshotImage}
+            />
+          </button>
           <figcaption className={styles.screenshotCaption}>
             <span className={styles.screenshotRound}>Round {screenshot.round}</span>
             <span className={styles.screenshotTime}>
@@ -326,6 +592,17 @@ function ScreenshotsTab({
           </figcaption>
         </figure>
       ))}
+
+      <Modal
+        isOpen={preview !== null}
+        onClose={() => setPreview(null)}
+        title={preview?.title}
+        size="lg"
+      >
+        {preview?.kind === "image" && (
+          <img src={preview.url} alt={preview.title} className={styles.mpPreviewImage} />
+        )}
+      </Modal>
     </div>
   );
 }

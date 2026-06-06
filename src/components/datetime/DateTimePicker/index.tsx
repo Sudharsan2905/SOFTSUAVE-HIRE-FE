@@ -123,7 +123,7 @@ export function DateTimePicker({
       window.removeEventListener("resize", reposition);
       window.removeEventListener("scroll", reposition, true);
     };
-  }, [open]);
+  }, [open, value]);
 
   useEffect(() => {
     if (!open) return;
@@ -211,6 +211,7 @@ export function DateTimePicker({
               visibility: coords ? "visible" : "hidden",
             }}
             aria-label="Date and time picker"
+            onMouseDown={(e) => e.stopPropagation()}
           >
             {/* Calendar */}
             <div className={styles.calendar}>
@@ -274,57 +275,59 @@ export function DateTimePicker({
               </div>
             </div>
 
-            {/* Time */}
-            <div className={styles.time}>
-              <span className={styles.timeTitle}>Time</span>
-              <div className={styles.timeCols}>
-                <div className={styles.timeScroll}>
-                  {HOURS.map((h) => (
-                    <button
-                      key={h}
-                      type="button"
-                      className={`${styles.timeOpt} ${h === hour12 ? styles.timeOptActive : ""}`}
-                      onClick={() => setTimePart({ h })}
-                    >
-                      {pad(h)}
-                    </button>
-                  ))}
+            {/* Time — only shown once a calendar day has been selected. */}
+            {parsed && (
+              <div className={styles.time}>
+                <span className={styles.timeTitle}>Time</span>
+                <div className={styles.timeCols}>
+                  <div className={styles.timeScroll}>
+                    {HOURS.map((h) => (
+                      <button
+                        key={h}
+                        type="button"
+                        className={`${styles.timeOpt} ${h === hour12 ? styles.timeOptActive : ""}`}
+                        onClick={() => setTimePart({ h })}
+                      >
+                        {pad(h)}
+                      </button>
+                    ))}
+                  </div>
+                  <div className={styles.timeScroll}>
+                    {MINUTES.map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        className={`${styles.timeOpt} ${m === minute ? styles.timeOptActive : ""}`}
+                        onClick={() => setTimePart({ m })}
+                      >
+                        {pad(m)}
+                      </button>
+                    ))}
+                  </div>
+                  <div className={`${styles.timeScroll} ${styles.ampmCol}`}>
+                    {(["AM", "PM"] as const).map((ap) => (
+                      <button
+                        key={ap}
+                        type="button"
+                        className={`${styles.timeOpt} ${ap === ampm ? styles.timeOptActive : ""}`}
+                        onClick={() => setTimePart({ ap })}
+                      >
+                        {ap}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className={styles.timeScroll}>
-                  {MINUTES.map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      className={`${styles.timeOpt} ${m === minute ? styles.timeOptActive : ""}`}
-                      onClick={() => setTimePart({ m })}
-                    >
-                      {pad(m)}
-                    </button>
-                  ))}
-                </div>
-                <div className={`${styles.timeScroll} ${styles.ampmCol}`}>
-                  {(["AM", "PM"] as const).map((ap) => (
-                    <button
-                      key={ap}
-                      type="button"
-                      className={`${styles.timeOpt} ${ap === ampm ? styles.timeOptActive : ""}`}
-                      onClick={() => setTimePart({ ap })}
-                    >
-                      {ap}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
-              <div className={styles.footer}>
-                <span className={styles.hint}>
-                  {parsed ? format(parsed, "MMM d, h:mm a") : "Pick a date to apply time"}
-                </span>
-                <button type="button" className={styles.clearBtn} onClick={handleClear}>
-                  Clear
-                </button>
+                <div className={styles.footer}>
+                  <span className={styles.hint}>
+                    {parsed ? format(parsed, "MMM d, h:mm a") : "Pick a date to apply time"}
+                  </span>
+                  <button type="button" className={styles.clearBtn} onClick={handleClear}>
+                    Clear
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </section>,
           document.body
         )}

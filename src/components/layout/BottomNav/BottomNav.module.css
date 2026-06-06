@@ -52,10 +52,10 @@
   color: var(--text-secondary);
 }
 .item.active {
-  color: var(--primary-600);
+  color: var(--logo-color);
 }
 [data-theme="dark"] .item.active {
-  color: var(--primary-400);
+  color: var(--logo-color);
 }
 .item.disabled {
   color: var(--text-disabled);
@@ -70,10 +70,10 @@
   width: 4px;
   height: 4px;
   border-radius: var(--radius-full);
-  background: var(--primary-600);
+  background: var(--logo-color);
 }
 [data-theme="dark"] .item.active::after {
-  background: var(--primary-400);
+  background: var(--logo-color);
 }
 
 /* Tap feedback */
@@ -99,10 +99,10 @@
   transform: scale(0.9);
 }
 .item.active .iconWrap {
-  background: var(--primary-50);
+  background: var(--logo-tint);
 }
 [data-theme="dark"] .item.active .iconWrap {
-  background: rgba(37, 99, 255, 0.12);
+  background: var(--logo-tint);
 }
 
 /* ── Workspace switcher item (mirrors .item layout without NavLink) ── */

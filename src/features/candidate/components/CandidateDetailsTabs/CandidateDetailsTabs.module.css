@@ -705,8 +705,20 @@
 /* ── Screenshots gallery (Screenshots tab) ───────────────────────────────── */
 .screenshotGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .screenshotItem {
@@ -727,6 +739,15 @@
   box-shadow: var(--shadow-md);
 }
 
+.screenshotButton {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
 .screenshotImage {
   display: block;
   width: 100%;
@@ -734,6 +755,11 @@
   object-fit: cover;
   background: var(--bg-muted);
   border-bottom: 1.5px solid var(--border-default);
+  transition: transform var(--transition-fast);
+}
+
+.screenshotButton:hover .screenshotImage {
+  transform: scale(1.02);
 }
 
 .screenshotCaption {
