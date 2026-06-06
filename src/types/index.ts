@@ -170,6 +170,8 @@ export type MalpracticeType =
 
 export interface MalpracticeEvent {
   type: MalpracticeType;
+  label?: string | null;
+  description?: string | null;
   timestamp: string;
   round: number;
   screen_image_url: string | null;
