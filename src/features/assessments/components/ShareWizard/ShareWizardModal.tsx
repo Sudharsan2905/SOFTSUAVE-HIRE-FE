@@ -362,7 +362,7 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
     video_monitoring: true,
     screenshot_enabled: true,
     screenshot_mode: "time_interval",
-    screenshot_interval_minutes: 5,
+    screenshot_interval_seconds: 5,
   });
   const [generating, setGenerating] = useState(false);
   const [existingLinks, setExistingLinks] = useState<ShareLink[]>([]);
@@ -565,9 +565,9 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
                   label="Interval (minutes)"
                   type="number"
                   min={1}
-                  value={monitoring.screenshot_interval_minutes ?? 5}
+                  value={monitoring.screenshot_interval_seconds ?? 5}
                   onChange={(e) =>
-                    setMonitoringKey("screenshot_interval_minutes", Number(e.target.value))
+                    setMonitoringKey("screenshot_interval_seconds", Number(e.target.value))
                   }
                 />
               ) : (

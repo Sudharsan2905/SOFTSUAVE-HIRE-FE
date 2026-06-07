@@ -39,7 +39,7 @@ const defaultMonitoring: MonitoringConfig = {
   audio_monitoring: true,
   video_monitoring: true,
   screenshot_mode: "time_interval",
-  screenshot_interval_minutes: 5,
+  screenshot_interval_seconds: 5,
   screenshot_enabled: true,
 };
 

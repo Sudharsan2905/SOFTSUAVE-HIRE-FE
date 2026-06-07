@@ -137,6 +137,7 @@ export function useNetworkMonitoring({
 
       switch (msg.type) {
         case "connected":
+          console.log(`[WS] Session connected: remaining=${msg.remaining_seconds ?? "N/A"}s q=${msg.current_question_idx ?? 0}`);
           setNetworkStatus("connected");
           if (msg.remaining_seconds !== undefined || msg.current_question_idx !== undefined) {
             onSessionStateRef.current?.(
@@ -149,10 +150,12 @@ export function useNetworkMonitoring({
           if (networkStatus === "reconnecting") setNetworkStatus("connected");
           break;
         case "on_hold":
+          console.warn("[WS] Session placed on hold by server");
           setNetworkStatus("on_hold");
           onSessionOnHoldRef.current?.();
           break;
         case "resume_approved":
+          console.log(`[WS] Session resumed: remaining=${msg.remaining_seconds ?? "N/A"}s q=${msg.current_question_idx ?? 0}`);
           setNetworkStatus("connected");
           onResumeApprovedRef.current?.(
             msg.remaining_seconds ?? null,
@@ -160,10 +163,12 @@ export function useNetworkMonitoring({
           );
           break;
         case "terminated":
+          console.warn("[WS] Session terminated by server");
           setNetworkStatus("offline");
           onTerminatedRef.current?.();
           break;
         case "admin_warning":
+          console.log(`[WS] Admin warning received: "${msg.message ?? ""}"`);
           if (msg.message) onAdminWarningRef.current?.(msg.message);
           break;
       }
@@ -177,6 +182,7 @@ export function useNetworkMonitoring({
     const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
     const url = `${apiBase.replace(/^https/, "wss").replace(/^http/, "ws")}/api/ws/interview/${submissionId}?token=${accessToken}`;
 
+    console.log(`[WS] Connecting: submission=${submissionId}`);
     const ws = new WebSocket(url);
     wsRef.current = ws;
 
@@ -185,6 +191,7 @@ export function useNetworkMonitoring({
         ws.close();
         return;
       }
+      console.log(`[WS] Connected: submission=${submissionId}`);
       retryCountRef.current = 0;
       setNetworkStatus("connected");
       setIsOnline(true);
@@ -193,7 +200,9 @@ export function useNetworkMonitoring({
 
     ws.onmessage = handleMessage;
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
+      const reasonPart = event.reason ? ` reason="${event.reason}"` : "";
+      console.log(`[WS] Closed: submission=${submissionId} code=${event.code}${reasonPart}`);
       stopHeartbeat();
       if (unmountedRef.current) return;
       setIsOnline(false);
@@ -205,21 +214,28 @@ export function useNetworkMonitoring({
       scheduleReconnect();
     };
 
-    ws.onerror = () => {
+    ws.onerror = (event) => {
+      console.error(`[WS] Error: submission=${submissionId}`, event);
       // onclose fires after onerror; no additional action needed here
     };
   }, [submissionId, accessToken, startHeartbeat, stopHeartbeat, handleMessage]);
 
   const scheduleReconnect = useCallback(() => {
     if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
-    if (retryCountRef.current >= MAX_RETRIES || unmountedRef.current) return;
+    if (retryCountRef.current >= MAX_RETRIES || unmountedRef.current) {
+      if (retryCountRef.current >= MAX_RETRIES) {
+        console.error(`[WS] Max retries (${MAX_RETRIES}) reached, giving up. submission=${submissionId ?? ""}`);
+      }
+      return;
+    }
 
     const delay = Math.min(BASE_BACKOFF_MS * 2 ** retryCountRef.current, MAX_BACKOFF_MS);
     retryCountRef.current += 1;
+    console.log(`[WS] Reconnect attempt ${retryCountRef.current}/${MAX_RETRIES} in ${delay}ms. submission=${submissionId ?? ""}`);
     retryTimerRef.current = setTimeout(() => {
       if (!unmountedRef.current) connect();
     }, delay);
-  }, [connect]);
+  }, [connect, submissionId]);
 
   // Browser online/offline events (supplements WebSocket)
   useEffect(() => {

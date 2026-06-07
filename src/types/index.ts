@@ -104,7 +104,7 @@ export interface MonitoringConfig {
   audio_monitoring: boolean;
   video_monitoring: boolean;
   screenshot_mode: "time_interval" | "count";
-  screenshot_interval_minutes?: number;
+  screenshot_interval_seconds?: number;
   screenshot_count?: number;
   screenshot_enabled: boolean;
 }
@@ -272,7 +272,7 @@ export interface MonitoringOverrides {
   video_monitoring?: boolean;
   screenshot_enabled?: boolean;
   screenshot_mode?: "time_interval" | "count";
-  screenshot_interval_minutes?: number;
+  screenshot_interval_seconds?: number;
   screenshot_count?: number;
 }
 

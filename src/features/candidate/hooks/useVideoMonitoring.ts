@@ -12,7 +12,7 @@ const FACE_MODEL =
 interface UseVideoMonitoringOptions {
   enabled: boolean;
   videoRef: React.RefObject<HTMLVideoElement | null>;
-  onViolation: (type: MalpracticeType) => void;
+  onViolation: (type: MalpracticeType, description: string) => void;
 }
 
 interface VideoMonitoringState {
@@ -98,7 +98,13 @@ export function useVideoMonitoring({
                   now - faceAbsenceStart.current > FACE_ABSENCE_THRESHOLD_MS &&
                   canFlag("face_absence")
                 ) {
-                  onViolationRef.current("face_absence");
+                  const absenceSecs = Math.round(
+                    (now - faceAbsenceStart.current) / 1_000
+                  );
+                  onViolationRef.current(
+                    "face_absence",
+                    `No face detected in camera feed for ${absenceSecs} seconds`
+                  );
                   faceAbsenceStart.current = null;
                 }
               } else {
@@ -106,7 +112,10 @@ export function useVideoMonitoring({
               }
 
               if (count > 1 && canFlag("multiple_faces")) {
-                onViolationRef.current("multiple_faces");
+                onViolationRef.current(
+                  "multiple_faces",
+                  `Multiple faces (${count}) detected in camera feed`
+                );
               }
             } catch {
               /* detector may fail on first frames */

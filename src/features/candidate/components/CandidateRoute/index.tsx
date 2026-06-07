@@ -7,6 +7,7 @@ import { api } from "@/utils/api";
 import { UserRole, type SubmissionStatusResponse } from "@/types";
 import { IconAlertTriangle, IconShield } from "@/assets/icons";
 import { InterviewSessionProvider } from "@/features/candidate/context/InterviewSessionContext";
+import { markAssessmentDone } from "@/utils/assessmentSession";
 
 /**
  * Outlet-based route guard for candidate assessment pages.
@@ -98,6 +99,7 @@ export function CandidateRoute() {
     const status = submissionStatus?.status;
 
     if (status === "completed") {
+      markAssessmentDone(shareLink!);
       return <Navigate to={`/assessment/${shareLink ?? ""}/completed`} replace />;
     }
 

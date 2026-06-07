@@ -1,13 +1,12 @@
 .page {
   min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-default);
-  padding: 24px;
+  flex-direction: column;
+  background: var(--bg-page);
 }
 
 .card {
+  margin: auto;
   width: 100%;
   max-width: 480px;
   background: var(--bg-surface);
