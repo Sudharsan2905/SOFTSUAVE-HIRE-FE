@@ -13,9 +13,18 @@ import {
   IconGlobe,
   IconShield,
   IconClock,
-  IconTimeout,
   IconArrowRight,
   IconLink,
+  IconChevronDown,
+  IconSettings,
+  IconMonitor,
+  IconMic,
+  IconCamera,
+  IconVideoCamera,
+  IconWhatsApp,
+  IconMail,
+  IconSlack,
+  IconMSTeams,
 } from "@/assets/icons";
 import { api } from "@/utils/api";
 import { ShareLink, MonitoringOverrides } from "@/types";
@@ -57,131 +66,6 @@ function formatDate(iso: string | null): string {
   });
 }
 
-// ─── Inline icons ─────────────────────────────────────────────────────────────
-
-function IconChevronDown({ className }: Readonly<{ className?: string }>) {
-  return (
-    <svg
-      className={className}
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="m6 9 6 6 6-6" />
-    </svg>
-  );
-}
-
-function IconTabMonitor() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="2" y="3" width="20" height="14" rx="2" />
-      <path d="M8 21h8M12 17v4" />
-    </svg>
-  );
-}
-
-function IconMic() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
-      <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8" />
-    </svg>
-  );
-}
-
-function IconVideoCamera() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M23 7 16 12 23 17z" />
-      <rect x="1" y="5" width="15" height="14" rx="2" />
-    </svg>
-  );
-}
-
-function IconScreenCapture() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z" />
-      <circle cx="12" cy="13" r="3" />
-    </svg>
-  );
-}
-
-function WhatsAppIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.103 1.51 5.833L.057 23.428a.5.5 0 0 0 .611.611l5.648-1.453A11.94 11.94 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.854 9.854 0 0 1-5.031-1.378l-.36-.214-3.733.96.993-3.648-.235-.374A9.855 9.855 0 0 1 2.1 12C2.1 6.533 6.533 2.1 12 2.1c5.468 0 9.9 4.432 9.9 9.9 0 5.467-4.432 9.9-9.9 9.9z" />
-    </svg>
-  );
-}
-
-function EmailIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="2" y="4" width="20" height="16" rx="2" />
-      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-    </svg>
-  );
-}
-
 // ─── Copy button (shared) ─────────────────────────────────────────────────────
 
 function CopyButton({ text }: Readonly<{ text: string }>) {
@@ -214,10 +98,11 @@ function CopyButton({ text }: Readonly<{ text: string }>) {
 interface AccordionProps {
   title: string;
   subtitle: string;
+  icon?: React.ReactNode;
   children: React.ReactNode;
 }
 
-function Accordion({ title, subtitle, children }: Readonly<AccordionProps>) {
+function Accordion({ title, subtitle, icon, children }: Readonly<AccordionProps>) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -228,9 +113,12 @@ function Accordion({ title, subtitle, children }: Readonly<AccordionProps>) {
         onClick={() => setOpen((prev) => !prev)}
         aria-expanded={open}
       >
-        <div className={styles.accordionTriggerMeta}>
-          <span className={styles.accordionTitle}>{title}</span>
-          <span className={styles.accordionSubtitle}>{subtitle}</span>
+        <div className={styles.accordionTriggerContent}>
+          {icon && <span className={styles.accordionTriggerIcon}>{icon}</span>}
+          <div className={styles.accordionTriggerMeta}>
+            <span className={styles.accordionTitle}>{title}</span>
+            <span className={styles.accordionSubtitle}>{subtitle}</span>
+          </div>
         </div>
         <IconChevronDown
           className={clsx(styles.accordionChevron, open && styles.accordionChevronOpen)}
@@ -295,6 +183,16 @@ function PermanentTab({
     `You have been invited to take an assessment.\n\nClick the link below to get started:\n${fullUrl}`
   );
   const emailHref = `mailto:?subject=${emailSubject}&body=${emailBody}`;
+  const teamsHref = `https://teams.microsoft.com/share?href=${encodeURIComponent(fullUrl)}`;
+
+  const handleSlackShare = async () => {
+    try {
+      await navigator.clipboard.writeText(fullUrl);
+      toast.success("Copied! Paste it in any Slack channel.");
+    } catch {
+      toast.error("Copy failed — please copy manually.");
+    }
+  };
 
   return (
     <div className={styles.tabContent}>
@@ -303,46 +201,171 @@ function PermanentTab({
         <span>This link never expires and uses the default monitoring settings.</span>
       </div>
 
-      <div className={styles.urlCard}>
+      {/* URL display with inline icon copy button */}
+      <div className={styles.urlBox}>
         <input
-          className={styles.urlCardField}
+          className={styles.urlBoxField}
+          id="permanent-share-link"
           readOnly
           value={fullUrl}
           aria-label="Permanent share link"
         />
       </div>
 
-      <div className={styles.permanentActions}>
+      {/* Primary CTA */}
+      <div className={styles.primaryAction}>
         <button
           type="button"
-          className={clsx(
-            styles.permanentBtn,
-            styles.permanentBtnPrimary,
-            copied && styles.permanentBtnCopied
-          )}
+          className={clsx(styles.primaryActionBtn, copied && styles.primaryActionBtnCopied)}
           onClick={() => void handleCopy()}
         >
           {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
           <span>{copied ? "Link Copied!" : "Copy Link"}</span>
         </button>
+      </div>
 
+      {/* Divider */}
+      <div className={styles.divider}>
+        <span className={styles.dividerText}>or share via</span>
+      </div>
+
+      {/* Share chips */}
+      <div className={styles.shareChips}>
         <a
           href={whatsappHref}
           target="_blank"
           rel="noopener noreferrer"
-          className={clsx(styles.permanentBtn, styles.permanentBtnWhatsapp)}
+          className={clsx(styles.shareChip, styles.shareChipWhatsapp)}
         >
-          <WhatsAppIcon />
-          <span>Share via WhatsApp</span>
+          <span className={styles.shareChipIcon}>
+            <IconWhatsApp size={20} />
+          </span>
+          <span className={styles.shareChipLabel}>WhatsApp</span>
         </a>
+        <a href={emailHref} className={clsx(styles.shareChip, styles.shareChipEmail)}>
+          <span className={styles.shareChipIcon}>
+            <IconMail size={20} />
+          </span>
+          <span className={styles.shareChipLabel}>Email</span>
+        </a>
+        <a href={teamsHref} target="_blank" rel="noopener noreferrer" className={styles.shareChip}>
+          <span className={styles.shareChipIcon}>
+            <IconMSTeams size={20} />
+          </span>
+          <span className={styles.shareChipLabel}>Teams</span>
+        </a>
+        <button
+          type="button"
+          onClick={() => void handleSlackShare()}
+          className={clsx(styles.shareChip, styles.shareChipSlack)}
+        >
+          <span className={styles.shareChipIcon}>
+            <IconSlack size={20} />
+          </span>
+          <span className={styles.shareChipLabel}>Slack</span>
+        </button>
+      </div>
 
-        <a href={emailHref} className={clsx(styles.permanentBtn, styles.permanentBtnEmail)}>
-          <EmailIcon />
-          <span>Share via Email</span>
-        </a>
+      <p className={styles.helperText}>
+        <IconGlobe size={12} />
+        <span>Anyone with this link can access the assessment</span>
+      </p>
+    </div>
+  );
+}
+
+// ─── Existing-link accordion card ────────────────────────────────────────────
+
+interface LinkAccordionCardProps {
+  link: ShareLink;
+  revoking: string | null;
+  onRevoke: (id: string) => void;
+}
+
+function LinkAccordionCard({ link, revoking, onRevoke }: Readonly<LinkAccordionCardProps>) {
+  const [open, setOpen] = useState(false);
+  const fullUrl = `${globalThis.location.origin}/assessment/${link.share_link}`;
+
+  return (
+    <div className={styles.customLinkCard}>
+      <button
+        type="button"
+        className={clsx(styles.customLinkCardTrigger, open && styles.customLinkCardTriggerOpen)}
+        onClick={() => setOpen((p) => !p)}
+        aria-expanded={open}
+      >
+        <IconLink size={16} className={styles.customLinkIcon} />
+        <span className={styles.customLinkCardLabel}>
+          {link.label ?? "Unlabelled link"}
+        </span>
+        <IconChevronDown
+          size={14}
+          className={clsx(styles.customLinkChevron, open && styles.customLinkChevronOpen)}
+        />
+      </button>
+
+      <div className={clsx(styles.customLinkBody, open && styles.customLinkBodyOpen)}>
+        <div className={styles.customLinkBodyInner}>
+          {/* Date range */}
+          {(link.start_time ?? link.end_time) && (
+            <div className={styles.customLinkDateRow}>
+              {link.start_time && (
+                <span className={styles.customLinkDate}>
+                  <IconClock size={14} className={styles.customLinkClock} />
+                  {formatDate(link.start_time)}
+                </span>
+              )}
+              {link.start_time && link.end_time && (
+                <IconArrowRight size={13} className={styles.customLinkArrow} />
+              )}
+              {link.end_time && (
+                <span className={styles.customLinkDate}>
+                  <IconClock size={14} className={styles.customLinkClock} />
+                  {formatDate(link.end_time)}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* URL */}
+          <input
+            className={styles.linkField}
+            id={`custom-link-${link.id}`}
+            readOnly
+            value={fullUrl}
+            aria-label={link.label ?? "Custom share link"}
+          />
+
+          {/* Footer */}
+          <div className={styles.customLinkActions}>
+            <span className={styles.customLinkCreated}>
+              {formatDate(link.created_at)}
+            </span>
+            <div className={styles.customLinkActionBtns}>
+              <CopyButton text={fullUrl} />
+              <Button
+                variant="danger"
+                size="sm"
+                leftIcon={<IconDelete size={13} />}
+                onClick={() => onRevoke(link.id)}
+                isLoading={revoking === link.id}
+                title="Revoke this link"
+              >
+                Revoke
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
+}
+
+// ─── Local ISO helper ─────────────────────────────────────────────────────────
+
+function toLocalISO(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
 // ─── Tab 2: Custom Link ───────────────────────────────────────────────────────
@@ -369,7 +392,11 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
   const [loadingLinks, setLoadingLinks] = useState(true);
   const [revoking, setRevoking] = useState<string | null>(null);
   const [labelError, setLabelError] = useState("");
+  const [startError, setStartError] = useState("");
   const [endError, setEndError] = useState("");
+
+  // Computed once on mount — close enough for a session-duration form.
+  const [nowMin] = useState(() => toLocalISO(new Date()));
 
   const setMonitoringKey = <K extends keyof MonitoringOverrides>(
     key: K,
@@ -399,18 +426,28 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
 
   const validate = (): boolean => {
     let ok = true;
+
     if (linkLabel.trim()) {
       setLabelError("");
     } else {
       setLabelError("Label is required");
       ok = false;
     }
+
+    if (startTime && new Date(startTime) < new Date()) {
+      setStartError("Opens On must be a future date and time");
+      ok = false;
+    } else {
+      setStartError("");
+    }
+
     if (startTime && endTime && new Date(endTime) <= new Date(startTime)) {
-      setEndError("End time must be after start time");
+      setEndError("Ends On must be after Opens On");
       ok = false;
     } else {
       setEndError("");
     }
+
     return ok;
   };
 
@@ -476,7 +513,8 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
       {/* Label */}
       <Input
         label="Link Label"
-        placeholder='e.g. "Remote office — low bandwidth"'
+        id="custom-link-label"
+        placeholder='e.g. "Weekend Assessment Link"'
         value={linkLabel}
         onChange={(e) => {
           setLinkLabel(e.target.value);
@@ -486,61 +524,66 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
         hint="Helps identify this link later"
       />
 
-      {/* Validity date range */}
-      <div className={styles.dateGrid}>
-        <DateTimePicker
-          id="custom-link-from-time"
-          label="From Date & Time"
-          placeholder="mm/dd/yyyy --:-- --"
-          value={startTime}
-          onChange={(v) => {
-            setStartTime(v);
-            setEndError("");
-          }}
-        />
-        <DateTimePicker
-          id="custom-link-to-time"
-          label="To Date & Time"
-          placeholder="mm/dd/yyyy --:-- --"
-          value={endTime}
-          min={startTime}
-          onChange={(v) => {
-            setEndTime(v);
-            setEndError("");
-          }}
-          error={endError}
-        />
+      {/* Assessment availability */}
+      <div className={styles.availabilitySection}>
+        <p className={styles.availabilityLabel}>Assessment Availability</p>
+        <div className={styles.dateGrid}>
+          <DateTimePicker
+            id="custom-link-opens-on"
+            label="Opens On"
+            value={startTime}
+            min={nowMin}
+            onChange={(v) => {
+              setStartTime(v);
+              setStartError("");
+              setEndError("");
+            }}
+            error={startError}
+          />
+          <DateTimePicker
+            id="custom-link-ends-on"
+            label="Ends On"
+            value={endTime}
+            min={startTime || nowMin}
+            onChange={(v) => {
+              setEndTime(v);
+              setEndError("");
+            }}
+            error={endError}
+          />
+        </div>
       </div>
 
       {/* Monitoring accordion */}
       <Accordion
+        icon={<IconSettings size={20} />}
         title="Override Monitoring Settings (Optional)"
         subtitle="Choose different monitoring settings for this custom link"
       >
         <div className={styles.monitoringSection}>
           <MonitoringToggleRow
-            icon={<IconTabMonitor />}
+            icon={<IconMonitor size={18} />}
             label="Tab Monitoring"
             hint="Flag malpractice on tab or window switch"
             checked={monitoring.tab_monitoring ?? true}
             onChange={(v) => setMonitoringKey("tab_monitoring", v)}
           />
           <MonitoringToggleRow
-            icon={<IconMic />}
+            icon={<IconMic size={18} />}
             label="Audio Monitoring"
             hint="Detect sustained background audio or speech"
             checked={monitoring.audio_monitoring ?? true}
             onChange={(v) => setMonitoringKey("audio_monitoring", v)}
           />
           <MonitoringToggleRow
-            icon={<IconVideoCamera />}
+            icon={<IconVideoCamera size={18} />}
             label="Video Monitoring"
             hint="Live camera feed checked for face presence"
             checked={monitoring.video_monitoring ?? true}
             onChange={(v) => setMonitoringKey("video_monitoring", v)}
           />
           <MonitoringToggleRow
-            icon={<IconScreenCapture />}
+            icon={<IconCamera size={18} />}
             label="Screenshot Capture"
             hint="Periodic screenshots uploaded during the session"
             checked={monitoring.screenshot_enabled ?? true}
@@ -563,6 +606,7 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
               {(monitoring.screenshot_mode ?? "time_interval") === "time_interval" ? (
                 <Input
                   label="Interval (minutes)"
+                  id="screenshot-interval"
                   type="number"
                   min={1}
                   value={monitoring.screenshot_interval_seconds ?? 5}
@@ -573,6 +617,7 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
               ) : (
                 <Input
                   label="Total screenshots"
+                  id="screenshot-count"
                   type="number"
                   min={1}
                   value={monitoring.screenshot_count ?? 10}
@@ -601,80 +646,14 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
         )}
         {!loadingLinks && existingLinks.length > 0 && (
           <div className={styles.customLinksList}>
-            {existingLinks.map((link) => {
-              const fullUrl = `${globalThis.location.origin}/assessment/${link.share_link}`;
-              return (
-                <div key={link.id} className={styles.customLinkCard}>
-                  {/* Header: clock + label, with the expiry highlighted */}
-                  <div className={styles.customLinkCardHead}>
-                    <IconLink size={18} className={styles.customLinkIcon} />
-                    <span className={styles.customLinkCardLabel}>
-                      {link.label ?? "Unlabelled link"}
-                      {link.end_time && (
-                        <>
-                          {" – "}
-                          <strong>{formatDate(link.end_time)}</strong>
-                        </>
-                      )}
-                    </span>
-                  </div>
-
-                  {/* Date meta */}
-                  <div className={styles.customLinkCardDates}>
-                    {(link.start_time || link.end_time) && (
-                      <div className={styles.customLinkDateRow}>
-                        {link.start_time && (
-                          <span className={styles.customLinkDate}>
-                            <IconClock size={15} className={styles.customLinkClock} />
-                            <span className={styles.customLinkDateLabel}>From</span>
-                            {formatDate(link.start_time)}
-                          </span>
-                        )}
-                        {link.start_time && link.end_time && (
-                          <IconArrowRight size={15} className={styles.customLinkArrow} />
-                        )}
-                        {link.end_time && (
-                          <span className={styles.customLinkDate}>
-                            <span className={styles.customLinkDateLabel}>To</span>
-                            {formatDate(link.end_time)}
-                            <IconTimeout size={15} className={styles.customLinkClock} />
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* URL field */}
-                  <input
-                    className={styles.linkField}
-                    readOnly
-                    value={fullUrl}
-                    aria-label={link.label ?? "Custom share link"}
-                  />
-
-                  {/* Footer: created date on the left, actions on the right */}
-                  <div className={styles.customLinkActions}>
-                    <span className={styles.customLinkCreated}>
-                      <span className={styles.customLinkDateLabel}>Created</span>
-                      {formatDate(link.created_at)}
-                    </span>
-                    <div className={styles.customLinkActionBtns}>
-                      <CopyButton text={fullUrl} />
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        leftIcon={<IconDelete size={13} />}
-                        onClick={() => void handleRevoke(link.id)}
-                        isLoading={revoking === link.id}
-                        title="Revoke this link"
-                      >
-                        Revoke
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {existingLinks.map((link) => (
+              <LinkAccordionCard
+                key={link.id}
+                link={link}
+                revoking={revoking}
+                onRevoke={(id) => void handleRevoke(id)}
+              />
+            ))}
           </div>
         )}
       </div>

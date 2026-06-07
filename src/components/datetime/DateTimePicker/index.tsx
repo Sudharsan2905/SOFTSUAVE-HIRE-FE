@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import {
   startOfMonth,
@@ -15,7 +15,12 @@ import {
   startOfDay,
   addMonths,
 } from "date-fns";
-import { IconCalendar, IconChevronDown, IconChevronLeft, IconChevronRight } from "@/assets/icons";
+import {
+  IconCalendar,
+  IconChevronDown,
+  IconChevronLeft,
+  IconChevronRight,
+} from "@/assets/icons";
 import styles from "./DateTimePicker.module.css";
 
 interface DateTimePickerProps {
@@ -38,6 +43,10 @@ const MINUTES = Array.from({ length: 60 }, (_, i) => i); // 0..59
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
+/** Convert 12-hour + AM/PM to 0-23 hour. */
+const to24h = (h12: number, ap: "AM" | "PM"): number =>
+  (h12 % 12) + (ap === "PM" ? 12 : 0);
+
 function parseValue(value: string): Date | null {
   if (!value) return null;
   const d = parseISO(value);
@@ -46,8 +55,7 @@ function parseValue(value: string): Date | null {
 
 /** Compose a datetime-local string from a calendar date + 12-hour time parts. */
 function compose(date: Date, hour12: number, minute: number, ampm: "AM" | "PM"): string {
-  let h = hour12 % 12;
-  if (ampm === "PM") h += 12;
+  const h = to24h(hour12, ampm);
   return `${format(date, "yyyy-MM-dd")}T${pad(h)}:${pad(minute)}`;
 }
 
@@ -67,10 +75,10 @@ export function DateTimePicker({
   const minDate = parseValue(min ?? "");
 
   const [open, setOpen] = useState(false);
-  // Fixed-position coordinates for the portalled popup (escapes modal overflow clipping).
+  /** "date" shows the calendar; "time" shows the time-selection columns. */
+  const [step, setStep] = useState<"date" | "time">("date");
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
   const [viewDate, setViewDate] = useState(() => startOfMonth(parsed ?? today));
-  // Time selection lives locally so the user can pick a time before a day.
   const [hour12, setHour12] = useState(() => (parsed ? ((parsed.getHours() + 11) % 12) + 1 : 12));
   const [minute, setMinute] = useState(() => (parsed ? parsed.getMinutes() : 0));
   const [ampm, setAmpm] = useState<"AM" | "PM">(() =>
@@ -79,19 +87,50 @@ export function DateTimePicker({
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const popupRef = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDialogElement>(null);
 
-  // Sync local time state when the value changes from outside.
+  // ── Min-day time constraints ────────────────────────────────────────────────
+
+  const isOnMinDay = !!(parsed && minDate && isSameDay(parsed, minDate));
+  const minH24 = minDate?.getHours() ?? 0;
+  const minMin = minDate?.getMinutes() ?? 0;
+
+  /** Is this hour (1-12) disabled given the current AM/PM? */
+  const isHourDisabled = useCallback(
+    (h: number): boolean => isOnMinDay && to24h(h, ampm) < minH24,
+    [isOnMinDay, ampm, minH24]
+  );
+
+  /** Is this AM/PM option entirely disabled? (All its hours are in the past.) */
+  const isAmpmDisabled = useCallback(
+    (ap: "AM" | "PM"): boolean => isOnMinDay && ap === "AM" && minH24 >= 12,
+    [isOnMinDay, minH24]
+  );
+
+  /** Is this minute disabled for the current hour/ampm? */
+  const isMinuteDisabled = useCallback(
+    (m: number): boolean => {
+      if (!isOnMinDay) return false;
+      const h24 = to24h(hour12, ampm);
+      if (h24 < minH24) return true;
+      if (h24 > minH24) return false;
+      return m < minMin;
+    },
+    [isOnMinDay, hour12, ampm, minH24, minMin]
+  );
+
+  // ── Sync local time state when value changes from outside ──────────────────
+
   useEffect(() => {
     if (!parsed) return;
     setHour12(((parsed.getHours() + 11) % 12) + 1);
     setMinute(parsed.getMinutes());
     setAmpm(parsed.getHours() >= 12 ? "PM" : "AM");
     setViewDate(startOfMonth(parsed));
-  }, [value]);
+  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Position the fixed popup relative to the trigger, flipping/aligning so it
-  // stays inside the viewport. Runs on open and on scroll/resize while open.
+  // ── Popup positioning ───────────────────────────────────────────────────────
+
   useLayoutEffect(() => {
     if (!open) return;
 
@@ -100,7 +139,7 @@ export function DateTimePicker({
       if (!t) return;
       const margin = 8;
       const ph = popupRef.current?.offsetHeight ?? 300;
-      const pw = popupRef.current?.offsetWidth ?? 410;
+      const pw = popupRef.current?.offsetWidth ?? 260;
 
       const spaceBelow = window.innerHeight - t.bottom;
       const top =
@@ -117,13 +156,14 @@ export function DateTimePicker({
 
     reposition();
     window.addEventListener("resize", reposition);
-    // capture: true so we catch scrolls on the modal body / any ancestor.
     window.addEventListener("scroll", reposition, true);
     return () => {
       window.removeEventListener("resize", reposition);
       window.removeEventListener("scroll", reposition, true);
     };
-  }, [open, value]);
+  }, [open, value, step]); // reposition when step changes (popup size changes)
+
+  // ── Outside-click to close ──────────────────────────────────────────────────
 
   useEffect(() => {
     if (!open) return;
@@ -137,40 +177,55 @@ export function DateTimePicker({
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
+  // ── Handlers ────────────────────────────────────────────────────────────────
+
   const handleOpen = () => {
     if (disabled) return;
-    if (!open) setCoords(null); // hide until positioned to avoid a flash at (0,0)
+    if (!open) {
+      setCoords(null); // hide until positioned to avoid flash at (0,0)
+      setStep("date"); // always start at the calendar step
+    }
     setOpen((p) => !p);
   };
-
-  const days = eachDayOfInterval({
-    start: startOfWeek(startOfMonth(viewDate)),
-    end: endOfWeek(endOfMonth(viewDate)),
-  });
 
   const emit = (date: Date, h: number, m: number, ap: "AM" | "PM") => {
     onChange(compose(date, h, m, ap));
   };
 
+  /** Clicking a calendar day advances to the time step. */
   const handleDayClick = (day: Date) => {
     emit(day, hour12, minute, ampm);
+    setStep("time");
   };
 
   const setTimePart = (next: { h?: number; m?: number; ap?: "AM" | "PM" }) => {
     const h = next.h ?? hour12;
     const m = next.m ?? minute;
     const ap = next.ap ?? ampm;
+
+    // Reject clicks on disabled time options.
+    if (next.h !== undefined && isHourDisabled(h)) return;
+    if (next.ap !== undefined && isAmpmDisabled(ap)) return;
+    if (next.m !== undefined && isMinuteDisabled(m)) return;
+
     setHour12(h);
     setMinute(m);
     setAmpm(ap);
-    // Only emit once a calendar day has been chosen.
     if (parsed) emit(parsed, h, m, ap);
   };
 
   const handleClear = () => {
     onChange("");
+    setStep("date");
     setOpen(false);
   };
+
+  // ── Calendar day grid ───────────────────────────────────────────────────────
+
+  const days = eachDayOfInterval({
+    start: startOfWeek(startOfMonth(viewDate)),
+    end: endOfWeek(endOfMonth(viewDate)),
+  });
 
   const triggerLabel = parsed ? format(parsed, "MMM d, yyyy · h:mm a") : placeholder;
 
@@ -202,8 +257,9 @@ export function DateTimePicker({
 
       {open &&
         createPortal(
-          <section
+          <dialog
             ref={popupRef}
+            open
             className={styles.popup}
             style={{
               top: coords?.top ?? -9999,
@@ -211,124 +267,173 @@ export function DateTimePicker({
               visibility: coords ? "visible" : "hidden",
             }}
             aria-label="Date and time picker"
-            onMouseDown={(e) => e.stopPropagation()}
           >
-            {/* Calendar */}
-            <div className={styles.calendar}>
-              <div className={styles.calNav}>
-                <button
-                  type="button"
-                  className={styles.calNavBtn}
-                  onClick={() => setViewDate((d) => addMonths(d, -1))}
-                  aria-label="Previous month"
-                >
-                  <IconChevronLeft size={14} />
-                </button>
-                <span className={styles.calTitle}>{format(viewDate, "MMMM yyyy")}</span>
-                <button
-                  type="button"
-                  className={styles.calNavBtn}
-                  onClick={() => setViewDate((d) => addMonths(d, 1))}
-                  aria-label="Next month"
-                >
-                  <IconChevronRight size={14} />
-                </button>
-              </div>
-
-              <div className={styles.calGrid} aria-label={format(viewDate, "MMMM yyyy")}>
-                {DAY_LABELS.map((d) => (
-                  <div key={d} className={styles.calDayHeader}>
-                    {d}
-                  </div>
-                ))}
-                {days.map((day) => {
-                  const isSelected = !!(parsed && isSameDay(day, parsed));
-                  const isDisabled = !!(
-                    minDate &&
-                    isBefore(day, startOfDay(minDate)) &&
-                    !isSameDay(day, minDate)
-                  );
-                  const cls = [
-                    styles.calDay,
-                    isSelected ? styles.calDaySelected : "",
-                    isSameDay(day, today) && !isSelected ? styles.calDayToday : "",
-                    !isSameMonth(day, viewDate) ? styles.calDayOutside : "",
-                    isDisabled ? styles.calDayDisabled : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ");
-
-                  return (
-                    <button
-                      key={format(day, "yyyy-MM-dd")}
-                      type="button"
-                      className={cls}
-                      onClick={() => !isDisabled && handleDayClick(day)}
-                      disabled={isDisabled}
-                      aria-label={format(day, "PPP")}
-                      aria-pressed={isSelected}
-                    >
-                      {format(day, "d")}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Time — only shown once a calendar day has been selected. */}
-            {parsed && (
-              <div className={styles.time}>
-                <span className={styles.timeTitle}>Time</span>
-                <div className={styles.timeCols}>
-                  <div className={styles.timeScroll}>
-                    {HOURS.map((h) => (
-                      <button
-                        key={h}
-                        type="button"
-                        className={`${styles.timeOpt} ${h === hour12 ? styles.timeOptActive : ""}`}
-                        onClick={() => setTimePart({ h })}
-                      >
-                        {pad(h)}
-                      </button>
-                    ))}
-                  </div>
-                  <div className={styles.timeScroll}>
-                    {MINUTES.map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        className={`${styles.timeOpt} ${m === minute ? styles.timeOptActive : ""}`}
-                        onClick={() => setTimePart({ m })}
-                      >
-                        {pad(m)}
-                      </button>
-                    ))}
-                  </div>
-                  <div className={`${styles.timeScroll} ${styles.ampmCol}`}>
-                    {(["AM", "PM"] as const).map((ap) => (
-                      <button
-                        key={ap}
-                        type="button"
-                        className={`${styles.timeOpt} ${ap === ampm ? styles.timeOptActive : ""}`}
-                        onClick={() => setTimePart({ ap })}
-                      >
-                        {ap}
-                      </button>
-                    ))}
-                  </div>
+            {/* ── Step 1: Calendar ─────────────────────────────────────── */}
+            {step === "date" && (
+              <div className={styles.calendar}>
+                <div className={styles.calNav}>
+                  <button
+                    type="button"
+                    className={styles.calNavBtn}
+                    onClick={() => setViewDate((d) => addMonths(d, -1))}
+                    aria-label="Previous month"
+                  >
+                    <IconChevronLeft size={14} />
+                  </button>
+                  <span className={styles.calTitle}>{format(viewDate, "MMMM yyyy")}</span>
+                  <button
+                    type="button"
+                    className={styles.calNavBtn}
+                    onClick={() => setViewDate((d) => addMonths(d, 1))}
+                    aria-label="Next month"
+                  >
+                    <IconChevronRight size={14} />
+                  </button>
                 </div>
 
-                <div className={styles.footer}>
-                  <span className={styles.hint}>
-                    {parsed ? format(parsed, "MMM d, h:mm a") : "Pick a date to apply time"}
-                  </span>
+                <div className={styles.calGrid} aria-label={format(viewDate, "MMMM yyyy")}>
+                  {DAY_LABELS.map((d) => (
+                    <div key={d} className={styles.calDayHeader}>
+                      {d}
+                    </div>
+                  ))}
+                  {days.map((day) => {
+                    const isSelected = !!(parsed && isSameDay(day, parsed));
+                    const isDisabled = !!(
+                      minDate &&
+                      isBefore(day, startOfDay(minDate)) &&
+                      !isSameDay(day, minDate)
+                    );
+                    const cls = [
+                      styles.calDay,
+                      isSelected ? styles.calDaySelected : "",
+                      isSameDay(day, today) && !isSelected ? styles.calDayToday : "",
+                      isSameMonth(day, viewDate) ? "" : styles.calDayOutside,
+                      isDisabled ? styles.calDayDisabled : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ");
+
+                    return (
+                      <button
+                        key={format(day, "yyyy-MM-dd")}
+                        type="button"
+                        className={cls}
+                        onClick={isDisabled ? undefined : () => handleDayClick(day)}
+                        disabled={isDisabled}
+                        aria-label={format(day, "PPP")}
+                        aria-pressed={isSelected}
+                      >
+                        {format(day, "d")}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── Step 2: Time ─────────────────────────────────────────── */}
+            {step === "time" && (
+              <div className={styles.timeStep}>
+                {/* Navigation row: Back | Select Time | Clear */}
+                <div className={styles.timeStepNav}>
+                  <button
+                    type="button"
+                    className={styles.timeBackBtn}
+                    onClick={() => setStep("date")}
+                  >
+                    <IconChevronLeft size={13} />
+                    Back
+                  </button>
+                  <span className={styles.timeStepTitle}>Select Time</span>
                   <button type="button" className={styles.clearBtn} onClick={handleClear}>
                     Clear
                   </button>
                 </div>
+
+                <div className={styles.timeCols}>
+                  {/* Hours */}
+                  <div className={styles.timeScroll}>
+                    {HOURS.map((h) => {
+                      const disabled = isHourDisabled(h);
+                      return (
+                        <button
+                          key={h}
+                          type="button"
+                          disabled={disabled}
+                          className={[
+                            styles.timeOpt,
+                            h === hour12 ? styles.timeOptActive : "",
+                            disabled ? styles.timeOptDisabled : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                          onClick={() => setTimePart({ h })}
+                        >
+                          {pad(h)}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Minutes */}
+                  <div className={styles.timeScroll}>
+                    {MINUTES.map((m) => {
+                      const disabled = isMinuteDisabled(m);
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          disabled={disabled}
+                          className={[
+                            styles.timeOpt,
+                            m === minute ? styles.timeOptActive : "",
+                            disabled ? styles.timeOptDisabled : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                          onClick={() => setTimePart({ m })}
+                        >
+                          {pad(m)}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* AM / PM */}
+                  <div className={`${styles.timeScroll} ${styles.ampmCol}`}>
+                    {(["AM", "PM"] as const).map((ap) => {
+                      const disabled = isAmpmDisabled(ap);
+                      return (
+                        <button
+                          key={ap}
+                          type="button"
+                          disabled={disabled}
+                          className={[
+                            styles.timeOpt,
+                            ap === ampm ? styles.timeOptActive : "",
+                            disabled ? styles.timeOptDisabled : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                          onClick={() => setTimePart({ ap })}
+                        >
+                          {ap}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Footer: current selection hint */}
+                <div className={styles.footer}>
+                  <span className={styles.hint}>
+                    {parsed ? format(parsed, "MMM d, yyyy · h:mm a") : "Pick a date first"}
+                  </span>
+                </div>
               </div>
             )}
-          </section>,
+          </dialog>,
           document.body
         )}
     </div>

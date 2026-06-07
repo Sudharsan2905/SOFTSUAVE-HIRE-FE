@@ -1,11 +1,12 @@
-/* ─── Tab bar ────────────────────────────────────────────────────────────────── */
+/* ─── Tab bar ─────────────────────────────────────────────────────────────── */
 .tabBar {
   display: flex;
+  gap: 6px;
+  padding: 5px;
+  background: var(--bg-muted);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  background: var(--bg-elevated);
-  overflow: hidden;
-  margin-bottom: 20px;
+  border-radius: var(--radius-xl);
+  margin-bottom: 24px;
 }
 
 .tabBtn {
@@ -13,18 +14,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 14px 16px;
+  gap: 7px;
+  height: 48px;
+  padding: 0 14px;
   border: none;
-  border-bottom: 2px solid transparent;
-  background: none;
+  border-radius: var(--radius-lg);
+  background: transparent;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
-  transition:
-    color 0.15s ease,
-    border-color 0.15s ease;
+  transition: all var(--transition-base);
   white-space: nowrap;
 }
 
@@ -33,9 +33,9 @@
 }
 
 .tabBtnActive {
+  background: var(--bg-elevated);
   color: var(--brand-orange);
-  border-bottom-color: var(--brand-orange);
-  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .tabIcon {
@@ -45,130 +45,192 @@
   color: inherit;
 }
 
-/* ─── Tab content wrapper ────────────────────────────────────────────────────── */
+/* ─── Tab content wrapper ────────────────────────────────────────────────── */
 .tabContent {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
-/* ─── Info banner ────────────────────────────────────────────────────────────── */
+/* ─── Info banner ─────────────────────────────────────────────────────────── */
 .infoBanner {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 10px 14px;
-  border-radius: var(--radius-md, 8px);
-  background: var(--primary-50, #eff6ff);
-  border: 1px solid var(--primary-200, #bfdbfe);
-  font-size: 12px;
-  color: var(--primary-700, #1d4ed8);
-  line-height: 1.55;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  border-radius: var(--radius-xl);
+  background: rgba(59, 130, 246, 0.07);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  color: var(--primary-700);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
 }
 
 .infoBanner svg {
   flex-shrink: 0;
-  margin-top: 1px;
 }
 
-/* ─── Permanent tab — URL card ───────────────────────────────────────────────── */
-.urlCard {
-  padding: 12px 14px;
-  border-radius: var(--radius-lg, 12px);
-  border: 1px solid var(--border-primary);
-  background: var(--bg-secondary);
+/* ─── URL box ─────────────────────────────────────────────────────────────── */
+.urlBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 10px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
 }
 
-.urlCardField {
-  width: 100%;
+.urlBoxField {
+  flex: 1;
+  min-width: 0;
   border: none;
   background: transparent;
-  font-size: 13px;
+  font-size: 13.5px;
   color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   outline: none;
   font-family: inherit;
-  cursor: text;
 }
 
-/* ─── Permanent tab — stacked action buttons ─────────────────────────────────── */
-.permanentActions {
+/* ─── Primary copy button ─────────────────────────────────────────────────── */
+.primaryAction {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  justify-content: center;
 }
 
-.permanentBtn {
+.primaryActionBtn {
+  min-width: 220px;
+  height: 48px;
+  padding: 0 28px;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--logo-color) 0%, var(--action-color) 100%);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  width: 100%;
-  padding: 11px 16px;
-  border-radius: var(--radius-md, 8px);
-  font-size: 14px;
-  font-weight: 500;
+  gap: 9px;
   cursor: pointer;
-  border: 1px solid transparent;
-  text-decoration: none;
-  transition:
-    opacity 0.15s ease,
-    transform 0.1s ease,
-    background 0.15s ease,
-    border-color 0.15s ease;
+  box-shadow: 0 8px 20px rgba(255, 66, 61, 0.2);
+  transition: all var(--transition-base);
 }
 
-.permanentBtn:hover {
-  opacity: 0.88;
+.primaryActionBtn:hover {
   transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(255, 66, 61, 0.28);
 }
 
-.permanentBtn:active {
+.primaryActionBtn:active {
   transform: translateY(0);
-  opacity: 1;
 }
 
-.permanentBtnPrimary {
-  background: var(--brand-orange);
-  color: #fff;
+.primaryActionBtnCopied {
+  background: linear-gradient(135deg, var(--success-500) 0%, var(--success-600) 100%);
+  box-shadow: 0 8px 20px rgba(22, 163, 74, 0.2);
+}
+
+/* ─── Divider ─────────────────────────────────────────────────────────────── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border-default);
+}
+
+.dividerText {
+  color: var(--text-tertiary);
+  font-size: 12.5px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* ─── Share chips ─────────────────────────────────────────────────────────── */
+.shareChips {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.shareChip {
+  height: 48px;
+  padding: 0 10px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-base);
+}
+
+.shareChip:hover {
+  transform: translateY(-2px);
   border-color: var(--brand-orange);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
 }
 
-.permanentBtnCopied {
-  background: var(--success-600, #16a34a);
-  border-color: var(--success-600, #16a34a);
+.shareChipIcon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
-.permanentBtnWhatsapp {
-  background: #25d366;
-  color: #0b4619;
-  border-color: #25d366;
-}
-
-.permanentBtnEmail {
-  background: var(--bg-secondary);
+.shareChipLabel {
+  font-size: 13px;
+  font-weight: 600;
   color: var(--text-primary);
-  border-color: var(--border-primary);
 }
 
-.permanentBtnEmail:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-strong);
-  opacity: 1;
+/* Per-chip icon colours for visual recognition */
+.shareChipWhatsapp .shareChipIcon {
+  color: #25d366;
 }
 
-/* ─── Link field (reused in existing custom link cards) ──────────────────────── */
+.shareChipEmail .shareChipIcon {
+  color: var(--primary-600);
+}
+
+.shareChipSlack .shareChipIcon {
+  color: #e01e5a;
+}
+
+/* ─── Helper text ─────────────────────────────────────────────────────────── */
+.helperText {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--text-tertiary);
+  font-size: 12.5px;
+  margin: 0;
+}
+
+/* ─── Link field (custom tab cards) ──────────────────────────────────────── */
 .linkField {
   width: 100%;
   min-width: 0;
-  padding: 11px 14px;
-  border-radius: var(--radius-md, 8px);
+  padding: 11px 10px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border-default);
   font-size: 13px;
   color: var(--text-secondary);
-  background: var(--bg-secondary);
+  background: var(--bg-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -176,7 +238,7 @@
   outline: none;
 }
 
-/* ─── Date range grid ────────────────────────────────────────────────────────── */
+/* ─── Date range grid ────────────────────────────────────────────────────── */
 .dateGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -197,10 +259,26 @@
   margin-bottom: 6px;
 }
 
-/* ─── Accordion ──────────────────────────────────────────────────────────────── */
+/* ─── Assessment availability section ───────────────────────────────────── */
+.availabilitySection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.availabilityLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ─── Accordion ──────────────────────────────────────────────────────────── */
 .accordion {
-  border: 1px solid var(--border-primary);
-  border-radius: var(--radius-lg, 12px);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--bg-hover);
 }
@@ -213,13 +291,12 @@
   width: 100%;
   padding: 14px 16px;
   border: none;
-  background: var(--bg-secondary);
+  background: var(--bg-muted);
   cursor: pointer;
   text-align: left;
-  transition: background 0.15s ease;
+  transition: background var(--transition-fast);
 }
 
-/* Divider beneath the header, shown only while the accordion is expanded. */
 .accordionTriggerOpen {
   border-bottom: 1px solid var(--border-default);
 }
@@ -229,10 +306,26 @@
   outline-offset: -2px;
 }
 
+/* Flex row that houses the optional icon + meta text. */
+.accordionTriggerContent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.accordionTriggerIcon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+
 .accordionTriggerMeta {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .accordionTitle {
@@ -249,7 +342,7 @@
 .accordionChevron {
   flex-shrink: 0;
   color: var(--text-tertiary);
-  transition: transform 0.2s ease;
+  transition: transform var(--transition-base);
 }
 
 .accordionChevronOpen {
@@ -259,18 +352,17 @@
 .accordionBody {
   overflow: hidden;
   max-height: 0;
-  transition: max-height 0.3s ease-out;
+  transition: max-height var(--transition-slow) ease-out;
 }
 
 .accordionBodyOpen {
   max-height: 800px;
 }
 
-/* ─── Monitoring toggles ─────────────────────────────────────────────────────── */
+/* ─── Monitoring toggles ─────────────────────────────────────────────────── */
 .monitoringSection {
   display: flex;
   flex-direction: column;
-  gap: 0;
 }
 
 .toggleRow {
@@ -278,9 +370,9 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  border-bottom: 1px solid var(--border-primary);
-  background: var(--bg-primary);
-  transition: background 0.1s ease;
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  transition: background var(--transition-fast);
 }
 
 .toggleRow:last-child {
@@ -288,7 +380,7 @@
 }
 
 .toggleRow:hover {
-  background: var(--bg-secondary);
+  background: var(--bg-muted);
 }
 
 .toggleIcon {
@@ -318,29 +410,28 @@
   margin: 0;
 }
 
-/* ─── Screenshot sub-options ─────────────────────────────────────────────────── */
+/* ─── Screenshot sub-options ─────────────────────────────────────────────── */
 .screenshotOptions {
   padding: 12px 16px;
   display: flex;
   gap: 10px;
-  border-top: 1px dashed var(--border-primary);
-  background: var(--bg-secondary);
+  border-top: 1px dashed var(--border-default);
+  background: var(--bg-muted);
 }
 
-/* ─── Generate row ───────────────────────────────────────────────────────────── */
+/* ─── Generate row ───────────────────────────────────────────────────────── */
 .generateRow {
   display: flex;
   justify-content: flex-end;
 }
 
-/* ─── Existing custom links section ─────────────────────────────────────────── */
+/* ─── Existing custom links section ─────────────────────────────────────── */
 .existingLinksSection {
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding-top: 8px;
-  border-top: 1px solid var(--border-primary);
-  margin-top: 4px;
+  border-top: 1px solid var(--border-default);
 }
 
 .existingLinksTitle {
@@ -357,7 +448,7 @@
   padding: 16px 0;
 }
 
-/* ─── Custom link cards ──────────────────────────────────────────────────────── */
+/* ─── Custom link accordion cards ───────────────────────────────────────── */
 .customLinksList {
   display: flex;
   flex-direction: column;
@@ -365,30 +456,70 @@
 }
 
 .customLinkCard {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 16px 18px;
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg, 12px);
-  background: var(--bg-elevated, #fff);
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated);
+  overflow: hidden;
   transition:
-    border-color 0.12s ease,
-    box-shadow 0.12s ease;
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
-.customLinkCard:hover {
+.customLinkCard:has(.customLinkBodyOpen) {
   border-color: var(--border-strong);
   box-shadow: var(--shadow-sm);
 }
 
-/* Header row: clock icon + label, with a divider beneath. */
-.customLinkCardHead {
+/* Accordion trigger for each link card */
+.customLinkCardTrigger {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding-bottom: 12px;
+  width: 100%;
+  padding: 13px 16px;
+  border: none;
+  background: var(--bg-muted);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-fast);
+}
+
+.customLinkCardTrigger:hover {
+  background: var(--bg-hover);
+}
+
+.customLinkCardTriggerOpen {
   border-bottom: 1px solid var(--border-default);
+}
+
+.customLinkChevron {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--text-tertiary);
+  transition: transform var(--transition-base);
+}
+
+.customLinkChevronOpen {
+  transform: rotate(180deg);
+}
+
+/* Collapsible body */
+.customLinkBody {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height var(--transition-slow) ease-out;
+}
+
+.customLinkBodyOpen {
+  max-height: 400px;
+}
+
+/* Inner padding wrapper — keeps vertical padding outside the height animation */
+.customLinkBodyInner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
 }
 
 .customLinkClock {
@@ -396,7 +527,6 @@
   color: var(--text-primary);
 }
 
-/* Header chain/link icon — light blue. */
 .customLinkIcon {
   flex-shrink: 0;
   color: var(--primary-600);
@@ -421,10 +551,10 @@
   gap: 10px;
 }
 
-/* FROM → TO sit on one line; the arrow separates them. */
 .customLinkDateRow {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px 96px;
 }
@@ -435,14 +565,6 @@
   gap: 8px;
   font-size: 14px;
   color: var(--text-secondary);
-}
-
-.customLinkDateLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
 }
 
 .customLinkArrow {
@@ -458,7 +580,6 @@
   flex-wrap: wrap;
 }
 
-/* Created date, sits at the bottom-left of the card — small/subtle. */
 .customLinkCreated {
   display: flex;
   align-items: center;
@@ -475,4 +596,21 @@
   display: flex;
   gap: 8px;
   flex-shrink: 0;
+}
+
+/* ─── Mobile ─────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .tabBar {
+    flex-direction: column;
+    border-radius: var(--radius-lg);
+  }
+
+  .primaryActionBtn {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .shareChips {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

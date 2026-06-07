@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 
 interface IconProps {
   size?: number | string;
@@ -306,8 +306,16 @@ export const IconDrag = icon(
 );
 export const IconWhatsApp = icon(
   <>
-    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.12 1.534 5.857L0 24l6.29-1.511A11.935 11.935 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.006-1.374l-.359-.212-3.72.894.936-3.617-.234-.372A9.798 9.798 0 0 1 2.182 12C2.182 6.582 6.582 2.182 12 2.182c5.42 0 9.818 4.4 9.818 9.818 0 5.42-4.398 9.818-9.818 9.818z" />
+    <path
+      fill="currentColor"
+      stroke="none"
+      d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"
+    />
+    <path
+      fill="currentColor"
+      stroke="none"
+      d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.12 1.534 5.857L0 24l6.29-1.511A11.935 11.935 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.006-1.374l-.359-.212-3.72.894.936-3.617-.234-.372A9.798 9.798 0 0 1 2.182 12C2.182 6.582 6.582 2.182 12 2.182c5.42 0 9.818 4.4 9.818 9.818 0 5.42-4.398 9.818-9.818 9.818z"
+    />
   </>,
   "0 0 24 24"
 );
@@ -403,15 +411,6 @@ export const IconClock = icon(
     <polyline points="12 7 12 12 15.5 14" />
   </>
 );
-// Timeout/countdown clock — most of the dial is solid, with a dashed arc at the
-// top-left to convey elapsing time.
-export const IconTimeout = icon(
-  <>
-    <path d="M12 3A9 9 0 1 1 4.5 7" />
-    <path d="M4.5 7A9 9 0 0 1 12 3" strokeDasharray="1.8 2.2" />
-    <polyline points="12 7.5 12 12 15.5 14" />
-  </>
-);
 export const IconLink = icon(
   <>
     <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
@@ -425,8 +424,8 @@ export const IconArrowRight = icon(
   </>
 );
 
-/* ── Candidate detail tab icons (path-only) ── */
-// "Over All" — a layout/overview pane.
+/* â”€â”€ Candidate detail tab icons (path-only) â”€â”€ */
+// "Over All" â€” a layout/overview pane.
 export const IconOverview = icon(
   <path
     fill="currentColor"
@@ -435,7 +434,7 @@ export const IconOverview = icon(
   />,
   "0 -960 960 960"
 );
-// "Rounds" — stacked layers for the successive rounds.
+// "Rounds" â€” stacked layers for the successive rounds.
 export const IconRounds = icon(
   <>
     <path d="M12 3 3 7.5l9 4.5 9-4.5L12 3z" />
@@ -443,7 +442,7 @@ export const IconRounds = icon(
     <path d="m3 16.5 9 4.5 9-4.5" />
   </>
 );
-// "Malpractice" — a shield with an alert mark.
+// "Malpractice" â€” a shield with an alert mark.
 export const IconMalpractice = icon(
   <path
     fill="currentColor"
@@ -452,7 +451,7 @@ export const IconMalpractice = icon(
   />,
   "0 -960 960 960"
 );
-// "Screenshots" — an image frame.
+// "Screenshots" â€” an image frame.
 export const IconScreenshot = icon(
   <path
     fill="currentColor"
@@ -461,16 +460,16 @@ export const IconScreenshot = icon(
   />,
   "0 -960 960 960"
 );
-// "Resume" — a filled play triangle.
+// "Resume" â€” a filled play triangle.
 export const IconPlay = icon(<path fill="currentColor" stroke="none" d="M8 5v14l11-7z" />);
-// "Terminate" — a power symbol.
+// "Terminate" â€” a power symbol.
 export const IconPower = icon(
   <>
     <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
     <path d="M12 2v10" />
   </>
 );
-// "Candidate Details" — a filled info circle.
+// "Candidate Details" â€” a filled info circle.
 export const IconCircleInfo = icon(
   <path
     fill="currentColor"
@@ -486,4 +485,128 @@ export const IconWarning = icon(
     d="M320 64C334.7 64 348.2 72.1 355.2 85L571.2 485C577.9 497.4 577.6 512.4 570.4 524.5C563.2 536.6 550.1 544 536 544L104 544C89.9 544 76.8 536.6 69.6 524.5C62.4 512.4 62.1 497.4 68.8 485L284.8 85C291.8 72.1 305.3 64 320 64zM320 416C302.3 416 288 430.3 288 448C288 465.7 302.3 480 320 480C337.7 480 352 465.7 352 448C352 430.3 337.7 416 320 416zM320 224C301.8 224 287.3 239.5 288.6 257.7L296 361.7C296.9 374.2 307.4 384 319.9 384C332.5 384 342.9 374.3 343.8 361.7L351.2 257.7C352.5 239.5 338.1 224 319.8 224z"
   />,
   "0 0 640 640"
+);
+export const IconVideoCamera = icon(
+  <>
+    <path d="M23 7 16 12 23 17z" />
+    <rect x="1" y="5" width="15" height="14" rx="2" />
+  </>
+);
+// Exact Slack logo (official-style colors)
+export const IconSlack = icon(
+  <>
+    <path
+      d="M27.255 80.719c0 7.33-5.978 13.317-13.309 13.317C6.616 94.036.63 88.049.63 80.719s5.987-13.317 13.317-13.317h13.309zm6.709 0c0-7.33 5.987-13.317 13.317-13.317s13.317 5.986 13.317 13.317v33.335c0 7.33-5.986 13.317-13.317 13.317-7.33 0-13.317-5.987-13.317-13.317zm0 0"
+      fill="#de1c59"
+    />
+    <path
+      d="M47.281 27.255c-7.33 0-13.317-5.978-13.317-13.309C33.964 6.616 39.951.63 47.281.63s13.317 5.987 13.317 13.317v13.309zm0 6.709c7.33 0 13.317 5.987 13.317 13.317s-5.986 13.317-13.317 13.317H13.946C6.616 60.598.63 54.612.63 47.281c0-7.33 5.987-13.317 13.317-13.317zm0 0"
+      fill="#35c5f0"
+    />
+    <path
+      d="M100.745 47.281c0-7.33 5.978-13.317 13.309-13.317 7.33 0 13.317 5.987 13.317 13.317s-5.987 13.317-13.317 13.317h-13.309zm-6.709 0c0 7.33-5.987 13.317-13.317 13.317s-13.317-5.986-13.317-13.317V13.946C67.402 6.616 73.388.63 80.719.63c7.33 0 13.317 5.987 13.317 13.317zm0 0"
+      fill="#2eb57d"
+    />
+    <path
+      d="M80.719 100.745c7.33 0 13.317 5.978 13.317 13.309 0 7.33-5.987 13.317-13.317 13.317s-13.317-5.987-13.317-13.317v-13.309zm0-6.709c-7.33 0-13.317-5.987-13.317-13.317s5.986-13.317 13.317-13.317h33.335c7.33 0 13.317 5.986 13.317 13.317 0 7.33-5.987 13.317-13.317 13.317zm0 0"
+      fill="#ebb02e"
+    />
+  </>,
+  "0 0 128 128"
+);
+
+// Microsoft Teams icon (official-style)
+export const IconMSTeams = icon(
+  <>
+    <path fill="url(#a)" d="M22 20h12a6 6 0 0 1 6 6v10a6 6 0 1 1-12 0V26a6 6 0 0 0-6-6Z" />
+
+    <path
+      fill="url(#b)"
+      d="M8 24a6 6 0 0 1 6-6h8a6 6 0 0 1 6 6v12a6 6 0 0 0 6 6H18A10 10 0 0 1 8 32Z"
+    />
+
+    <path
+      fill="url(#c)"
+      fillOpacity=".7"
+      d="M8 24a6 6 0 0 1 6-6h8a6 6 0 0 1 6 6v12a6 6 0 0 0 6 6H18A10 10 0 0 1 8 32Z"
+    />
+
+    <circle cx="33" cy="13" r="5" fill="url(#d)" />
+    <circle cx="18" cy="10" r="6" fill="url(#e)" />
+
+    <rect x="4" y="23" width="16" height="16" rx="3.25" fill="url(#f)" />
+
+    <path fill="#fff" d="M15.48 28.1h-2.45v7.47h-2.06V28.1H8.52v-1.68h6.96Z" />
+
+    <defs>
+      <radialGradient
+        id="a"
+        cx="0"
+        cy="0"
+        r="1"
+        gradientTransform="matrix(13.5 0 0 33.3 39.8 22.2)"
+        gradientUnits="userSpaceOnUse"
+      >
+        <stop stopColor="#A98AFF" />
+        <stop offset=".14" stopColor="#8C75FF" />
+        <stop offset=".56" stopColor="#5F50E2" />
+        <stop offset=".9" stopColor="#3C2CB8" />
+      </radialGradient>
+
+      <radialGradient
+        id="b"
+        cx="0"
+        cy="0"
+        r="1"
+        gradientTransform="rotate(68.15 -7.7 14.7) scale(32.75 33.12)"
+        gradientUnits="userSpaceOnUse"
+      >
+        <stop stopColor="#85C2FF" />
+        <stop offset=".69" stopColor="#7588FF" />
+        <stop offset="1" stopColor="#6459FE" />
+      </radialGradient>
+
+      <linearGradient id="c" x1="20.6" x2="20.6" y1="18" y2="42" gradientUnits="userSpaceOnUse">
+        <stop offset=".8" stopColor="#6864F6" stopOpacity="0" />
+        <stop offset="1" stopColor="#5149DE" />
+      </linearGradient>
+
+      <radialGradient
+        id="d"
+        cx="0"
+        cy="0"
+        r="1"
+        gradientTransform="matrix(0 -10 12.6 0 33 11.6)"
+        gradientUnits="userSpaceOnUse"
+      >
+        <stop offset=".27" stopColor="#6868F7" />
+        <stop offset="1" stopColor="#3923B1" />
+      </radialGradient>
+
+      <radialGradient
+        id="e"
+        cx="0"
+        cy="0"
+        r="1"
+        gradientTransform="matrix(0 -12 15.1 0 18 8.3)"
+        gradientUnits="userSpaceOnUse"
+      >
+        <stop offset=".27" stopColor="#8282FF" />
+        <stop offset="1" stopColor="#3923B1" />
+      </radialGradient>
+
+      <radialGradient
+        id="f"
+        cx="0"
+        cy="0"
+        r="1"
+        gradientTransform="rotate(45 -25.8 16.3) scale(22.6)"
+        gradientUnits="userSpaceOnUse"
+      >
+        <stop offset=".05" stopColor="#688EFF" />
+        <stop offset=".95" stopColor="#230F94" />
+      </radialGradient>
+    </defs>
+  </>,
+  "4 4 36 38"
 );

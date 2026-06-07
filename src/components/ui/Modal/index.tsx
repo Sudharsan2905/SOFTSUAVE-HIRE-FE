@@ -17,7 +17,7 @@ interface ModalProps {
   disableEscapeKey?: boolean;
 }
 
-export function Modal({
+export const Modal = React.memo(function Modal({
   isOpen,
   onClose,
   title,
@@ -29,43 +29,48 @@ export function Modal({
   disableBackdropClose = false,
   disableEscapeKey = false,
 }: ModalProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  // Always-current reference to onClose so effects never need it as a dep,
+  // preventing re-registration on every parent render.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
-  const handleEsc = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !disableEscapeKey) onClose();
-    },
-    [onClose, disableEscapeKey]
-  );
-
+  // Escape key — only re-registers when isOpen or the flag actually changes.
   useEffect(() => {
-    if (isOpen) {
-      document.addEventListener("keydown", handleEsc);
-      document.body.style.overflow = "hidden";
-    }
+    if (!isOpen || disableEscapeKey) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCloseRef.current();
+    };
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [isOpen, disableEscapeKey]);
+
+  // Body scroll lock — stable dep, never re-runs on parent re-render.
+  useEffect(() => {
+    if (!isOpen) return;
+    document.body.style.overflow = "hidden";
     return () => {
-      document.removeEventListener("keydown", handleEsc);
       document.body.style.overflow = "";
     };
-  }, [isOpen, handleEsc]);
+  }, [isOpen]);
 
-  useEffect(() => {
-    if (!isOpen || disableBackdropClose) return;
-    const handleMouseDown = (e: MouseEvent) => {
-      if (dialogRef.current && !dialogRef.current.contains(e.target as Node)) {
-        onClose();
+  // Backdrop close: fires only when the mousedown lands directly on the overlay
+  // div itself (e.target === e.currentTarget). This means clicks inside the
+  // dialog, or inside any portaled child (Select dropdown, DateTimePicker
+  // popup, etc.), never trigger modal close — fixes the dropdown-closes-modal bug.
+  const handleOverlayMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!disableBackdropClose && e.target === e.currentTarget) {
+        onCloseRef.current();
       }
-    };
-    document.addEventListener("mousedown", handleMouseDown);
-    return () => document.removeEventListener("mousedown", handleMouseDown);
-  }, [isOpen, disableBackdropClose, onClose]);
+    },
+    [disableBackdropClose]
+  );
 
   if (!isOpen) return null;
 
   return createPortal(
-    <div className={styles.overlay}>
+    <div className={styles.overlay} onMouseDown={handleOverlayMouseDown}>
       <dialog
-        ref={dialogRef}
         open
         className={clsx(styles.modal, styles[size], className)}
         aria-modal="true"
@@ -75,7 +80,11 @@ export function Modal({
           <div className={styles.header}>
             {title && <h2 className={styles.title}>{title}</h2>}
             {showClose && (
-              <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
+              <button
+                className={styles.closeBtn}
+                onClick={() => onCloseRef.current()}
+                aria-label="Close"
+              >
                 <IconClose size={18} />
               </button>
             )}
@@ -87,4 +96,4 @@ export function Modal({
     </div>,
     document.body
   );
-}
+});
