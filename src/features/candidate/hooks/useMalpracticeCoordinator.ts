@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, RefObject } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useAppDispatch } from "../../../store/hooks";
 import {
   setMalpracticeCount,
@@ -7,10 +7,8 @@ import {
 } from "../../../store/slices/proctoringSlice";
 import api from "../../../utils/api";
 import { MalpracticeType, MonitoringConfig } from "../../../types";
-import { useMediaRingBuffer } from "./useMediaRingBuffer";
-
-const FORWARD_RECORD_MS = 10_000;
-const RING_BUFFER_MS = 10_000;
+import { useMalpracticeRecording } from "./useMalpracticeRecording";
+import type { RefObject } from "react";
 
 const VIOLATION_MESSAGES: Record<MalpracticeType, string> = {
   tab_switch: "Tab switch detected",
@@ -41,12 +39,6 @@ export interface ViolationPayload {
   description?: string;
 }
 
-interface InFlightRecording {
-  eventIndex: number;
-  stopVideoEarly: () => void;
-  stopAudioEarly: () => void;
-}
-
 interface UseMalpracticeCoordinatorOptions {
   submissionId: string;
   monitoringConfig: MonitoringConfig;
@@ -60,7 +52,7 @@ interface UseMalpracticeCoordinatorOptions {
 // ─── Module-level helpers ─────────────────────────────────────────────────────
 
 async function snapshotVideoFrame(
-  videoEl: HTMLVideoElement | null | undefined
+  videoEl: HTMLVideoElement | null | undefined,
 ): Promise<Blob | null> {
   if (!videoEl || videoEl.videoWidth === 0) return null;
   const canvas = document.createElement("canvas");
@@ -91,45 +83,9 @@ function dispatchViolationResult(
       setLastViolation({
         type: event.type,
         message: `Warning ${String(data.malpractice_count)}/3: ${VIOLATION_MESSAGES[event.type]}`,
-      })
+      }),
     );
   }
-}
-
-async function uploadMediaEvidence(
-  submissionId: string,
-  eventIndex: number,
-  videoBlobs: Blob[],
-  audioBlobs: Blob[],
-  cfg: MonitoringConfig,
-  videoMimeType: string,
-  audioMimeType: string,
-): Promise<void> {
-  const hasVideo = videoBlobs.length > 0 && cfg.video_monitoring;
-  const hasAudio = audioBlobs.length > 0 && cfg.audio_monitoring;
-  if (!hasVideo && !hasAudio) return;
-
-  const mediaFd = new FormData();
-  if (hasVideo) {
-    mediaFd.append(
-      "video_chunk",
-      new Blob(videoBlobs, { type: videoMimeType || "video/webm" }),
-      "clip.webm",
-    );
-  }
-  if (hasAudio) {
-    mediaFd.append(
-      "audio_clip",
-      new Blob(audioBlobs, { type: audioMimeType || "audio/webm" }),
-      "audio.webm",
-    );
-  }
-
-  await api.post(
-    `/api/candidate/submission/${submissionId}/malpractice/${eventIndex}/media`,
-    mediaFd,
-    { headers: { "Content-Type": "multipart/form-data" } },
-  );
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -145,71 +101,47 @@ export function useMalpracticeCoordinator({
 }: UseMalpracticeCoordinatorOptions) {
   const dispatch = useAppDispatch();
   const firstWarningIssued = useRef<Partial<Record<MalpracticeType, boolean>>>({});
-  const inFlightRef = useRef<InFlightRecording[]>([]);
   const monitoringConfigRef = useRef(monitoringConfig);
 
   useEffect(() => {
     monitoringConfigRef.current = monitoringConfig;
   });
 
-  // ── Ring buffers — only active when monitoring flags are enabled ───────────
-  const { snapshotRing: snapshotVideoRing, startForwardRecording: startVideoFwd } =
-    useMediaRingBuffer({
-      stream: monitoringConfig.video_monitoring ? (screenStreamRef?.current ?? null) : null,
-      maxDurationMs: RING_BUFFER_MS,
-      mimeType: "video/webm;codecs=vp9",
-      videoBitsPerSecond: 1_500_000,
-    });
-
-  const { snapshotRing: snapshotAudioRing, startForwardRecording: startAudioFwd } =
-    useMediaRingBuffer({
-      stream: monitoringConfig.audio_monitoring ? (audioStreamRef?.current ?? null) : null,
-      maxDurationMs: RING_BUFFER_MS,
-      mimeType: "audio/webm;codecs=opus",
-      audioBitsPerSecond: 128_000,
-    });
-
-  // ── Flush in-flight recordings on unmount / page unload ──────────────────
-  useEffect(() => {
-    const flush = () => {
-      for (const entry of inFlightRef.current) {
-        entry.stopVideoEarly();
-        entry.stopAudioEarly();
-      }
-    };
-    window.addEventListener("beforeunload", flush);
-    return () => {
-      window.removeEventListener("beforeunload", flush);
-      flush();
-      inFlightRef.current = [];
-    };
-  }, []);
+  // ── Recording — unified screen + audio stream ─────────────────────────────
+  // Screen recording is active when tab_monitoring or screenshot_enabled is on.
+  // Audio is merged in when audio_monitoring is on.
+  // If only audio_monitoring is on (no screen share), an audio-only clip is captured.
+  const { prepareCapture, commitCapture, abortCapture } = useMalpracticeRecording({
+    submissionId,
+    screenStream: screenStreamRef?.current ?? null,
+    audioStream: audioStreamRef?.current ?? null,
+    hasScreenMonitoring: !!(monitoringConfig.tab_monitoring || monitoringConfig.screenshot_enabled),
+    hasAudioMonitoring: !!monitoringConfig.audio_monitoring,
+  });
 
   const flagViolation = useCallback(
     async (event: ViolationPayload): Promise<void> => {
       const cfg = monitoringConfigRef.current;
 
-      // Two-strike rule: first occurrence dispatches a warning, not a server flag
+      // Two-strike rule: first occurrence dispatches a UI warning only
       if (TWO_STRIKE_TYPES.has(event.type) && !firstWarningIssued.current[event.type]) {
         firstWarningIssued.current[event.type] = true;
-        dispatch(setLastViolation({ type: event.type, message: `Warning: ${VIOLATION_MESSAGES[event.type]}` }));
+        dispatch(
+          setLastViolation({
+            type: event.type,
+            message: `Warning: ${VIOLATION_MESSAGES[event.type]}`,
+          }),
+        );
         return;
       }
 
-      // ── Phase 1: start evidence capture, POST violation immediately ───────
+      // ── Phase 1: start evidence capture BEFORE the POST ───────────────────
+      // prepareCapture snapshots the ring buffer (last 5 s) and registers a
+      // forward listener immediately, so footage from the violation moment is
+      // captured even while the POST request is in-flight.
+      const captureId = prepareCapture();
+
       const description = event.description ?? VIOLATION_MESSAGES[event.type] ?? "";
-
-      // Snapshot ring buffers for MIME-type lookup (blobs no longer concatenated —
-      // forward recordings from a fresh MediaRecorder are always keyframe-aligned).
-      const videoRingSnapshot = cfg.video_monitoring ? snapshotVideoRing() : null;
-      const audioRingSnapshot = cfg.audio_monitoring ? snapshotAudioRing() : null;
-
-      const videoFwd = cfg.video_monitoring
-        ? startVideoFwd(FORWARD_RECORD_MS)
-        : { promise: Promise.resolve([] as Blob[]), stopEarly: () => {} };
-      const audioFwd = cfg.audio_monitoring
-        ? startAudioFwd(FORWARD_RECORD_MS)
-        : { promise: Promise.resolve([] as Blob[]), stopEarly: () => {} };
 
       const [screenImage, faceImage] = await Promise.all([
         cfg.screenshot_enabled && captureScreenFrame ? captureScreenFrame() : null,
@@ -219,8 +151,10 @@ export function useMalpracticeCoordinator({
       const fd = new FormData();
       fd.append("type", event.type);
       fd.append("description", description);
-      if (screenImage && cfg.screenshot_enabled) fd.append("screen_image", screenImage, "screen.jpg");
-      if (faceImage && cfg.video_monitoring) fd.append("face_image", faceImage, "face.jpg");
+      if (screenImage && cfg.screenshot_enabled)
+        fd.append("screen_image", screenImage, "screen.jpg");
+      if (faceImage && cfg.video_monitoring)
+        fd.append("face_image", faceImage, "face.jpg");
 
       let eventIndex = -1;
       try {
@@ -236,49 +170,25 @@ export function useMalpracticeCoordinator({
         console.warn("Malpractice flag failed:", err);
       }
 
-      // ── Phase 2: upload media evidence — fire and forget ──────────────────
-      if (eventIndex < 0) {
-        videoFwd.stopEarly();
-        audioFwd.stopEarly();
-        return;
+      // ── Phase 2: commit or abort the capture ──────────────────────────────
+      if (eventIndex >= 0) {
+        // Associate the pre-captured ring snapshot + forward listener with
+        // this eventIndex and start the 20-second forward countdown.
+        commitCapture(captureId, eventIndex);
+      } else {
+        // POST failed — discard the pending capture to free the listener
+        abortCapture(captureId);
       }
-
-      const entry: InFlightRecording = {
-        eventIndex,
-        stopVideoEarly: videoFwd.stopEarly,
-        stopAudioEarly: audioFwd.stopEarly,
-      };
-      inFlightRef.current.push(entry);
-
-      void (async () => {
-        try {
-          const [videoBlobs, audioBlobs] = await Promise.all([videoFwd.promise, audioFwd.promise]);
-          await uploadMediaEvidence(
-            submissionId,
-            eventIndex,
-            videoBlobs,
-            audioBlobs,
-            cfg,
-            videoRingSnapshot?.mimeType ?? "",
-            audioRingSnapshot?.mimeType ?? "",
-          );
-        } catch (err) {
-          console.warn("Malpractice media upload failed:", err);
-        } finally {
-          inFlightRef.current = inFlightRef.current.filter((e) => e !== entry);
-        }
-      })();
     },
     [
       submissionId,
       dispatch,
       onTerminated,
-      snapshotVideoRing,
-      snapshotAudioRing,
-      startVideoFwd,
-      startAudioFwd,
       videoRef,
       captureScreenFrame,
+      prepareCapture,
+      commitCapture,
+      abortCapture,
     ],
   );
 
