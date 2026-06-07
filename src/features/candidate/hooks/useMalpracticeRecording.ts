@@ -3,25 +3,19 @@ import api from "../../../utils/api";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const RING_BUFFER_MS = 5_000; // rolling pre-event window
 const FORWARD_RECORD_MS = 20_000; // post-event capture window per event
 const TIMESLICE_MS = 250; // MediaRecorder chunk interval
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-// Listeners are keyed by a unique Symbol (pending phase) or by eventIndex
-// (active phase). Using a union avoids two separate Maps while still allowing
-// the key to be re-typed from symbol → number at commit time.
-type ListenerKey = symbol | number;
-
-interface CaptureState {
-  preBlobs: Blob[];
-  postBlobs: Blob[]; // same array reference held by the listener
+interface CaptureSession {
+  recorder: MediaRecorder | null;
+  blobs: Blob[];
   isVideo: boolean;
   mimeType: string;
 }
 
-interface ActiveEvent extends CaptureState {
+interface ActiveEvent extends CaptureSession {
   eventIndex: number;
   timeoutId: ReturnType<typeof setTimeout>;
 }
@@ -41,28 +35,34 @@ export interface UseMalpracticeRecordingOptions {
 export interface UseMalpracticeRecordingReturn {
   /**
    * Call BEFORE posting the malpractice violation to the server.
-   * Immediately snapshots the ring buffer (pre-event footage) and registers a
-   * forward listener on the main recorder. Returns an opaque capture ID.
+   * Starts a dedicated fresh MediaRecorder for this event so the resulting
+   * clip has sequential timestamps from T=0 and is always playable.
+   * Returns an opaque capture ID.
    */
   prepareCapture: () => symbol;
   /**
    * Call AFTER the POST returns successfully with an eventIndex.
-   * Re-keys the listener from the opaque ID to eventIndex and starts the 20-second
-   * forward countdown.
+   * Associates the capture with the event and starts the 20-second forward countdown.
    */
   commitCapture: (id: symbol, eventIndex: number) => void;
   /**
    * Call if the POST fails or eventIndex is invalid.
-   * Cleans up the listener and discards buffered data.
+   * Stops the dedicated recorder and discards buffered data.
    */
   abortCapture: (id: symbol) => void;
 }
 
 // ─── MIME selection ───────────────────────────────────────────────────────────
 
-function pickMimeType(isVideo: boolean): string {
+function pickMimeType(isVideo: boolean, hasAudio: boolean): string {
   if (isVideo) {
-    const candidates = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"];
+    // Only declare the Opus codec when audio tracks are actually present.
+    // Using codecs=vp9,opus on a video-only stream produces a WebM where the
+    // Tracks header declares an audio track but no audio blocks exist —
+    // strict players reject this as malformed and refuse to play the file.
+    const candidates = hasAudio
+      ? ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"]
+      : ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
     return candidates.find((m) => MediaRecorder.isTypeSupported(m)) ?? "";
   }
   const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg"];
@@ -78,35 +78,55 @@ export function useMalpracticeRecording({
   hasScreenMonitoring,
   hasAudioMonitoring,
 }: UseMalpracticeRecordingOptions): UseMalpracticeRecordingReturn {
-  // Main recorder state
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<{ blob: Blob; ts: number }[]>([]);
-  // Kept permanently — prepended to any event snapshot so the WebM container
-  // header is always present, even after old chunks age out of the ring.
-  const initChunkRef = useRef<Blob | null>(null);
+  // Current stream configuration — updated whenever streams change
+  const currentTracksRef = useRef<MediaStreamTrack[]>([]);
   const isVideoRef = useRef(false);
+  const wantsAudioRef = useRef(false);
   const resolvedMimeRef = useRef<string>("");
 
-  // Captures that have been prepared but not yet committed (POST in-flight)
-  const pendingRef = useRef<Map<symbol, CaptureState>>(new Map());
-  // Captures that have been committed and are accumulating forward footage
+  // Captures pending a POST response (opaque symbol → session)
+  const pendingRef = useRef<Map<symbol, CaptureSession>>(new Map());
+  // Captures committed and accumulating footage (eventIndex → session + timer)
   const activeEventsRef = useRef<Map<number, ActiveEvent>>(new Map());
-  // All active chunk listeners, keyed by symbol (pending) or eventIndex (active)
-  const listenersRef = useRef<Map<ListenerKey, (blob: Blob) => void>>(new Map());
+
+  // ── Track current stream configuration ───────────────────────────────────
+  useEffect(() => {
+    const wantsScreen = hasScreenMonitoring && !!screenStream;
+    const wantsAudio = hasAudioMonitoring && !!audioStream;
+
+    const tracks: MediaStreamTrack[] = [];
+    if (wantsScreen && screenStream) {
+      screenStream
+        .getVideoTracks()
+        .filter((t) => t.readyState === "live")
+        .forEach((t) => tracks.push(t));
+    }
+    if (wantsAudio && audioStream) {
+      audioStream
+        .getAudioTracks()
+        .filter((t) => t.readyState === "live")
+        .forEach((t) => tracks.push(t));
+    }
+
+    const isVideo = wantsScreen;
+    const mimeType = pickMimeType(isVideo, wantsAudio);
+
+    currentTracksRef.current = tracks;
+    isVideoRef.current = isVideo;
+    wantsAudioRef.current = wantsAudio;
+    resolvedMimeRef.current = mimeType;
+
+    return () => {
+      currentTracksRef.current = [];
+    };
+  }, [screenStream, audioStream, hasScreenMonitoring, hasAudioMonitoring]);
 
   // ── Upload ────────────────────────────────────────────────────────────────
   const uploadCapture = useCallback(
-    async (
-      eventIndex: number,
-      preBlobs: Blob[],
-      postBlobs: Blob[],
-      isVideo: boolean,
-      mimeType: string
-    ): Promise<void> => {
-      const allBlobs = [...preBlobs, ...postBlobs];
-      if (allBlobs.length === 0) return;
+    async (eventIndex: number, blobs: Blob[], isVideo: boolean, mimeType: string): Promise<void> => {
+      if (blobs.length === 0) return;
 
-      const blob = new Blob(allBlobs, {
+      const blob = new Blob(blobs, {
         type: mimeType || (isVideo ? "video/webm" : "audio/webm"),
       });
       const fd = new FormData();
@@ -121,18 +141,26 @@ export function useMalpracticeRecording({
     [submissionId]
   );
 
-  // ── Finalize active event (on 20 s timeout or early flush) ───────────────
+  // ── Finalize an active event (20 s timeout or early flush) ────────────────
   const finalizeActive = useCallback(
     async (eventIndex: number): Promise<void> => {
       const ev = activeEventsRef.current.get(eventIndex);
       if (!ev) return; // already finalized (idempotent)
 
       clearTimeout(ev.timeoutId);
-      listenersRef.current.delete(eventIndex);
       activeEventsRef.current.delete(eventIndex);
 
+      // Stop the dedicated recorder and wait for its final ondataavailable
+      if (ev.recorder && ev.recorder.state !== "inactive") {
+        const rec = ev.recorder;
+        await new Promise<void>((resolve) => {
+          rec.addEventListener("stop", () => resolve(), { once: true });
+          rec.stop();
+        });
+      }
+
       try {
-        await uploadCapture(eventIndex, ev.preBlobs, ev.postBlobs, ev.isVideo, ev.mimeType);
+        await uploadCapture(eventIndex, ev.blobs, ev.isVideo, ev.mimeType);
       } catch (err) {
         console.warn(`Malpractice media upload failed for event ${eventIndex}:`, err);
       }
@@ -140,124 +168,57 @@ export function useMalpracticeRecording({
     [uploadCapture]
   );
 
-  // ── Main recorder: unified stream + ring buffer ───────────────────────────
-  useEffect(() => {
-    const wantsScreen = hasScreenMonitoring && !!screenStream;
-    const wantsAudio = hasAudioMonitoring && !!audioStream;
-    if (!wantsScreen && !wantsAudio) return;
+  // ── Start a dedicated recorder for one violation clip ─────────────────────
+  // Each violation gets its OWN MediaRecorder starting fresh at T=0.
+  // This produces a sequential WebM with no timestamp gaps — reliably playable
+  // by all players. The ring-buffer/listener approach produced clips where an
+  // old initChunk (T=0) was prepended to ring chunks (T=now-5s), creating a
+  // ~5-second gap that strict decoders reject as malformed.
+  const startCaptureSession = useCallback((): CaptureSession => {
+    const isVideo = isVideoRef.current;
+    const mimeType = resolvedMimeRef.current;
+    const blobs: Blob[] = [];
 
-    const tracks: MediaStreamTrack[] = [];
-    if (wantsScreen) {
-      screenStream!
-        .getVideoTracks()
-        .filter((t) => t.readyState === "live")
-        .forEach((t) => tracks.push(t));
+    const liveTracks = currentTracksRef.current.filter((t) => t.readyState === "live");
+    if (liveTracks.length === 0) {
+      return { recorder: null, blobs, isVideo, mimeType };
     }
-    if (wantsAudio) {
-      audioStream!
-        .getAudioTracks()
-        .filter((t) => t.readyState === "live")
-        .forEach((t) => tracks.push(t));
-    }
-    if (tracks.length === 0) return;
 
-    const isVideo = wantsScreen;
-    isVideoRef.current = isVideo;
-    const mimeType = pickMimeType(isVideo);
-    resolvedMimeRef.current = mimeType;
-
-    // Reset ring state for this recorder session
-    chunksRef.current = [];
-    initChunkRef.current = null;
-
-    const combined = new MediaStream(tracks);
+    const captureStream = new MediaStream(liveTracks);
     const opts: MediaRecorderOptions = {};
     if (mimeType) opts.mimeType = mimeType;
     if (isVideo) opts.videoBitsPerSecond = 1_500_000;
-    if (wantsAudio) opts.audioBitsPerSecond = 128_000;
+    if (wantsAudioRef.current) opts.audioBitsPerSecond = 128_000;
 
     let recorder: MediaRecorder;
     try {
-      recorder = new MediaRecorder(combined, opts);
+      recorder = new MediaRecorder(captureStream, opts);
     } catch {
-      return;
+      return { recorder: null, blobs, isVideo, mimeType };
     }
-    recorderRef.current = recorder;
 
     recorder.ondataavailable = (e) => {
-      if (e.data.size === 0) return;
-      const ts = Date.now();
-
-      // Keep the very first chunk so WebM container headers are always available
-      if (!initChunkRef.current) initChunkRef.current = e.data;
-
-      // Rolling ring: prune chunks older than RING_BUFFER_MS
-      chunksRef.current.push({ blob: e.data, ts });
-      const cutoff = ts - RING_BUFFER_MS;
-      chunksRef.current = chunksRef.current.filter((c) => c.ts >= cutoff);
-
-      // Fan out to all active event listeners (pending + active events)
-      for (const listener of listenersRef.current.values()) {
-        listener(e.data);
-      }
+      if (e.data.size > 0) blobs.push(e.data);
     };
-
     recorder.start(TIMESLICE_MS);
 
-    return () => {
-      if (recorder.state !== "inactive") recorder.stop();
-      recorderRef.current = null;
-    };
-  }, [screenStream, audioStream, hasScreenMonitoring, hasAudioMonitoring]);
+    return { recorder, blobs, isVideo, mimeType };
+  }, []);
 
   // ── Public API ────────────────────────────────────────────────────────────
 
   const prepareCapture = useCallback((): symbol => {
     const id = Symbol();
-
-    // Build pre-event snapshot from ring buffer.
-    // Always prepend initChunkRef so the WebM container header is present —
-    // skip if initChunk is already the first ring entry (within first 5 s).
-    const recentBlobs = chunksRef.current.map((c) => c.blob);
-    const initChunk = initChunkRef.current;
-    const preBlobs: Blob[] =
-      initChunk && (recentBlobs.length === 0 || recentBlobs[0] !== initChunk)
-        ? [initChunk, ...recentBlobs]
-        : [...recentBlobs];
-
-    const postBlobs: Blob[] = [];
-    // Share postBlobs array by reference with the listener so chunks
-    // accumulated during the POST are captured without a second copy step.
-    const listener = (blob: Blob) => {
-      postBlobs.push(blob);
-    };
-
-    if (recorderRef.current && recorderRef.current.state !== "inactive") {
-      listenersRef.current.set(id, listener);
-    }
-
-    pendingRef.current.set(id, {
-      preBlobs,
-      postBlobs,
-      isVideo: isVideoRef.current,
-      mimeType: resolvedMimeRef.current,
-    });
-
+    const session = startCaptureSession();
+    pendingRef.current.set(id, session);
     return id;
-  }, []);
+  }, [startCaptureSession]);
 
   const commitCapture = useCallback(
     (id: symbol, eventIndex: number): void => {
       const pending = pendingRef.current.get(id);
       if (!pending) return;
       pendingRef.current.delete(id);
-
-      // Re-key the listener: symbol → eventIndex, keeping the shared postBlobs array
-      const existingListener = listenersRef.current.get(id);
-      if (existingListener) {
-        listenersRef.current.delete(id);
-        listenersRef.current.set(eventIndex, existingListener);
-      }
 
       const timeoutId = setTimeout(() => {
         void finalizeActive(eventIndex);
@@ -273,32 +234,33 @@ export function useMalpracticeRecording({
   );
 
   const abortCapture = useCallback((id: symbol): void => {
+    const session = pendingRef.current.get(id);
+    if (session?.recorder && session.recorder.state !== "inactive") {
+      session.recorder.stop();
+    }
     pendingRef.current.delete(id);
-    listenersRef.current.delete(id);
   }, []);
 
   // ── Flush all in-flight captures on unmount / page unload ─────────────────
-  // Active events are uploaded immediately with whatever footage has been
-  // collected — partial uploads are accepted as best-effort evidence.
-  // Pending captures (POST in-flight) are discarded since we have no eventIndex.
   useEffect(() => {
     const flushAll = () => {
-      // Drop pending (no eventIndex — cannot upload)
-      for (const id of pendingRef.current.keys()) {
-        listenersRef.current.delete(id);
+      // Stop and discard pending sessions (no eventIndex → cannot upload)
+      for (const session of pendingRef.current.values()) {
+        if (session.recorder && session.recorder.state !== "inactive") {
+          session.recorder.stop();
+        }
       }
       pendingRef.current.clear();
 
-      // Upload active events immediately
+      // Upload active events with whatever footage has accumulated
       const events = [...activeEventsRef.current.values()];
       activeEventsRef.current.clear();
-      listenersRef.current.clear();
 
       for (const ev of events) {
         clearTimeout(ev.timeoutId);
-        void uploadCapture(ev.eventIndex, ev.preBlobs, ev.postBlobs, ev.isVideo, ev.mimeType).catch(
-          () => {}
-        );
+        // Stop the recorder (best-effort; upload whatever blobs were collected so far)
+        if (ev.recorder && ev.recorder.state !== "inactive") ev.recorder.stop();
+        void uploadCapture(ev.eventIndex, ev.blobs, ev.isVideo, ev.mimeType).catch(() => {});
       }
     };
 

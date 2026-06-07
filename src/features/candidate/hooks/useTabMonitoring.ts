@@ -3,10 +3,10 @@ import { useEffect, useRef, MutableRefObject } from "react";
 // Tab must be away longer than this before a violation is recorded.
 // Covers legitimate flows: screen-share picker, browser permission dialogs,
 // OS notifications that briefly steal focus.
-const TAB_SWITCH_GRACE_MS = 7_000;
+const TAB_SWITCH_GRACE_MS = 1_000;
 
 // Minimum time between successive tab-switch violations of the same session.
-const VIOLATION_LOCK_MS = 2_000;
+const VIOLATION_LOCK_MS = 1_000;
 
 interface UseTabMonitoringOptions {
   enabled: boolean;
@@ -65,7 +65,11 @@ export function useTabMonitoring({
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
-        if (examActiveRef.current && !isPermissionFlowActiveRef.current) {
+        // Record the leave time unconditionally (unless a permission dialog is open).
+        // examActiveRef is checked later in maybeFlag — guarding it here caused the
+        // timestamp to be skipped when the ref was momentarily false (async effect lag
+        // or brief network blip), so the switch was silently missed on return.
+        if (!isPermissionFlowActiveRef.current) {
           tabLeaveTimeRef.current ??= performance.now();
         }
       } else {
@@ -74,7 +78,7 @@ export function useTabMonitoring({
     };
 
     const handleBlur = () => {
-      if (examActiveRef.current && !isPermissionFlowActiveRef.current) {
+      if (!isPermissionFlowActiveRef.current) {
         tabLeaveTimeRef.current ??= performance.now();
       }
     };
