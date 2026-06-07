@@ -196,11 +196,11 @@ export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<
                   label="Interval (minutes)"
                   type="number"
                   min={1}
-                  value={monitoring.screenshot_interval_minutes ?? 5}
+                  value={monitoring.screenshot_interval_seconds ?? 5}
                   onChange={(e) =>
                     setMonitoring((p) => ({
                       ...p,
-                      screenshot_interval_minutes: Number(e.target.value),
+                      screenshot_interval_seconds: Number(e.target.value),
                     }))
                   }
                   style={{ marginTop: 10 }}

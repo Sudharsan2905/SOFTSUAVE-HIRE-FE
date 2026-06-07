@@ -4,6 +4,15 @@ import { takeScreenStream } from "../services/screenCaptureStore";
 const MAX_WIDTH = 1280;
 const JPEG_QUALITY = 0.6;
 
+interface UseScreenCaptureOptions {
+  /**
+   * When false, defers consuming the pre-acquired stream from the store and
+   * will not call getDisplayMedia until set to true. Defaults to true.
+   * Used by ExamOrchestrator to sequence permission requests.
+   */
+  shouldInitialize?: boolean;
+}
+
 interface UseScreenCaptureReturn {
   isCapturing: boolean;
   isInitialized: boolean;
@@ -11,9 +20,12 @@ interface UseScreenCaptureReturn {
   captureFrame: () => Promise<Blob | null>;
   stopScreenCapture: () => void;
   validateScreenStream: () => boolean;
+  streamRef: React.RefObject<MediaStream | null>;
 }
 
-export function useScreenCapture(): UseScreenCaptureReturn {
+export function useScreenCapture({
+  shouldInitialize = true,
+}: UseScreenCaptureOptions = {}): UseScreenCaptureReturn {
   const streamRef = useRef<MediaStream | null>(null);
   const videoElRef = useRef<HTMLVideoElement | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -46,7 +58,8 @@ export function useScreenCapture(): UseScreenCaptureReturn {
     if (!track || track.readyState !== "live") return false;
     const settings = track.getSettings() as MediaTrackSettings & { displaySurface?: string };
     // If displaySurface is unavailable the browser can't tell us the surface type — trust the track
-    if (settings.displaySurface !== undefined && settings.displaySurface !== "monitor") return false;
+    if (settings.displaySurface !== undefined && settings.displaySurface !== "monitor")
+      return false;
     return true;
   }, []);
 
@@ -72,8 +85,13 @@ export function useScreenCapture(): UseScreenCaptureReturn {
     [stopScreenCapture]
   );
 
-  // Pick up a stream pre-obtained in InstructionsPage (user-gesture context)
+  // Pick up a stream pre-obtained in InstructionsPage (user-gesture context).
+  // Deferred until shouldInitialize is true so the orchestrator can sequence
+  // permission requests one at a time without multiple browser dialogs.
+  const hasInitializedRef = useRef(false);
   useEffect(() => {
+    if (!shouldInitialize || hasInitializedRef.current) return;
+    hasInitializedRef.current = true;
     const stored = takeScreenStream();
     if (stored) {
       void setupStream(stored).then(() => {
@@ -84,7 +102,7 @@ export function useScreenCapture(): UseScreenCaptureReturn {
       setIsInitialized(true);
       isInitializedRef.current = true;
     }
-  }, [setupStream]);
+  }, [setupStream, shouldInitialize]);
 
   // Revalidate stream on reconnect and tab return — stop capture if stream is no longer live
   useEffect(() => {
@@ -112,9 +130,15 @@ export function useScreenCapture(): UseScreenCaptureReturn {
     if (streamRef.current) return true;
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { frameRate: 5 },
+        video: { displaySurface: "monitor", frameRate: 5 },
         audio: false,
       });
+      const track = stream.getVideoTracks()[0];
+      const settings = track?.getSettings() as MediaTrackSettings & { displaySurface?: string };
+      if (settings?.displaySurface !== undefined && settings.displaySurface !== "monitor") {
+        stream.getTracks().forEach((t) => t.stop());
+        return false;
+      }
       return setupStream(stream);
     } catch {
       return false;
@@ -152,5 +176,6 @@ export function useScreenCapture(): UseScreenCaptureReturn {
     captureFrame,
     stopScreenCapture,
     validateScreenStream,
+    streamRef,
   };
 }

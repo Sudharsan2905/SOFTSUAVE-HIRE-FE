@@ -5,7 +5,7 @@ const COOLDOWN_MS = 10_000;
 
 interface UseScreenMonitoringOptions {
   enabled: boolean;
-  onViolation: (type: MalpracticeType) => void;
+  onViolation: (type: MalpracticeType, description: string) => void;
 }
 
 interface UseScreenMonitoringReturn {
@@ -25,11 +25,11 @@ export function useScreenMonitoring({
     onViolationRef.current = onViolation;
   });
 
-  const flag = useCallback((type: MalpracticeType) => {
+  const flag = useCallback((type: MalpracticeType, description: string) => {
     const now = performance.now();
     if (now - lastViolationRef.current > COOLDOWN_MS) {
       lastViolationRef.current = now;
-      onViolationRef.current(type);
+      onViolationRef.current(type, description);
     }
   }, []);
 
@@ -47,7 +47,7 @@ export function useScreenMonitoring({
       });
       screenStreamRef.current = stream;
       stream.getVideoTracks()[0]?.addEventListener("ended", () => {
-        flag("screen_share_stop");
+        flag("screen_share_stop", "Screen sharing stream was stopped or revoked");
         screenStreamRef.current = null;
       });
       return stream;

@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, RefObject } from "react";
 import {
-  LocalTrack,
+  LocalAudioTrack,
   LocalVideoTrack,
   RemoteParticipant,
   RemoteTrack,
@@ -8,17 +8,17 @@ import {
   Room,
   RoomEvent,
   Track,
-  createLocalScreenTracks,
-  createLocalTracks,
 } from "livekit-client";
 import api from "@/utils/api";
 
 // ─── Candidate publisher ──────────────────────────────────────────────────────
 
 interface PublisherOptions {
-  submissionId: string;
+  submissionId: string | null;
   enabled: boolean;
-  onScreenShareStop?: () => void;
+  screenStreamRef?: RefObject<MediaStream | null>;
+  cameraStreamRef?: RefObject<MediaStream | null>;
+  audioStreamRef?: RefObject<MediaStream | null>;
 }
 
 interface PublisherState {
@@ -30,64 +30,98 @@ interface PublisherState {
 export function useLiveKitPublisher({
   submissionId,
   enabled,
-  onScreenShareStop,
+  screenStreamRef,
+  cameraStreamRef,
+  audioStreamRef,
 }: PublisherOptions): PublisherState {
   const roomRef = useRef<Room | null>(null);
-  const tracksRef = useRef<LocalTrack[]>([]);
+  const publishedTracksRef = useRef<(LocalVideoTrack | LocalAudioTrack)[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
 
   const stopPublishing = useCallback(() => {
-    tracksRef.current.forEach((t) => t.stop());
-    tracksRef.current = [];
+    console.log(`[LiveKit] Stopping publishing: submission=${submissionId ?? ""}`);
+    publishedTracksRef.current.forEach((t) => t.stop());
+    publishedTracksRef.current = [];
     roomRef.current?.disconnect();
     roomRef.current = null;
     setIsPublishing(false);
-  }, []);
+  }, [submissionId]);
 
   const startPublishing = useCallback(async () => {
-    if (!enabled || isPublishing) return;
+    if (!enabled || !submissionId || isPublishing) return;
+    console.log(`[LiveKit] Connecting: submission=${submissionId}`);
     try {
-      const { data } = await api.post(`/candidate/submission/${submissionId}/livekit-token`);
+      const { data } = await api.post(
+        `/api/candidate/submission/${submissionId}/livekit-token`
+      );
       const { token } = data.data as { token: string };
 
       const room = new Room();
       roomRef.current = room;
       const liveKitHost = import.meta.env.VITE_LIVEKIT_HOST as string;
       await room.connect(liveKitHost, token);
+      console.log(`[LiveKit] Room connected: host=${liveKitHost} submission=${submissionId}`);
 
-      // Screen share (requires user-gesture context — called post-consent)
-      try {
-        const [screenTrack] = await createLocalScreenTracks({ audio: false });
-        const localScreen = screenTrack as LocalVideoTrack;
-        tracksRef.current.push(localScreen);
-        await room.localParticipant.publishTrack(localScreen, {
-          name: `screen-${submissionId}`,
-          source: Track.Source.ScreenShare,
-        });
-        localScreen.mediaStreamTrack.addEventListener("ended", () => {
-          stopPublishing();
-          onScreenShareStop?.();
-        });
-      } catch {
-        /* screen share denied — continue with camera/mic only */
+      // Screen share — reuse the pre-acquired stream (no second getDisplayMedia prompt)
+      const screenStream = screenStreamRef?.current;
+      if (screenStream) {
+        const rawScreenTrack = screenStream.getVideoTracks()[0];
+        if (rawScreenTrack) {
+          const screenTrack = new LocalVideoTrack(rawScreenTrack);
+          publishedTracksRef.current.push(screenTrack);
+          await room.localParticipant.publishTrack(screenTrack, {
+            name: `screen-${submissionId}`,
+            source: Track.Source.ScreenShare,
+          });
+          console.log(`[LiveKit] Published screen track: screen-${submissionId}`);
+          rawScreenTrack.addEventListener("ended", stopPublishing);
+        }
       }
 
-      // Camera + microphone
-      const localTracks = await createLocalTracks({ audio: true, video: true });
-      for (const track of localTracks) {
-        tracksRef.current.push(track);
-        const source =
-          track.kind === Track.Kind.Video ? Track.Source.Camera : Track.Source.Microphone;
-        const name =
-          track.kind === Track.Kind.Video ? `camera-${submissionId}` : `mic-${submissionId}`;
-        await room.localParticipant.publishTrack(track, { name, source });
+      // Camera — reuse pre-acquired camera stream
+      const cameraStream = cameraStreamRef?.current;
+      if (cameraStream) {
+        const rawCamTrack = cameraStream.getVideoTracks()[0];
+        if (rawCamTrack) {
+          const camTrack = new LocalVideoTrack(rawCamTrack);
+          publishedTracksRef.current.push(camTrack);
+          await room.localParticipant.publishTrack(camTrack, {
+            name: `camera-${submissionId}`,
+            source: Track.Source.Camera,
+          });
+          console.log(`[LiveKit] Published camera track: camera-${submissionId}`);
+        }
+      }
+
+      // Microphone — reuse pre-acquired audio stream
+      const micStream = audioStreamRef?.current;
+      if (micStream) {
+        const rawAudioTrack = micStream.getAudioTracks()[0];
+        if (rawAudioTrack) {
+          const audioTrack = new LocalAudioTrack(rawAudioTrack);
+          publishedTracksRef.current.push(audioTrack);
+          await room.localParticipant.publishTrack(audioTrack, {
+            name: `mic-${submissionId}`,
+            source: Track.Source.Microphone,
+          });
+          console.log(`[LiveKit] Published audio track: mic-${submissionId}`);
+        }
       }
 
       setIsPublishing(true);
-    } catch {
+    } catch (err) {
+      console.error(`[LiveKit] Publish failed: submission=${submissionId}`, err);
       stopPublishing();
     }
-  }, [enabled, isPublishing, submissionId, stopPublishing, onScreenShareStop]);
+  }, [
+    enabled,
+    isPublishing,
+    submissionId,
+    stopPublishing,
+    screenStreamRef,
+    cameraStreamRef,
+    audioStreamRef,
+  ]);
 
   useEffect(() => {
     return () => stopPublishing();

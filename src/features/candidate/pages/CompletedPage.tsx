@@ -6,6 +6,8 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
 import { IconCheck } from "@/assets/icons";
 import { isAssessmentDone } from "@/utils/assessmentSession";
+import CandidateHeader from "@/features/candidate/components/CandidateHeader";
+import { useAppSelector } from "@/store/hooks";
 
 type ValidationState = "checking" | "valid" | "invalid";
 
@@ -13,6 +15,11 @@ export default function CompletedPage() {
   const { shareLink } = useParams<{ shareLink: string }>();
   const navigate = useNavigate();
   const [state, setState] = useState<ValidationState>("checking");
+
+  const user = useAppSelector((s) => s.auth.user);
+  const candidateName = user
+    ? [user.first_name, user.last_name].filter(Boolean).join(" ")
+    : undefined;
 
   useEffect(() => {
     // isAssessmentDone reads sessionStorage — synchronous, no API call needed.
@@ -49,6 +56,7 @@ export default function CompletedPage() {
 
   return (
     <div className={styles.page}>
+      <CandidateHeader candidateName={candidateName} />
       <div className={styles.card}>
         <div className={styles.iconWrap}>
           <IconCheck size={32} color="#fff" />

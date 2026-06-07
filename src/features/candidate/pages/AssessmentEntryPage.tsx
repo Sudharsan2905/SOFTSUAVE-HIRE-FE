@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { Spinner } from "@/components/ui/Spinner";
 import { NoAccessPage } from "@/components/shared/NoAccessPage";

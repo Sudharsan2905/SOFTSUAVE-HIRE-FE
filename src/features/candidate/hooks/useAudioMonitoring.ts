@@ -3,10 +3,17 @@ import { takeAudioStream } from "../services/screenCaptureStore";
 
 interface UseAudioMonitoringOptions {
   enabled: boolean;
+  /**
+   * Set to false to defer stream acquisition even when enabled.
+   * Defaults to true (same as enabled). Used by ExamOrchestrator to
+   * sequence permission requests one at a time.
+   */
+  shouldInitialize?: boolean;
   threshold?: number;
   sustainedSeconds?: number;
-  onViolation: () => void;
+  onViolation: (description: string) => void;
   analyserRef?: MutableRefObject<AnalyserNode | null>;
+  onStreamReady?: (stream: MediaStream) => void;
 }
 
 const COOLDOWN_MS = 30_000;
@@ -15,10 +22,12 @@ const DEFAULT_SUSTAINED_S = 5;
 
 export function useAudioMonitoring({
   enabled,
+  shouldInitialize = true,
   threshold = DEFAULT_THRESHOLD,
   sustainedSeconds = DEFAULT_SUSTAINED_S,
   onViolation,
   analyserRef,
+  onStreamReady,
 }: UseAudioMonitoringOptions): void {
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -27,9 +36,14 @@ export function useAudioMonitoring({
   const lastFiredRef = useRef<number | null>(null);
   const isActiveRef = useRef(false);
   const onViolationRef = useRef(onViolation);
+  const onStreamReadyRef = useRef(onStreamReady);
 
   useEffect(() => {
     onViolationRef.current = onViolation;
+  });
+
+  useEffect(() => {
+    onStreamReadyRef.current = onStreamReady;
   });
 
   const cleanup = useCallback(() => {
@@ -47,7 +61,7 @@ export function useAudioMonitoring({
   }, [analyserRef]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !shouldInitialize) return;
 
     let cancelled = false;
 
@@ -61,6 +75,7 @@ export function useAudioMonitoring({
         }
 
         streamRef.current = stream;
+        onStreamReadyRef.current?.(stream);
         const audioContext = new AudioContext();
         audioContextRef.current = audioContext;
 
@@ -91,7 +106,9 @@ export function useAudioMonitoring({
               if (cooldownOk) {
                 lastFiredRef.current = now;
                 violationStartRef.current = null;
-                onViolationRef.current();
+                onViolationRef.current(
+                  `Sustained background noise detected above threshold for ${sustainedSeconds} seconds`
+                );
               }
             }
           } else {
@@ -113,5 +130,5 @@ export function useAudioMonitoring({
       cancelled = true;
       cleanup();
     };
-  }, [enabled, threshold, sustainedSeconds, analyserRef, cleanup]);
+  }, [enabled, shouldInitialize, threshold, sustainedSeconds, analyserRef, cleanup]);
 }
