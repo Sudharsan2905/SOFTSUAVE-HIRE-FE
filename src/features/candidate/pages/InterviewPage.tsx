@@ -529,7 +529,10 @@ export default function InterviewPage() {
     };
   }, [monitoringConfig.video_monitoring, shouldAcquireCamera, setPhaseError]);
 
-  // Rebind camera stream after round transitions (video element remounts)
+  // Rebind camera stream after round transitions or when the exam goes ACTIVE.
+  // The <video> element only exists in the DOM once the active exam UI mounts
+  // (phase >= ACTIVE), so the initial stream assignment during VALIDATING_VIDEO
+  // always finds videoRef.current null and must be retried here.
   useEffect(() => {
     const stream = cameraStreamRef.current;
     if (!stream || !videoRef.current) return;
@@ -537,7 +540,7 @@ export default function InterviewPage() {
       videoRef.current.srcObject = stream;
       videoRef.current.play().catch(() => {});
     }
-  }, [roundData]);
+  }, [roundData, phase]);
 
   useEffect(() => {
     if (monitoringConfig.audio_monitoring) setAudioActive(true);
