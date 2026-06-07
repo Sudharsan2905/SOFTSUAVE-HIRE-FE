@@ -51,9 +51,7 @@ export function useLiveKitPublisher({
     if (!enabled || !submissionId || isPublishing) return;
     console.log(`[LiveKit] Connecting: submission=${submissionId}`);
     try {
-      const { data } = await api.post(
-        `/api/candidate/submission/${submissionId}/livekit-token`
-      );
+      const { data } = await api.post(`/api/candidate/submission/${submissionId}/livekit-token`);
       const { token } = data.data as { token: string };
 
       const room = new Room();

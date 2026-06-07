@@ -3,9 +3,9 @@ import api from "../../../utils/api";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const RING_BUFFER_MS = 5_000;    // rolling pre-event window
+const RING_BUFFER_MS = 5_000; // rolling pre-event window
 const FORWARD_RECORD_MS = 20_000; // post-event capture window per event
-const TIMESLICE_MS = 250;         // MediaRecorder chunk interval
+const TIMESLICE_MS = 250; // MediaRecorder chunk interval
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -62,18 +62,10 @@ export interface UseMalpracticeRecordingReturn {
 
 function pickMimeType(isVideo: boolean): string {
   if (isVideo) {
-    const candidates = [
-      "video/webm;codecs=vp9,opus",
-      "video/webm;codecs=vp8,opus",
-      "video/webm",
-    ];
+    const candidates = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"];
     return candidates.find((m) => MediaRecorder.isTypeSupported(m)) ?? "";
   }
-  const candidates = [
-    "audio/webm;codecs=opus",
-    "audio/webm",
-    "audio/ogg",
-  ];
+  const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg"];
   return candidates.find((m) => MediaRecorder.isTypeSupported(m)) ?? "";
 }
 
@@ -109,7 +101,7 @@ export function useMalpracticeRecording({
       preBlobs: Blob[],
       postBlobs: Blob[],
       isVideo: boolean,
-      mimeType: string,
+      mimeType: string
     ): Promise<void> => {
       const allBlobs = [...preBlobs, ...postBlobs];
       if (allBlobs.length === 0) return;
@@ -118,19 +110,15 @@ export function useMalpracticeRecording({
         type: mimeType || (isVideo ? "video/webm" : "audio/webm"),
       });
       const fd = new FormData();
-      fd.append(
-        isVideo ? "video_chunk" : "audio_clip",
-        blob,
-        isVideo ? "clip.webm" : "audio.webm",
-      );
+      fd.append(isVideo ? "video_chunk" : "audio_clip", blob, isVideo ? "clip.webm" : "audio.webm");
 
       await api.post(
         `/api/candidate/submission/${submissionId}/malpractice/${eventIndex}/media`,
         fd,
-        { headers: { "Content-Type": "multipart/form-data" } },
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
     },
-    [submissionId],
+    [submissionId]
   );
 
   // ── Finalize active event (on 20 s timeout or early flush) ───────────────
@@ -144,18 +132,12 @@ export function useMalpracticeRecording({
       activeEventsRef.current.delete(eventIndex);
 
       try {
-        await uploadCapture(
-          eventIndex,
-          ev.preBlobs,
-          ev.postBlobs,
-          ev.isVideo,
-          ev.mimeType,
-        );
+        await uploadCapture(eventIndex, ev.preBlobs, ev.postBlobs, ev.isVideo, ev.mimeType);
       } catch (err) {
         console.warn(`Malpractice media upload failed for event ${eventIndex}:`, err);
       }
     },
-    [uploadCapture],
+    [uploadCapture]
   );
 
   // ── Main recorder: unified stream + ring buffer ───────────────────────────
@@ -287,7 +269,7 @@ export function useMalpracticeRecording({
         timeoutId,
       });
     },
-    [finalizeActive],
+    [finalizeActive]
   );
 
   const abortCapture = useCallback((id: symbol): void => {
@@ -314,13 +296,9 @@ export function useMalpracticeRecording({
 
       for (const ev of events) {
         clearTimeout(ev.timeoutId);
-        void uploadCapture(
-          ev.eventIndex,
-          ev.preBlobs,
-          ev.postBlobs,
-          ev.isVideo,
-          ev.mimeType,
-        ).catch(() => {});
+        void uploadCapture(ev.eventIndex, ev.preBlobs, ev.postBlobs, ev.isVideo, ev.mimeType).catch(
+          () => {}
+        );
       }
     };
 

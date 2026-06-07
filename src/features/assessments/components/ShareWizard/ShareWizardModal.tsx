@@ -295,9 +295,7 @@ function LinkAccordionCard({ link, revoking, onRevoke }: Readonly<LinkAccordionC
         aria-expanded={open}
       >
         <IconLink size={16} className={styles.customLinkIcon} />
-        <span className={styles.customLinkCardLabel}>
-          {link.label ?? "Unlabelled link"}
-        </span>
+        <span className={styles.customLinkCardLabel}>{link.label ?? "Unlabelled link"}</span>
         <IconChevronDown
           size={14}
           className={clsx(styles.customLinkChevron, open && styles.customLinkChevronOpen)}
@@ -338,9 +336,7 @@ function LinkAccordionCard({ link, revoking, onRevoke }: Readonly<LinkAccordionC
 
           {/* Footer */}
           <div className={styles.customLinkActions}>
-            <span className={styles.customLinkCreated}>
-              {formatDate(link.created_at)}
-            </span>
+            <span className={styles.customLinkCreated}>{formatDate(link.created_at)}</span>
             <div className={styles.customLinkActionBtns}>
               <CopyButton text={fullUrl} />
               <Button

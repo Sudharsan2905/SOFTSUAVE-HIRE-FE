@@ -102,7 +102,8 @@ export function useExamOrchestrator({
   // ── Devtools detection via resize event (event-driven, no polling) ──────────
   // Opening/closing devtools changes window.innerWidth/Height, firing "resize".
   const [isDevtoolsOpen, setIsDevtoolsOpen] = useState(
-    () => window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 160
+    () =>
+      window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 160
   );
   useEffect(() => {
     const check = () => {

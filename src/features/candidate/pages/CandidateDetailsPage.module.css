@@ -97,6 +97,47 @@
   align-self: flex-start;
 }
 
+.actionsRow {
+  grid-column: 2;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 2px;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: var(--bg-muted);
+  border: 1.5px solid var(--border-default);
+}
+.actionBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.actionBtn:not(:disabled):hover {
+  border-color: transparent;
+}
+.resume:not(:disabled):hover {
+  background: var(--success-50, #f0fdf4);
+  color: var(--success-700, #15803d);
+}
+.danger:not(:disabled):hover {
+  background: var(--error-50, #fef2f2);
+  color: var(--color-error-600, #dc2626);
+}
+.reaccess:not(:disabled):hover {
+  background: var(--color-warning-50, #fffbeb);
+  color: var(--color-warning-700, #b45309);
+}
+
 /* ── Version control (in page header) ────────────────────────────────────────── */
 .versionControl {
   display: inline-flex;

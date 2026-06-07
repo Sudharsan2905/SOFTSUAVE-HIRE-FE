@@ -52,7 +52,7 @@ interface UseMalpracticeCoordinatorOptions {
 // ─── Module-level helpers ─────────────────────────────────────────────────────
 
 async function snapshotVideoFrame(
-  videoEl: HTMLVideoElement | null | undefined,
+  videoEl: HTMLVideoElement | null | undefined
 ): Promise<Blob | null> {
   if (!videoEl || videoEl.videoWidth === 0) return null;
   const canvas = document.createElement("canvas");
@@ -70,7 +70,7 @@ function dispatchViolationResult(
   data: { malpractice_count?: number; is_terminal?: boolean },
   event: ViolationPayload,
   dispatch: ReturnType<typeof useAppDispatch>,
-  onTerminated?: (reason: string) => void,
+  onTerminated?: (reason: string) => void
 ): void {
   if (data.malpractice_count !== undefined) {
     dispatch(setMalpracticeCount(data.malpractice_count));
@@ -83,7 +83,7 @@ function dispatchViolationResult(
       setLastViolation({
         type: event.type,
         message: `Warning ${String(data.malpractice_count)}/3: ${VIOLATION_MESSAGES[event.type]}`,
-      }),
+      })
     );
   }
 }
@@ -130,7 +130,7 @@ export function useMalpracticeCoordinator({
           setLastViolation({
             type: event.type,
             message: `Warning: ${VIOLATION_MESSAGES[event.type]}`,
-          }),
+          })
         );
         return;
       }
@@ -153,15 +153,14 @@ export function useMalpracticeCoordinator({
       fd.append("description", description);
       if (screenImage && cfg.screenshot_enabled)
         fd.append("screen_image", screenImage, "screen.jpg");
-      if (faceImage && cfg.video_monitoring)
-        fd.append("face_image", faceImage, "face.jpg");
+      if (faceImage && cfg.video_monitoring) fd.append("face_image", faceImage, "face.jpg");
 
       let eventIndex = -1;
       try {
         const response = await api.post(
           `/api/candidate/submission/${submissionId}/malpractice`,
           fd,
-          { headers: { "Content-Type": "multipart/form-data" } },
+          { headers: { "Content-Type": "multipart/form-data" } }
         );
         const data = response.data?.data ?? {};
         eventIndex = data.event_index ?? -1;
@@ -189,7 +188,7 @@ export function useMalpracticeCoordinator({
       prepareCapture,
       commitCapture,
       abortCapture,
-    ],
+    ]
   );
 
   const resetFirstWarnings = useCallback(() => {

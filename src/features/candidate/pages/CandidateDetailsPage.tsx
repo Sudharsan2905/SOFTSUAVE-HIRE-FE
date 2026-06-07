@@ -73,7 +73,6 @@ export default function CandidateDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedVersion, setSelectedVersion] = useState<string>("current");
-  // const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   const fetchSubmission = useCallback(
     async (version: string) => {
@@ -199,7 +198,12 @@ export default function CandidateDetailsPage() {
         </article>
 
         <div className={styles.tabsArea}>
-          <CandidateDetailsTabs data={data} />
+          <CandidateDetailsTabs
+            data={data}
+            workspaceId={workspaceId!}
+            assessmentId={assessmentId!}
+            onRefresh={() => void fetchSubmission(selectedVersion)}
+          />
         </div>
       </div>
     </div>

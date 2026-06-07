@@ -23,10 +23,7 @@ function isSizeDevtoolsOpen(): boolean {
 }
 
 function getSizeDelta(): number {
-  return Math.max(
-    window.outerWidth - window.innerWidth,
-    window.outerHeight - window.innerHeight
-  );
+  return Math.max(window.outerWidth - window.innerWidth, window.outerHeight - window.innerHeight);
 }
 
 export function useDevtoolsMonitoring({

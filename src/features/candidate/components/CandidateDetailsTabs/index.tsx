@@ -1,9 +1,12 @@
 import { useState, type ComponentType, type ReactNode } from "react";
 import styles from "./CandidateDetailsTabs.module.css";
 import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
 import { RichText } from "@/components/ui/RichText";
 import { Modal } from "@/components/ui/Modal";
 import { clsx } from "@/utils/helpers";
+import { api } from "@/utils/api";
+import toast from "react-hot-toast";
 import {
   IconOverview,
   IconRounds,
@@ -22,8 +25,8 @@ import {
   IconChevronLeft,
   IconChevronRight,
 } from "@/assets/icons";
-import type { MalpracticeType } from "@/types";
 import type {
+  MalpracticeType,
   CandidateSubmissionDetail,
   QuestionAnswer,
   RoundResult,
@@ -33,7 +36,33 @@ import { getStatusLabel } from "@/constants/statusColors";
 
 interface CandidateDetailsTabsProps {
   data: CandidateSubmissionDetail;
+  workspaceId: string;
+  assessmentId: string;
+  onRefresh: () => void;
 }
+
+const REACCESS_CATEGORY_OPTIONS = [
+  {
+    value: "poor_network",
+    label: "Poor Network",
+    description: "Candidate experienced connectivity issues during the assessment.",
+  },
+  {
+    value: "candidate_request",
+    label: "Candidate Request",
+    description: "Candidate made a personal request for re-access.",
+  },
+  {
+    value: "technical_issue",
+    label: "Technical Issue",
+    description: "A technical problem on our end disrupted the candidate's session.",
+  },
+  {
+    value: "other",
+    label: "Other",
+    description: "",
+  },
+];
 
 interface DetailTab {
   id: string;
@@ -50,8 +79,96 @@ const TABS: ReadonlyArray<DetailTab> = [
 
 // ─── Overall Tab ─────────────────────────────────────────────────────────────
 
-function StatusSummary({ data }: Readonly<{ data: CandidateSubmissionDetail }>) {
+interface StatusSummaryProps {
+  data: CandidateSubmissionDetail;
+  workspaceId: string;
+  assessmentId: string;
+  onRefresh: () => void;
+}
+
+function StatusSummary({
+  data,
+  workspaceId,
+  assessmentId,
+  onRefresh,
+}: Readonly<StatusSummaryProps>) {
   const statusLabel = getStatusLabel(data.status);
+  const status = data.status;
+
+  const [resuming, setResuming] = useState(false);
+  const [terminating, setTerminating] = useState(false);
+  const [showReaccessModal, setShowReaccessModal] = useState(false);
+  const [reaccessCategory, setReaccessCategory] = useState("poor_network");
+  const [reaccessReason, setReaccessReason] = useState("");
+  const [reaccessSubmitting, setReaccessSubmitting] = useState(false);
+
+  const handleResume = async () => {
+    setResuming(true);
+    try {
+      await api.post(
+        `/api/workspaces/${workspaceId}/assessments/${assessmentId}/submissions/${data.submission_id}/resume`
+      );
+      toast.success("Interview resumed — candidate can continue.");
+      onRefresh();
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg ?? "Failed to resume interview");
+    } finally {
+      setResuming(false);
+    }
+  };
+
+  const handleTerminate = async () => {
+    setTerminating(true);
+    try {
+      await api.post(
+        `/api/workspaces/${workspaceId}/assessments/${assessmentId}/submissions/${data.submission_id}/terminate`,
+        { reason: "Terminated by admin" }
+      );
+      toast.success("Submission terminated.");
+      onRefresh();
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg ?? "Failed to terminate submission");
+    } finally {
+      setTerminating(false);
+    }
+  };
+
+  const openReaccessModal = () => {
+    setReaccessCategory("poor_network");
+    setReaccessReason("");
+    setShowReaccessModal(true);
+  };
+
+  const handleReaccess = async () => {
+    if (reaccessCategory === "other" && !reaccessReason.trim()) {
+      toast.error("Please provide a reason for re-access.");
+      return;
+    }
+    setReaccessSubmitting(true);
+    try {
+      const selectedOption = REACCESS_CATEGORY_OPTIONS.find((o) => o.value === reaccessCategory);
+      const reason =
+        reaccessCategory === "other" ? reaccessReason.trim() : (selectedOption?.description ?? "");
+      await api.post(
+        `/api/workspaces/${workspaceId}/assessments/${assessmentId}/submissions/${data.submission_id}/reaccess`,
+        { reason, reason_category: reaccessCategory }
+      );
+      toast.success("Re-access granted.");
+      setShowReaccessModal(false);
+      onRefresh();
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg ?? "Failed to grant re-access");
+    } finally {
+      setReaccessSubmitting(false);
+    }
+  };
+
+  const selectedCategoryOption = REACCESS_CATEGORY_OPTIONS.find(
+    (o) => o.value === reaccessCategory
+  );
 
   return (
     <div className={styles.summary}>
@@ -107,16 +224,99 @@ function StatusSummary({ data }: Readonly<{ data: CandidateSubmissionDetail }>) 
       </article>
 
       <div className={styles.statusActions}>
-        <Button variant="secondary" leftIcon={<IconRefresh size={16} />}>
-          Re-access
-        </Button>
-        <Button variant="primary" leftIcon={<IconPlay size={16} />}>
-          Resume
-        </Button>
-        <Button variant="danger" leftIcon={<IconPower size={16} />}>
-          Terminate
-        </Button>
+        {(status === "completed" || status === "malpractice") && (
+          <Button
+            variant="secondary"
+            leftIcon={<IconRefresh size={16} />}
+            onClick={openReaccessModal}
+          >
+            Re-access
+          </Button>
+        )}
+        {status === "on_hold" && (
+          <Button
+            variant="primary"
+            leftIcon={<IconPlay size={16} />}
+            onClick={() => void handleResume()}
+            isLoading={resuming}
+          >
+            Resume
+          </Button>
+        )}
+        {(status === "in_progress" || status === "pending") && (
+          <Button
+            variant="danger"
+            leftIcon={<IconPower size={16} />}
+            onClick={() => void handleTerminate()}
+            isLoading={terminating}
+          >
+            Terminate
+          </Button>
+        )}
       </div>
+
+      {/* Re-access Modal */}
+      <Modal
+        isOpen={showReaccessModal}
+        onClose={() => setShowReaccessModal(false)}
+        title="Grant Re-access"
+        size="sm"
+        footer={
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+            <Button variant="secondary" onClick={() => setShowReaccessModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => void handleReaccess()} isLoading={reaccessSubmitting}>
+              Confirm Re-access
+            </Button>
+          </div>
+        }
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div>
+            <Select
+              label="Reason Category"
+              options={REACCESS_CATEGORY_OPTIONS}
+              value={reaccessCategory}
+              onChange={(val) => {
+                setReaccessCategory(val);
+                setReaccessReason("");
+              }}
+              fullWidth
+              hint={reaccessCategory === "other" ? "" : (selectedCategoryOption?.description ?? "")}
+            />
+          </div>
+
+          {reaccessCategory === "other" && (
+            <div>
+              <label
+                htmlFor="reaccess-reason"
+                style={{ display: "block", fontSize: 13, fontWeight: 500, marginBottom: 6 }}
+              >
+                Reason <span style={{ color: "var(--color-error-500)" }}>*</span>
+              </label>
+              <textarea
+                id="reaccess-reason"
+                value={reaccessReason}
+                onChange={(e) => setReaccessReason(e.target.value)}
+                placeholder="Describe why re-access is being granted..."
+                rows={3}
+                style={{
+                  width: "100%",
+                  padding: "8px 10px",
+                  borderRadius: 6,
+                  border: "1px solid var(--border-primary)",
+                  background: "var(--bg-secondary)",
+                  color: "var(--text-primary)",
+                  fontSize: 14,
+                  resize: "vertical",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }
@@ -534,16 +734,20 @@ function MalpracticeTab({ events }: Readonly<{ events: MalpracticeEvent[] }>) {
         isOpen={preview !== null}
         onClose={() => setPreview(null)}
         title={preview?.title}
-        size="lg"
+        size="xl"
       >
         {preview?.kind === "image" && (
           <img src={preview.url} alt={preview.title} className={styles.mpPreviewImage} />
         )}
         {preview?.kind === "video" && (
-          <video src={preview.url} controls autoPlay className={styles.mpPreviewVideo} />
+          <video src={preview.url} controls autoPlay className={styles.mpPreviewVideo}>
+            <track kind="captions" src="" srcLang="en" label="Captions" default />
+          </video>
         )}
         {preview?.kind === "audio" && (
-          <audio src={preview.url} controls autoPlay style={{ width: "100%" }} />
+          <audio src={preview.url} controls autoPlay style={{ width: "100%" }}>
+            <track kind="captions" src="" srcLang="en" label="Captions" default />
+          </audio>
         )}
       </Modal>
     </div>
@@ -609,14 +813,26 @@ function ScreenshotsTab({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function CandidateDetailsTabs({ data }: CandidateDetailsTabsProps) {
+export function CandidateDetailsTabs({
+  data,
+  workspaceId,
+  assessmentId,
+  onRefresh,
+}: Readonly<CandidateDetailsTabsProps>) {
   const [activeTabId, setActiveTabId] = useState(TABS[0].id);
 
   const activeTab = TABS.find((tab) => tab.id === activeTabId) ?? TABS[0];
 
   let panelContent: ReactNode;
   if (activeTab.id === "overall") {
-    panelContent = <StatusSummary data={data} />;
+    panelContent = (
+      <StatusSummary
+        data={data}
+        workspaceId={workspaceId}
+        assessmentId={assessmentId}
+        onRefresh={onRefresh}
+      />
+    );
   } else if (activeTab.id === "rounds") {
     panelContent = <RoundsReview rounds={data.rounds} />;
   } else if (activeTab.id === "malpractice") {

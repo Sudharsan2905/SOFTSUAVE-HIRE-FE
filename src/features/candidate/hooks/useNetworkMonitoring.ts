@@ -137,7 +137,9 @@ export function useNetworkMonitoring({
 
       switch (msg.type) {
         case "connected":
-          console.log(`[WS] Session connected: remaining=${msg.remaining_seconds ?? "N/A"}s q=${msg.current_question_idx ?? 0}`);
+          console.log(
+            `[WS] Session connected: remaining=${msg.remaining_seconds ?? "N/A"}s q=${msg.current_question_idx ?? 0}`
+          );
           setNetworkStatus("connected");
           if (msg.remaining_seconds !== undefined || msg.current_question_idx !== undefined) {
             onSessionStateRef.current?.(
@@ -155,7 +157,9 @@ export function useNetworkMonitoring({
           onSessionOnHoldRef.current?.();
           break;
         case "resume_approved":
-          console.log(`[WS] Session resumed: remaining=${msg.remaining_seconds ?? "N/A"}s q=${msg.current_question_idx ?? 0}`);
+          console.log(
+            `[WS] Session resumed: remaining=${msg.remaining_seconds ?? "N/A"}s q=${msg.current_question_idx ?? 0}`
+          );
           setNetworkStatus("connected");
           onResumeApprovedRef.current?.(
             msg.remaining_seconds ?? null,
@@ -224,14 +228,18 @@ export function useNetworkMonitoring({
     if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
     if (retryCountRef.current >= MAX_RETRIES || unmountedRef.current) {
       if (retryCountRef.current >= MAX_RETRIES) {
-        console.error(`[WS] Max retries (${MAX_RETRIES}) reached, giving up. submission=${submissionId ?? ""}`);
+        console.error(
+          `[WS] Max retries (${MAX_RETRIES}) reached, giving up. submission=${submissionId ?? ""}`
+        );
       }
       return;
     }
 
     const delay = Math.min(BASE_BACKOFF_MS * 2 ** retryCountRef.current, MAX_BACKOFF_MS);
     retryCountRef.current += 1;
-    console.log(`[WS] Reconnect attempt ${retryCountRef.current}/${MAX_RETRIES} in ${delay}ms. submission=${submissionId ?? ""}`);
+    console.log(
+      `[WS] Reconnect attempt ${retryCountRef.current}/${MAX_RETRIES} in ${delay}ms. submission=${submissionId ?? ""}`
+    );
     retryTimerRef.current = setTimeout(() => {
       if (!unmountedRef.current) connect();
     }, delay);

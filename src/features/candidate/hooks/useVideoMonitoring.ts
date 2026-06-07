@@ -98,9 +98,7 @@ export function useVideoMonitoring({
                   now - faceAbsenceStart.current > FACE_ABSENCE_THRESHOLD_MS &&
                   canFlag("face_absence")
                 ) {
-                  const absenceSecs = Math.round(
-                    (now - faceAbsenceStart.current) / 1_000
-                  );
+                  const absenceSecs = Math.round((now - faceAbsenceStart.current) / 1_000);
                   onViolationRef.current(
                     "face_absence",
                     `No face detected in camera feed for ${absenceSecs} seconds`

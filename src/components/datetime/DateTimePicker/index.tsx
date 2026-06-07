@@ -15,12 +15,7 @@ import {
   startOfDay,
   addMonths,
 } from "date-fns";
-import {
-  IconCalendar,
-  IconChevronDown,
-  IconChevronLeft,
-  IconChevronRight,
-} from "@/assets/icons";
+import { IconCalendar, IconChevronDown, IconChevronLeft, IconChevronRight } from "@/assets/icons";
 import styles from "./DateTimePicker.module.css";
 
 interface DateTimePickerProps {
@@ -44,8 +39,7 @@ const MINUTES = Array.from({ length: 60 }, (_, i) => i); // 0..59
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /** Convert 12-hour + AM/PM to 0-23 hour. */
-const to24h = (h12: number, ap: "AM" | "PM"): number =>
-  (h12 % 12) + (ap === "PM" ? 12 : 0);
+const to24h = (h12: number, ap: "AM" | "PM"): number => (h12 % 12) + (ap === "PM" ? 12 : 0);
 
 function parseValue(value: string): Date | null {
   if (!value) return null;

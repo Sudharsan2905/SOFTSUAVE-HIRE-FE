@@ -245,7 +245,6 @@ export default function InterviewPage() {
     });
   }, [registerCallbacks, navigate, shareLink]);
 
-
   // ── Screen capture — initialized once orchestrator opens the gate ───────────
   // shouldInitScreenCapture starts false; an effect below sets it true when
   // the orchestrator reaches VALIDATING_SCREEN_SHARE. This breaks the
@@ -746,7 +745,7 @@ export default function InterviewPage() {
   if (!roundData) return null;
 
   // Show the sequential setup screen until the exam is ACTIVE
-  if (phase < ExamPhase .ACTIVE) {
+  if (phase < ExamPhase.ACTIVE) {
     return (
       <ExamSetupScreen
         phase={phase}
