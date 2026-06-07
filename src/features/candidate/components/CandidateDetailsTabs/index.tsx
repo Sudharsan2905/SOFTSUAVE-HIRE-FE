@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { RichText } from "@/components/ui/RichText";
 import { Modal } from "@/components/ui/Modal";
-import { clsx } from "@/utils/helpers";
+import { Badge } from "@/components/ui/Badge";
+import { clsx, formatDateTime } from "@/utils/helpers";
 import { api } from "@/utils/api";
 import toast from "react-hot-toast";
 import {
@@ -32,7 +33,7 @@ import type {
   RoundResult,
   MalpracticeEvent,
 } from "@/types";
-import { getStatusLabel } from "@/constants/statusColors";
+import { getStatusLabel, STATUS_COLORS } from "@/constants/statusColors";
 
 interface CandidateDetailsTabsProps {
   data: CandidateSubmissionDetail;
@@ -178,19 +179,10 @@ function StatusSummary({
           <div className={styles.statItem}>
             <dt className={styles.statLabel}>Status</dt>
             <dd className={styles.statValue}>
-              <span
-                className={clsx(
-                  styles.statusPill,
-                  styles[`status${data.status.replace(/_([a-z])/g, (_, c) => c.toUpperCase())}`]
-                )}
-              >
+              <Badge variant={STATUS_COLORS[data.status]?.variant ?? "default"}>
                 {statusLabel}
-              </span>
+              </Badge>
             </dd>
-          </div>
-          <div className={styles.statItem}>
-            <dt className={styles.statLabel}>Submission ID</dt>
-            <dd className={styles.statValue}>{data.submission_id}</dd>
           </div>
           <div className={styles.statItem}>
             <dt className={styles.statLabel}>Score</dt>
@@ -201,6 +193,10 @@ function StatusSummary({
             <dd className={styles.statValue}>{data.percentage}%</dd>
           </div>
           <div className={styles.statItem}>
+            <dt className={styles.statLabel}>Rounds</dt>
+            <dd className={styles.statValue}>{String((data.rounds || []).length || 0)}</dd>
+          </div>
+          <div className={styles.statItem}>
             <dt className={styles.statLabel}>Malpractice Count</dt>
             <dd className={styles.statValue}>{data.malpractice_count}</dd>
           </div>
@@ -208,18 +204,18 @@ function StatusSummary({
             <dt className={styles.statLabel}>Re-access Count</dt>
             <dd className={styles.statValue}>{data.reaccess_count}</dd>
           </div>
-          {data.started_at && (
-            <div className={styles.statItem}>
-              <dt className={styles.statLabel}>Started At</dt>
-              <dd className={styles.statValue}>{new Date(data.started_at).toLocaleString()}</dd>
-            </div>
-          )}
-          {data.completed_at && (
-            <div className={styles.statItem}>
-              <dt className={styles.statLabel}>Completed At</dt>
-              <dd className={styles.statValue}>{new Date(data.completed_at).toLocaleString()}</dd>
-            </div>
-          )}
+          <div className={styles.statItem}>
+            <dt className={styles.statLabel}>Started At</dt>
+            <dd className={styles.statValue}>
+              {data.started_at ? formatDateTime(data.started_at) : "-"}
+            </dd>
+          </div>
+          <div className={styles.statItem}>
+            <dt className={styles.statLabel}>Completed At</dt>
+            <dd className={styles.statValue}>
+              {data.completed_at ? formatDateTime(data.completed_at) : "-"}
+            </dd>
+          </div>
         </dl>
       </article>
 
@@ -291,9 +287,15 @@ function StatusSummary({
             <div>
               <label
                 htmlFor="reaccess-reason"
-                style={{ display: "block", fontSize: 13, fontWeight: 500, marginBottom: 6 }}
+                style={{
+                  display: "block",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  marginBottom: 6,
+                  color: "var(--text-secondary)",
+                }}
               >
-                Reason <span style={{ color: "var(--color-error-500)" }}>*</span>
+                Reason <span style={{ color: "var(--error-500)" }}>*</span>
               </label>
               <textarea
                 id="reaccess-reason"
@@ -305,8 +307,8 @@ function StatusSummary({
                   width: "100%",
                   padding: "8px 10px",
                   borderRadius: 6,
-                  border: "1px solid var(--border-primary)",
-                  background: "var(--bg-secondary)",
+                  border: "1px solid var(--border-default)",
+                  background: "var(--bg-elevated)",
                   color: "var(--text-primary)",
                   fontSize: 14,
                   resize: "vertical",
@@ -801,7 +803,7 @@ function ScreenshotsTab({
         isOpen={preview !== null}
         onClose={() => setPreview(null)}
         title={preview?.title}
-        size="lg"
+        size="xl"
       >
         {preview?.kind === "image" && (
           <img src={preview.url} alt={preview.title} className={styles.mpPreviewImage} />
