@@ -21,6 +21,7 @@ interface CandidateStreamPanelProps {
   session: LiveSession;
   screenTrack: RemoteTrack | null;
   isConnected: boolean;
+  connectionError: string | null;
   onTerminate: (submissionId: string) => void;
   onResume: (submissionId: string) => void;
   onClose: () => void;
@@ -31,23 +32,22 @@ export function CandidateStreamPanel({
   session,
   screenTrack,
   isConnected,
+  connectionError,
   onTerminate,
   onResume,
   onClose,
   onWarnCandidate,
-}: CandidateStreamPanelProps) {
+}: Readonly<CandidateStreamPanelProps>) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [warnMessage, setWarnMessage] = useState("");
   const [showWarnInput, setShowWarnInput] = useState(false);
 
   useEffect(() => {
-    if (!videoRef.current || !screenTrack) return;
-    if (screenTrack.kind === Track.Kind.Video) {
-      screenTrack.attach(videoRef.current);
-      return () => {
-        screenTrack.detach(videoRef.current!);
-      };
-    }
+    const el = videoRef.current;
+    // Optional chain on screenTrack?.kind narrows screenTrack to non-null after the guard
+    if (!el || screenTrack?.kind !== Track.Kind.Video) return;
+    screenTrack.attach(el);
+    return () => { screenTrack.detach(el); };
   }, [screenTrack]);
 
   const elapsedMins = session.started_at
@@ -60,6 +60,34 @@ export function CandidateStreamPanel({
     onWarnCandidate(session.submission_id, trimmed);
     setWarnMessage("");
     setShowWarnInput(false);
+  }
+
+  function renderVideoArea() {
+    if (connectionError) {
+      return (
+        <div className={styles.noStream}>
+          <p>Stream connection failed</p>
+          <span>{connectionError}</span>
+        </div>
+      );
+    }
+    if (isConnected && screenTrack) {
+      return <video ref={videoRef} className={styles.video} autoPlay playsInline muted />;
+    }
+    if (isConnected) {
+      return (
+        <div className={styles.noStream}>
+          <p>Screen share not available</p>
+          <span>Candidate may not have enabled screen sharing</span>
+        </div>
+      );
+    }
+    return (
+      <div className={styles.connecting}>
+        <Spinner size="md" />
+        <p>Connecting to stream…</p>
+      </div>
+    );
   }
 
   return (
@@ -77,21 +105,7 @@ export function CandidateStreamPanel({
         </button>
       </div>
 
-      <div className={styles.videoArea}>
-        {!isConnected ? (
-          <div className={styles.connecting}>
-            <Spinner size="md" />
-            <p>Connecting to stream…</p>
-          </div>
-        ) : !screenTrack ? (
-          <div className={styles.noStream}>
-            <p>Screen share not available</p>
-            <span>Candidate may not have enabled screen sharing</span>
-          </div>
-        ) : (
-          <video ref={videoRef} className={styles.video} autoPlay playsInline muted />
-        )}
-      </div>
+      <div className={styles.videoArea}>{renderVideoArea()}</div>
 
       {showWarnInput && (
         <div className={styles.warnInputArea}>

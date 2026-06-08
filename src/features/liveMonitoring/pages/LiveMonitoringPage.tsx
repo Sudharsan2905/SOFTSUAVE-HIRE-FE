@@ -190,7 +190,7 @@ export default function LiveMonitoringPage() {
   const wsSendRef = useAdminWebSocket(handleWsEvent);
 
   // ── LiveKit viewer ───────────────────────────────────────────────────────
-  const { screenTrack, isConnected: lkConnected } = useLiveKitViewer({
+  const { screenTrack, isConnected: lkConnected, connectionError: lkError } = useLiveKitViewer({
     workspaceId: selectedSession?.workspace_id ?? null,
     targetSubmissionId: selectedSession?.submission_id ?? null,
   });
@@ -311,6 +311,7 @@ export default function LiveMonitoringPage() {
             session={selectedSession}
             screenTrack={screenTrack}
             isConnected={lkConnected}
+            connectionError={lkError}
             onTerminate={handleTerminate}
             onResume={handleResume}
             onClose={() => setSelectedSession(null)}

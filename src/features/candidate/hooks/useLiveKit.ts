@@ -38,27 +38,31 @@ export function useLiveKitPublisher({
   const publishedTracksRef = useRef<(LocalVideoTrack | LocalAudioTrack)[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
 
+  // submissionId intentionally excluded — it is only used for logging, not logic.
+  // Including it would recreate stopPublishing (and therefore startPublishing + the
+  // cleanup effect) on every submission change, causing premature disconnection.
   const stopPublishing = useCallback(() => {
-    console.log(`[LiveKit] Stopping publishing: submission=${submissionId ?? ""}`);
     publishedTracksRef.current.forEach((t) => t.stop());
     publishedTracksRef.current = [];
     roomRef.current?.disconnect();
     roomRef.current = null;
     setIsPublishing(false);
-  }, [submissionId]);
+  }, []);
 
   const startPublishing = useCallback(async () => {
     if (!enabled || !submissionId || isPublishing) return;
-    console.log(`[LiveKit] Connecting: submission=${submissionId}`);
+    console.warn(`[LiveKit] Connecting: submission=${submissionId}`);
     try {
       const { data } = await api.post(`/api/candidate/submission/${submissionId}/livekit-token`);
       const { token } = data.data as { token: string };
 
       const room = new Room();
       roomRef.current = room;
-      const liveKitHost = import.meta.env.VITE_LIVEKIT_HOST as string;
+      const liveKitHost =
+        (import.meta.env.VITE_LIVEKIT_HOST as string | undefined) ||
+        `${globalThis.location.protocol === "https:" ? "wss" : "ws"}://${globalThis.location.host}/livekit`;
       await room.connect(liveKitHost, token);
-      console.log(`[LiveKit] Room connected: host=${liveKitHost} submission=${submissionId}`);
+      console.warn(`[LiveKit] Room connected: host=${liveKitHost} submission=${submissionId}`);
 
       // Screen share — reuse the pre-acquired stream (no second getDisplayMedia prompt)
       const screenStream = screenStreamRef?.current;
@@ -71,7 +75,7 @@ export function useLiveKitPublisher({
             name: `screen-${submissionId}`,
             source: Track.Source.ScreenShare,
           });
-          console.log(`[LiveKit] Published screen track: screen-${submissionId}`);
+          console.warn(`[LiveKit] Published screen track: screen-${submissionId}`);
           rawScreenTrack.addEventListener("ended", stopPublishing);
         }
       }
@@ -87,7 +91,7 @@ export function useLiveKitPublisher({
             name: `camera-${submissionId}`,
             source: Track.Source.Camera,
           });
-          console.log(`[LiveKit] Published camera track: camera-${submissionId}`);
+          console.warn(`[LiveKit] Published camera track: camera-${submissionId}`);
         }
       }
 
@@ -102,7 +106,7 @@ export function useLiveKitPublisher({
             name: `mic-${submissionId}`,
             source: Track.Source.Microphone,
           });
-          console.log(`[LiveKit] Published audio track: mic-${submissionId}`);
+          console.warn(`[LiveKit] Published audio track: mic-${submissionId}`);
         }
       }
 
@@ -138,40 +142,57 @@ interface ViewerOptions {
 interface ViewerState {
   screenTrack: RemoteTrack | null;
   isConnected: boolean;
+  connectionError: string | null;
 }
 
-function findScreenTrack(room: Room, submissionId: string): RemoteTrack | null {
-  const identity = `candidate-${submissionId}`;
+/**
+ * Ensures admin is subscribed ONLY to the target candidate's screen track.
+ * Unsubscribes every other participant. Idempotent — safe to call multiple times.
+ *
+ * This is the core of targeted monitoring: one admin → one candidate stream,
+ * regardless of how many other candidates are publishing in the same workspace room.
+ */
+function syncSubscriptions(room: Room, targetSubmissionId: string | null): void {
+  const targetIdentity = targetSubmissionId ? `candidate-${targetSubmissionId}` : null;
   for (const participant of room.remoteParticipants.values()) {
-    if (participant.identity !== identity) continue;
+    const isTarget = participant.identity === targetIdentity;
     for (const pub of participant.trackPublications.values()) {
-      if (pub.track?.source === Track.Source.ScreenShare) return pub.track;
+      // Use pub.source (always available) not pub.track?.source (null when unsubscribed)
+      const wantSubscribed = isTarget && pub.source === Track.Source.ScreenShare;
+      if (wantSubscribed && !pub.isSubscribed) pub.setSubscribed(true);
+      if (!wantSubscribed && pub.isSubscribed) pub.setSubscribed(false);
     }
   }
-  return null;
 }
 
 export function useLiveKitViewer({ workspaceId, targetSubmissionId }: ViewerOptions): ViewerState {
   const roomRef = useRef<Room | null>(null);
   const [screenTrack, setScreenTrack] = useState<RemoteTrack | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  // Ref keeps the event handlers' closure in sync with the latest selected candidate
+  // without requiring the room effect to re-run and reconnect.
   const targetRef = useRef(targetSubmissionId);
 
   useEffect(() => {
     targetRef.current = targetSubmissionId;
   }, [targetSubmissionId]);
 
+  // ── Room lifecycle — reconnects only when workspace changes ─────────────────
   useEffect(() => {
     if (!workspaceId) return;
 
     let active = true;
+    setConnectionError(null);
+
     const room = new Room();
     roomRef.current = room;
 
     room.on(RoomEvent.Connected, () => {
       if (!active) return;
       setIsConnected(true);
-      if (targetRef.current) setScreenTrack(findScreenTrack(room, targetRef.current));
+      // Subscribe to target candidate if they are already in the room and publishing
+      syncSubscriptions(room, targetRef.current);
     });
 
     room.on(RoomEvent.Disconnected, () => {
@@ -179,9 +200,26 @@ export function useLiveKitViewer({ workspaceId, targetSubmissionId }: ViewerOpti
       setScreenTrack(null);
     });
 
+    // A participant published a new track — subscribe if it is our target candidate's
+    // screen share. This covers the case where the candidate publishes AFTER the
+    // admin has already connected (the Connected handler would have found nothing).
+    room.on(
+      RoomEvent.TrackPublished,
+      (pub: RemoteTrackPublication, participant: RemoteParticipant) => {
+        if (!active) return;
+        if (
+          participant.identity === `candidate-${targetRef.current}` &&
+          pub.source === Track.Source.ScreenShare
+        ) {
+          pub.setSubscribed(true);
+        }
+      }
+    );
+
     room.on(
       RoomEvent.TrackSubscribed,
       (track: RemoteTrack, _pub: RemoteTrackPublication, participant: RemoteParticipant) => {
+        if (!active) return;
         if (
           targetRef.current &&
           participant.identity === `candidate-${targetRef.current}` &&
@@ -192,33 +230,54 @@ export function useLiveKitViewer({ workspaceId, targetSubmissionId }: ViewerOpti
       }
     );
 
+    // Reference equality ensures we only clear the track that was actually removed,
+    // never accidentally clearing a freshly-set track from another candidate.
     room.on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack) => {
       setScreenTrack((prev) => (prev === track ? null : prev));
     });
 
+    console.warn(`[LiveKit] Viewer: fetching admin token for workspace=${workspaceId}`);
     api
-      .post("/live-interviews/livekit-token", { workspace_id: workspaceId })
+      .post("/api/live-interviews/livekit-token", { workspace_id: workspaceId })
       .then(({ data }) => {
         if (!active) return;
-        const liveKitHost = import.meta.env.VITE_LIVEKIT_HOST as string;
-        return room.connect(liveKitHost, data.data.token as string);
+        const liveKitHost =
+          (import.meta.env.VITE_LIVEKIT_HOST as string | undefined) ||
+          `${globalThis.location.protocol === "https:" ? "wss" : "ws"}://${globalThis.location.host}/livekit`;
+        console.warn(`[LiveKit] Viewer: token received, connecting to ${liveKitHost}`);
+        // autoSubscribe: false — admin explicitly subscribes only to the selected
+        // candidate's screen track. Without this, LiveKit auto-subscribes to every
+        // participant in the room (all candidates), wasting bandwidth at scale.
+        return room.connect(liveKitHost, data.data.token as string, { autoSubscribe: false });
       })
-      .catch(() => {});
+      .catch((err: unknown) => {
+        if (!active) return;
+        const msg =
+          err instanceof Error ? err.message : (String(err) || "Unknown connection error");
+        console.error("[LiveKit] Viewer: connection failed:", err);
+        setConnectionError(msg);
+      });
 
     return () => {
       active = false;
+      room.removeAllListeners();
       room.disconnect();
       roomRef.current = null;
       setScreenTrack(null);
       setIsConnected(false);
+      setConnectionError(null);
     };
   }, [workspaceId]);
 
+  // ── Target candidate switch — resync subscriptions without reconnecting ──────
+  // Runs when admin selects a different candidate (or when room first connects).
+  // syncSubscriptions unsubscribes the old candidate → TrackUnsubscribed clears
+  // screenTrack. Subscribing new candidate → TrackSubscribed sets screenTrack.
   useEffect(() => {
     const room = roomRef.current;
     if (!room || !isConnected) return;
-    setScreenTrack(targetSubmissionId ? findScreenTrack(room, targetSubmissionId) : null);
+    syncSubscriptions(room, targetSubmissionId);
   }, [targetSubmissionId, isConnected]);
 
-  return { screenTrack, isConnected };
+  return { screenTrack, isConnected, connectionError };
 }
