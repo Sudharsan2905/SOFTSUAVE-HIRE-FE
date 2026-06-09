@@ -227,12 +227,74 @@ export default function LiveMonitoringPage() {
   });
 
   // ── Render ───────────────────────────────────────────────────────────────
+  let sessionContent: React.ReactNode;
+  if (isLoading) {
+    sessionContent = (
+      <div className={styles.centered}>
+        <Spinner size="lg" />
+      </div>
+    );
+  } else if (filtered.length === 0) {
+    sessionContent = (
+      <div className={styles.empty}>
+        <IconLiveInterview size={48} color="var(--text-tertiary)" />
+        <p>No active interviews right now</p>
+        <span>Updates are pushed in real time via WebSocket</span>
+      </div>
+    );
+  } else {
+    sessionContent = (
+      <div className={styles.sessionList}>
+        {filtered.map((session) => {
+          const statusColor = STATUS_COLORS[session.status as keyof typeof STATUS_COLORS];
+          const isSelected = selectedSession?.submission_id === session.submission_id;
+          const avatarBg = getAvatarColor(session.candidate_name);
+
+          return (
+            <button
+              key={session.submission_id}
+              type="button"
+              className={`${styles.sessionCard} ${isSelected ? styles.sessionCardSelected : ""}`}
+              onClick={() => setSelectedSession(isSelected ? null : session)}
+            >
+              <div className={styles.cardLeft}>
+                <div className={styles.avatar} style={{ background: avatarBg }}>
+                  {getInitials(session.candidate_name)}
+                </div>
+                <div className={styles.liveRing} />
+              </div>
+              <div className={styles.cardBody}>
+                <p className={styles.name}>{session.candidate_name}</p>
+                <p className={styles.assessment}>{session.assessment_name}</p>
+                <p className={styles.meta}>
+                  Round {session.current_round} · Started {formatDateTime(session.started_at)}
+                  {session.malpractice_count > 0 && (
+                    <span className={styles.malBadge}>
+                      ⚠ {session.malpractice_count} violation
+                      {session.malpractice_count === 1 ? "" : "s"}
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className={styles.cardRight}>
+                <Badge variant={statusColor?.variant ?? "default"}>
+                  {statusColor?.label ?? session.status}
+                </Badge>
+                <span className={styles.watchLabel}>{isSelected ? "Watching" : "Watch"}</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className={styles.pageRoot}>
       <div className={`${styles.listPanel} ${selectedSession ? styles.listPanelNarrow : ""}`}>
         <Header
           title="Live Monitoring"
-          subtitle={`${filtered.length} candidate${filtered.length !== 1 ? "s" : ""} currently attending`}
+          subtitle={`${filtered.length} candidate${filtered.length === 1 ? "" : "s"} currently attending`}
         />
 
         <FilterBar
@@ -244,60 +306,7 @@ export default function LiveMonitoringPage() {
           onSortOrderToggle={() => undefined}
         />
 
-        {isLoading ? (
-          <div className={styles.centered}>
-            <Spinner size="lg" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className={styles.empty}>
-            <IconLiveInterview size={48} color="var(--text-tertiary)" />
-            <p>No active interviews right now</p>
-            <span>Updates are pushed in real time via WebSocket</span>
-          </div>
-        ) : (
-          <div className={styles.sessionList}>
-            {filtered.map((session) => {
-              const statusColor = STATUS_COLORS[session.status as keyof typeof STATUS_COLORS];
-              const isSelected = selectedSession?.submission_id === session.submission_id;
-              const avatarBg = getAvatarColor(session.candidate_name);
-
-              return (
-                <button
-                  key={session.submission_id}
-                  type="button"
-                  className={`${styles.sessionCard} ${isSelected ? styles.sessionCardSelected : ""}`}
-                  onClick={() => setSelectedSession(isSelected ? null : session)}
-                >
-                  <div className={styles.cardLeft}>
-                    <div className={styles.avatar} style={{ background: avatarBg }}>
-                      {getInitials(session.candidate_name)}
-                    </div>
-                    <div className={styles.liveRing} />
-                  </div>
-                  <div className={styles.cardBody}>
-                    <p className={styles.name}>{session.candidate_name}</p>
-                    <p className={styles.assessment}>{session.assessment_name}</p>
-                    <p className={styles.meta}>
-                      Round {session.current_round} · Started {formatDateTime(session.started_at)}
-                      {session.malpractice_count > 0 && (
-                        <span className={styles.malBadge}>
-                          ⚠ {session.malpractice_count} violation
-                          {session.malpractice_count !== 1 ? "s" : ""}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                  <div className={styles.cardRight}>
-                    <Badge variant={statusColor?.variant ?? "default"}>
-                      {statusColor?.label ?? session.status}
-                    </Badge>
-                    <span className={styles.watchLabel}>{isSelected ? "Watching" : "Watch"}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {sessionContent}
       </div>
 
       {selectedSession && (

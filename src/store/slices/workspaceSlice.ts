@@ -1,12 +1,13 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Workspace } from "@/types";
 
+const WORKSPACE_KEY = "ssh_workspace";
+const AUTH_LOGOUT_ACTION = "auth/logout";
+
 interface WorkspaceState {
   activeWorkspace: Workspace | null;
   workspaces: Workspace[];
 }
-
-const WORKSPACE_KEY = "ssh_workspace";
 
 const savedWorkspace = (): Workspace | null => {
   try {
@@ -15,6 +16,12 @@ const savedWorkspace = (): Workspace | null => {
     return null;
   }
 };
+
+function resetWorkspaceState(state: WorkspaceState) {
+  state.activeWorkspace = null;
+  state.workspaces = [];
+  localStorage.removeItem(WORKSPACE_KEY);
+}
 
 const initialState: WorkspaceState = {
   activeWorkspace: savedWorkspace(),
@@ -33,16 +40,12 @@ const workspaceSlice = createSlice({
       state.workspaces = action.payload;
     },
     clearWorkspace(state) {
-      state.activeWorkspace = null;
-      state.workspaces = [];
-      localStorage.removeItem(WORKSPACE_KEY);
+      resetWorkspaceState(state);
     },
   },
   extraReducers: (builder) => {
-    builder.addCase("auth/logout", (state) => {
-      state.activeWorkspace = null;
-      state.workspaces = [];
-      localStorage.removeItem(WORKSPACE_KEY);
+    builder.addCase(AUTH_LOGOUT_ACTION, (state) => {
+      resetWorkspaceState(state);
     });
   },
 });

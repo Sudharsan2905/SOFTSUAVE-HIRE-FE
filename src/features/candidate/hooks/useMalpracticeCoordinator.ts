@@ -42,7 +42,7 @@ export interface ViolationPayload {
 
 interface UseMalpracticeCoordinatorOptions {
   submissionId: string;
-  monitoringConfig: MonitoringConfig;
+  monitoringConfig: Partial<MonitoringConfig>;
   onTerminated?: (reason: string) => void;
   videoRef?: RefObject<HTMLVideoElement | null>;
   screenStreamRef?: RefObject<MediaStream | null>;

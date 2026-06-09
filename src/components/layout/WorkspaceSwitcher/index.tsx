@@ -36,6 +36,174 @@ function getMemberInitials(detail: User | undefined, email: string | undefined):
   return fallbackInitial;
 }
 
+// S3776: extracted the create-workspace modal (reused in collapsed + expanded empty states).
+function CreateWorkspaceModal({
+  isOpen,
+  onClose,
+  createForm,
+  setCreateForm,
+  onCreate,
+  loading,
+}: Readonly<{
+  isOpen: boolean;
+  onClose: () => void;
+  createForm: { name: string; description: string };
+  setCreateForm: React.Dispatch<React.SetStateAction<{ name: string; description: string }>>;
+  onCreate: () => void;
+  loading: boolean;
+}>) {
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Create Workspace"
+      showClose={false}
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={onCreate} isLoading={loading} disabled={!createForm.name}>
+            Create
+          </Button>
+        </>
+      }
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <Input
+          label="Workspace Name"
+          placeholder="e.g., Engineering Hiring"
+          value={createForm.name}
+          onChange={(e) => setCreateForm((p) => ({ ...p, name: e.target.value }))}
+        />
+        <Textarea
+          label="Description (optional)"
+          placeholder="What is this workspace for?"
+          value={createForm.description}
+          onChange={(e) => setCreateForm((p) => ({ ...p, description: e.target.value }))}
+          rows={3}
+        />
+      </div>
+    </Modal>
+  );
+}
+
+// S3776: extracted the member avatar stack rendering out of the main component.
+function MemberAvatarStack({
+  members,
+  memberDetails,
+}: Readonly<{
+  members: Workspace["members"] | undefined;
+  memberDetails: User[];
+}>) {
+  const count = members?.length ?? 0;
+  if (count === 0) {
+    return <p className={styles.wsSettingsMeta}>No members yet</p>;
+  }
+  return (
+    <div className={styles.memberAvatarStack}>
+      {(members ?? []).slice(0, 6).map((m, i) => {
+        const detail = memberDetails.find((u) => u.id === m.user_id);
+        const displayName = detail ? getFullName(detail) : (m.email ?? m.user_id);
+        const initials = getMemberInitials(detail, m.email);
+        const color = getAvatarColor(displayName);
+        return (
+          <Tooltip key={m.user_id} content={displayName} placement="top">
+            <div className={styles.memberAvatar} style={{ background: color, zIndex: 6 - i }}>
+              {initials}
+            </div>
+          </Tooltip>
+        );
+      })}
+      {count > 6 && <div className={styles.memberAvatarMore}>+{count - 6}</div>}
+    </div>
+  );
+}
+
+// S3776: extracted the "no workspace access" state for non-super-admins.
+function NoWorkspaceAccess({ collapsed }: Readonly<{ collapsed?: boolean }>) {
+  if (collapsed) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <div className={styles.wsIcon} style={{ background: "#334155", opacity: 0.5 }}>
+          ?
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className={styles.noWsPrompt}>
+      <p className={styles.noWsText}>No workspace access</p>
+      <p className={styles.noWsText} style={{ opacity: 0.7 }}>
+        Contact your administrator
+      </p>
+    </div>
+  );
+}
+
+// S3776: extracted the super-admin "no workspaces yet" create prompt (collapsed + expanded).
+function NoWorkspacesCreatePrompt({
+  collapsed,
+  showCreate,
+  setShowCreate,
+  createForm,
+  setCreateForm,
+  onCreate,
+  loading,
+}: Readonly<{
+  collapsed?: boolean;
+  showCreate: boolean;
+  setShowCreate: (v: boolean) => void;
+  createForm: { name: string; description: string };
+  setCreateForm: React.Dispatch<React.SetStateAction<{ name: string; description: string }>>;
+  onCreate: () => void;
+  loading: boolean;
+}>) {
+  const modal = (
+    <CreateWorkspaceModal
+      isOpen={showCreate}
+      onClose={() => setShowCreate(false)}
+      createForm={createForm}
+      setCreateForm={setCreateForm}
+      onCreate={onCreate}
+      loading={loading}
+    />
+  );
+
+  if (collapsed) {
+    return (
+      <>
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <Tooltip content="Create Workspace" placement="right">
+            <button
+              className={styles.collapsedTrigger}
+              onClick={() => setShowCreate(true)}
+              aria-label="Create Workspace"
+            >
+              <div className={styles.wsIcon} style={{ background: "#334155" }}>
+                <IconPlus size={13} color="#fff" />
+              </div>
+            </button>
+          </Tooltip>
+        </div>
+        {modal}
+      </>
+    );
+  }
+  return (
+    <>
+      <div className={styles.noWsPrompt}>
+        <p className={styles.noWsText}>No workspaces yet</p>
+        <button className={styles.createBtn} onClick={() => setShowCreate(true)}>
+          <IconPlus size={14} />
+          Create Workspace
+        </button>
+      </div>
+      {modal}
+    </>
+  );
+}
+
 // S6759: Props marked as Readonly in the function signature.
 export function WorkspaceSwitcher({ collapsed }: Readonly<{ collapsed?: boolean }>) {
   const dispatch = useAppDispatch();
@@ -258,121 +426,21 @@ export function WorkspaceSwitcher({ collapsed }: Readonly<{ collapsed?: boolean 
 
   // Admin with no workspace access
   if (!isSuperAdmin && workspaces.length === 0) {
-    if (collapsed) {
-      return (
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          <div className={styles.wsIcon} style={{ background: "#334155", opacity: 0.5 }}>
-            ?
-          </div>
-        </div>
-      );
-    }
-    return (
-      <div className={styles.noWsPrompt}>
-        <p className={styles.noWsText}>No workspace access</p>
-        <p className={styles.noWsText} style={{ opacity: 0.7 }}>
-          Contact your administrator
-        </p>
-      </div>
-    );
+    return <NoWorkspaceAccess collapsed={collapsed} />;
   }
 
   // Super admin with no workspaces yet — show inline create prompt
   if (isSuperAdmin && workspaces.length === 0) {
-    if (collapsed) {
-      return (
-        <>
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <Tooltip content="Create Workspace" placement="right">
-              <button
-                className={styles.collapsedTrigger}
-                onClick={() => setShowCreate(true)}
-                aria-label="Create Workspace"
-              >
-                <div className={styles.wsIcon} style={{ background: "#334155" }}>
-                  <IconPlus size={13} color="#fff" />
-                </div>
-              </button>
-            </Tooltip>
-          </div>
-          <Modal
-            isOpen={showCreate}
-            onClose={() => setShowCreate(false)}
-            title="Create Workspace"
-            showClose={false}
-            footer={
-              <>
-                <Button variant="secondary" onClick={() => setShowCreate(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={createWorkspace} isLoading={loading} disabled={!createForm.name}>
-                  Create
-                </Button>
-              </>
-            }
-          >
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <Input
-                label="Workspace Name"
-                placeholder="e.g., Engineering Hiring"
-                value={createForm.name}
-                onChange={(e) => setCreateForm((p) => ({ ...p, name: e.target.value }))}
-              />
-              <Textarea
-                label="Description (optional)"
-                placeholder="What is this workspace for?"
-                value={createForm.description}
-                onChange={(e) => setCreateForm((p) => ({ ...p, description: e.target.value }))}
-                rows={3}
-              />
-            </div>
-          </Modal>
-        </>
-      );
-    }
     return (
-      <>
-        <div className={styles.noWsPrompt}>
-          <p className={styles.noWsText}>No workspaces yet</p>
-          <button className={styles.createBtn} onClick={() => setShowCreate(true)}>
-            <IconPlus size={14} />
-            Create Workspace
-          </button>
-        </div>
-
-        <Modal
-          isOpen={showCreate}
-          onClose={() => setShowCreate(false)}
-          title="Create Workspace"
-          showClose={false}
-          footer={
-            <>
-              <Button variant="secondary" onClick={() => setShowCreate(false)}>
-                Cancel
-              </Button>
-              <Button onClick={createWorkspace} isLoading={loading} disabled={!createForm.name}>
-                Create
-              </Button>
-            </>
-          }
-        >
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <Input
-              label="Workspace Name"
-              placeholder="e.g., Engineering Hiring"
-              value={createForm.name}
-              onChange={(e) => setCreateForm((p) => ({ ...p, name: e.target.value }))}
-            />
-            <Textarea
-              label="Description (optional)"
-              placeholder="What is this workspace for?"
-              value={createForm.description}
-              onChange={(e) => setCreateForm((p) => ({ ...p, description: e.target.value }))}
-              rows={3}
-            />
-          </div>
-        </Modal>
-      </>
+      <NoWorkspacesCreatePrompt
+        collapsed={collapsed}
+        showCreate={showCreate}
+        setShowCreate={setShowCreate}
+        createForm={createForm}
+        setCreateForm={setCreateForm}
+        onCreate={createWorkspace}
+        loading={loading}
+      />
     );
   }
 
@@ -545,35 +613,10 @@ export function WorkspaceSwitcher({ collapsed }: Readonly<{ collapsed?: boolean 
             {isSuperAdmin && (
               <div>
                 <p className={styles.wsSettingsSectionLabel}>Members</p>
-                {(activeWorkspace?.members?.length ?? 0) === 0 ? (
-                  <p className={styles.wsSettingsMeta}>No members yet</p>
-                ) : (
-                  <div className={styles.memberAvatarStack}>
-                    {(activeWorkspace?.members ?? []).slice(0, 6).map((m, i) => {
-                      const detail = memberDetails.find((u) => u.id === m.user_id);
-                      // S6606: replaced || with ??
-                      const displayName = detail ? getFullName(detail) : (m.email ?? m.user_id);
-                      // S3358: nested ternary extracted to getMemberInitials helper (defined above the component)
-                      const initials = getMemberInitials(detail, m.email);
-                      const color = getAvatarColor(displayName);
-                      return (
-                        <Tooltip key={m.user_id} content={displayName} placement="top">
-                          <div
-                            className={styles.memberAvatar}
-                            style={{ background: color, zIndex: 6 - i }}
-                          >
-                            {initials}
-                          </div>
-                        </Tooltip>
-                      );
-                    })}
-                    {(activeWorkspace?.members?.length ?? 0) > 6 && (
-                      <div className={styles.memberAvatarMore}>
-                        +{(activeWorkspace?.members?.length ?? 0) - 6}
-                      </div>
-                    )}
-                  </div>
-                )}
+                <MemberAvatarStack
+                  members={activeWorkspace?.members}
+                  memberDetails={memberDetails}
+                />
               </div>
             )}
 

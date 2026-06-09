@@ -18,6 +18,63 @@ import toast from "react-hot-toast";
 export type { RoundSetup, AssessmentDraft } from "@/features/assessments/types";
 import type { AssessmentDraft } from "@/features/assessments/types";
 
+interface RoundNavFooterProps {
+  roundSelected: number;
+  roundRequired: number;
+  isLastRound: boolean;
+  saving: boolean;
+  finishLabel: string;
+  onPrev: () => void;
+  onNext: () => void;
+  onFinish: () => void;
+}
+
+function RoundNavigationFooter({
+  roundSelected,
+  roundRequired,
+  isLastRound,
+  saving,
+  finishLabel,
+  onPrev,
+  onNext,
+  onFinish,
+}: Readonly<RoundNavFooterProps>) {
+  const selectedColor =
+    roundSelected >= roundRequired ? "var(--success-600)" : "var(--primary-600)";
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 8,
+        flexWrap: "wrap",
+        width: "100%",
+      }}
+    >
+      <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+        Selected:{" "}
+        <strong style={{ color: selectedColor }}>{roundSelected}</strong> /{" "}
+        <strong>{roundRequired}</strong> required (can select more for randomization)
+      </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+        <Button variant="secondary" onClick={onPrev}>
+          Back
+        </Button>
+        {isLastRound ? (
+          <Button onClick={onFinish} isLoading={saving} disabled={roundSelected < roundRequired}>
+            {finishLabel}
+          </Button>
+        ) : (
+          <Button onClick={onNext} disabled={roundSelected < roundRequired}>
+            Next Round
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface Props {
   workspaceId: string;
   onClose: () => void;
@@ -120,49 +177,20 @@ export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
       size="xl"
       disableBackdropClose
       footer={
-        step === 1 ? undefined : (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 8,
-              flexWrap: "wrap",
-              width: "100%",
-            }}
-          >
-            <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-              Selected:{" "}
-              <strong
-                style={{
-                  color:
-                    roundSelected >= roundRequired ? "var(--success-600)" : "var(--primary-600)",
-                }}
-              >
-                {roundSelected}
-              </strong>{" "}
-              / <strong>{roundRequired}</strong> required (can select more for randomization)
-            </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-              <Button variant="secondary" onClick={handleRoundPrev}>
-                Back
-              </Button>
-              {isLastRound ? (
-                <Button
-                  onClick={handleFinish}
-                  isLoading={saving}
-                  disabled={roundSelected < roundRequired}
-                >
-                  {finishLabel}
-                </Button>
-              ) : (
-                <Button onClick={handleRoundNext} disabled={roundSelected < roundRequired}>
-                  Next Round
-                </Button>
-              )}
-            </div>
-          </div>
-        )
+        step === 1
+          ? undefined
+          : (
+            <RoundNavigationFooter
+              roundSelected={roundSelected}
+              roundRequired={roundRequired}
+              isLastRound={isLastRound}
+              saving={saving}
+              finishLabel={finishLabel}
+              onPrev={handleRoundPrev}
+              onNext={handleRoundNext}
+              onFinish={handleFinish}
+            />
+          )
       }
     >
       <div className={styles.wizard}>

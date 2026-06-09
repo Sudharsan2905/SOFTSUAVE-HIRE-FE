@@ -339,6 +339,12 @@ function toCandidateAnswerArray(value: string | string[]): string[] {
   return value ? [value] : [];
 }
 
+function getReviewQuestionTypeLabel(type: string): string {
+  if (type === "mcq_single") return "Multiple Choice";
+  if (type === "mcq_multi") return "Multiple Select";
+  return "Descriptive";
+}
+
 function QuestionReview({ index, qa }: Readonly<{ index: number; qa: QuestionAnswer }>) {
   const isMcq = qa.question_type === "mcq_single" || qa.question_type === "mcq_multi";
   const candidateAnswers = toCandidateAnswerArray(qa.candidate_answer);
@@ -348,11 +354,7 @@ function QuestionReview({ index, qa }: Readonly<{ index: number; qa: QuestionAns
       <div className={styles.questionHead}>
         <span className={styles.questionNo}>Q{index + 1}</span>
         <span className={styles.questionType}>
-          {qa.question_type === "mcq_single"
-            ? "Multiple Choice"
-            : qa.question_type === "mcq_multi"
-              ? "Multiple Select"
-              : "Descriptive"}
+          {getReviewQuestionTypeLabel(qa.question_type)}
         </span>
         {qa.is_correct !== null && (
           <span
@@ -778,8 +780,8 @@ function ScreenshotsTab({
 
   return (
     <div className={styles.screenshotGrid}>
-      {screenshots.map((screenshot, index) => (
-        <figure key={index} className={styles.screenshotItem}>
+      {screenshots.map((screenshot) => (
+        <figure key={`${screenshot.url}-${screenshot.taken_at}`} className={styles.screenshotItem}>
           <button
             type="button"
             className={styles.screenshotButton}

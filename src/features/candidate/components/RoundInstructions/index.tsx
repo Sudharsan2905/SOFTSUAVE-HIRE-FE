@@ -14,21 +14,28 @@ interface RoundInstructionsProps {
   onStart: () => void;
 }
 
+function getProgressStepClass(stepNum: number, currentRound: number): string {
+  if (stepNum < currentRound) return styles.stepDone;
+  if (stepNum === currentRound) return styles.stepActive;
+  return styles.stepPending;
+}
+
 export function RoundInstructions({
   isOpen,
   roundNumber,
   roundConfig,
   totalRounds,
   onStart,
-}: RoundInstructionsProps) {
+}: Readonly<RoundInstructionsProps>) {
   if (!roundConfig) return null;
 
   const durationHours = Math.floor(roundConfig.max_duration_minutes / 60);
   const durationMins = roundConfig.max_duration_minutes % 60;
+  const minsLabel = durationMins > 0 ? `${durationMins}m` : "";
   const durationLabel =
-    durationHours > 0
-      ? `${durationHours}h ${durationMins > 0 ? `${durationMins}m` : ""}`
-      : `${durationMins} minutes`;
+    durationHours > 0 ? `${durationHours}h ${minsLabel}` : `${durationMins} minutes`;
+
+  const roundNums = Array.from({ length: totalRounds }, (_, i) => i + 1);
 
   return (
     <Modal
@@ -40,19 +47,13 @@ export function RoundInstructions({
     >
       <div className={styles.container}>
         <div className={styles.progressRow}>
-          {Array.from({ length: totalRounds }, (_, i) => (
+          {roundNums.map((roundNum) => (
             <div
-              key={i + 1}
-              className={`${styles.progressStep} ${
-                i + 1 < roundNumber
-                  ? styles.stepDone
-                  : i + 1 === roundNumber
-                    ? styles.stepActive
-                    : styles.stepPending
-              }`}
+              key={`progress-step-${roundNum}`}
+              className={`${styles.progressStep} ${getProgressStepClass(roundNum, roundNumber)}`}
             >
-              <div className={styles.stepCircle}>{i + 1 < roundNumber ? "✓" : i + 1}</div>
-              <span className={styles.stepLabel}>Round {i + 1}</span>
+              <div className={styles.stepCircle}>{roundNum < roundNumber ? "✓" : roundNum}</div>
+              <span className={styles.stepLabel}>Round {roundNum}</span>
             </div>
           ))}
         </div>

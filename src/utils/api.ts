@@ -4,16 +4,26 @@ import { logout, setTokens } from "@/store/slices/authSlice";
 import { CONFIG } from "@/constants/config";
 import { API_ENDPOINTS } from "@/constants/api";
 
+const API_TIMEOUT_MS = 15_000;
+const BEARER_TOKEN_PREFIX = "Bearer";
+
+export function extractApiErrorMessage(err: unknown, fallback: string): string {
+  if (axios.isAxiosError(err)) {
+    return (err.response?.data as { message?: string })?.message ?? fallback;
+  }
+  return fallback;
+}
+
 export const api = axios.create({
   baseURL: CONFIG.API_BASE_URL,
   headers: { "Content-Type": "application/json" },
-  timeout: 15000,
+  timeout: API_TIMEOUT_MS,
 });
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = store.getState().auth.accessToken;
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers.Authorization = `${BEARER_TOKEN_PREFIX} ${token}`;
   }
   return config;
 });
@@ -25,7 +35,13 @@ let failedQueue: Array<{
 }> = [];
 
 const processQueue = (error: unknown, token: string | null = null) => {
-  failedQueue.forEach((p) => (error ? p.reject(error) : p.resolve(token!)));
+  failedQueue.forEach((p) => {
+    if (error) {
+      p.reject(error);
+    } else if (token !== null) {
+      p.resolve(token);
+    }
+  });
   failedQueue = [];
 };
 
@@ -41,7 +57,7 @@ api.interceptors.response.use(
         return new Promise((resolve, reject) => {
           failedQueue.push({
             resolve: (token) => {
-              original.headers.Authorization = `Bearer ${token}`;
+              original.headers.Authorization = `${BEARER_TOKEN_PREFIX} ${token}`;
               resolve(api(original));
             },
             reject,
@@ -65,7 +81,7 @@ api.interceptors.response.use(
         const newToken = data.data.access_token;
         store.dispatch(setTokens({ accessToken: newToken }));
         processQueue(null, newToken);
-        original.headers.Authorization = `Bearer ${newToken}`;
+        original.headers.Authorization = `${BEARER_TOKEN_PREFIX} ${newToken}`;
         return api(original);
       } catch (refreshError) {
         processQueue(refreshError);

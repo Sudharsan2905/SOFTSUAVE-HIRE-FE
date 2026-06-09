@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { User } from "@/types";
-import { api } from "@/utils/api";
+import { api, extractApiErrorMessage } from "@/utils/api";
 import { API_ENDPOINTS } from "@/constants/api";
 import { LOCAL_STORAGE_KEYS } from "@/constants/storage";
 import toast from "react-hot-toast";
@@ -33,10 +33,7 @@ export const adminLogin = createAsyncThunk(
       const { data } = await api.post(API_ENDPOINTS.AUTH.ADMIN_LOGIN, payload);
       return data.data;
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        "Login failed";
-      return rejectWithValue(msg);
+      return rejectWithValue(extractApiErrorMessage(err, "Login failed"));
     }
   }
 );
@@ -48,10 +45,7 @@ export const candidateLogin = createAsyncThunk(
       const { data } = await api.post(API_ENDPOINTS.AUTH.CANDIDATE_LOGIN, payload);
       return data.data;
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        "Login failed";
-      return rejectWithValue(msg);
+      return rejectWithValue(extractApiErrorMessage(err, "Login failed"));
     }
   }
 );
@@ -63,10 +57,7 @@ export const googleLogin = createAsyncThunk(
       const { data } = await api.post(API_ENDPOINTS.AUTH.GOOGLE, { credential });
       return data.data;
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        "Google login failed";
-      return rejectWithValue(msg);
+      return rejectWithValue(extractApiErrorMessage(err, "Google login failed"));
     }
   }
 );
@@ -78,13 +69,23 @@ export const candidateRegister = createAsyncThunk(
       const { data } = await api.post(API_ENDPOINTS.AUTH.CANDIDATE_REGISTER, payload);
       return data.data;
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        "Registration failed";
-      return rejectWithValue(msg);
+      return rejectWithValue(extractApiErrorMessage(err, "Registration failed"));
     }
   }
 );
+
+type AuthPayload = { access_token: string; refresh_token: string; user: User };
+
+function persistAuthData(state: AuthState, payload: AuthPayload) {
+  state.isLoading = false;
+  state.accessToken = payload.access_token;
+  state.refreshToken = payload.refresh_token;
+  state.user = payload.user;
+  state.isAuthenticated = true;
+  localStorage.setItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN, payload.access_token);
+  localStorage.setItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN, payload.refresh_token);
+  localStorage.setItem(LOCAL_STORAGE_KEYS.USER, JSON.stringify(payload.user));
+}
 
 const initialState: AuthState = {
   user: null,
@@ -121,34 +122,13 @@ const authSlice = createSlice({
       state.user = action.payload;
       localStorage.setItem(LOCAL_STORAGE_KEYS.USER, JSON.stringify(action.payload));
     },
-    setAuthData(
-      state,
-      action: PayloadAction<{ access_token: string; refresh_token: string; user: User }>
-    ) {
-      state.isLoading = false;
-      state.accessToken = action.payload.access_token;
-      state.refreshToken = action.payload.refresh_token;
-      state.user = action.payload.user;
-      state.isAuthenticated = true;
-      localStorage.setItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN, action.payload.access_token);
-      localStorage.setItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN, action.payload.refresh_token);
-      localStorage.setItem(LOCAL_STORAGE_KEYS.USER, JSON.stringify(action.payload.user));
+    setAuthData(state, action: PayloadAction<AuthPayload>) {
+      persistAuthData(state, action.payload);
     },
   },
   extraReducers: (builder) => {
-    const handleAuthFulfilled = (
-      state: AuthState,
-      action: PayloadAction<{ access_token: string; refresh_token: string; user: User }>
-    ) => {
-      state.isLoading = false;
-      state.accessToken = action.payload.access_token;
-      state.refreshToken = action.payload.refresh_token;
-      state.user = action.payload.user;
-      state.isAuthenticated = true;
-      localStorage.setItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN, action.payload.access_token);
-      localStorage.setItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN, action.payload.refresh_token);
-      localStorage.setItem(LOCAL_STORAGE_KEYS.USER, JSON.stringify(action.payload.user));
-    };
+    const handleAuthFulfilled = (state: AuthState, action: PayloadAction<AuthPayload>) =>
+      persistAuthData(state, action.payload);
 
     builder
       .addCase(adminLogin.pending, (state) => {

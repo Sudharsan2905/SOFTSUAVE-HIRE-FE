@@ -30,7 +30,7 @@ export default function AdminLoginPage() {
   useEffect(() => {
     const isAdmin = user?.role === UserRole.ADMIN || user?.role === UserRole.SUPER_ADMIN;
     if (isAuthenticated && isAdmin) navigate(ROUTES.ADMIN.QUESTION_BANK, { replace: true });
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, user]);
 
   const onSubmit = (data: AdminLoginForm) => {
     dispatch(adminLogin(data));

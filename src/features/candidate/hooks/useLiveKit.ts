@@ -62,7 +62,7 @@ export function useLiveKitPublisher({
       const room = new Room();
       roomRef.current = room;
       const liveKitHost =
-        (import.meta.env.VITE_LIVEKIT_HOST as string | undefined) ||
+        (import.meta.env.VITE_LIVEKIT_HOST as string | undefined) ??
         `${globalThis.location.protocol === "https:" ? "wss" : "ws"}://${globalThis.location.host}/livekit`;
       await room.connect(liveKitHost, token);
       console.warn(`[LiveKit] Room connected: host=${liveKitHost} submission=${submissionId}`);
@@ -245,7 +245,7 @@ export function useLiveKitViewer({ workspaceId, targetSubmissionId }: ViewerOpti
       .then(({ data }) => {
         if (!active) return;
         const liveKitHost =
-          (import.meta.env.VITE_LIVEKIT_HOST as string | undefined) ||
+          (import.meta.env.VITE_LIVEKIT_HOST as string | undefined) ??
           `${globalThis.location.protocol === "https:" ? "wss" : "ws"}://${globalThis.location.host}/livekit`;
         console.warn(`[LiveKit] Viewer: token received, connecting to ${liveKitHost}`);
         // autoSubscribe: false — admin explicitly subscribes only to the selected

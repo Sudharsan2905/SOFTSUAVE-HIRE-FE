@@ -75,6 +75,171 @@ function extractStartErrorMessage(e: unknown): string {
   return (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "";
 }
 
+function handleStartCatchError(
+  e: unknown,
+  shareLink: string | undefined,
+  markDone: (link: string) => void,
+  navigateFn: (path: string, opts?: { replace?: boolean }) => void
+): void {
+  const msg = extractStartErrorMessage(e);
+  if (msg.toLowerCase().includes("already completed")) {
+    if (shareLink) markDone(shareLink);
+    navigateFn(ROUTES.ASSESSMENT.completed(shareLink!), { replace: true });
+  } else {
+    toast.error(msg || "Failed to start assessment");
+  }
+}
+
+// S3776: extracted the monitoring-mode requirements section out of the main component.
+function MonitoringRequirements({
+  assessment,
+  needsVideo,
+  needsAudio,
+  needsScreen,
+  needsAnyPermission,
+  videoGranted,
+  audioGranted,
+  screenGranted,
+  cameraMicGranted,
+  checkingPermissions,
+  checkingScreen,
+  onRequestPermissions,
+  onRequestScreenAccess,
+}: Readonly<{
+  assessment: Assessment;
+  needsVideo: boolean;
+  needsAudio: boolean;
+  needsScreen: boolean;
+  needsAnyPermission: boolean;
+  videoGranted: boolean;
+  audioGranted: boolean;
+  screenGranted: boolean;
+  cameraMicGranted: boolean;
+  checkingPermissions: boolean;
+  checkingScreen: boolean;
+  onRequestPermissions: () => void;
+  onRequestScreenAccess: () => void;
+}>) {
+  const cfg = assessment.monitoring_config;
+  return (
+    <div className={styles.monitoringSection}>
+      <h2 className={styles.sectionTitle}>Monitoring Mode Requirements</h2>
+      <div className={styles.monitoringCards}>
+        {cfg?.tab_monitoring && (
+          <div className={styles.monitorCard}>
+            <IconMonitor size={24} color="var(--accent-400, #a78bfa)" />
+            <div>
+              <p className={styles.monitorTitle}>Tab Monitoring Active</p>
+              <p className={styles.monitorDesc}>
+                Switching tabs or windows will be flagged as malpractice.
+              </p>
+            </div>
+          </div>
+        )}
+        {cfg?.video_monitoring && (
+          <div className={styles.monitorCard}>
+            <IconCamera size={24} color="var(--accent-400, #a78bfa)" />
+            <div>
+              <p className={styles.monitorTitle}>Camera Required</p>
+              <p className={styles.monitorDesc}>
+                Your camera must remain on throughout the assessment.
+              </p>
+            </div>
+          </div>
+        )}
+        {cfg?.audio_monitoring && (
+          <div className={styles.monitorCard}>
+            <IconMic size={24} color="var(--accent-400, #a78bfa)" />
+            <div>
+              <p className={styles.monitorTitle}>Microphone Required</p>
+              <p className={styles.monitorDesc}>
+                Audio will be monitored throughout the assessment.
+              </p>
+            </div>
+          </div>
+        )}
+        {cfg?.screenshot_enabled && (
+          <div className={styles.monitorCard}>
+            <IconMonitor size={24} color="var(--accent-400, #a78bfa)" />
+            <div>
+              <p className={styles.monitorTitle}>Screen Capture Required</p>
+              <p className={styles.monitorDesc}>
+                Periodic screenshots of your screen will be captured during the assessment.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {needsAnyPermission && (
+        <div className={styles.permissionSetup}>
+          <div className={styles.permissionRow}>
+            <p className={styles.permissionLabel}>Step 1: Grant Device Access</p>
+            <div className={styles.permissionPills}>
+              {needsVideo && (
+                <span
+                  className={`${styles.pill} ${videoGranted ? styles.pillGranted : styles.pillPending}`}
+                >
+                  <IconCamera size={12} />
+                  {videoGranted ? "Camera granted" : "Camera pending"}
+                </span>
+              )}
+              {needsAudio && (
+                <span
+                  className={`${styles.pill} ${audioGranted ? styles.pillGranted : styles.pillPending}`}
+                >
+                  <IconMic size={12} />
+                  {audioGranted ? "Microphone granted" : "Microphone pending"}
+                </span>
+              )}
+            </div>
+          </div>
+          {!cameraMicGranted && (
+            <Button
+              variant="secondary"
+              onClick={onRequestPermissions}
+              isLoading={checkingPermissions}
+              leftIcon={<IconCamera size={16} />}
+            >
+              Request Access
+            </Button>
+          )}
+        </div>
+      )}
+
+      {needsScreen && (
+        <div className={styles.permissionSetup}>
+          <div className={styles.permissionRow}>
+            <p className={styles.permissionLabel}>
+              {needsAnyPermission
+                ? "Step 2: Grant Screen Access"
+                : "Step 1: Grant Screen Access"}
+            </p>
+            <div className={styles.permissionPills}>
+              <span
+                className={`${styles.pill} ${screenGranted ? styles.pillGranted : styles.pillPending}`}
+              >
+                <IconMonitor size={12} />
+                {screenGranted ? "Screen granted" : "Screen pending"}
+              </span>
+            </div>
+          </div>
+          {!screenGranted && (
+            <Button
+              variant="secondary"
+              onClick={onRequestScreenAccess}
+              isLoading={checkingScreen}
+              leftIcon={<IconMonitor size={16} />}
+            >
+              Share Screen
+            </Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function InstructionsPage() {
@@ -131,15 +296,18 @@ export default function InstructionsPage() {
   }, [shareLink]);
 
   useEffect(() => {
-    const handleOnline = () => {
-      if (networkStatus !== "connected") setNetworkStatus("unstable");
+    const handleConnectivityChange = () => {
+      if (!navigator.onLine) {
+        setNetworkStatus("disconnected");
+      } else if (networkStatus !== "connected") {
+        setNetworkStatus("unstable");
+      }
     };
-    const handleOffline = () => setNetworkStatus("disconnected");
-    globalThis.addEventListener("online", handleOnline);
-    globalThis.addEventListener("offline", handleOffline);
+    globalThis.addEventListener("online", handleConnectivityChange);
+    globalThis.addEventListener("offline", handleConnectivityChange);
     return () => {
-      globalThis.removeEventListener("online", handleOnline);
-      globalThis.removeEventListener("offline", handleOffline);
+      globalThis.removeEventListener("online", handleConnectivityChange);
+      globalThis.removeEventListener("offline", handleConnectivityChange);
     };
   }, [networkStatus]);
 
@@ -208,9 +376,6 @@ export default function InstructionsPage() {
     }
   };
 
-  const canStart = (): boolean =>
-    isAssessmentReady(assessment, networkStatus, videoGranted, audioGranted, screenGranted);
-
   const handleStart = async () => {
     if (!assessment) return;
 
@@ -219,7 +384,7 @@ export default function InstructionsPage() {
       return;
     }
 
-    if (!canStart()) {
+    if (!isAssessmentReady(assessment, networkStatus, videoGranted, audioGranted, screenGranted)) {
       if (networkStatus === "connected") {
         toast.error("Please grant the required device permissions first");
       } else {
@@ -232,17 +397,12 @@ export default function InstructionsPage() {
     try {
       const { data } = await api.post(API_ENDPOINTS.CANDIDATE.ASSESSMENT_START(shareLink!));
       const submissionId = data.data?.id;
-      if (shareLink && submissionId) saveSubmissionId(shareLink, submissionId);
+      const canSaveSession = shareLink && submissionId;
+      if (canSaveSession) saveSubmissionId(shareLink, submissionId);
       if (submissionId) startSession(submissionId as string);
       navigate(ROUTES.ASSESSMENT.interview(shareLink!, submissionId as string), { replace: true });
     } catch (e: unknown) {
-      const msg = extractStartErrorMessage(e);
-      if (msg.toLowerCase().includes("already completed")) {
-        if (shareLink) markAssessmentDone(shareLink);
-        navigate(ROUTES.ASSESSMENT.completed(shareLink!), { replace: true });
-      } else {
-        toast.error(msg || "Failed to start assessment");
-      }
+      handleStartCatchError(e, shareLink, markAssessmentDone, navigate);
     } finally {
       setStarting(false);
     }
@@ -385,121 +545,21 @@ export default function InstructionsPage() {
           </div>
 
           {isMonitoring && (
-            <div className={styles.monitoringSection}>
-              <h2 className={styles.sectionTitle}>Monitoring Mode Requirements</h2>
-              <div className={styles.monitoringCards}>
-                {assessment.monitoring_config?.tab_monitoring && (
-                  <div className={styles.monitorCard}>
-                    <IconMonitor size={24} color="var(--accent-400, #a78bfa)" />
-                    <div>
-                      <p className={styles.monitorTitle}>Tab Monitoring Active</p>
-                      <p className={styles.monitorDesc}>
-                        Switching tabs or windows will be flagged as malpractice.
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {assessment.monitoring_config?.video_monitoring && (
-                  <div className={styles.monitorCard}>
-                    <IconCamera size={24} color="var(--accent-400, #a78bfa)" />
-                    <div>
-                      <p className={styles.monitorTitle}>Camera Required</p>
-                      <p className={styles.monitorDesc}>
-                        Your camera must remain on throughout the assessment.
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {assessment.monitoring_config?.audio_monitoring && (
-                  <div className={styles.monitorCard}>
-                    <IconMic size={24} color="var(--accent-400, #a78bfa)" />
-                    <div>
-                      <p className={styles.monitorTitle}>Microphone Required</p>
-                      <p className={styles.monitorDesc}>
-                        Audio will be monitored throughout the assessment.
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {assessment.monitoring_config?.screenshot_enabled && (
-                  <div className={styles.monitorCard}>
-                    <IconMonitor size={24} color="var(--accent-400, #a78bfa)" />
-                    <div>
-                      <p className={styles.monitorTitle}>Screen Capture Required</p>
-                      <p className={styles.monitorDesc}>
-                        Periodic screenshots of your screen will be captured during the assessment.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {needsAnyPermission && (
-                <div className={styles.permissionSetup}>
-                  <div className={styles.permissionRow}>
-                    <p className={styles.permissionLabel}>Step 1: Grant Device Access</p>
-                    <div className={styles.permissionPills}>
-                      {needsVideo && (
-                        <span
-                          className={`${styles.pill} ${videoGranted ? styles.pillGranted : styles.pillPending}`}
-                        >
-                          <IconCamera size={12} />
-                          {videoGranted ? "Camera granted" : "Camera pending"}
-                        </span>
-                      )}
-                      {needsAudio && (
-                        <span
-                          className={`${styles.pill} ${audioGranted ? styles.pillGranted : styles.pillPending}`}
-                        >
-                          <IconMic size={12} />
-                          {audioGranted ? "Microphone granted" : "Microphone pending"}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {!cameraMicGranted && (
-                    <Button
-                      variant="secondary"
-                      onClick={requestPermissions}
-                      isLoading={checkingPermissions}
-                      leftIcon={<IconCamera size={16} />}
-                    >
-                      Request Access
-                    </Button>
-                  )}
-                </div>
-              )}
-
-              {needsScreen && (
-                <div className={styles.permissionSetup}>
-                  <div className={styles.permissionRow}>
-                    <p className={styles.permissionLabel}>
-                      {needsAnyPermission
-                        ? "Step 2: Grant Screen Access"
-                        : "Step 1: Grant Screen Access"}
-                    </p>
-                    <div className={styles.permissionPills}>
-                      <span
-                        className={`${styles.pill} ${screenGranted ? styles.pillGranted : styles.pillPending}`}
-                      >
-                        <IconMonitor size={12} />
-                        {screenGranted ? "Screen granted" : "Screen pending"}
-                      </span>
-                    </div>
-                  </div>
-                  {!screenGranted && (
-                    <Button
-                      variant="secondary"
-                      onClick={requestScreenAccess}
-                      isLoading={checkingScreen}
-                      leftIcon={<IconMonitor size={16} />}
-                    >
-                      Share Screen
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
+            <MonitoringRequirements
+              assessment={assessment}
+              needsVideo={needsVideo}
+              needsAudio={needsAudio}
+              needsScreen={needsScreen}
+              needsAnyPermission={needsAnyPermission}
+              videoGranted={videoGranted}
+              audioGranted={audioGranted}
+              screenGranted={screenGranted}
+              cameraMicGranted={cameraMicGranted}
+              checkingPermissions={checkingPermissions}
+              checkingScreen={checkingScreen}
+              onRequestPermissions={requestPermissions}
+              onRequestScreenAccess={requestScreenAccess}
+            />
           )}
 
           <section className={styles.progressSection}>
@@ -528,7 +588,7 @@ export default function InstructionsPage() {
               fullWidth
               onClick={handleStart}
               isLoading={starting}
-              disabled={!canStart()}
+              disabled={!isAssessmentReady(assessment, networkStatus, videoGranted, audioGranted, screenGranted)}
             >
               {startButtonLabel}
             </Button>

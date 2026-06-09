@@ -4,6 +4,6 @@ export const CONFIG = {
   LIVEKIT_URL: import.meta.env.VITE_LIVEKIT_URL ?? "",
   GOOGLE_CLIENT_ID: import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "",
   APP_NAME: import.meta.env.VITE_APP_NAME ?? "SoftSuave Hire",
-  IS_PROD: import.meta.env.PROD as boolean,
-  IS_DEV: import.meta.env.DEV as boolean,
+  IS_PROD: import.meta.env.PROD,
+  IS_DEV: import.meta.env.DEV,
 } as const;

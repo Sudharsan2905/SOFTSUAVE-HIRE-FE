@@ -147,8 +147,10 @@ export function ExamSetupScreen({
         <ol className={styles.stepList} aria-label="Setup progress">
           {visibleSteps.map((step) => {
             const status = getStepStatus(step.phase, phase, !!phaseError);
+            const stepKey = `step_${status}`;
+            const stepClass = `${styles.step} ${styles[stepKey] ?? ""}`;
             return (
-              <li key={step.phase} className={`${styles.step} ${styles[`step_${status}`]}`}>
+              <li key={step.phase} className={stepClass}>
                 <StepIcon status={status} />
                 <span className={styles.stepLabel}>{step.label}</span>
                 {status === "done" && <span className={styles.stepBadgeDone}>Ready</span>}

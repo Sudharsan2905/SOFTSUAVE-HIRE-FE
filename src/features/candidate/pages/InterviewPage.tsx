@@ -4,7 +4,7 @@ import styles from "./InterviewPage.module.css";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Spinner } from "@/components/ui/Spinner";
-import { api } from "@/utils/api";
+import { api, extractApiErrorMessage } from "@/utils/api";
 import { API_ENDPOINTS } from "@/constants/api";
 import { ROUTES } from "@/constants/routes";
 import { CandidateQuestion, MonitoringConfig, RoundConfig } from "@/types";
@@ -117,6 +117,204 @@ function getQuestionTypeLabel(type: string) {
   return "Single Choice";
 }
 
+function getNetworkLabel(status: string): string {
+  if (status === "connected") return "Network Stable";
+  if (status === "on_hold") return "Session Paused";
+  return "Reconnecting…";
+}
+
+function getClipboardAction(eventType: string): string {
+  if (eventType === "copy") return "Copy";
+  if (eventType === "paste") return "Paste";
+  return "Cut";
+}
+
+function getCandidateName(user: { first_name?: string; last_name?: string } | null | undefined) {
+  return user ? [user.first_name, user.last_name].filter(Boolean).join(" ") : undefined;
+}
+
+function getRoundProgress(isActive: boolean, isCompleted: boolean, answeredPct: number): number {
+  if (isActive) return answeredPct;
+  if (isCompleted) return 100;
+  return 0;
+}
+
+function getNetworkBadgeClass(networkStatus: string, sm: Record<string, string>): string {
+  return networkStatus === "connected" ? sm.monitorBadgeGreen : sm.monitorBadgeOrange;
+}
+
+function renderMonitoringBadges(
+  cfg: Partial<MonitoringConfig>,
+  isScreenCapturing: boolean,
+  networkBadgeClass: string,
+  networkLabel: string,
+  sm: Record<string, string>
+) {
+  const screenBadgeClass = isScreenCapturing ? sm.monitorBadgeGreen : sm.monitorBadgeOrange;
+  const screenBadgeLabel = isScreenCapturing
+    ? "Screen Capture Active"
+    : "Screen Capture Inactive";
+  return (
+    <div className={sm.monitorBadgeList}>
+      {cfg.video_monitoring && (
+        <div className={`${sm.monitorBadge} ${sm.monitorBadgeGreen}`}>
+          <span className={sm.monitorBadgeDot} /> Camera Active
+        </div>
+      )}
+      {cfg.audio_monitoring && (
+        <div className={`${sm.monitorBadge} ${sm.monitorBadgeGreen}`}>
+          <span className={sm.monitorBadgeDot} /> Mic Active
+        </div>
+      )}
+      {cfg.screenshot_enabled && (
+        <div className={`${sm.monitorBadge} ${screenBadgeClass}`}>
+          <span className={sm.monitorBadgeDot} />
+          {screenBadgeLabel}
+        </div>
+      )}
+      <div className={`${sm.monitorBadge} ${networkBadgeClass}`}>
+        <span className={sm.monitorBadgeDot} /> {networkLabel}
+      </div>
+    </div>
+  );
+}
+
+// ── Question-input renderers (one per question type) ──────────────────────────
+
+type SetAnswerFn = (questionId: string, answer: string | string[]) => void;
+
+function renderMcqSingle(
+  q: CandidateQuestion,
+  answers: AnswerMap,
+  setAnswer: SetAnswerFn,
+  sm: Record<string, string>
+) {
+  return (
+    <div className={sm.options}>
+      {q.options?.map((opt) => {
+        const selected = answers[q.id] === opt.text;
+        return (
+          <label
+            key={opt.text}
+            className={`${sm.option} ${selected ? sm.optionSelected : ""}`}
+          >
+            <input
+              type="radio"
+              className={sm.optionInput}
+              name={q.id}
+              checked={selected}
+              onChange={() => setAnswer(q.id, opt.text)}
+            />
+            <span className={sm.optionText}>{opt.text}</span>
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
+function renderMcqMultiple(
+  q: CandidateQuestion,
+  answers: AnswerMap,
+  setAnswer: SetAnswerFn,
+  sm: Record<string, string>
+) {
+  return (
+    <div className={sm.options}>
+      {q.options?.map((opt) => {
+        const selected = ((answers[q.id] as string[]) || []).includes(opt.text);
+        return (
+          <label
+            key={opt.text}
+            className={`${sm.option} ${selected ? sm.optionSelected : ""}`}
+          >
+            <input
+              type="checkbox"
+              className={sm.optionInput}
+              checked={selected}
+              onChange={() => {
+                const current = (answers[q.id] as string[]) || [];
+                const updated = selected
+                  ? current.filter((v) => v !== opt.text)
+                  : [...current, opt.text];
+                setAnswer(q.id, updated);
+              }}
+            />
+            <span className={sm.optionText}>{opt.text}</span>
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
+function renderEssay(
+  q: CandidateQuestion,
+  answers: AnswerMap,
+  setAnswer: SetAnswerFn,
+  sm: Record<string, string>
+) {
+  return (
+    <div className={sm.essayWrapper}>
+      <textarea
+        className={sm.essayBox}
+        placeholder="Write your answer here..."
+        value={answers[q.id] || ""}
+        onChange={(e) => setAnswer(q.id, e.target.value)}
+        rows={10}
+      />
+      <span className={sm.charCount}>
+        {((answers[q.id] as string) || "").length} characters
+      </span>
+    </div>
+  );
+}
+
+function renderQuestionInput(
+  q: CandidateQuestion,
+  answers: AnswerMap,
+  setAnswer: SetAnswerFn,
+  sm: Record<string, string>
+) {
+  if (q.type === "mcq_single") return renderMcqSingle(q, answers, setAnswer, sm);
+  if (q.type === "mcq_multiple") return renderMcqMultiple(q, answers, setAnswer, sm);
+  if (q.type === "essay") return renderEssay(q, answers, setAnswer, sm);
+  return null;
+}
+
+function renderRoundCard(
+  round: RoundConfig,
+  currentRoundNumber: number,
+  answeredPct: number,
+  sm: Record<string, string>
+) {
+  const isActive = round.round_number === currentRoundNumber;
+  const isCompleted = round.round_number < currentRoundNumber;
+  const progress = getRoundProgress(isActive, isCompleted, answeredPct);
+  return (
+    <div
+      key={round.round_number}
+      className={`${sm.roundCard} ${isActive ? sm.roundCardActive : ""} ${isCompleted ? sm.roundCardCompleted : ""}`}
+    >
+      <div className={sm.roundCardHeader}>
+        <span className={sm.roundCardName}>Round {round.round_number}</span>
+        <span className={`${sm.roundStatusPill} ${getRoundStatusClass(isActive, isCompleted, sm)}`}>
+          {getRoundStatusLabel(isActive, isCompleted)}
+        </span>
+      </div>
+      <p className={sm.roundCardMeta}>
+        {round.question_count} question{round.question_count === 1 ? "" : "s"}
+      </p>
+      <div className={sm.roundMiniBar}>
+        <div
+          className={getRoundMiniBarClass(isActive, isCompleted, sm)}
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 const VIOLATION_DEBOUNCE_MS = 2_000;
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -126,9 +324,7 @@ export default function InterviewPage() {
   const navigate = useNavigate();
 
   const user = useAppSelector((s) => s.auth.user);
-  const candidateName = user
-    ? [user.first_name, user.last_name].filter(Boolean).join(" ")
-    : undefined;
+  const candidateName = getCandidateName(user);
 
   // ── Core state ──────────────────────────────────────────────────────────────
   const [roundData, setRoundData] = useState<InterviewRoundData | null>(null);
@@ -327,23 +523,25 @@ export default function InterviewPage() {
 
   const fetchAssessment = useCallback(async (): Promise<AssessmentData | null> => {
     if (!shareLink) return null;
-    const { data } = await api.get(API_ENDPOINTS.CANDIDATE.ASSESSMENT(shareLink));
-    return data.data as AssessmentData;
+    const { data } = await api.get<{ data: AssessmentData }>(
+      API_ENDPOINTS.CANDIDATE.ASSESSMENT(shareLink)
+    );
+    return data.data;
   }, [shareLink]);
 
   const handleLoadError = useCallback(
     (e: unknown) => {
-      const status = (e as { response?: { status?: number } })?.response?.status;
-      const msg =
-        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "";
+      const isAxiosErr = e !== null && typeof e === "object" && "response" in e;
+      const status = isAxiosErr
+        ? (e as { response?: { status?: number } }).response?.status
+        : undefined;
+      const msg = extractApiErrorMessage(e, "");
       if (status === 403) {
         if (shareLink) markAssessmentDone(shareLink);
         const isRevoked = msg.toLowerCase().includes("revoked");
         navigate(
           isRevoked ? ROUTES.ASSESSMENT.entry(shareLink!) : ROUTES.ASSESSMENT.completed(shareLink!),
-          {
-            replace: true,
-          }
+          { replace: true }
         );
       } else {
         toast.error("Failed to load questions");
@@ -454,7 +652,7 @@ export default function InterviewPage() {
   // ── Malpractice coordinator ─────────────────────────────────────────────────
   const { flagViolation } = useMalpracticeCoordinator({
     submissionId: submissionId ?? "",
-    monitoringConfig: monitoringConfig as MonitoringConfig,
+    monitoringConfig,
     onTerminated: useCallback(() => {
       setTimeout(() => void finishRoundRef.current(true), 500);
     }, []),
@@ -660,6 +858,37 @@ export default function InterviewPage() {
     }
   }, [startScreenCapture, markPermissionFlowStart, markPermissionFlowEnd]);
 
+  // ── Setup-screen handlers ───────────────────────────────────────────────────
+  const handleSetupShareScreen = useCallback(async () => {
+    markPermissionFlowStart();
+    try {
+      const ok = await startScreenCapture();
+      if (ok) setPhaseError(null);
+      else
+        setPhaseError("Screen sharing was denied or cancelled. Please share your entire screen.");
+    } finally {
+      markPermissionFlowEnd();
+    }
+  }, [startScreenCapture, markPermissionFlowStart, markPermissionFlowEnd, setPhaseError]);
+
+  const handleSetupRequestFullscreen = useCallback(async () => {
+    if (!document.fullscreenElement) {
+      await document.documentElement
+        .requestFullscreen({ navigationUI: "hide" })
+        .catch(() => undefined);
+    }
+  }, []);
+
+  const handleSetupRetryCamera = useCallback(async () => {
+    setIsCameraReady(false);
+    setPhaseError(null);
+  }, [setPhaseError]);
+
+  const handleSetupRetryAudio = useCallback(async () => {
+    setIsAudioReady(false);
+    setPhaseError(null);
+  }, [setPhaseError]);
+
   // ── Periodic screenshot ─────────────────────────────────────────────────────
   useEffect(() => {
     if (!monitoringConfig.screenshot_enabled || !submissionId) return;
@@ -672,7 +901,7 @@ export default function InterviewPage() {
           if (!blob) return;
           const fd = new FormData();
           fd.append("file", blob, "screenshot.jpg");
-          await api.post(API_ENDPOINTS.CANDIDATE.SUBMISSION_SCREENSHOT(submissionId!), fd, {
+          await api.post(API_ENDPOINTS.CANDIDATE.SUBMISSION_SCREENSHOT(submissionId), fd, {
             headers: { "Content-Type": "multipart/form-data" },
           });
         } catch {
@@ -717,7 +946,7 @@ export default function InterviewPage() {
 
     const handleClipboard = (e: ClipboardEvent) => {
       e.preventDefault();
-      const action = e.type === "copy" ? "Copy" : e.type === "paste" ? "Paste" : "Cut";
+      const action = getClipboardAction(e.type);
       toast.error(`${action} action is not allowed on this page`);
     };
 
@@ -761,35 +990,10 @@ export default function InterviewPage() {
         phaseLabel={phaseLabel}
         phaseError={phaseError}
         config={monitoringConfig}
-        onShareScreen={async () => {
-          markPermissionFlowStart();
-          try {
-            const ok = await startScreenCapture();
-            if (ok) setPhaseError(null);
-            else
-              setPhaseError(
-                "Screen sharing was denied or cancelled. Please share your entire screen."
-              );
-          } finally {
-            markPermissionFlowEnd();
-          }
-        }}
-        onRequestFullscreen={async () => {
-          if (!document.fullscreenElement) {
-            await document.documentElement
-              .requestFullscreen({ navigationUI: "hide" })
-              .catch(() => undefined);
-          }
-        }}
-        onRetryCamera={async () => {
-          setIsCameraReady(false);
-          setPhaseError(null);
-          // The camera useEffect will re-run since isCameraReady resets
-        }}
-        onRetryAudio={async () => {
-          setIsAudioReady(false);
-          setPhaseError(null);
-        }}
+        onShareScreen={handleSetupShareScreen}
+        onRequestFullscreen={handleSetupRequestFullscreen}
+        onRetryCamera={handleSetupRetryCamera}
+        onRetryAudio={handleSetupRetryAudio}
       />
     );
   }
@@ -809,16 +1013,13 @@ export default function InterviewPage() {
   const currentQuestion = questions[currentIdx];
   const answeredCount = Object.keys(answers).length;
   const remainingCount = questions.length - answeredCount;
+  const answeredPct = (answeredCount / questions.length) * 100;
   const { hh, mm, ss } = formattedTime;
 
-  const networkBadgeClass =
-    networkStatus === "connected" ? styles.monitorBadgeGreen : styles.monitorBadgeOrange;
-  const networkLabel =
-    networkStatus === "connected"
-      ? "Network Stable"
-      : networkStatus === "on_hold"
-        ? "Session Paused"
-        : "Reconnecting…";
+  const networkBadgeClass = getNetworkBadgeClass(networkStatus, styles);
+  const networkLabel = getNetworkLabel(networkStatus);
+  const isNext = currentIdx < questions.length - 1;
+  const showPausedIndicator = !timerActive && networkStatus !== "connected";
 
   return (
     <div className={styles.page}>
@@ -835,10 +1036,7 @@ export default function InterviewPage() {
               {assessmentRounds.length > 0 ? ` of ${assessmentRounds.length}` : ""}
             </p>
             <div className={styles.progressBarOuter}>
-              <div
-                className={styles.progressBarInner}
-                style={{ width: `${(answeredCount / questions.length) * 100}%` }}
-              />
+              <div className={styles.progressBarInner} style={{ width: `${answeredPct}%` }} />
             </div>
             <div className={styles.progressStats}>
               <div className={`${styles.progressStat} ${styles.progressStatAnswered}`}>
@@ -859,39 +1057,9 @@ export default function InterviewPage() {
           {assessmentRounds.length > 0 && (
             <div className={styles.roundListSection}>
               <p className={styles.sidebarSectionLabel}>Rounds</p>
-              {assessmentRounds.map((round) => {
-                const isActive = round.round_number === roundData.round_number;
-                const isCompleted = round.round_number < roundData.round_number;
-                const progress = isActive
-                  ? (answeredCount / questions.length) * 100
-                  : isCompleted
-                    ? 100
-                    : 0;
-                return (
-                  <div
-                    key={round.round_number}
-                    className={`${styles.roundCard} ${isActive ? styles.roundCardActive : ""} ${isCompleted ? styles.roundCardCompleted : ""}`}
-                  >
-                    <div className={styles.roundCardHeader}>
-                      <span className={styles.roundCardName}>Round {round.round_number}</span>
-                      <span
-                        className={`${styles.roundStatusPill} ${getRoundStatusClass(isActive, isCompleted, styles)}`}
-                      >
-                        {getRoundStatusLabel(isActive, isCompleted)}
-                      </span>
-                    </div>
-                    <p className={styles.roundCardMeta}>
-                      {round.question_count} question{round.question_count === 1 ? "" : "s"}
-                    </p>
-                    <div className={styles.roundMiniBar}>
-                      <div
-                        className={getRoundMiniBarClass(isActive, isCompleted, styles)}
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+              {assessmentRounds.map((round) =>
+                renderRoundCard(round, roundData.round_number, answeredPct, styles)
+              )}
             </div>
           )}
 
@@ -958,73 +1126,7 @@ export default function InterviewPage() {
             <div className={styles.questionBody}>
               <RichText className={styles.questionText}>{currentQuestion.text}</RichText>
 
-              {currentQuestion.type === "mcq_single" && (
-                <div className={styles.options}>
-                  {currentQuestion.options?.map((opt) => {
-                    const selected = answers[currentQuestion.id] === opt.text;
-                    return (
-                      <label
-                        key={opt.text}
-                        className={`${styles.option} ${selected ? styles.optionSelected : ""}`}
-                      >
-                        <input
-                          type="radio"
-                          className={styles.optionInput}
-                          name={currentQuestion.id}
-                          checked={selected}
-                          onChange={() => setAnswer(currentQuestion.id, opt.text)}
-                        />
-                        <span className={styles.optionText}>{opt.text}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
-
-              {currentQuestion.type === "mcq_multiple" && (
-                <div className={styles.options}>
-                  {currentQuestion.options?.map((opt) => {
-                    const selected = ((answers[currentQuestion.id] as string[]) || []).includes(
-                      opt.text
-                    );
-                    return (
-                      <label
-                        key={opt.text}
-                        className={`${styles.option} ${selected ? styles.optionSelected : ""}`}
-                      >
-                        <input
-                          type="checkbox"
-                          className={styles.optionInput}
-                          checked={selected}
-                          onChange={() => {
-                            const current = (answers[currentQuestion.id] as string[]) || [];
-                            const updated = selected
-                              ? current.filter((v) => v !== opt.text)
-                              : [...current, opt.text];
-                            setAnswer(currentQuestion.id, updated);
-                          }}
-                        />
-                        <span className={styles.optionText}>{opt.text}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
-
-              {currentQuestion.type === "essay" && (
-                <div className={styles.essayWrapper}>
-                  <textarea
-                    className={styles.essayBox}
-                    placeholder="Write your answer here..."
-                    value={(answers[currentQuestion.id] as string) || ""}
-                    onChange={(e) => setAnswer(currentQuestion.id, e.target.value)}
-                    rows={10}
-                  />
-                  <span className={styles.charCount}>
-                    {((answers[currentQuestion.id] as string) || "").length} characters
-                  </span>
-                </div>
-              )}
+              {renderQuestionInput(currentQuestion, answers, setAnswer, styles)}
             </div>
           </div>
 
@@ -1037,7 +1139,7 @@ export default function InterviewPage() {
               Previous
             </Button>
             <div className={styles.navRight}>
-              {currentIdx < questions.length - 1 ? (
+              {isNext ? (
                 <Button onClick={() => navigateTo(currentIdx + 1)}>Next</Button>
               ) : (
                 <Button onClick={() => setShowSubmitConfirm(true)} isLoading={submitting}>
@@ -1053,7 +1155,7 @@ export default function InterviewPage() {
           <div className={`${styles.timerCard} ${isLowTime ? styles.timerLow : ""}`}>
             <p className={styles.sidebarSectionLabel}>
               Time Remaining
-              {!timerActive && networkStatus !== "connected" && (
+              {showPausedIndicator && (
                 <span style={{ fontSize: 11, color: "var(--warning-600, #d97706)", marginLeft: 6 }}>
                   (paused)
                 </span>
@@ -1079,29 +1181,13 @@ export default function InterviewPage() {
 
           <div className={styles.monitoringStatus}>
             <p className={styles.sidebarSectionLabel}>Monitoring</p>
-            <div className={styles.monitorBadgeList}>
-              {monitoringConfig.video_monitoring && (
-                <div className={`${styles.monitorBadge} ${styles.monitorBadgeGreen}`}>
-                  <span className={styles.monitorBadgeDot} /> Camera Active
-                </div>
-              )}
-              {monitoringConfig.audio_monitoring && (
-                <div className={`${styles.monitorBadge} ${styles.monitorBadgeGreen}`}>
-                  <span className={styles.monitorBadgeDot} /> Mic Active
-                </div>
-              )}
-              {monitoringConfig.screenshot_enabled && (
-                <div
-                  className={`${styles.monitorBadge} ${isScreenCapturing ? styles.monitorBadgeGreen : styles.monitorBadgeOrange}`}
-                >
-                  <span className={styles.monitorBadgeDot} />
-                  {isScreenCapturing ? "Screen Capture Active" : "Screen Capture Inactive"}
-                </div>
-              )}
-              <div className={`${styles.monitorBadge} ${networkBadgeClass}`}>
-                <span className={styles.monitorBadgeDot} /> {networkLabel}
-              </div>
-            </div>
+            {renderMonitoringBadges(
+              monitoringConfig,
+              isScreenCapturing,
+              networkBadgeClass,
+              networkLabel,
+              styles
+            )}
           </div>
 
           {monitoringConfig.video_monitoring && (

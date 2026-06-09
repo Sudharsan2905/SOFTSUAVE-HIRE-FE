@@ -7,7 +7,7 @@ import type { CredentialResponse } from "@react-oauth/google";
 import styles from "./CandidateLoginPage.module.css";
 import { useAppDispatch } from "@/store";
 import { candidateLogin, setAuthData } from "@/store/slices/authSlice";
-import { api } from "@/utils/api";
+import { api, extractApiErrorMessage } from "@/utils/api";
 import { IconUser, IconLock, IconEye, IconEyeOff } from "@/assets/icons";
 import { Tooltip } from "@/components/ui/Tooltip";
 import logoUrl from "@/assets/favicon.svg";
@@ -55,6 +55,10 @@ export default function CandidateLoginPage() {
     resolver: zodResolver(candidateLoginSchema),
   });
 
+  const registerPath = shareLink
+    ? `${ROUTES.CANDIDATE.REGISTER}?share=${shareLink}`
+    : ROUTES.CANDIDATE.REGISTER;
+
   const goNext = () => {
     if (shareLink) navigate(ROUTES.ASSESSMENT.instructions(shareLink));
     else navigate(ROUTES.CANDIDATE.DASHBOARD);
@@ -65,7 +69,8 @@ export default function CandidateLoginPage() {
       await dispatch(candidateLogin(values)).unwrap();
       goNext();
     } catch (e: unknown) {
-      setError("root", { message: (e as { message?: string })?.message ?? "Invalid credentials" });
+      // unwrap() throws the rejectWithValue payload, which is already a plain string
+      setError("root", { message: typeof e === "string" ? e : "Invalid credentials" });
     }
   };
 
@@ -78,9 +83,6 @@ export default function CandidateLoginPage() {
       const result = data.data;
 
       if (result?.needs_registration) {
-        const registerPath = shareLink
-          ? `${ROUTES.CANDIDATE.REGISTER}?share=${shareLink}`
-          : ROUTES.CANDIDATE.REGISTER;
         navigate(registerPath, { state: { googleData: result.google_data } });
         return;
       }
@@ -88,10 +90,7 @@ export default function CandidateLoginPage() {
       dispatch(setAuthData(result));
       goNext();
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        "Google login failed";
-      toast.error(msg);
+      toast.error(extractApiErrorMessage(err, "Google login failed"));
     }
   };
 
@@ -178,14 +177,7 @@ export default function CandidateLoginPage() {
 
             <p className={styles.footer}>
               Don't have an account?{" "}
-              <Link
-                to={
-                  shareLink
-                    ? `${ROUTES.CANDIDATE.REGISTER}?share=${shareLink}`
-                    : ROUTES.CANDIDATE.REGISTER
-                }
-                className={styles.link}
-              >
+              <Link to={registerPath} className={styles.link}>
                 Register here
               </Link>
             </p>

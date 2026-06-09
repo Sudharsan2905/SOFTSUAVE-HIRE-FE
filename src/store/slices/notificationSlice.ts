@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { api } from "@/utils/api";
 import { API_ENDPOINTS } from "@/constants/api";
+import { DEFAULT_PAGE_SIZE } from "@/constants/app";
 import type { PaginationMeta } from "@/types";
 import type { Notification, NotificationType } from "@/features/notifications/types";
 
@@ -24,15 +25,18 @@ const initialState: NotificationState = {
   error: null,
 };
 
+const asString = (v: unknown): string => (typeof v === "string" ? v : "");
+const asOptionalString = (v: unknown): string | undefined => (typeof v === "string" ? v : undefined);
+
 /* Normalise snake_case API response → camelCase Notification */
 const normalise = (raw: Record<string, unknown>): Notification => ({
-  id: raw.id as string,
+  id: asString(raw.id),
   type: raw.type as NotificationType,
-  title: raw.title as string,
-  message: raw.message as string,
-  timestamp: raw.created_at as string,
-  isRead: raw.is_read as boolean,
-  link: raw.link as string | undefined,
+  title: asString(raw.title),
+  message: asString(raw.message),
+  timestamp: asString(raw.created_at),
+  isRead: raw.is_read === true,
+  link: asOptionalString(raw.link),
 });
 
 /* ── Async Thunks ── */
@@ -40,13 +44,12 @@ const normalise = (raw: Record<string, unknown>): Notification => ({
 export const fetchNotifications = createAsyncThunk(
   "notifications/fetchNotifications",
   async (
-    { page = 1, pageSize = 20 }: { page?: number; pageSize?: number },
+    { page = 1, pageSize = DEFAULT_PAGE_SIZE }: { page?: number; pageSize?: number },
     { rejectWithValue }
   ) => {
     try {
-      const { data } = await api.get(
-        `${API_ENDPOINTS.NOTIFICATIONS.ROOT}?page=${page}&page_size=${pageSize}`
-      );
+      const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+      const { data } = await api.get(`${API_ENDPOINTS.NOTIFICATIONS.ROOT}?${params}`);
       return data.data as {
         notifications: Record<string, unknown>[];
         pagination: PaginationMeta;

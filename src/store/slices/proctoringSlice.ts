@@ -1,6 +1,8 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { MalpracticeType } from "../../types";
 
+const DEFAULT_MALPRACTICE_LIMIT = 3;
+
 interface ProctoringState {
   malpracticeCount: number;
   totalMalpracticeLimit: number;
@@ -13,7 +15,7 @@ interface ProctoringState {
 
 const initialState: ProctoringState = {
   malpracticeCount: 0,
-  totalMalpracticeLimit: 3,
+  totalMalpracticeLimit: DEFAULT_MALPRACTICE_LIMIT,
   lastViolationType: null,
   isWarningVisible: false,
   warningMessage: "",

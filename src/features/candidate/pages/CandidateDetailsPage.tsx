@@ -131,11 +131,11 @@ export default function CandidateDetailsPage() {
             <div className={styles.contactRow} aria-label="Contact information">
               <span className={styles.contactItem}>
                 <IconMail size={14} aria-hidden="true" />
-                <span>{candidate.email || "--"}</span>
+                <span>{candidate.email ?? "--"}</span>
               </span>
               <span className={styles.contactItem}>
                 <IconPhone size={14} aria-hidden="true" />
-                <span>{candidate.phone || "--"}</span>
+                <span>{candidate.phone ?? "--"}</span>
               </span>
               <span className={styles.contactItem}>
                 <IconGender size={14} aria-hidden="true" />
@@ -147,7 +147,7 @@ export default function CandidateDetailsPage() {
               </span>
               <span className={styles.contactItem}>
                 <IconMapPin size={14} aria-hidden="true" />
-                <span>{candidate.location || "--"}</span>
+                <span>{candidate.location ?? "--"}</span>
               </span>
             </div>
           </div>
@@ -158,7 +158,7 @@ export default function CandidateDetailsPage() {
             data={data}
             workspaceId={workspaceId!}
             assessmentId={assessmentId!}
-            onRefresh={() => void fetchSubmission(selectedVersion)}
+            onRefresh={async () => { await fetchSubmission(selectedVersion); }}
           />
         </div>
       </div>

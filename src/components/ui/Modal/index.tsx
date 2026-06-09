@@ -28,7 +28,7 @@ export const Modal = React.memo(function Modal({
   className,
   disableBackdropClose = false,
   disableEscapeKey = false,
-}: ModalProps) {
+}: Readonly<ModalProps>) {
   // Always-current reference to onClose so effects never need it as a dep,
   // preventing re-registration on every parent render.
   const onCloseRef = useRef(onClose);
@@ -69,7 +69,7 @@ export const Modal = React.memo(function Modal({
   if (!isOpen) return null;
 
   return createPortal(
-    <div className={styles.overlay} onMouseDown={handleOverlayMouseDown}>
+    <div className={styles.overlay} role="none" onMouseDown={handleOverlayMouseDown}>
       <dialog
         open
         className={clsx(styles.modal, styles[size], className)}

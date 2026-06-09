@@ -20,6 +20,75 @@ const MAX_RETRIES = 10;
 const BASE_BACKOFF_MS = 1_000;
 const MAX_BACKOFF_MS = 10_000;
 
+interface WsMessageCallbacks {
+  onSessionState?: (remaining: number | null, qIdx: number) => void;
+  onSessionOnHold?: () => void;
+  onResumeApproved?: (remaining: number | null, qIdx: number) => void;
+  onTerminated?: () => void;
+  onAdminWarning?: (message: string) => void;
+}
+
+function handleConnectedMessage(
+  msg: WsMessage,
+  setNetworkStatus: (s: NetworkStatus) => void,
+  cbs: WsMessageCallbacks
+): void {
+  console.warn(
+    `[WS] Session connected: remaining=${msg.remaining_seconds ?? "N/A"}s q=${msg.current_question_idx ?? 0}`
+  );
+  setNetworkStatus("connected");
+  const hasSessionState =
+    msg.remaining_seconds !== undefined || msg.current_question_idx !== undefined;
+  if (hasSessionState) {
+    cbs.onSessionState?.(msg.remaining_seconds ?? null, msg.current_question_idx ?? 0);
+  }
+}
+
+function handleResumeApprovedMessage(
+  msg: WsMessage,
+  setNetworkStatus: (s: NetworkStatus) => void,
+  cbs: WsMessageCallbacks
+): void {
+  console.warn(
+    `[WS] Session resumed: remaining=${msg.remaining_seconds ?? "N/A"}s q=${msg.current_question_idx ?? 0}`
+  );
+  setNetworkStatus("connected");
+  cbs.onResumeApproved?.(msg.remaining_seconds ?? null, msg.current_question_idx ?? 0);
+}
+
+function processWsMessage(
+  msg: WsMessage,
+  networkStatus: NetworkStatus,
+  setNetworkStatus: (s: NetworkStatus) => void,
+  cbs: WsMessageCallbacks
+): void {
+  switch (msg.type) {
+    case "connected":
+      handleConnectedMessage(msg, setNetworkStatus, cbs);
+      break;
+    case "pong":
+      if (networkStatus === "reconnecting") setNetworkStatus("connected");
+      break;
+    case "on_hold":
+      console.warn("[WS] Session placed on hold by server");
+      setNetworkStatus("on_hold");
+      cbs.onSessionOnHold?.();
+      break;
+    case "resume_approved":
+      handleResumeApprovedMessage(msg, setNetworkStatus, cbs);
+      break;
+    case "terminated":
+      console.warn("[WS] Session terminated by server");
+      setNetworkStatus("offline");
+      cbs.onTerminated?.();
+      break;
+    case "admin_warning":
+      console.warn(`[WS] Admin warning received: "${msg.message ?? ""}"`);
+      if (msg.message) cbs.onAdminWarning?.(msg.message);
+      break;
+  }
+}
+
 export type NetworkStatus = "connected" | "reconnecting" | "offline" | "on_hold";
 
 interface UseNetworkMonitoringOptions {
@@ -134,48 +203,13 @@ export function useNetworkMonitoring({
       } catch {
         return;
       }
-
-      switch (msg.type) {
-        case "connected":
-          console.log(
-            `[WS] Session connected: remaining=${msg.remaining_seconds ?? "N/A"}s q=${msg.current_question_idx ?? 0}`
-          );
-          setNetworkStatus("connected");
-          if (msg.remaining_seconds !== undefined || msg.current_question_idx !== undefined) {
-            onSessionStateRef.current?.(
-              msg.remaining_seconds ?? null,
-              msg.current_question_idx ?? 0
-            );
-          }
-          break;
-        case "pong":
-          if (networkStatus === "reconnecting") setNetworkStatus("connected");
-          break;
-        case "on_hold":
-          console.warn("[WS] Session placed on hold by server");
-          setNetworkStatus("on_hold");
-          onSessionOnHoldRef.current?.();
-          break;
-        case "resume_approved":
-          console.log(
-            `[WS] Session resumed: remaining=${msg.remaining_seconds ?? "N/A"}s q=${msg.current_question_idx ?? 0}`
-          );
-          setNetworkStatus("connected");
-          onResumeApprovedRef.current?.(
-            msg.remaining_seconds ?? null,
-            msg.current_question_idx ?? 0
-          );
-          break;
-        case "terminated":
-          console.warn("[WS] Session terminated by server");
-          setNetworkStatus("offline");
-          onTerminatedRef.current?.();
-          break;
-        case "admin_warning":
-          console.log(`[WS] Admin warning received: "${msg.message ?? ""}"`);
-          if (msg.message) onAdminWarningRef.current?.(msg.message);
-          break;
-      }
+      processWsMessage(msg, networkStatus, setNetworkStatus, {
+        onSessionState: onSessionStateRef.current,
+        onSessionOnHold: onSessionOnHoldRef.current,
+        onResumeApproved: onResumeApprovedRef.current,
+        onTerminated: onTerminatedRef.current,
+        onAdminWarning: onAdminWarningRef.current,
+      });
     },
     [networkStatus]
   );
@@ -186,7 +220,7 @@ export function useNetworkMonitoring({
     const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
     const url = `${apiBase.replace(/^https/, "wss").replace(/^http/, "ws")}/api/ws/interview/${submissionId}?token=${accessToken}`;
 
-    console.log(`[WS] Connecting: submission=${submissionId}`);
+    console.warn(`[WS] Connecting: submission=${submissionId}`);
     const ws = new WebSocket(url);
     wsRef.current = ws;
 
@@ -195,7 +229,7 @@ export function useNetworkMonitoring({
         ws.close();
         return;
       }
-      console.log(`[WS] Connected: submission=${submissionId}`);
+      console.warn(`[WS] Connected: submission=${submissionId}`);
       retryCountRef.current = 0;
       setNetworkStatus("connected");
       setIsOnline(true);
@@ -206,7 +240,7 @@ export function useNetworkMonitoring({
 
     ws.onclose = (event) => {
       const reasonPart = event.reason ? ` reason="${event.reason}"` : "";
-      console.log(`[WS] Closed: submission=${submissionId} code=${event.code}${reasonPart}`);
+      console.warn(`[WS] Closed: submission=${submissionId} code=${event.code}${reasonPart}`);
       stopHeartbeat();
       if (unmountedRef.current) return;
       setIsOnline(false);
@@ -237,7 +271,7 @@ export function useNetworkMonitoring({
 
     const delay = Math.min(BASE_BACKOFF_MS * 2 ** retryCountRef.current, MAX_BACKOFF_MS);
     retryCountRef.current += 1;
-    console.log(
+    console.warn(
       `[WS] Reconnect attempt ${retryCountRef.current}/${MAX_RETRIES} in ${delay}ms. submission=${submissionId ?? ""}`
     );
     retryTimerRef.current = setTimeout(() => {
@@ -259,11 +293,11 @@ export function useNetworkMonitoring({
       setNetworkStatus((prev) => (prev === "on_hold" ? "on_hold" : "offline"));
       stopHeartbeat();
     };
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
+    globalThis.addEventListener("online", handleOnline);
+    globalThis.addEventListener("offline", handleOffline);
     return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
+      globalThis.removeEventListener("online", handleOnline);
+      globalThis.removeEventListener("offline", handleOffline);
     };
   }, [connect, stopHeartbeat, networkStatus]);
 

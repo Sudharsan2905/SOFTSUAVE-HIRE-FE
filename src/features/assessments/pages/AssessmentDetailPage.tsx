@@ -16,7 +16,6 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
 import { Assessment, Submission, PaginationMeta, SortOrder } from "@/types";
 import { SUBMISSION_STATUS_OPTIONS } from "@/constants/app";
-import { getStatusColor } from "@/constants/statusColors";
 import { API_ENDPOINTS } from "@/constants/api";
 import { ROUTES } from "@/constants/routes";
 import { ASSESSMENT_ERRORS } from "@/features/assessments/constants";
@@ -182,10 +181,6 @@ export default function AssessmentDetailPage() {
                   : "Unknown";
                 const pct = sub.score_percentage;
                 const candidateId = sub.candidate?.id ?? "";
-                const subStatus = sub.status;
-                const statusConfig = getStatusColor(subStatus);
-                void statusConfig;
-
                 return (
                   <tr key={sub.id}>
                     <td>
@@ -203,10 +198,10 @@ export default function AssessmentDetailPage() {
                       <StatusBadge status={sub.status} />
                     </td>
                     <td>
-                      {pct !== undefined && pct !== null ? (
-                        <Badge variant={percentageBadgeColor(pct)}>{pct.toFixed(1)}%</Badge>
-                      ) : (
+                      {pct === undefined || pct === null ? (
                         <span style={{ color: "var(--text-tertiary)", fontSize: 13 }}>—</span>
+                      ) : (
+                        <Badge variant={percentageBadgeColor(pct)}>{pct.toFixed(1)}%</Badge>
                       )}
                     </td>
                     <td style={{ fontSize: 13, color: "var(--text-secondary)" }}>

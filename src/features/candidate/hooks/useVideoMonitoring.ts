@@ -32,6 +32,66 @@ interface MediaPipeModule {
   FilesetResolver: { forVisionTasks: (path: string) => Promise<unknown> };
 }
 
+interface DetectionContext {
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  rafRef: React.MutableRefObject<number>;
+  runningRef: { current: boolean };
+  lastDetectionTime: React.MutableRefObject<number>;
+  detectorRef: React.MutableRefObject<FaceDetectorInstance | null>;
+  faceAbsenceStart: React.MutableRefObject<number | null>;
+  stateRef: React.MutableRefObject<VideoMonitoringState>;
+  canFlag: (type: MalpracticeType) => boolean;
+  onViolation: (type: MalpracticeType, description: string) => void;
+}
+
+function checkFaceAbsence(ctx: DetectionContext, now: number): void {
+  if (ctx.faceAbsenceStart.current === null) {
+    ctx.faceAbsenceStart.current = now;
+  } else if (
+    now - ctx.faceAbsenceStart.current > FACE_ABSENCE_THRESHOLD_MS &&
+    ctx.canFlag("face_absence")
+  ) {
+    const absenceSecs = Math.round((now - ctx.faceAbsenceStart.current) / 1_000);
+    ctx.onViolation("face_absence", `No face detected in camera feed for ${absenceSecs} seconds`);
+    ctx.faceAbsenceStart.current = null;
+  }
+}
+
+function processDetectionFrame(ctx: DetectionContext, now: number): void {
+  ctx.lastDetectionTime.current = now;
+  const video = ctx.videoRef.current;
+  if (video && video.readyState >= 2 && ctx.detectorRef.current) {
+    try {
+      const result = ctx.detectorRef.current.detectForVideo(video, now);
+      const count = result?.detections?.length ?? 0;
+      ctx.stateRef.current.faceCount = count;
+      if (count === 0) {
+        checkFaceAbsence(ctx, now);
+      } else {
+        ctx.faceAbsenceStart.current = null;
+      }
+      if (count > 1 && ctx.canFlag("multiple_faces")) {
+        ctx.onViolation("multiple_faces", `Multiple faces (${count}) detected in camera feed`);
+      }
+    } catch {
+      /* detector may fail on first frames */
+    }
+  }
+}
+
+function runDetectionStep(ctx: DetectionContext): void {
+  if (!ctx.runningRef.current) return;
+  const now = performance.now();
+  if (now - ctx.lastDetectionTime.current >= DETECTION_INTERVAL_MS) {
+    processDetectionFrame(ctx, now);
+  }
+  ctx.rafRef.current = requestAnimationFrame(() => runDetectionStep(ctx));
+}
+
+function runDetectionLoop(ctx: DetectionContext): void {
+  ctx.rafRef.current = requestAnimationFrame(() => runDetectionStep(ctx));
+}
+
 export function useVideoMonitoring({
   enabled,
   videoRef,
@@ -62,7 +122,18 @@ export function useVideoMonitoring({
   useEffect(() => {
     if (!enabled) return;
 
-    let running = true;
+    const runningRef = { current: true };
+    const ctx: DetectionContext = {
+      videoRef,
+      rafRef,
+      runningRef,
+      lastDetectionTime,
+      detectorRef,
+      faceAbsenceStart,
+      stateRef,
+      canFlag,
+      onViolation: (type, desc) => onViolationRef.current(type, desc),
+    };
 
     const init = async () => {
       try {
@@ -77,60 +148,13 @@ export function useVideoMonitoring({
       } catch {
         return;
       }
-
-      const detect = () => {
-        if (!running) return;
-
-        const now = performance.now();
-        if (now - lastDetectionTime.current >= DETECTION_INTERVAL_MS) {
-          lastDetectionTime.current = now;
-          const video = videoRef.current;
-          if (video && video.readyState >= 2 && detectorRef.current) {
-            try {
-              const result = detectorRef.current.detectForVideo(video, now);
-              const count = result?.detections?.length ?? 0;
-              stateRef.current.faceCount = count;
-
-              if (count === 0) {
-                if (faceAbsenceStart.current === null) {
-                  faceAbsenceStart.current = now;
-                } else if (
-                  now - faceAbsenceStart.current > FACE_ABSENCE_THRESHOLD_MS &&
-                  canFlag("face_absence")
-                ) {
-                  const absenceSecs = Math.round((now - faceAbsenceStart.current) / 1_000);
-                  onViolationRef.current(
-                    "face_absence",
-                    `No face detected in camera feed for ${absenceSecs} seconds`
-                  );
-                  faceAbsenceStart.current = null;
-                }
-              } else {
-                faceAbsenceStart.current = null;
-              }
-
-              if (count > 1 && canFlag("multiple_faces")) {
-                onViolationRef.current(
-                  "multiple_faces",
-                  `Multiple faces (${count}) detected in camera feed`
-                );
-              }
-            } catch {
-              /* detector may fail on first frames */
-            }
-          }
-        }
-
-        rafRef.current = requestAnimationFrame(detect);
-      };
-
-      rafRef.current = requestAnimationFrame(detect);
+      runDetectionLoop(ctx);
     };
 
     void init();
 
     return () => {
-      running = false;
+      runningRef.current = false;
       cancelAnimationFrame(rafRef.current);
       detectorRef.current?.close?.();
     };

@@ -8,7 +8,7 @@ import { Select } from "@/components/ui/Select";
 import { Modal } from "@/components/ui/Modal";
 import { Spinner } from "@/components/ui/Spinner";
 import { getFullName, getInitials, getAvatarColor } from "@/utils/helpers";
-import { api } from "@/utils/api";
+import { api, extractApiErrorMessage } from "@/utils/api";
 import { User, UserRole } from "@/types";
 import toast from "react-hot-toast";
 import { API_ENDPOINTS } from "@/constants/api";
@@ -245,6 +245,321 @@ function WorkspacePreferencesContent({
   );
 }
 
+// S3776: extracted the Personal Information card out of the main component.
+function PersonalInformationCard({
+  isEditing,
+  activeUser,
+  profileForm,
+  setProfileForm,
+  roleLabel,
+}: Readonly<{
+  isEditing: boolean;
+  activeUser: User;
+  profileForm: ProfileFormState;
+  setProfileForm: React.Dispatch<React.SetStateAction<ProfileFormState>>;
+  roleLabel: string;
+}>) {
+  return (
+    <div className={styles.card}>
+      <h2 className={styles.cardTitle}>Personal Information</h2>
+      <div className={styles.grid}>
+        {isEditing ? (
+          <>
+            <Input
+              label="First Name"
+              placeholder="Enter first name"
+              value={profileForm.first_name}
+              onChange={(e) => setProfileForm((p) => ({ ...p, first_name: e.target.value }))}
+              showRequired
+            />
+            <Input
+              label="Last Name"
+              placeholder="Enter last name (optional)"
+              value={profileForm.last_name}
+              onChange={(e) => setProfileForm((p) => ({ ...p, last_name: e.target.value }))}
+            />
+            <Input
+              label="Email Address"
+              type="email"
+              placeholder="Enter email"
+              value={profileForm.email}
+              onChange={(e) => setProfileForm((p) => ({ ...p, email: e.target.value }))}
+              showRequired
+            />
+          </>
+        ) : (
+          <>
+            <div className={styles.field}>
+              <span className={styles.fieldLabel}>First Name</span>
+              <span className={styles.fieldValue}>{activeUser.first_name ?? "—"}</span>
+            </div>
+            <div className={styles.field}>
+              <span className={styles.fieldLabel}>Last Name</span>
+              {/* S6606 (line 355): Replace || with ?? */}
+              <span className={styles.fieldValue}>{activeUser.last_name ?? "—"}</span>
+            </div>
+            <div className={styles.field}>
+              <span className={styles.fieldLabel}>Email Address</span>
+              <span className={styles.fieldValue}>{activeUser.email}</span>
+            </div>
+            <div className={styles.field}>
+              <span className={styles.fieldLabel}>Role</span>
+              <span className={styles.fieldValue}>{roleLabel}</span>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// S3776: extracted the Account Settings card out of the main component.
+function AccountSettingsCard({
+  isEditing,
+  activeUser,
+  profileForm,
+  setProfileForm,
+  roleLabel,
+  isActive,
+}: Readonly<{
+  isEditing: boolean;
+  activeUser: User;
+  profileForm: ProfileFormState;
+  setProfileForm: React.Dispatch<React.SetStateAction<ProfileFormState>>;
+  roleLabel: string;
+  isActive: boolean;
+}>) {
+  return (
+    <div className={styles.card}>
+      <h2 className={styles.cardTitle}>Account Settings</h2>
+      <div className={styles.grid}>
+        {isEditing ? (
+          <>
+            <Select
+              label="Role"
+              value={profileForm.role}
+              onChange={(v) => setProfileForm((p) => ({ ...p, role: v }))}
+              options={[
+                { value: UserRole.ADMIN, label: "Admin" },
+                { value: UserRole.SUPER_ADMIN, label: "Super Admin" },
+              ]}
+              disabled={activeUser.role === UserRole.SUPER_ADMIN}
+            />
+            <div className={styles.field}>
+              <span className={styles.fieldLabel}>Status</span>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  className={styles.checkboxNative}
+                  checked={profileForm.is_active}
+                  onChange={(e) => setProfileForm((p) => ({ ...p, is_active: e.target.checked }))}
+                />
+                <span className={styles.checkboxText}>Active account</span>
+              </label>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className={styles.field}>
+              <span className={styles.fieldLabel}>Role</span>
+              <span className={styles.fieldValue}>{roleLabel}</span>
+            </div>
+            <div className={styles.field}>
+              <span className={styles.fieldLabel}>Status</span>
+              <label className={styles.checkboxLabel}>
+                <span
+                  className={`${styles.checkbox} ${isActive ? styles.checkboxChecked : ""}`}
+                  aria-hidden="true"
+                >
+                  {isActive && <CheckIcon />}
+                </span>
+                <span className={styles.checkboxText}>
+                  {isActive ? "Active account" : "Inactive account"}
+                </span>
+              </label>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+type PasswordFormState = {
+  current_password: string;
+  new_password: string;
+  confirm_password: string;
+};
+type ShowPwState = { current: boolean; new: boolean; confirm: boolean };
+
+// S3776: extracted the password change/reset modal out of the main component.
+function PasswordModal({
+  isOpen,
+  isViewingOther,
+  passwordForm,
+  setPasswordForm,
+  showPw,
+  setShowPw,
+  pwSaving,
+  onClose,
+  onSubmit,
+}: Readonly<{
+  isOpen: boolean;
+  isViewingOther: boolean;
+  passwordForm: PasswordFormState;
+  setPasswordForm: React.Dispatch<React.SetStateAction<PasswordFormState>>;
+  showPw: ShowPwState;
+  setShowPw: React.Dispatch<React.SetStateAction<ShowPwState>>;
+  pwSaving: boolean;
+  onClose: () => void;
+  onSubmit: () => void;
+}>) {
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isViewingOther ? "Reset Password" : "Change Password"}
+      size="sm"
+      showClose={false}
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={onSubmit} isLoading={pwSaving}>
+            {isViewingOther ? "Reset" : "Save"}
+          </Button>
+        </>
+      }
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {!isViewingOther && (
+          <Input
+            label="Current Password"
+            type={showPw.current ? "text" : "password"}
+            placeholder="Enter current password"
+            value={passwordForm.current_password}
+            onChange={(e) => setPasswordForm((p) => ({ ...p, current_password: e.target.value }))}
+            showRequired
+            autoComplete="current-password"
+            rightElement={
+              <ToggleVisBtn
+                show={showPw.current}
+                onToggle={() => setShowPw((p) => ({ ...p, current: !p.current }))}
+              />
+            }
+          />
+        )}
+        <Input
+          label="New Password"
+          type={showPw.new ? "text" : "password"}
+          placeholder="Enter new password"
+          value={passwordForm.new_password}
+          onChange={(e) => setPasswordForm((p) => ({ ...p, new_password: e.target.value }))}
+          showRequired
+          autoComplete="new-password"
+          rightElement={
+            <ToggleVisBtn
+              show={showPw.new}
+              onToggle={() => setShowPw((p) => ({ ...p, new: !p.new }))}
+            />
+          }
+        />
+        <Input
+          label="Confirm New Password"
+          type={showPw.confirm ? "text" : "password"}
+          placeholder="Confirm new password"
+          value={passwordForm.confirm_password}
+          onChange={(e) => setPasswordForm((p) => ({ ...p, confirm_password: e.target.value }))}
+          showRequired
+          autoComplete="new-password"
+          rightElement={
+            <ToggleVisBtn
+              show={showPw.confirm}
+              onToggle={() => setShowPw((p) => ({ ...p, confirm: !p.confirm }))}
+            />
+          }
+        />
+      </div>
+    </Modal>
+  );
+}
+
+// S3776: extracted the gradient hero header out of the main component.
+function ProfileHero({
+  avatarBg,
+  initials,
+  fullName,
+  email,
+  roleLabel,
+  isActive,
+  canEditThis,
+  isEditing,
+  saving,
+  onEdit,
+  onCancel,
+  onSave,
+}: Readonly<{
+  avatarBg: string;
+  initials: string;
+  fullName: string;
+  email: string | undefined;
+  roleLabel: string;
+  isActive: boolean;
+  canEditThis: boolean;
+  isEditing: boolean;
+  saving: boolean;
+  onEdit: () => void;
+  onCancel: () => void;
+  onSave: () => void;
+}>) {
+  return (
+    <div className={styles.hero}>
+      <div className={styles.heroInner}>
+        <div className={styles.heroLeft}>
+          <div className={styles.avatarCircle} style={{ background: avatarBg }}>
+            {initials}
+          </div>
+          <div className={styles.heroInfo}>
+            <h1 className={styles.heroName}>{fullName || "—"}</h1>
+            <p className={styles.heroMeta}>
+              <span>{email}</span>
+              <span className={styles.heroDot} aria-hidden="true">
+                ·
+              </span>
+              <span>{roleLabel}</span>
+              <span className={styles.heroDot} aria-hidden="true">
+                ·
+              </span>
+              <span className={isActive ? styles.statusActive : styles.statusInactive}>
+                {isActive ? "Active" : "Inactive"}
+              </span>
+            </p>
+          </div>
+        </div>
+        {canEditThis && (
+          <div className={styles.heroActions}>
+            {isEditing ? (
+              <>
+                <Button variant="secondary" size="sm" onClick={onCancel}>
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={onSave} isLoading={saving}>
+                  Save Changes
+                </Button>
+              </>
+            ) : (
+              <Button size="sm" leftIcon={<EditIcon />} onClick={onEdit}>
+                Edit Profile
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function UserProfilePage() {
   const { userId } = useParams<{ userId?: string }>();
   const navigate = useNavigate();
@@ -284,7 +599,7 @@ export default function UserProfilePage() {
     if (!isViewingOther) return;
     setIsLoading(true);
     try {
-      const { data } = await api.get(API_ENDPOINTS.USERS.BY_ID(userId!));
+      const { data } = await api.get(API_ENDPOINTS.USERS.BY_ID(userId));
       setProfileUser(data.data);
     } catch {
       toast.error(PROFILE_ERRORS.LOAD_FAILED);
@@ -331,7 +646,7 @@ export default function UserProfilePage() {
         return;
       }
 
-      const endpoint = isViewingOther ? API_ENDPOINTS.USERS.BY_ID(userId!) : API_ENDPOINTS.USERS.ME;
+      const endpoint = isViewingOther ? API_ENDPOINTS.USERS.BY_ID(userId) : API_ENDPOINTS.USERS.ME;
       const { data } = await api.patch(endpoint, payload);
 
       if (isViewingOther) {
@@ -342,10 +657,7 @@ export default function UserProfilePage() {
       toast.success(PROFILE_SUCCESS.UPDATED);
       setIsEditing(false);
     } catch (e: unknown) {
-      toast.error(
-        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-          PROFILE_ERRORS.UPDATE_FAILED
-      );
+      toast.error(extractApiErrorMessage(e, PROFILE_ERRORS.UPDATE_FAILED));
     } finally {
       setSaving(false);
     }
@@ -367,7 +679,7 @@ export default function UserProfilePage() {
     setPwSaving(true);
     try {
       if (isViewingOther && isSuperAdmin) {
-        await api.patch(API_ENDPOINTS.USERS.BY_ID(userId!), {
+        await api.patch(API_ENDPOINTS.USERS.BY_ID(userId), {
           password: passwordForm.new_password,
         });
       } else {
@@ -381,13 +693,16 @@ export default function UserProfilePage() {
       setPasswordForm({ current_password: "", new_password: "", confirm_password: "" });
       setShowPw({ current: false, new: false, confirm: false });
     } catch (e: unknown) {
-      toast.error(
-        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-          PROFILE_ERRORS.PASSWORD_CHANGE_FAILED
-      );
+      toast.error(extractApiErrorMessage(e, PROFILE_ERRORS.PASSWORD_CHANGE_FAILED));
     } finally {
       setPwSaving(false);
     }
+  };
+
+  const closePasswordModal = () => {
+    setShowPasswordModal(false);
+    setPasswordForm({ current_password: "", new_password: "", confirm_password: "" });
+    setShowPw({ current: false, new: false, confirm: false });
   };
 
   const toggleWs = (id: string) => {
@@ -433,160 +748,42 @@ export default function UserProfilePage() {
       )}
 
       {/* ── Gradient Hero Header ── */}
-      <div className={styles.hero}>
-        <div className={styles.heroInner}>
-          <div className={styles.heroLeft}>
-            <div className={styles.avatarCircle} style={{ background: avatarBg }}>
-              {initials}
-            </div>
-            <div className={styles.heroInfo}>
-              <h1 className={styles.heroName}>{fullName || "—"}</h1>
-              <p className={styles.heroMeta}>
-                <span>{activeUser.email}</span>
-                <span className={styles.heroDot} aria-hidden="true">
-                  ·
-                </span>
-                <span>{roleLabel}</span>
-                <span className={styles.heroDot} aria-hidden="true">
-                  ·
-                </span>
-                <span className={isActive ? styles.statusActive : styles.statusInactive}>
-                  {isActive ? "Active" : "Inactive"}
-                </span>
-              </p>
-            </div>
-          </div>
-          {canEditThis && (
-            <div className={styles.heroActions}>
-              {isEditing ? (
-                <>
-                  <Button variant="secondary" size="sm" onClick={handleCancel}>
-                    Cancel
-                  </Button>
-                  <Button size="sm" onClick={handleSave} isLoading={saving}>
-                    Save Changes
-                  </Button>
-                </>
-              ) : (
-                <Button size="sm" leftIcon={<EditIcon />} onClick={handleEdit}>
-                  Edit Profile
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      <ProfileHero
+        avatarBg={avatarBg}
+        initials={initials}
+        fullName={fullName}
+        email={activeUser.email}
+        roleLabel={roleLabel}
+        isActive={isActive}
+        canEditThis={canEditThis}
+        isEditing={isEditing}
+        saving={saving}
+        onEdit={handleEdit}
+        onCancel={handleCancel}
+        onSave={handleSave}
+      />
 
       {/* ── Content ── */}
       <div className={styles.content}>
         {/* Personal Information */}
-        <div className={styles.card}>
-          <h2 className={styles.cardTitle}>Personal Information</h2>
-          <div className={styles.grid}>
-            {isEditing ? (
-              <>
-                <Input
-                  label="First Name"
-                  placeholder="Enter first name"
-                  value={profileForm.first_name}
-                  onChange={(e) => setProfileForm((p) => ({ ...p, first_name: e.target.value }))}
-                  showRequired
-                />
-                <Input
-                  label="Last Name"
-                  placeholder="Enter last name (optional)"
-                  value={profileForm.last_name}
-                  onChange={(e) => setProfileForm((p) => ({ ...p, last_name: e.target.value }))}
-                />
-                <Input
-                  label="Email Address"
-                  type="email"
-                  placeholder="Enter email"
-                  value={profileForm.email}
-                  onChange={(e) => setProfileForm((p) => ({ ...p, email: e.target.value }))}
-                  showRequired
-                />
-              </>
-            ) : (
-              <>
-                <div className={styles.field}>
-                  <span className={styles.fieldLabel}>First Name</span>
-                  <span className={styles.fieldValue}>{activeUser.first_name ?? "—"}</span>
-                </div>
-                <div className={styles.field}>
-                  <span className={styles.fieldLabel}>Last Name</span>
-                  {/* S6606 (line 355): Replace || with ?? */}
-                  <span className={styles.fieldValue}>{activeUser.last_name ?? "—"}</span>
-                </div>
-                <div className={styles.field}>
-                  <span className={styles.fieldLabel}>Email Address</span>
-                  <span className={styles.fieldValue}>{activeUser.email}</span>
-                </div>
-                <div className={styles.field}>
-                  <span className={styles.fieldLabel}>Role</span>
-                  <span className={styles.fieldValue}>{roleLabel}</span>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+        <PersonalInformationCard
+          isEditing={isEditing}
+          activeUser={activeUser}
+          profileForm={profileForm}
+          setProfileForm={setProfileForm}
+          roleLabel={roleLabel}
+        />
 
         {/* Account Settings — visible to super admin editing another user */}
         {isViewingOther && isSuperAdmin && (
-          <div className={styles.card}>
-            <h2 className={styles.cardTitle}>Account Settings</h2>
-            <div className={styles.grid}>
-              {isEditing ? (
-                <>
-                  <Select
-                    label="Role"
-                    value={profileForm.role}
-                    onChange={(v) => setProfileForm((p) => ({ ...p, role: v }))}
-                    options={[
-                      { value: UserRole.ADMIN, label: "Admin" },
-                      { value: UserRole.SUPER_ADMIN, label: "Super Admin" },
-                    ]}
-                    disabled={activeUser.role === UserRole.SUPER_ADMIN}
-                  />
-                  <div className={styles.field}>
-                    <span className={styles.fieldLabel}>Status</span>
-                    <label className={styles.checkboxLabel}>
-                      <input
-                        type="checkbox"
-                        className={styles.checkboxNative}
-                        checked={profileForm.is_active}
-                        onChange={(e) =>
-                          setProfileForm((p) => ({ ...p, is_active: e.target.checked }))
-                        }
-                      />
-                      <span className={styles.checkboxText}>Active account</span>
-                    </label>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className={styles.field}>
-                    <span className={styles.fieldLabel}>Role</span>
-                    <span className={styles.fieldValue}>{roleLabel}</span>
-                  </div>
-                  <div className={styles.field}>
-                    <span className={styles.fieldLabel}>Status</span>
-                    <label className={styles.checkboxLabel}>
-                      <span
-                        className={`${styles.checkbox} ${isActive ? styles.checkboxChecked : ""}`}
-                        aria-hidden="true"
-                      >
-                        {isActive && <CheckIcon />}
-                      </span>
-                      <span className={styles.checkboxText}>
-                        {isActive ? "Active account" : "Inactive account"}
-                      </span>
-                    </label>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+          <AccountSettingsCard
+            isEditing={isEditing}
+            activeUser={activeUser}
+            profileForm={profileForm}
+            setProfileForm={setProfileForm}
+            roleLabel={roleLabel}
+            isActive={isActive}
+          />
         )}
 
         {/* Workspace Preferences */}
@@ -631,88 +828,17 @@ export default function UserProfilePage() {
       </div>
 
       {/* ── Password Modal ── */}
-      <Modal
+      <PasswordModal
         isOpen={showPasswordModal}
-        onClose={() => {
-          setShowPasswordModal(false);
-          setPasswordForm({ current_password: "", new_password: "", confirm_password: "" });
-          setShowPw({ current: false, new: false, confirm: false });
-        }}
-        title={isViewingOther ? "Reset Password" : "Change Password"}
-        size="sm"
-        showClose={false}
-        footer={
-          <>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setShowPasswordModal(false);
-                setPasswordForm({
-                  current_password: "",
-                  new_password: "",
-                  confirm_password: "",
-                });
-                setShowPw({ current: false, new: false, confirm: false });
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handlePasswordChange} isLoading={pwSaving}>
-              {isViewingOther ? "Reset" : "Save"}
-            </Button>
-          </>
-        }
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {!isViewingOther && (
-            <Input
-              label="Current Password"
-              type={showPw.current ? "text" : "password"}
-              placeholder="Enter current password"
-              value={passwordForm.current_password}
-              onChange={(e) => setPasswordForm((p) => ({ ...p, current_password: e.target.value }))}
-              showRequired
-              autoComplete="current-password"
-              rightElement={
-                <ToggleVisBtn
-                  show={showPw.current}
-                  onToggle={() => setShowPw((p) => ({ ...p, current: !p.current }))}
-                />
-              }
-            />
-          )}
-          <Input
-            label="New Password"
-            type={showPw.new ? "text" : "password"}
-            placeholder="Enter new password"
-            value={passwordForm.new_password}
-            onChange={(e) => setPasswordForm((p) => ({ ...p, new_password: e.target.value }))}
-            showRequired
-            autoComplete="new-password"
-            rightElement={
-              <ToggleVisBtn
-                show={showPw.new}
-                onToggle={() => setShowPw((p) => ({ ...p, new: !p.new }))}
-              />
-            }
-          />
-          <Input
-            label="Confirm New Password"
-            type={showPw.confirm ? "text" : "password"}
-            placeholder="Confirm new password"
-            value={passwordForm.confirm_password}
-            onChange={(e) => setPasswordForm((p) => ({ ...p, confirm_password: e.target.value }))}
-            showRequired
-            autoComplete="new-password"
-            rightElement={
-              <ToggleVisBtn
-                show={showPw.confirm}
-                onToggle={() => setShowPw((p) => ({ ...p, confirm: !p.confirm }))}
-              />
-            }
-          />
-        </div>
-      </Modal>
+        isViewingOther={isViewingOther}
+        passwordForm={passwordForm}
+        setPasswordForm={setPasswordForm}
+        showPw={showPw}
+        setShowPw={setShowPw}
+        pwSaving={pwSaving}
+        onClose={closePasswordModal}
+        onSubmit={handlePasswordChange}
+      />
     </div>
   );
 }

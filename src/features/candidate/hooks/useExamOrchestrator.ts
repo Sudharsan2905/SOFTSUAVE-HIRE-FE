@@ -77,6 +77,80 @@ function isInValidationRange(phase: ExamPhase): boolean {
   return phase >= ExamPhase.IDLE && phase <= ExamPhase.ACTIVE;
 }
 
+function isDevtoolsDetected(): boolean {
+  return (
+    window.outerWidth - window.innerWidth > 160 ||
+    window.outerHeight - window.innerHeight > 160
+  );
+}
+
+interface ReadinessSignals {
+  networkStatus: string;
+  isDevtoolsOpen: boolean;
+  isCameraReady: boolean;
+  isAudioReady: boolean;
+  isScreenShareReady: boolean;
+  isFullscreen: boolean;
+}
+
+/**
+ * The state transition a single validation phase resolves to.
+ * `nextPhase` is the phase to advance to (undefined = stay put),
+ * `error` is the phase error to set (undefined = leave error untouched).
+ */
+interface PhaseTransition {
+  nextPhase?: ExamPhase;
+  error?: string | null;
+}
+
+/**
+ * Pure resolver for the phase-advancement state machine. Given the current
+ * phase and readiness signals, returns the transition to apply. Extracted from
+ * the advancement effect to keep its cognitive complexity low.
+ */
+function resolvePhaseTransition(
+  phase: ExamPhase,
+  signals: ReadinessSignals,
+  nextPhaseAfter: (current: ExamPhase) => ExamPhase
+): PhaseTransition {
+  switch (phase) {
+    case ExamPhase.IDLE:
+      return { nextPhase: ExamPhase.VALIDATING_NETWORK };
+
+    case ExamPhase.VALIDATING_NETWORK:
+      return signals.networkStatus === "connected"
+        ? { nextPhase: nextPhaseAfter(ExamPhase.VALIDATING_NETWORK) }
+        : {};
+
+    case ExamPhase.VALIDATING_DEVTOOLS:
+      if (signals.isDevtoolsOpen) {
+        return { error: "Please close developer tools before the exam can begin." };
+      }
+      return { error: null, nextPhase: nextPhaseAfter(ExamPhase.VALIDATING_DEVTOOLS) };
+
+    case ExamPhase.VALIDATING_VIDEO:
+      return signals.isCameraReady
+        ? { nextPhase: nextPhaseAfter(ExamPhase.VALIDATING_VIDEO) }
+        : {};
+
+    case ExamPhase.VALIDATING_AUDIO:
+      return signals.isAudioReady
+        ? { nextPhase: nextPhaseAfter(ExamPhase.VALIDATING_AUDIO) }
+        : {};
+
+    case ExamPhase.VALIDATING_SCREEN_SHARE:
+      return signals.isScreenShareReady
+        ? { nextPhase: nextPhaseAfter(ExamPhase.VALIDATING_SCREEN_SHARE) }
+        : {};
+
+    case ExamPhase.VALIDATING_FULLSCREEN:
+      return signals.isFullscreen ? { nextPhase: ExamPhase.ACTIVE } : {};
+
+    default:
+      return {};
+  }
+}
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useExamOrchestrator({
@@ -101,16 +175,9 @@ export function useExamOrchestrator({
 
   // ── Devtools detection via resize event (event-driven, no polling) ──────────
   // Opening/closing devtools changes window.innerWidth/Height, firing "resize".
-  const [isDevtoolsOpen, setIsDevtoolsOpen] = useState(
-    () =>
-      window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 160
-  );
+  const [isDevtoolsOpen, setIsDevtoolsOpen] = useState(isDevtoolsDetected);
   useEffect(() => {
-    const check = () => {
-      setIsDevtoolsOpen(
-        window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 160
-      );
-    };
+    const check = () => setIsDevtoolsOpen(isDevtoolsDetected());
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
@@ -140,51 +207,21 @@ export function useExamOrchestrator({
   useEffect(() => {
     if (!enabled || !isInValidationRange(phase) || phase === ExamPhase.ACTIVE) return;
 
-    switch (phase) {
-      case ExamPhase.IDLE:
-        setPhase(ExamPhase.VALIDATING_NETWORK);
-        break;
+    const { nextPhase, error } = resolvePhaseTransition(
+      phase,
+      {
+        networkStatus,
+        isDevtoolsOpen,
+        isCameraReady,
+        isAudioReady,
+        isScreenShareReady,
+        isFullscreen,
+      },
+      nextPhaseAfter
+    );
 
-      case ExamPhase.VALIDATING_NETWORK:
-        if (networkStatus === "connected") {
-          setPhase(nextPhaseAfter(ExamPhase.VALIDATING_NETWORK));
-        }
-        break;
-
-      case ExamPhase.VALIDATING_DEVTOOLS:
-        if (isDevtoolsOpen) {
-          setPhaseError("Please close developer tools before the exam can begin.");
-        } else {
-          setPhaseError(null);
-          setPhase(nextPhaseAfter(ExamPhase.VALIDATING_DEVTOOLS));
-        }
-        break;
-
-      case ExamPhase.VALIDATING_VIDEO:
-        if (isCameraReady) {
-          setPhase(nextPhaseAfter(ExamPhase.VALIDATING_VIDEO));
-        }
-        break;
-
-      case ExamPhase.VALIDATING_AUDIO:
-        if (isAudioReady) {
-          setPhase(nextPhaseAfter(ExamPhase.VALIDATING_AUDIO));
-        }
-        break;
-
-      case ExamPhase.VALIDATING_SCREEN_SHARE:
-        if (isScreenShareReady) {
-          // setPhaseError(null); --- IGNORE ---
-          setPhase(nextPhaseAfter(ExamPhase.VALIDATING_SCREEN_SHARE));
-        }
-        break;
-
-      case ExamPhase.VALIDATING_FULLSCREEN:
-        if (isFullscreen) {
-          setPhase(ExamPhase.ACTIVE);
-        }
-        break;
-    }
+    if (error !== undefined) setPhaseError(error);
+    if (nextPhase !== undefined) setPhase(nextPhase);
   }, [
     enabled,
     phase,

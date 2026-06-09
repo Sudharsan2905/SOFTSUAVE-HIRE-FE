@@ -63,7 +63,8 @@ export default function RegisterPage() {
       if (shareLink) navigate(`${ROUTES.CANDIDATE.LOGIN}?share=${shareLink}`);
       else navigate(ROUTES.CANDIDATE.DASHBOARD);
     } catch (e: unknown) {
-      setError("root", { message: (e as { message?: string })?.message ?? "Registration failed" });
+      // unwrap() throws the rejectWithValue payload, which is already a plain string
+      setError("root", { message: typeof e === "string" ? e : "Registration failed" });
     }
   };
 
