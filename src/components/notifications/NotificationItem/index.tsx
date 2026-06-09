@@ -1,6 +1,6 @@
 import React from "react";
 import { formatDistanceToNow } from "date-fns";
-import { type Notification } from "@/store/slices/notificationSlice";
+import type { Notification } from "@/features/notifications/types";
 import styles from "./NotificationItem.module.css";
 
 interface Props {

@@ -7,6 +7,7 @@ import styles from "./CandidateLoginPage.module.css";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { candidateLogin } from "@/store/slices/authSlice";
 import { api } from "@/utils/api";
+import { API_ENDPOINTS } from "@/constants/api";
 import { IconUser, IconLock, IconEye, IconEyeOff } from "@/assets/icons";
 import { Spinner } from "@/components/ui/Spinner";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -70,7 +71,7 @@ export default function AssessmentAccessPage() {
       return;
     }
     api
-      .get(`/api/assessments/share/validate?link=${token}`)
+      .get(`${API_ENDPOINTS.ASSESSMENTS.SHARE_VALIDATE}?link=${token}`)
       .then((res) => {
         const v = res.data.data;
         if (v.can_allow) {

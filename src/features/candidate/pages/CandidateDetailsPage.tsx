@@ -9,6 +9,8 @@ import { Select } from "@/components/ui/Select";
 import { Spinner } from "@/components/ui/Spinner";
 import type { CandidateSubmissionDetail } from "@/types";
 import { api } from "@/utils/api";
+import { API_ENDPOINTS } from "@/constants/api";
+import { ROUTES } from "@/constants/routes";
 
 export default function CandidateDetailsPage() {
   const { workspaceId, assessmentId, candidateId } = useParams<{
@@ -30,7 +32,7 @@ export default function CandidateDetailsPage() {
       setError(null);
       try {
         const resp = await api.get(
-          `/api/workspaces/${workspaceId}/assessments/${assessmentId}/candidates/${candidateId}/submission`,
+          API_ENDPOINTS.ASSESSMENTS.CANDIDATE_SUBMISSION(workspaceId, assessmentId, candidateId),
           { params: { version } }
         );
         setData(resp.data.data);
@@ -97,7 +99,7 @@ export default function CandidateDetailsPage() {
       />
 
       <button
-        onClick={() => navigate(`/workspaces/${workspaceId}/assessments/${assessmentId}`)}
+        onClick={() => navigate(ROUTES.ADMIN.assessmentDetail(workspaceId!, assessmentId!))}
         style={{
           display: "flex",
           alignItems: "center",

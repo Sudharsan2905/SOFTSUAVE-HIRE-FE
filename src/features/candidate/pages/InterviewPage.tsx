@@ -164,7 +164,9 @@ export default function InterviewPage() {
   const captureFrameRef = useRef<(() => Promise<Blob | null>) | null>(null);
   const screenshotIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const submittingRef = useRef(false);
-  const finishRoundRef = useRef<(autoSubmit?: boolean) => Promise<void>>(async () => { return; });
+  const finishRoundRef = useRef<(autoSubmit?: boolean) => Promise<void>>(async () => {
+    return;
+  });
   const currentIdxRef = useRef(0);
   const roundDataRef = useRef<InterviewRoundData | null>(null);
   const violationCooldownRef = useRef<Partial<Record<string, number>>>({});

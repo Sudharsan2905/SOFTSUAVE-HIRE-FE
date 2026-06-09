@@ -7,6 +7,7 @@ import { LinkStatusScreen, LinkStatus } from "@/features/candidate/components/Li
 import { useAppSelector } from "@/store";
 import { UserRole } from "@/types";
 import { api } from "@/utils/api";
+import { API_ENDPOINTS } from "@/constants/api";
 import { isAssessmentDone } from "@/utils/assessmentSession";
 import { ROUTES } from "@/constants/routes";
 
@@ -53,7 +54,7 @@ export default function AssessmentEntry() {
       return;
     }
     api
-      .get(`/api/assessments/share/validate?link=${shareLink}`)
+      .get(`${API_ENDPOINTS.ASSESSMENTS.SHARE_VALIDATE}?link=${shareLink}`)
       .then((res) => {
         const v = res.data.data;
         if (v.can_allow) {

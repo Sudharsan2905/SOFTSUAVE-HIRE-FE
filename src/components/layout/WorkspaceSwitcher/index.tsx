@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { setActiveWorkspace, setWorkspaces, clearWorkspace } from "@/store/slices/workspaceSlice";
 import { api } from "@/utils/api";
 import { API_ENDPOINTS } from "@/constants/api";
+import { ROUTES } from "@/constants/routes";
 import { Workspace, User, UserRole } from "@/types";
 import {
   IconChevronDown,
@@ -210,7 +211,7 @@ export function WorkspaceSwitcher({ collapsed }: Readonly<{ collapsed?: boolean 
     dispatch(setActiveWorkspace(ws));
     setIsOpen(false);
     if (location.pathname.startsWith("/workspaces")) {
-      navigate(`/workspaces/${ws.id}/assessments`);
+      navigate(ROUTES.ADMIN.assessments(ws.id));
     }
   };
 

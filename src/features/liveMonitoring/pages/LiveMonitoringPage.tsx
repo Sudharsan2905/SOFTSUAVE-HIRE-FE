@@ -14,19 +14,9 @@ import { getInitials, getAvatarColor, formatDateTime } from "@/utils/helpers";
 import { useAppSelector } from "@/store/hooks";
 import { useLiveKitViewer } from "@/features/candidate/hooks/useLiveKit";
 import { CandidateStreamPanel } from "../components/CandidateStreamPanel";
+import type { LiveSession } from "../types";
 
 import styles from "./LiveMonitoringPage.module.css";
-
-interface LiveSession {
-  submission_id: string;
-  candidate_name: string;
-  assessment_name: string;
-  workspace_id: string;
-  status: string;
-  current_round: number;
-  started_at: string;
-  malpractice_count: number;
-}
 
 // ─── Admin WebSocket hook (global cross-workspace events) ────────────────────
 

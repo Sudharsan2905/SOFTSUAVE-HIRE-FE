@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import api from "../../../utils/api";
+import { API_ENDPOINTS } from "@/constants/api";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -138,7 +139,7 @@ export function useMalpracticeRecording({
       fd.append(isVideo ? "video_chunk" : "audio_clip", blob, isVideo ? "clip.webm" : "audio.webm");
 
       await api.post(
-        `/api/candidate/submission/${submissionId}/malpractice/${eventIndex}/media`,
+        API_ENDPOINTS.CANDIDATE.SUBMISSION_MALPRACTICE_MEDIA(submissionId, eventIndex),
         fd,
         { headers: { "Content-Type": "multipart/form-data" } }
       );

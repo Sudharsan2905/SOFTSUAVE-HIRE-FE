@@ -7,6 +7,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
 import { clsx, formatDateTime } from "@/utils/helpers";
 import { api } from "@/utils/api";
+import { API_ENDPOINTS } from "@/constants/api";
 import toast from "react-hot-toast";
 import {
   IconOverview,
@@ -107,7 +108,7 @@ function StatusSummary({
     setResuming(true);
     try {
       await api.post(
-        `/api/workspaces/${workspaceId}/assessments/${assessmentId}/submissions/${data.submission_id}/resume`
+        API_ENDPOINTS.ASSESSMENTS.SUBMISSION_RESUME(workspaceId, assessmentId, data.submission_id)
       );
       toast.success("Interview resumed — candidate can continue.");
       onRefresh();
@@ -123,7 +124,11 @@ function StatusSummary({
     setTerminating(true);
     try {
       await api.post(
-        `/api/workspaces/${workspaceId}/assessments/${assessmentId}/submissions/${data.submission_id}/terminate`,
+        API_ENDPOINTS.ASSESSMENTS.SUBMISSION_TERMINATE(
+          workspaceId,
+          assessmentId,
+          data.submission_id
+        ),
         { reason: "Terminated by admin" }
       );
       toast.success("Submission terminated.");
@@ -153,7 +158,11 @@ function StatusSummary({
       const reason =
         reaccessCategory === "other" ? reaccessReason.trim() : (selectedOption?.description ?? "");
       await api.post(
-        `/api/workspaces/${workspaceId}/assessments/${assessmentId}/submissions/${data.submission_id}/reaccess`,
+        API_ENDPOINTS.ASSESSMENTS.SUBMISSION_REACCESS(
+          workspaceId,
+          assessmentId,
+          data.submission_id
+        ),
         { reason, reason_category: reaccessCategory }
       );
       toast.success("Re-access granted.");
@@ -220,7 +229,7 @@ function StatusSummary({
       </article>
 
       <div className={styles.statusActions}>
-        {(status === "completed" || status === "malpractice") && (
+        {(status === "completed" || status === "malpractice" || status === "terminated") && (
           <Button
             variant="secondary"
             leftIcon={<IconRefresh size={16} />}

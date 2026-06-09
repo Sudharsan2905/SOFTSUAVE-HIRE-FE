@@ -13,6 +13,7 @@ import {
 } from "@/assets/icons";
 import { Assessment } from "@/types";
 import { formatDate } from "@/utils/helpers";
+import { ROUTES } from "@/constants/routes";
 
 interface DotsIcon {
   size?: number;
@@ -80,7 +81,7 @@ export function AssessmentCard({
   return (
     <div className={cardClass}>
       <Link
-        to={`/workspaces/${workspaceId}/assessments/${a.id}`}
+        to={ROUTES.ADMIN.assessmentDetail(workspaceId, a.id)}
         className={styles.overlay}
         aria-label={`View ${a.name} assessment`}
       />
@@ -174,7 +175,7 @@ export function AssessmentCard({
       {/* Footer */}
       <div className={styles.footer}>
         <span className={styles.date}>{formatDate(a.created_at)}</span>
-        <Link to={`/workspaces/${workspaceId}/assessments/${a.id}`} className={styles.viewBtn}>
+        <Link to={ROUTES.ADMIN.assessmentDetail(workspaceId, a.id)} className={styles.viewBtn}>
           View Details <IconChevronRight size={12} />
         </Link>
       </div>

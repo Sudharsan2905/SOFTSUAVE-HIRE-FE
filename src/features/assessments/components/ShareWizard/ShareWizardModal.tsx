@@ -28,6 +28,7 @@ import {
   IconMSTeams,
 } from "@/assets/icons";
 import { api } from "@/utils/api";
+import { API_ENDPOINTS } from "@/constants/api";
 import { ShareLink, MonitoringOverrides } from "@/types";
 import toast from "react-hot-toast";
 import { clsx } from "@/utils/helpers";
@@ -463,7 +464,7 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
     setLoadingLinks(true);
     try {
       const { data } = await api.get(
-        `/api/workspaces/${workspaceId}/assessments/${assessmentId}/shares?share_type=custom`
+        `${API_ENDPOINTS.ASSESSMENTS.SHARES(workspaceId, assessmentId)}?share_type=custom`
       );
       const links: ShareLink[] = data.data?.shares ?? data.data ?? [];
       setExistingLinks(links.filter((l) => l.is_active));
@@ -518,7 +519,7 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
       if (endTime) payload.end_time = new Date(endTime).toISOString();
 
       const { data } = await api.post(
-        `/api/workspaces/${workspaceId}/assessments/${assessmentId}/shares`,
+        API_ENDPOINTS.ASSESSMENTS.SHARES(workspaceId, assessmentId),
         payload
       );
       const newLink: ShareLink = data.data;
@@ -538,9 +539,7 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
   const handleRevoke = async (shareId: string) => {
     setRevoking(shareId);
     try {
-      await api.delete(
-        `/api/workspaces/${workspaceId}/assessments/${assessmentId}/shares/${shareId}`
-      );
+      await api.delete(API_ENDPOINTS.ASSESSMENTS.SHARE_BY_ID(workspaceId, assessmentId, shareId));
       setExistingLinks((prev) => prev.filter((l) => l.id !== shareId));
       toast.success("Link revoked");
     } catch (e: unknown) {

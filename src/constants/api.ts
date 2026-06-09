@@ -34,10 +34,23 @@ export const API_ENDPOINTS = {
     SHARE_LINK_BY_ID: (workspaceId: string, assessmentId: string, linkId: string) =>
       `${V}/workspaces/${workspaceId}/assessments/${assessmentId}/share-links/${linkId}`,
     BY_SHARE_LINK: (shareLink: string) => `${V}/assessments/entry/${shareLink}`,
+    SHARE_VALIDATE: `${V}/assessments/share/validate`,
+    SHARES: (workspaceId: string, assessmentId: string) =>
+      `${V}/workspaces/${workspaceId}/assessments/${assessmentId}/shares`,
+    SHARE_BY_ID: (workspaceId: string, assessmentId: string, shareId: string) =>
+      `${V}/workspaces/${workspaceId}/assessments/${assessmentId}/shares/${shareId}`,
     SUBMISSIONS: (workspaceId: string, id: string) =>
       `${V}/workspaces/${workspaceId}/assessments/${id}/submissions`,
     SUBMISSIONS_EXPORT: (workspaceId: string, id: string) =>
       `${V}/workspaces/${workspaceId}/assessments/${id}/submissions/export`,
+    SUBMISSION_RESUME: (workspaceId: string, assessmentId: string, submissionId: string) =>
+      `${V}/workspaces/${workspaceId}/assessments/${assessmentId}/submissions/${submissionId}/resume`,
+    SUBMISSION_TERMINATE: (workspaceId: string, assessmentId: string, submissionId: string) =>
+      `${V}/workspaces/${workspaceId}/assessments/${assessmentId}/submissions/${submissionId}/terminate`,
+    SUBMISSION_REACCESS: (workspaceId: string, assessmentId: string, submissionId: string) =>
+      `${V}/workspaces/${workspaceId}/assessments/${assessmentId}/submissions/${submissionId}/reaccess`,
+    CANDIDATE_SUBMISSION: (workspaceId: string, assessmentId: string, candidateId: string) =>
+      `${V}/workspaces/${workspaceId}/assessments/${assessmentId}/candidates/${candidateId}/submission`,
     SHARE_EXPIRABLE: (workspaceId: string) =>
       `${V}/workspaces/${workspaceId}/assessments/share/expirable`,
   },
@@ -90,6 +103,8 @@ export const API_ENDPOINTS = {
     SUBMISSION_FINISH_ROUND: (id: string) => `${V}/candidate/submission/${id}/finish-round`,
     SUBMISSION_SCREENSHOT: (id: string) => `${V}/candidate/submission/${id}/screenshot`,
     SUBMISSION_MALPRACTICE: (id: string) => `${V}/candidate/submission/${id}/malpractice`,
+    SUBMISSION_MALPRACTICE_MEDIA: (id: string, eventIndex: number) =>
+      `${V}/candidate/submission/${id}/malpractice/${eventIndex}/media`,
     SUBMISSION_LIVEKIT_TOKEN: (id: string) => `${V}/candidate/submission/${id}/livekit-token`,
   },
 

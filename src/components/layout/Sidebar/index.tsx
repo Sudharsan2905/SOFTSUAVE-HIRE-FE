@@ -93,7 +93,7 @@ export function Sidebar() {
             {!collapsed && <p className={styles.navSectionLabel}>Workspace</p>}
             <Tooltip content="Assessments" placement="right" disabled={!collapsed}>
               <NavLink
-                to={`/workspaces/${activeWorkspace.id}/assessments`}
+                to={ROUTES.ADMIN.assessments(activeWorkspace.id)}
                 className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ""}`}
               >
                 <IconAssessment size={22} />
