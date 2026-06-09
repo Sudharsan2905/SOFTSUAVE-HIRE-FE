@@ -25,6 +25,9 @@ import { useAppSelector } from "@/store";
 import { User, SortOrder, UserRole } from "@/types";
 import { getAvatarColor, getInitials, getFullName } from "@/utils/helpers";
 import toast from "react-hot-toast";
+import { API_ENDPOINTS } from "@/constants/api";
+import { ROUTES } from "@/constants/routes";
+import { USERS_SUCCESS, USERS_ERRORS } from "@/features/users/constants";
 
 export default function UsersPage() {
   const navigate = useNavigate();
@@ -36,7 +39,13 @@ export default function UsersPage() {
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [showCreate, setShowCreate] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    first_name: string;
+    last_name: string;
+    email: string;
+    password: string;
+    role: UserRole;
+  }>({
     first_name: "",
     last_name: "",
     email: "",
@@ -51,7 +60,7 @@ export default function UsersPage() {
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { data } = await api.get(`/api/users`);
+      const { data } = await api.get(API_ENDPOINTS.USERS.ROOT);
       const list: User[] = Array.isArray(data.data) ? data.data : [];
       let filteredList = debouncedSearch
         ? list.filter(
@@ -69,7 +78,7 @@ export default function UsersPage() {
       });
       setUsers(sorted);
     } catch {
-      toast.error("Failed to load users");
+      toast.error(USERS_ERRORS.LOAD_FAILED);
     } finally {
       setIsLoading(false);
     }
@@ -97,7 +106,7 @@ export default function UsersPage() {
       return;
     setSaving(true);
     try {
-      await api.post("/api/users", {
+      await api.post(API_ENDPOINTS.USERS.ROOT, {
         first_name: form.first_name,
         last_name: form.last_name || undefined,
         email: form.email,
@@ -105,13 +114,13 @@ export default function UsersPage() {
         role: form.role,
         workspace_ids: createWsIds,
       });
-      toast.success("Admin user created");
+      toast.success(USERS_SUCCESS.CREATED);
       setShowCreate(false);
       fetchUsers();
     } catch (e: unknown) {
       toast.error(
         (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-          "Failed to create user"
+          USERS_ERRORS.CREATE_FAILED
       );
     } finally {
       setSaving(false);
@@ -173,7 +182,7 @@ export default function UsersPage() {
                 <Tooltip content="Edit user profile" placement="top">
                   <button
                     className={styles.editBtn}
-                    onClick={() => navigate(`/profile/${user.id}`)}
+                    onClick={() => navigate(ROUTES.ADMIN.profileById(user.id))}
                     aria-label={`Edit profile of ${getFullName(user)}`}
                   >
                     <IconUserSetting size={16} />

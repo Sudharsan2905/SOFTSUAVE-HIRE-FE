@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import readXlsxFile from "read-excel-file/browser";
 import styles from "./QuestionsPage.module.css";
@@ -36,6 +36,10 @@ import {
 } from "@/types";
 import { COMPLEXITY_OPTIONS, QUESTION_TYPE_OPTIONS } from "@/constants/app";
 import toast from "react-hot-toast";
+import { API_ENDPOINTS } from "@/constants/api";
+import { ROUTES } from "@/constants/routes";
+import { QUESTION_BANK_SUCCESS, QUESTION_BANK_ERRORS } from "@/features/questionBank/constants";
+import type { QuestionForm } from "@/features/questionBank/types";
 
 const SORT_OPTIONS = [
   { value: "created_at", label: "Created Date" },
@@ -43,22 +47,16 @@ const SORT_OPTIONS = [
   { value: "complexity", label: "Complexity" },
 ];
 
-type QuestionForm = {
-  _key: string;
-  question_text: string;
-  question_type: QuestionType;
-  complexity: Complexity;
-  options: { id: string; text: string; is_correct: boolean }[];
-  correct_answer: string;
-};
+let _uidCounter = 0;
+const uid = () => `id_${Date.now()}_${++_uidCounter}`;
 
 const newBlankForm = (): QuestionForm => ({
-  _key: crypto.randomUUID(),
+  _key: uid(),
   question_text: "",
   question_type: "mcq_single",
   complexity: "medium",
   options: Array.from({ length: 4 }, () => ({
-    id: crypto.randomUUID(),
+    id: uid(),
     text: "",
     is_correct: false,
   })),
@@ -144,7 +142,7 @@ export default function QuestionsPage() {
 
   const fetchCategory = useCallback(async () => {
     try {
-      const { data } = await api.get(`/api/questions/categories`);
+      const { data } = await api.get(API_ENDPOINTS.CATEGORIES.ROOT);
       const cats = data.data?.categories ?? [];
       const cat = cats.find((c: QuestionCategory) => c.id === categoryId);
       if (cat) setCategory(cat);
@@ -164,11 +162,11 @@ export default function QuestionsPage() {
         ...(complexity && { complexity }),
         ...(questionType && { question_type: questionType }),
       });
-      const { data } = await api.get(`/api/questions/categories/${categoryId}/questions?${params}`);
+      const { data } = await api.get(`${API_ENDPOINTS.CATEGORIES.QUESTIONS(categoryId)}?${params}`);
       setQuestions(data.data?.questions ?? []);
       setMeta(data.data?.pagination ?? null);
     } catch {
-      toast.error("Failed to load questions");
+      toast.error(QUESTION_BANK_ERRORS.QUESTIONS_LOAD_FAILED);
     } finally {
       setIsLoading(false);
     }
@@ -231,8 +229,8 @@ export default function QuestionsPage() {
           options: f.question_type !== "essay" ? f.options.filter((o) => o.text) : [],
           correct_answer: f.question_type === "essay" ? f.correct_answer : undefined,
         };
-        await api.put(`/api/questions/${selected.id}`, payload);
-        toast.success("Question updated");
+        await api.put(API_ENDPOINTS.QUESTIONS.BY_ID(selected.id), payload);
+        toast.success(QUESTION_BANK_SUCCESS.QUESTION_UPDATED);
       } else {
         const questions = forms.map((f) => ({
           question_text: f.question_text,
@@ -241,17 +239,17 @@ export default function QuestionsPage() {
           options: f.question_type !== "essay" ? f.options.filter((o) => o.text) : [],
           correct_answer: f.question_type === "essay" ? f.correct_answer : undefined,
         }));
-        const { data } = await api.post(`/api/questions/categories/${categoryId}/bulk`, {
+        const { data } = await api.post(API_ENDPOINTS.CATEGORIES.BULK_CREATE(categoryId!), {
           questions,
         });
-        toast.success(`${data.data?.created ?? 0} question(s) created`);
+        toast.success(QUESTION_BANK_SUCCESS.BULK_CREATED(data.data?.created ?? 0));
       }
       setShowCreate(false);
       resetForms();
       setSelected(null);
       fetchQuestions();
     } catch {
-      toast.error("Failed to save question");
+      toast.error(QUESTION_BANK_ERRORS.QUESTION_CREATE_FAILED);
     } finally {
       setSaving(false);
     }
@@ -261,12 +259,12 @@ export default function QuestionsPage() {
     if (!selected) return;
     setSaving(true);
     try {
-      await api.delete(`/api/questions/${selected.id}`);
-      toast.success("Question deleted");
+      await api.delete(API_ENDPOINTS.QUESTIONS.BY_ID(selected.id));
+      toast.success(QUESTION_BANK_SUCCESS.QUESTION_DELETED);
       setShowDelete(false);
       fetchQuestions();
     } catch {
-      toast.error("Failed to delete");
+      toast.error(QUESTION_BANK_ERRORS.QUESTION_DELETE_FAILED);
     } finally {
       setSaving(false);
     }
@@ -275,15 +273,12 @@ export default function QuestionsPage() {
   const handleAIGenerate = async () => {
     setSaving(true);
     try {
-      const { data } = await api.post(
-        `/api/questions/categories/${categoryId}/ai-generate`,
-        aiForm
-      );
-      toast.success(`${data.data?.created ?? 0} questions generated`);
+      const { data } = await api.post(API_ENDPOINTS.CATEGORIES.AI_GENERATE(categoryId!), aiForm);
+      toast.success(QUESTION_BANK_SUCCESS.AI_GENERATED(data.data?.created ?? 0));
       setShowAI(false);
       fetchQuestions();
     } catch {
-      toast.error("AI generation failed");
+      toast.error(QUESTION_BANK_ERRORS.AI_GENERATE_FAILED);
     } finally {
       setSaving(false);
     }
@@ -299,7 +294,7 @@ export default function QuestionsPage() {
       const auto = autoMapColumns(headers);
       setColumnMap(auto);
     } catch {
-      toast.error("Failed to read Excel headers");
+      toast.error(QUESTION_BANK_ERRORS.EXCEL_HEADERS_FAILED);
     }
   };
 
@@ -311,25 +306,25 @@ export default function QuestionsPage() {
     formData.append("column_map", JSON.stringify(columnMap));
     try {
       const { data } = await api.post(
-        `/api/questions/categories/${categoryId}/excel-import`,
+        API_ENDPOINTS.CATEGORIES.EXCEL_IMPORT(categoryId!),
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
-      toast.success(`${data.data?.created ?? 0} questions imported`);
+      toast.success(QUESTION_BANK_SUCCESS.BULK_IMPORTED(data.data?.created ?? 0));
       setShowColumnMap(false);
       setExcelFile(null);
       setExcelHeaders([]);
       setColumnMap({ question: "", options: "", answer: "", complexity: "" });
       fetchQuestions();
     } catch {
-      toast.error("Import failed");
+      toast.error(QUESTION_BANK_ERRORS.BULK_IMPORT_FAILED);
     } finally {
       setSaving(false);
     }
   };
 
   const openEdit = (q: Question) => {
-    const key = crypto.randomUUID();
+    const key = uid();
     setSelected(q);
     setForms([
       {
@@ -341,7 +336,7 @@ export default function QuestionsPage() {
           q.options.length > 0
             ? q.options
             : Array.from({ length: 4 }, () => ({
-                id: crypto.randomUUID(),
+                id: uid(),
                 text: "",
                 is_correct: false,
               })),
@@ -516,7 +511,7 @@ export default function QuestionsPage() {
       />
 
       <button
-        onClick={() => navigate("/question-bank")}
+        onClick={() => navigate(ROUTES.ADMIN.QUESTION_BANK)}
         style={{
           display: "flex",
           alignItems: "center",

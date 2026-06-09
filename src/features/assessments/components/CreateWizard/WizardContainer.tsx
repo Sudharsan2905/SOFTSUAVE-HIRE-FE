@@ -6,23 +6,17 @@ import { Select } from "@/components/ui/Select";
 import { Step1BasicInfo } from "./Step1BasicInfo";
 import { Step2Questions } from "./Step2Questions";
 import { api } from "@/utils/api";
-import { AssessmentAccessibility, MonitoringConfig } from "@/types";
+import { API_ENDPOINTS } from "@/constants/api";
+import {
+  ASSESSMENT_SUCCESS,
+  ASSESSMENT_ERRORS,
+  DEFAULT_MONITORING_CONFIG,
+  DEFAULT_ROUND,
+} from "@/features/assessments/constants";
 import toast from "react-hot-toast";
 
-export interface RoundSetup {
-  round_number: number;
-  question_count: number;
-  max_duration_minutes: number;
-  question_ids: string[];
-}
-
-export interface AssessmentDraft {
-  name: string;
-  description: string;
-  rounds: RoundSetup[];
-  accessibility: AssessmentAccessibility;
-  monitoring_config: MonitoringConfig;
-}
+export type { RoundSetup, AssessmentDraft } from "@/features/assessments/types";
+import type { AssessmentDraft } from "@/features/assessments/types";
 
 interface Props {
   workspaceId: string;
@@ -33,15 +27,6 @@ interface Props {
   assessmentId?: string;
   availableWorkspaces?: { id: string; name: string }[];
 }
-
-const defaultMonitoring: MonitoringConfig = {
-  tab_monitoring: true,
-  audio_monitoring: true,
-  video_monitoring: true,
-  screenshot_mode: "time_interval",
-  screenshot_interval_seconds: 5,
-  screenshot_enabled: true,
-};
 
 export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
   workspaceId,
@@ -60,11 +45,9 @@ export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
   const [draft, setDraft] = useState<AssessmentDraft>({
     name: initialData?.name ?? "",
     description: initialData?.description ?? "",
-    rounds: initialData?.rounds || [
-      { round_number: 1, question_count: 10, max_duration_minutes: 30, question_ids: [] },
-    ],
+    rounds: initialData?.rounds || [{ ...DEFAULT_ROUND }],
     accessibility: initialData?.accessibility ?? "normal",
-    monitoring_config: initialData?.monitoring_config || defaultMonitoring,
+    monitoring_config: initialData?.monitoring_config || { ...DEFAULT_MONITORING_CONFIG },
   });
 
   const updateDraft = (updates: Partial<AssessmentDraft>) => {
@@ -101,17 +84,17 @@ export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
     setSaving(true);
     try {
       if (editMode && assessmentId) {
-        await api.put(`/api/workspaces/${selectedWorkspaceId}/assessments/${assessmentId}`, draft);
-        toast.success("Assessment updated successfully");
+        await api.put(API_ENDPOINTS.ASSESSMENTS.BY_ID(selectedWorkspaceId, assessmentId), draft);
+        toast.success(ASSESSMENT_SUCCESS.UPDATED);
       } else {
-        await api.post(`/api/workspaces/${selectedWorkspaceId}/assessments`, draft);
-        toast.success("Assessment created successfully");
+        await api.post(API_ENDPOINTS.ASSESSMENTS.ROOT(selectedWorkspaceId), draft);
+        toast.success(ASSESSMENT_SUCCESS.CREATED);
       }
       onSuccess();
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
       toast.error(
-        msg ?? (editMode ? "Failed to update assessment" : "Failed to create assessment")
+        msg ?? (editMode ? ASSESSMENT_ERRORS.UPDATE_FAILED : ASSESSMENT_ERRORS.CREATE_FAILED)
       );
     } finally {
       setSaving(false);

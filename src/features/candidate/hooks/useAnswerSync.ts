@@ -1,6 +1,7 @@
 import { useCallback, useRef } from "react";
 
 import api from "@/utils/api";
+import { API_ENDPOINTS } from "@/constants/api";
 
 type Answer = string | string[];
 type AnswerMap = Record<string, Answer>;
@@ -33,7 +34,7 @@ export function useAnswerSync({
   const syncToServer = useCallback(
     async (questionId: string, answer: Answer) => {
       try {
-        await api.post(`/api/candidate/submission/${submissionId}/answer`, {
+        await api.post(API_ENDPOINTS.CANDIDATE.SUBMISSION_ANSWER(submissionId), {
           question_id: questionId,
           answer,
         });

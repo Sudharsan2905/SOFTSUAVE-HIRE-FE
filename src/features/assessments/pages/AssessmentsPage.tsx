@@ -21,10 +21,10 @@ import { usePagination } from "@/hooks/usePagination";
 import { Assessment, PaginationMeta, ViewMode, SortOrder, UserRole } from "@/types";
 import { generateShareUrl, copyToClipboard } from "@/utils/helpers";
 import toast from "react-hot-toast";
-import {
-  CreateAssessmentWizard,
-  AssessmentDraft,
-} from "../components/CreateWizard/WizardContainer";
+import { API_ENDPOINTS } from "@/constants/api";
+import { ASSESSMENT_SUCCESS, ASSESSMENT_ERRORS } from "@/features/assessments/constants";
+import type { AssessmentDraft } from "@/features/assessments/types";
+import { CreateAssessmentWizard } from "../components/CreateWizard/WizardContainer";
 import { AssessmentCard } from "../components/AssessmentCard";
 import { useAppSelector } from "@/store";
 
@@ -74,11 +74,11 @@ export default function AssessmentsPage() {
         sort_order: sortOrder,
         ...(debouncedSearch && { search: debouncedSearch }),
       });
-      const { data } = await api.get(`/api/workspaces/${workspaceId}/assessments?${params}`);
+      const { data } = await api.get(`${API_ENDPOINTS.ASSESSMENTS.ROOT(workspaceId)}?${params}`);
       setAssessments(data.data?.assessments || []);
       setMeta(data.data?.pagination || null);
     } catch {
-      toast.error("Failed to load assessments");
+      toast.error(ASSESSMENT_ERRORS.LOAD_FAILED);
     } finally {
       setIsLoading(false);
     }
@@ -130,12 +130,12 @@ export default function AssessmentsPage() {
     if (!selected) return;
     setSaving(true);
     try {
-      await api.delete(`/api/workspaces/${workspaceId}/assessments/${selected.id}`);
-      toast.success("Assessment deleted");
+      await api.delete(API_ENDPOINTS.ASSESSMENTS.BY_ID(workspaceId!, selected.id));
+      toast.success(ASSESSMENT_SUCCESS.DELETED);
       setShowDelete(false);
       fetchAssessments();
     } catch {
-      toast.error("Failed to delete");
+      toast.error(ASSESSMENT_ERRORS.DELETE_FAILED);
     } finally {
       setSaving(false);
     }
@@ -408,7 +408,7 @@ export default function AssessmentsPage() {
                 setGeneratingLink(true);
                 try {
                   const { data } = await api.post(
-                    `/api/workspaces/${workspaceId}/assessments/share/expirable`,
+                    API_ENDPOINTS.ASSESSMENTS.SHARE_EXPIRABLE(workspaceId),
                     {
                       assessment_id: selected.id,
                       start_time: start.toISOString(),
@@ -418,7 +418,7 @@ export default function AssessmentsPage() {
                   setShareUrl(generateShareUrl(data.data.share_link));
                   setShareStep("ready");
                 } catch {
-                  toast.error("Unable to generate share link. Please retry.");
+                  toast.error(ASSESSMENT_ERRORS.LINK_CREATE_FAILED);
                 } finally {
                   setGeneratingLink(false);
                 }
@@ -435,7 +435,9 @@ export default function AssessmentsPage() {
               <button
                 className={styles.shareCard}
                 onClick={() => {
-                  copyToClipboard(shareUrl).then(() => toast.success("Link copied!"));
+                  copyToClipboard(shareUrl).then(() =>
+                    toast.success(ASSESSMENT_SUCCESS.LINK_COPIED)
+                  );
                 }}
               >
                 <IconCopy size={24} color="var(--primary-600)" />

@@ -10,6 +10,7 @@ import {
   Track,
 } from "livekit-client";
 import api from "@/utils/api";
+import { API_ENDPOINTS } from "@/constants/api";
 
 // ─── Candidate publisher ──────────────────────────────────────────────────────
 
@@ -53,7 +54,9 @@ export function useLiveKitPublisher({
     if (!enabled || !submissionId || isPublishing) return;
     console.warn(`[LiveKit] Connecting: submission=${submissionId}`);
     try {
-      const { data } = await api.post(`/api/candidate/submission/${submissionId}/livekit-token`);
+      const { data } = await api.post(
+        API_ENDPOINTS.CANDIDATE.SUBMISSION_LIVEKIT_TOKEN(submissionId)
+      );
       const { token } = data.data as { token: string };
 
       const room = new Room();
@@ -238,7 +241,7 @@ export function useLiveKitViewer({ workspaceId, targetSubmissionId }: ViewerOpti
 
     console.warn(`[LiveKit] Viewer: fetching admin token for workspace=${workspaceId}`);
     api
-      .post("/api/live-interviews/livekit-token", { workspace_id: workspaceId })
+      .post(API_ENDPOINTS.LIVE_MONITORING.LIVEKIT_TOKEN, { workspace_id: workspaceId })
       .then(({ data }) => {
         if (!active) return;
         const liveKitHost =
@@ -252,8 +255,7 @@ export function useLiveKitViewer({ workspaceId, targetSubmissionId }: ViewerOpti
       })
       .catch((err: unknown) => {
         if (!active) return;
-        const msg =
-          err instanceof Error ? err.message : (String(err) || "Unknown connection error");
+        const msg = err instanceof Error ? err.message : String(err) || "Unknown connection error";
         console.error("[LiveKit] Viewer: connection failed:", err);
         setConnectionError(msg);
       });

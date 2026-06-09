@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { GoogleLogin } from "@react-oauth/google";
 import type { CredentialResponse } from "@react-oauth/google";
 import styles from "./CandidateLoginPage.module.css";
@@ -13,12 +12,9 @@ import { IconUser, IconLock, IconEye, IconEyeOff } from "@/assets/icons";
 import { Tooltip } from "@/components/ui/Tooltip";
 import logoUrl from "@/assets/favicon.svg";
 import toast from "react-hot-toast";
-
-const schema = z.object({
-  email: z.string().email("Invalid email"),
-  password: z.string().min(1, "Password is required"),
-});
-type FormData = z.infer<typeof schema>;
+import { ROUTES } from "@/constants/routes";
+import { API_ENDPOINTS } from "@/constants/api";
+import { candidateLoginSchema, CandidateLoginForm } from "@/features/auth/constants";
 
 function GoogleIcon() {
   return (
@@ -55,16 +51,16 @@ export default function CandidateLoginPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
     setError,
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
+  } = useForm<CandidateLoginForm>({
+    resolver: zodResolver(candidateLoginSchema),
   });
 
   const goNext = () => {
-    if (shareLink) navigate(`/assessment/${shareLink}/instructions`);
-    else navigate("/candidate/dashboard");
+    if (shareLink) navigate(ROUTES.ASSESSMENT.instructions(shareLink));
+    else navigate(ROUTES.CANDIDATE.DASHBOARD);
   };
 
-  const onSubmit = async (values: FormData) => {
+  const onSubmit = async (values: CandidateLoginForm) => {
     try {
       await dispatch(candidateLogin(values)).unwrap();
       goNext();
@@ -76,21 +72,19 @@ export default function CandidateLoginPage() {
   const handleGoogleLogin = async (credentialResponse: CredentialResponse) => {
     if (!credentialResponse.credential) return;
     try {
-      const { data } = await api.post("/api/auth/google", {
+      const { data } = await api.post(API_ENDPOINTS.AUTH.GOOGLE, {
         credential: credentialResponse.credential,
       });
       const result = data.data;
 
       if (result?.needs_registration) {
-        // New user — redirect to register with Google data prefilled
         const registerPath = shareLink
-          ? `/candidate/register?share=${shareLink}`
-          : "/candidate/register";
+          ? `${ROUTES.CANDIDATE.REGISTER}?share=${shareLink}`
+          : ROUTES.CANDIDATE.REGISTER;
         navigate(registerPath, { state: { googleData: result.google_data } });
         return;
       }
 
-      // Existing candidate — store auth and proceed
       dispatch(setAuthData(result));
       goNext();
     } catch (err: unknown) {
@@ -185,7 +179,11 @@ export default function CandidateLoginPage() {
             <p className={styles.footer}>
               Don't have an account?{" "}
               <Link
-                to={shareLink ? `/candidate/register?share=${shareLink}` : "/candidate/register"}
+                to={
+                  shareLink
+                    ? `${ROUTES.CANDIDATE.REGISTER}?share=${shareLink}`
+                    : ROUTES.CANDIDATE.REGISTER
+                }
                 className={styles.link}
               >
                 Register here

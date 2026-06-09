@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 
 import api from "@/utils/api";
+import { API_ENDPOINTS } from "@/constants/api";
 import { CandidateQuestion, MonitoringConfig, RoundConfig } from "@/types";
 
 export interface InterviewRoundData {
@@ -57,7 +58,7 @@ export function useInterviewSession({
   const currentIdxRef = useRef(0);
 
   const fetchRound = useCallback(async () => {
-    const { data } = await api.get(`/api/candidate/submission/${submissionId}/round`);
+    const { data } = await api.get(API_ENDPOINTS.CANDIDATE.SUBMISSION_ROUND(submissionId));
     const r = data.data ?? {};
     return {
       round: r.round ?? null,
@@ -76,7 +77,7 @@ export function useInterviewSession({
 
   const fetchAssessment = useCallback(async () => {
     if (!shareLink) return null;
-    const { data } = await api.get(`/api/candidate/assessment/${shareLink}`);
+    const { data } = await api.get(API_ENDPOINTS.CANDIDATE.ASSESSMENT(shareLink));
     return data.data ?? null;
   }, [shareLink]);
 

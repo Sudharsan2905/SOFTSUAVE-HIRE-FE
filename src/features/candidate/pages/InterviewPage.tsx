@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Spinner } from "@/components/ui/Spinner";
 import { api } from "@/utils/api";
+import { API_ENDPOINTS } from "@/constants/api";
+import { ROUTES } from "@/constants/routes";
 import { CandidateQuestion, MonitoringConfig, RoundConfig } from "@/types";
 import { RichText } from "@/components/ui/RichText";
 import CandidateHeader from "@/features/candidate/components/CandidateHeader";
@@ -162,7 +164,7 @@ export default function InterviewPage() {
   const captureFrameRef = useRef<(() => Promise<Blob | null>) | null>(null);
   const screenshotIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const submittingRef = useRef(false);
-  const finishRoundRef = useRef<(autoSubmit?: boolean) => Promise<void>>(async () => {});
+  const finishRoundRef = useRef<(autoSubmit?: boolean) => Promise<void>>(async () => { return; });
   const currentIdxRef = useRef(0);
   const roundDataRef = useRef<InterviewRoundData | null>(null);
   const violationCooldownRef = useRef<Partial<Record<string, number>>>({});
@@ -188,7 +190,7 @@ export default function InterviewPage() {
   // Exit fullscreen on unmount (navigation away from interview)
   useEffect(() => {
     return () => {
-      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => undefined);
     };
   }, []);
 
@@ -221,14 +223,14 @@ export default function InterviewPage() {
   useEffect(() => {
     registerCallbacks({
       onSessionState: (remainingSeconds, questionIdx) => {
-        if (remainingSeconds != null) setTimeLeft(remainingSeconds);
+        if (remainingSeconds !== null) setTimeLeft(remainingSeconds);
         if (questionIdx !== undefined) {
           setCurrentIdx(questionIdx);
           currentIdxRef.current = questionIdx;
         }
       },
       onResumeApproved: (remainingSeconds, questionIdx) => {
-        if (remainingSeconds != null) setTimeLeft(remainingSeconds);
+        if (remainingSeconds !== null) setTimeLeft(remainingSeconds);
         if (questionIdx !== undefined) {
           setCurrentIdx(questionIdx);
           currentIdxRef.current = questionIdx;
@@ -237,7 +239,7 @@ export default function InterviewPage() {
       },
       onTerminated: () => {
         toast.error("Your session has been terminated by an administrator.");
-        setTimeout(() => navigate(`/assessment/${shareLink ?? ""}`), 2000);
+        setTimeout(() => navigate(ROUTES.ASSESSMENT.entry(shareLink ?? "")), 2000);
       },
       onAdminWarning: (message: string) => setAdminWarningMessage(message),
       getRemainingSeconds: () => timeLeftRef.current,
@@ -303,7 +305,7 @@ export default function InterviewPage() {
 
   // ── Data fetching ───────────────────────────────────────────────────────────
   const fetchRound = useCallback(async () => {
-    const { data } = await api.get(`/api/candidate/submission/${submissionId}/round`);
+    const { data } = await api.get(API_ENDPOINTS.CANDIDATE.SUBMISSION_ROUND(submissionId!));
     const rd: RoundApiResponse = data.data ?? {};
     const monitoring: Partial<MonitoringConfig> = {
       tab_monitoring: rd.tab_monitoring ?? false,
@@ -323,7 +325,7 @@ export default function InterviewPage() {
 
   const fetchAssessment = useCallback(async (): Promise<AssessmentData | null> => {
     if (!shareLink) return null;
-    const { data } = await api.get(`/api/candidate/assessment/${shareLink}`);
+    const { data } = await api.get(API_ENDPOINTS.CANDIDATE.ASSESSMENT(shareLink));
     return data.data as AssessmentData;
   }, [shareLink]);
 
@@ -335,9 +337,12 @@ export default function InterviewPage() {
       if (status === 403) {
         if (shareLink) markAssessmentDone(shareLink);
         const isRevoked = msg.toLowerCase().includes("revoked");
-        navigate(isRevoked ? `/assessment/${shareLink}` : `/assessment/${shareLink}/completed`, {
-          replace: true,
-        });
+        navigate(
+          isRevoked ? ROUTES.ASSESSMENT.entry(shareLink!) : ROUTES.ASSESSMENT.completed(shareLink!),
+          {
+            replace: true,
+          }
+        );
       } else {
         toast.error("Failed to load questions");
       }
@@ -411,10 +416,12 @@ export default function InterviewPage() {
       setShowSubmitConfirm(false);
       flushPending();
       try {
-        const { data } = await api.post(`/api/candidate/submission/${submissionId}/finish-round`);
+        const { data } = await api.post(
+          API_ENDPOINTS.CANDIDATE.SUBMISSION_FINISH_ROUND(submissionId!)
+        );
         if (data.data?.completed) {
           if (shareLink) markAssessmentDone(shareLink);
-          navigate(`/assessment/${shareLink}/completed`, { replace: true });
+          navigate(ROUTES.ASSESSMENT.completed(shareLink!), { replace: true });
         } else {
           // Round transition — reset media readiness so orchestrator re-validates
           setRoundData(null);
@@ -537,7 +544,7 @@ export default function InterviewPage() {
     if (!stream || !videoRef.current) return;
     if (videoRef.current.srcObject !== stream) {
       videoRef.current.srcObject = stream;
-      videoRef.current.play().catch(() => {});
+      videoRef.current.play().catch(() => undefined);
     }
   }, [roundData, phase]);
 
@@ -663,7 +670,7 @@ export default function InterviewPage() {
           if (!blob) return;
           const fd = new FormData();
           fd.append("file", blob, "screenshot.jpg");
-          await api.post(`/api/candidate/submission/${submissionId}/screenshot`, fd, {
+          await api.post(API_ENDPOINTS.CANDIDATE.SUBMISSION_SCREENSHOT(submissionId!), fd, {
             headers: { "Content-Type": "multipart/form-data" },
           });
         } catch {
@@ -769,7 +776,7 @@ export default function InterviewPage() {
           if (!document.fullscreenElement) {
             await document.documentElement
               .requestFullscreen({ navigationUI: "hide" })
-              .catch(() => {});
+              .catch(() => undefined);
           }
         }}
         onRetryCamera={async () => {
@@ -1163,7 +1170,7 @@ export default function InterviewPage() {
         isOpen={showTimeExpired}
         onClose={() => {
           setShowTimeExpired(false);
-          navigate(`/assessment/${shareLink}/completed`);
+          navigate(ROUTES.ASSESSMENT.completed(shareLink ?? ""));
         }}
         title="Time's Up"
         size="sm"
@@ -1172,7 +1179,7 @@ export default function InterviewPage() {
           <Button
             onClick={() => {
               setShowTimeExpired(false);
-              navigate(`/assessment/${shareLink}/completed`);
+              navigate(ROUTES.ASSESSMENT.completed(shareLink ?? ""));
             }}
           >
             Continue

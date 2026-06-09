@@ -17,6 +17,9 @@ import { usePagination } from "@/hooks/usePagination";
 import { QuestionCategory, PaginationMeta, ViewMode, SortOrder } from "@/types";
 import { formatDate, getAvatarColor, getInitials } from "@/utils/helpers";
 import toast from "react-hot-toast";
+import { API_ENDPOINTS } from "@/constants/api";
+import { ROUTES } from "@/constants/routes";
+import { QUESTION_BANK_SUCCESS, QUESTION_BANK_ERRORS } from "@/features/questionBank/constants";
 
 const SORT_OPTIONS = [
   { value: "created_at", label: "Created Date" },
@@ -52,11 +55,11 @@ export default function CategoriesPage() {
         sort_order: sortOrder,
         ...(debouncedSearch && { search: debouncedSearch }),
       });
-      const { data } = await api.get(`/api/questions/categories?${params}`);
+      const { data } = await api.get(`${API_ENDPOINTS.CATEGORIES.ROOT}?${params}`);
       setCategories(data.data?.categories || []);
       setMeta(data.data?.pagination || null);
     } catch {
-      toast.error("Failed to load categories");
+      toast.error(QUESTION_BANK_ERRORS.CATEGORIES_LOAD_FAILED);
     } finally {
       setIsLoading(false);
     }
@@ -83,14 +86,15 @@ export default function CategoriesPage() {
     if (!form.name.trim()) return;
     setSaving(true);
     try {
-      await api.post("/api/questions/categories", form);
-      toast.success("Category created");
+      await api.post(API_ENDPOINTS.CATEGORIES.ROOT, form);
+      toast.success(QUESTION_BANK_SUCCESS.CATEGORY_CREATED);
       setShowCreate(false);
       setForm({ name: "", description: "" });
       fetchCategories();
     } catch (e: unknown) {
       toast.error(
-        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "Failed"
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          QUESTION_BANK_ERRORS.CATEGORY_CREATE_FAILED
       );
     } finally {
       setSaving(false);
@@ -101,12 +105,12 @@ export default function CategoriesPage() {
     if (!selected) return;
     setSaving(true);
     try {
-      await api.put(`/api/questions/categories/${selected.id}`, form);
-      toast.success("Category updated");
+      await api.put(API_ENDPOINTS.CATEGORIES.BY_ID(selected.id), form);
+      toast.success(QUESTION_BANK_SUCCESS.CATEGORY_UPDATED);
       setShowEdit(false);
       fetchCategories();
     } catch {
-      toast.error("Failed to update");
+      toast.error(QUESTION_BANK_ERRORS.CATEGORY_UPDATE_FAILED);
     } finally {
       setSaving(false);
     }
@@ -116,12 +120,12 @@ export default function CategoriesPage() {
     if (!selected) return;
     setSaving(true);
     try {
-      await api.delete(`/api/questions/categories/${selected.id}`);
-      toast.success("Category deleted");
+      await api.delete(API_ENDPOINTS.CATEGORIES.BY_ID(selected.id));
+      toast.success(QUESTION_BANK_SUCCESS.CATEGORY_DELETED);
       setShowDelete(false);
       fetchCategories();
     } catch {
-      toast.error("Failed to delete");
+      toast.error(QUESTION_BANK_ERRORS.CATEGORY_DELETE_FAILED);
     } finally {
       setSaving(false);
     }
@@ -153,7 +157,7 @@ export default function CategoriesPage() {
               <button
                 type="button"
                 className={styles.cardNavBtn}
-                onClick={() => navigate(`/question-bank/${cat.id}`)}
+                onClick={() => navigate(ROUTES.ADMIN.questionBankCategory(cat.id))}
                 aria-label={`Open ${cat.name} category`}
               />
 

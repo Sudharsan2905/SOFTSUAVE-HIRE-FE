@@ -21,6 +21,7 @@ import { NotificationDropdown } from "@/components/notifications/NotificationDro
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { UserRole } from "@/types";
+import { ROUTES } from "@/constants/routes";
 import styles from "./AppHeader.module.css";
 
 export function AppHeader() {
@@ -53,12 +54,12 @@ export function AppHeader() {
     setShowLogoutConfirm(false);
     setShowProfileMenu(false);
     dispatch(logout());
-    navigate("/admin/login");
+    navigate(ROUTES.ADMIN.LOGIN);
   }, [dispatch, navigate]);
 
   const handleProfileClick = () => {
     setShowProfileMenu(false);
-    navigate("/profile");
+    navigate(ROUTES.ADMIN.PROFILE);
   };
 
   const notificationUnreadSuffix = unreadCount > 0 ? ` (${unreadCount} unread)` : "";

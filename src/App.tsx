@@ -7,6 +7,7 @@ import { CandidateRoute } from "@/features/candidate/components/CandidateRoute";
 import { useAppSelector } from "@/store";
 import { UserRole } from "@/types";
 import NeonLoader from "./components/ui/NeonLoader";
+import { ROUTES } from "@/constants/routes";
 
 const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
   const user = useAppSelector((s) => s.auth.user);
@@ -15,7 +16,7 @@ const SuperAdminRoute = ({ children }: { children: React.ReactNode }) => {
       <NoAccessPage
         title="Super Admin Only"
         description="This area is restricted to Super Admins. Contact your administrator if you require access."
-        backTo="/question-bank"
+        backTo={ROUTES.ADMIN.QUESTION_BANK}
         backLabel="Back to Dashboard"
       />
     );
@@ -64,47 +65,41 @@ export default function App() {
     <Suspense fallback={<Loading />}>
       <Routes>
         {/* Public candidate routes */}
-        <Route path="/candidate/login" element={<CandidateLoginPage />} />
-        <Route path="/candidate/register" element={<RegisterPage />} />
-        <Route path="/candidate/dashboard" element={<CandidateDashboard />} />
+        <Route path={ROUTES.CANDIDATE.LOGIN} element={<CandidateLoginPage />} />
+        <Route path={ROUTES.CANDIDATE.REGISTER} element={<RegisterPage />} />
+        <Route path={ROUTES.CANDIDATE.DASHBOARD} element={<CandidateDashboard />} />
 
         {/* Assessment flow — entry is public, protected pages require candidate auth */}
-        <Route path="/assessment/:shareLink" element={<AssessmentEntryPage />} />
+        <Route path={ROUTES.ASSESSMENT.ENTRY} element={<AssessmentEntryPage />} />
         <Route element={<CandidateRoute />}>
-          <Route path="/assessment/:shareLink/instructions" element={<InstructionsPage />} />
-          <Route
-            path="/assessment/:shareLink/interview/:submissionId"
-            element={<InterviewPage />}
-          />
-          <Route path="/assessment/:shareLink/completed" element={<CompletedPage />} />
+          <Route path={ROUTES.ASSESSMENT.INSTRUCTIONS} element={<InstructionsPage />} />
+          <Route path={ROUTES.ASSESSMENT.INTERVIEW} element={<InterviewPage />} />
+          <Route path={ROUTES.ASSESSMENT.COMPLETED} element={<CompletedPage />} />
         </Route>
 
         {/* Admin auth */}
-        <Route path="/loader" element={<NeonLoader />} />
-        <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route path={ROUTES.ADMIN.LOADER} element={<NeonLoader />} />
+        <Route path={ROUTES.ADMIN.LOGIN} element={<AdminLoginPage />} />
         <Route
-          path="/admin/no-access"
-          element={<NoAccessPage backTo="/admin/login" backLabel="Go to Admin Login" />}
+          path={ROUTES.ADMIN.NO_ACCESS}
+          element={<NoAccessPage backTo={ROUTES.ADMIN.LOGIN} backLabel="Go to Admin Login" />}
         />
 
         {/* Admin protected routes */}
         <Route element={<AdminLayout />}>
-          <Route path="/" element={<Navigate to="/question-bank" replace />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/question-bank" element={<CategoriesPage />} />
-          <Route path="/question-bank/:categoryId" element={<QuestionsPage />} />
-          <Route path="/workspaces/:workspaceId/assessments" element={<AssessmentsPage />} />
-          <Route path="/live-interviews" element={<LiveMonitoringPage />} />
-          <Route path="/profile" element={<UserProfilePage />} />
-          <Route path="/notifications" element={<NotificationsPage />} />
           <Route
-            path="/workspaces/:workspaceId/assessments/:id"
-            element={<AssessmentDetailPage />}
+            path={ROUTES.ROOT}
+            element={<Navigate to={ROUTES.ADMIN.QUESTION_BANK} replace />}
           />
-          <Route
-            path="/workspaces/:workspaceId/assessments/:assessmentId/candidates/:candidateId"
-            element={<CandidateDetailsPage />}
-          />
+          <Route path={ROUTES.ADMIN.DASHBOARD} element={<DashboardPage />} />
+          <Route path={ROUTES.ADMIN.QUESTION_BANK} element={<CategoriesPage />} />
+          <Route path={ROUTES.ADMIN.QUESTION_BANK_CATEGORY} element={<QuestionsPage />} />
+          <Route path={ROUTES.ADMIN.ASSESSMENTS} element={<AssessmentsPage />} />
+          <Route path={ROUTES.ADMIN.LIVE_INTERVIEWS} element={<LiveMonitoringPage />} />
+          <Route path={ROUTES.ADMIN.PROFILE} element={<UserProfilePage />} />
+          <Route path={ROUTES.ADMIN.NOTIFICATIONS} element={<NotificationsPage />} />
+          <Route path={ROUTES.ADMIN.ASSESSMENT_DETAIL} element={<AssessmentDetailPage />} />
+          <Route path={ROUTES.ADMIN.CANDIDATE_DETAIL} element={<CandidateDetailsPage />} />
           <Route
             element={
               <SuperAdminRoute>
@@ -112,13 +107,13 @@ export default function App() {
               </SuperAdminRoute>
             }
           >
-            <Route path="/users" element={<UsersPage />} />
-            <Route path="/profile/:userId" element={<UserProfilePage />} />
+            <Route path={ROUTES.ADMIN.USERS} element={<UsersPage />} />
+            <Route path={ROUTES.ADMIN.PROFILE_BY_ID} element={<UserProfilePage />} />
           </Route>
         </Route>
 
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/question-bank" replace />} />
+        <Route path="*" element={<Navigate to={ROUTES.ADMIN.QUESTION_BANK} replace />} />
       </Routes>
     </Suspense>
   );

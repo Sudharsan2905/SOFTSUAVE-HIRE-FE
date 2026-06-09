@@ -4,6 +4,7 @@ import styles from "./WorkspaceSwitcher.module.css";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { setActiveWorkspace, setWorkspaces, clearWorkspace } from "@/store/slices/workspaceSlice";
 import { api } from "@/utils/api";
+import { API_ENDPOINTS } from "@/constants/api";
 import { Workspace, User, UserRole } from "@/types";
 import {
   IconChevronDown,
@@ -67,8 +68,8 @@ export function WorkspaceSwitcher({ collapsed }: Readonly<{ collapsed?: boolean 
   const fetchWorkspaces = useCallback(async () => {
     try {
       const [wsRes, meRes] = await Promise.all([
-        api.get("/api/workspaces?page_size=50"),
-        api.get("/api/auth/me"),
+        api.get(`${API_ENDPOINTS.WORKSPACES.ROOT}?page_size=50`),
+        api.get(API_ENDPOINTS.AUTH.ME),
       ]);
       const freshUser: User = meRes.data.data;
       dispatch(updateUser(freshUser));
@@ -115,7 +116,7 @@ export function WorkspaceSwitcher({ collapsed }: Readonly<{ collapsed?: boolean 
     setShowSettings(true);
     if (isSuperAdmin && activeWorkspace) {
       try {
-        const { data } = await api.get(`/api/workspaces/${activeWorkspace.id}/members`);
+        const { data } = await api.get(API_ENDPOINTS.WORKSPACES.MEMBERS(activeWorkspace.id));
         setMemberDetails(data.data ?? []);
       } catch {}
     }
@@ -128,7 +129,7 @@ export function WorkspaceSwitcher({ collapsed }: Readonly<{ collapsed?: boolean 
     try {
       const [, usersRes] = await Promise.all([
         fetchWorkspaces(),
-        api.get("/api/workspaces/admin-users"),
+        api.get(API_ENDPOINTS.WORKSPACES.ADMIN_USERS),
       ]);
       setAdminUsers(usersRes.data.data ?? []);
     } catch {}
@@ -138,7 +139,7 @@ export function WorkspaceSwitcher({ collapsed }: Readonly<{ collapsed?: boolean 
     if (!activeWorkspace) return;
     setLoading(true);
     try {
-      const { data } = await api.put(`/api/workspaces/${activeWorkspace.id}`, editForm);
+      const { data } = await api.put(API_ENDPOINTS.WORKSPACES.BY_ID(activeWorkspace.id), editForm);
       dispatch(setActiveWorkspace(data.data));
       await fetchWorkspaces();
       toast.success("Workspace updated");
@@ -154,7 +155,9 @@ export function WorkspaceSwitcher({ collapsed }: Readonly<{ collapsed?: boolean 
     if (!activeWorkspace) return;
     setLoading(true);
     try {
-      await api.post(`/api/workspaces/${activeWorkspace.id}/invite`, { user_ids: selectedUsers });
+      await api.post(API_ENDPOINTS.WORKSPACES.INVITE(activeWorkspace.id), {
+        user_ids: selectedUsers,
+      });
       toast.success("Members updated");
       setShowInvite(false);
       setShowSettings(true);
@@ -168,7 +171,7 @@ export function WorkspaceSwitcher({ collapsed }: Readonly<{ collapsed?: boolean 
   const createWorkspace = async () => {
     setLoading(true);
     try {
-      const { data } = await api.post("/api/workspaces", createForm);
+      const { data } = await api.post(API_ENDPOINTS.WORKSPACES.ROOT, createForm);
       dispatch(setActiveWorkspace(data.data));
       await fetchWorkspaces();
       toast.success("Workspace created");
@@ -185,7 +188,7 @@ export function WorkspaceSwitcher({ collapsed }: Readonly<{ collapsed?: boolean 
     if (!activeWorkspace) return;
     setLoading(true);
     try {
-      await api.delete(`/api/workspaces/${activeWorkspace.id}`);
+      await api.delete(API_ENDPOINTS.WORKSPACES.BY_ID(activeWorkspace.id));
       toast.success(`"${activeWorkspace.name}" deleted`);
       setShowDeleteConfirm(false);
       setShowSettings(false);

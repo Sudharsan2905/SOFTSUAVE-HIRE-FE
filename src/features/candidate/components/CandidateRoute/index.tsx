@@ -4,7 +4,9 @@ import { useAppSelector } from "@/store";
 import { NoAccessPage } from "@/components/shared/NoAccessPage";
 import { Spinner } from "@/components/ui/Spinner";
 import { api } from "@/utils/api";
-import { UserRole, type SubmissionStatusResponse } from "@/types";
+import { API_ENDPOINTS } from "@/constants/api";
+import { ROUTES } from "@/constants/routes";
+import { UserRole, SubmissionStatus, type SubmissionStatusResponse } from "@/types";
 import { IconAlertTriangle, IconShield } from "@/assets/icons";
 import { InterviewSessionProvider } from "@/features/candidate/context/InterviewSessionContext";
 import { markAssessmentDone } from "@/utils/assessmentSession";
@@ -45,7 +47,9 @@ export function CandidateRoute() {
     }
     setStatusLoading(true);
     try {
-      const { data } = await api.get(`/api/candidate/submission/status?share_link=${shareLink}`);
+      const { data } = await api.get(
+        `${API_ENDPOINTS.CANDIDATE.SUBMISSION_STATUS}?share_link=${shareLink}`
+      );
       setSubmissionStatus(data.data ?? null);
     } catch {
       // Fail open — let the child page surface any real errors
@@ -62,7 +66,9 @@ export function CandidateRoute() {
   // ── 1. Auth checks ────────────────────────────────────────────────────────
 
   if (!isAuthenticated) {
-    const loginTarget = shareLink ? `/candidate/login?share=${shareLink}` : "/candidate/login";
+    const loginTarget = shareLink
+      ? `${ROUTES.CANDIDATE.LOGIN}?share=${shareLink}`
+      : ROUTES.CANDIDATE.LOGIN;
     return <Navigate to={loginTarget} replace />;
   }
 
@@ -71,7 +77,7 @@ export function CandidateRoute() {
       <NoAccessPage
         title="Candidate Access Only"
         description="This assessment area is restricted to candidates. Please sign in with a candidate account."
-        backTo="/question-bank"
+        backTo={ROUTES.ADMIN.QUESTION_BANK}
         backLabel="Back to Admin Dashboard"
       />
     );
@@ -98,12 +104,12 @@ export function CandidateRoute() {
 
     const status = submissionStatus?.status;
 
-    if (status === "completed") {
+    if (status === SubmissionStatus.COMPLETED) {
       markAssessmentDone(shareLink!);
-      return <Navigate to={`/assessment/${shareLink ?? ""}/completed`} replace />;
+      return <Navigate to={ROUTES.ASSESSMENT.completed(shareLink!)} replace />;
     }
 
-    if (status === "on_hold") {
+    if (status === SubmissionStatus.ON_HOLD) {
       return (
         <NoAccessPage
           title="Interview Temporarily Paused"
@@ -114,7 +120,7 @@ export function CandidateRoute() {
       );
     }
 
-    if (status === "terminated") {
+    if (status === SubmissionStatus.TERMINATED) {
       return (
         <NoAccessPage
           title="Interview Session Terminated"
@@ -125,7 +131,7 @@ export function CandidateRoute() {
       );
     }
 
-    if (status === "malpractice") {
+    if (status === SubmissionStatus.MALPRACTICE) {
       return (
         <NoAccessPage
           title="Assessment Ended — Policy Violation"

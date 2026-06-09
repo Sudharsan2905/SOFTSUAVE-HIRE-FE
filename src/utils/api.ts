@@ -1,11 +1,11 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { store } from "@/store";
 import { logout, setTokens } from "@/store/slices/authSlice";
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+import { CONFIG } from "@/constants/config";
+import { API_ENDPOINTS } from "@/constants/api";
 
 export const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: CONFIG.API_BASE_URL,
   headers: { "Content-Type": "application/json" },
   timeout: 15000,
 });
@@ -55,11 +55,11 @@ api.interceptors.response.use(
       const refreshToken = store.getState().auth.refreshToken;
       if (!refreshToken) {
         store.dispatch(logout());
-        return Promise.reject(error);
+        throw error;
       }
 
       try {
-        const { data } = await axios.post(`${BASE_URL}/api/auth/refresh`, {
+        const { data } = await axios.post(`${CONFIG.API_BASE_URL}${API_ENDPOINTS.AUTH.REFRESH}`, {
           refresh_token: refreshToken,
         });
         const newToken = data.data.access_token;
@@ -70,15 +70,13 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError);
         store.dispatch(logout());
-        return Promise.reject(
-          refreshError instanceof Error ? refreshError : new Error(String(refreshError))
-        );
+        throw refreshError instanceof Error ? refreshError : new Error(String(refreshError));
       } finally {
         isRefreshing = false;
       }
     }
 
-    return Promise.reject(error);
+    throw error;
   }
 );
 

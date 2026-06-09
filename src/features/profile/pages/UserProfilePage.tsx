@@ -11,6 +11,9 @@ import { getFullName, getInitials, getAvatarColor } from "@/utils/helpers";
 import { api } from "@/utils/api";
 import { User, UserRole } from "@/types";
 import toast from "react-hot-toast";
+import { API_ENDPOINTS } from "@/constants/api";
+import { ROUTES } from "@/constants/routes";
+import { PROFILE_SUCCESS, PROFILE_ERRORS } from "@/features/profile/constants";
 import styles from "./UserProfilePage.module.css";
 
 function EditIcon() {
@@ -281,11 +284,11 @@ export default function UserProfilePage() {
     if (!isViewingOther) return;
     setIsLoading(true);
     try {
-      const { data } = await api.get(`/api/users/${userId}`);
+      const { data } = await api.get(API_ENDPOINTS.USERS.BY_ID(userId!));
       setProfileUser(data.data);
     } catch {
-      toast.error("Failed to load user profile");
-      navigate("/users");
+      toast.error(PROFILE_ERRORS.LOAD_FAILED);
+      navigate(ROUTES.ADMIN.USERS);
     } finally {
       setIsLoading(false);
     }
@@ -328,7 +331,7 @@ export default function UserProfilePage() {
         return;
       }
 
-      const endpoint = isViewingOther ? `/api/users/${userId}` : "/api/users/me";
+      const endpoint = isViewingOther ? API_ENDPOINTS.USERS.BY_ID(userId!) : API_ENDPOINTS.USERS.ME;
       const { data } = await api.patch(endpoint, payload);
 
       if (isViewingOther) {
@@ -336,13 +339,12 @@ export default function UserProfilePage() {
       } else {
         dispatch(updateUser(data.data));
       }
-      toast.success("Profile updated");
+      toast.success(PROFILE_SUCCESS.UPDATED);
       setIsEditing(false);
     } catch (e: unknown) {
-      // S6606 (line 176): Replace || with ??
       toast.error(
         (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-          "Failed to update profile"
+          PROFILE_ERRORS.UPDATE_FAILED
       );
     } finally {
       setSaving(false);
@@ -365,22 +367,23 @@ export default function UserProfilePage() {
     setPwSaving(true);
     try {
       if (isViewingOther && isSuperAdmin) {
-        await api.patch(`/api/users/${userId}`, { password: passwordForm.new_password });
+        await api.patch(API_ENDPOINTS.USERS.BY_ID(userId!), {
+          password: passwordForm.new_password,
+        });
       } else {
-        await api.patch("/api/users/me", {
+        await api.patch(API_ENDPOINTS.USERS.ME, {
           password: passwordForm.new_password,
           current_password: passwordForm.current_password,
         });
       }
-      toast.success("Password changed successfully");
+      toast.success(PROFILE_SUCCESS.PASSWORD_CHANGED);
       setShowPasswordModal(false);
       setPasswordForm({ current_password: "", new_password: "", confirm_password: "" });
       setShowPw({ current: false, new: false, confirm: false });
     } catch (e: unknown) {
-      // S6606 (line 213): Replace || with ??
       toast.error(
         (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-          "Failed to change password"
+          PROFILE_ERRORS.PASSWORD_CHANGE_FAILED
       );
     } finally {
       setPwSaving(false);
@@ -423,7 +426,7 @@ export default function UserProfilePage() {
     <div className={styles.page}>
       {/* Back button when viewing another user */}
       {isViewingOther && (
-        <button className={styles.backBtn} onClick={() => navigate("/users")}>
+        <button className={styles.backBtn} onClick={() => navigate(ROUTES.ADMIN.USERS)}>
           <BackIcon />
           <span>Back to Users</span>
         </button>
@@ -540,10 +543,10 @@ export default function UserProfilePage() {
                     value={profileForm.role}
                     onChange={(v) => setProfileForm((p) => ({ ...p, role: v }))}
                     options={[
-                      { value: "admin", label: "Admin" },
-                      { value: "super_admin", label: "Super Admin" },
+                      { value: UserRole.ADMIN, label: "Admin" },
+                      { value: UserRole.SUPER_ADMIN, label: "Super Admin" },
                     ]}
-                    disabled={activeUser.role === "super_admin"}
+                    disabled={activeUser.role === UserRole.SUPER_ADMIN}
                   />
                   <div className={styles.field}>
                     <span className={styles.fieldLabel}>Status</span>

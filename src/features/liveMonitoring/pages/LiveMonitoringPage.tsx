@@ -8,6 +8,8 @@ import { IconLiveInterview } from "@/assets/icons";
 import api from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { STATUS_COLORS } from "@/constants/statusColors";
+import { CONFIG } from "@/constants/config";
+import { API_ENDPOINTS } from "@/constants/api";
 import { getInitials, getAvatarColor, formatDateTime } from "@/utils/helpers";
 import { useAppSelector } from "@/store/hooks";
 import { useLiveKitViewer } from "@/features/candidate/hooks/useLiveKit";
@@ -90,8 +92,7 @@ function useAdminWebSocket(onEvent: (event: Record<string, unknown>) => void) {
 
     function connect() {
       if (!active) return;
-      const wsBase = (import.meta.env.VITE_WS_URL as string | undefined) ?? "ws://localhost:8000";
-      const ws = new WebSocket(`${wsBase}/api/ws/admin?token=${token}`);
+      const ws = new WebSocket(`${CONFIG.WS_URL}/api/ws/admin?token=${token}`);
       wsRef.current = ws;
       sendRef.current = (data) => {
         if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(data));
@@ -139,7 +140,7 @@ export default function LiveMonitoringPage() {
   // ── Initial data fetch ───────────────────────────────────────────────────
   const fetchSessions = useCallback(async () => {
     try {
-      const { data } = await api.get("/api/candidate/live-interviews");
+      const { data } = await api.get(API_ENDPOINTS.LIVE_MONITORING.ACTIVE_SESSIONS);
       setSessions((data.data?.live_interviews as LiveSession[]) ?? []);
     } catch {
       // handled gracefully — WS updates will keep list fresh
@@ -190,7 +191,11 @@ export default function LiveMonitoringPage() {
   const wsSendRef = useAdminWebSocket(handleWsEvent);
 
   // ── LiveKit viewer ───────────────────────────────────────────────────────
-  const { screenTrack, isConnected: lkConnected, connectionError: lkError } = useLiveKitViewer({
+  const {
+    screenTrack,
+    isConnected: lkConnected,
+    connectionError: lkError,
+  } = useLiveKitViewer({
     workspaceId: selectedSession?.workspace_id ?? null,
     targetSubmissionId: selectedSession?.submission_id ?? null,
   });
@@ -199,7 +204,7 @@ export default function LiveMonitoringPage() {
   const handleTerminate = useCallback(
     async (submissionId: string) => {
       try {
-        await api.post(`/api/candidate/submission/${submissionId}/terminate`, {
+        await api.post(API_ENDPOINTS.SUBMISSIONS.TERMINATE(submissionId), {
           reason: "Admin terminated from live monitoring",
         });
         setSessions((prev) => prev.filter((s) => s.submission_id !== submissionId));
@@ -213,7 +218,7 @@ export default function LiveMonitoringPage() {
 
   const handleResume = useCallback(async (submissionId: string) => {
     try {
-      await api.post(`/api/candidate/submission/${submissionId}/resume`);
+      await api.post(API_ENDPOINTS.SUBMISSIONS.RESUME(submissionId));
       setSessions((prev) =>
         prev.map((s) => (s.submission_id === submissionId ? { ...s, status: "in_progress" } : s))
       );

@@ -6,6 +6,7 @@ import {
   setTerminated,
 } from "../../../store/slices/proctoringSlice";
 import api from "../../../utils/api";
+import { API_ENDPOINTS } from "@/constants/api";
 import { MalpracticeType, MonitoringConfig } from "../../../types";
 import { useMalpracticeRecording } from "./useMalpracticeRecording";
 import type { RefObject } from "react";
@@ -158,7 +159,7 @@ export function useMalpracticeCoordinator({
       let eventIndex = -1;
       try {
         const response = await api.post(
-          `/api/candidate/submission/${submissionId}/malpractice`,
+          API_ENDPOINTS.CANDIDATE.SUBMISSION_MALPRACTICE(submissionId),
           fd,
           { headers: { "Content-Type": "multipart/form-data" } }
         );

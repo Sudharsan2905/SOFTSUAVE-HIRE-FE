@@ -10,7 +10,6 @@ import { Spinner } from "@/components/ui/Spinner";
 import type { CandidateSubmissionDetail } from "@/types";
 import { api } from "@/utils/api";
 
-
 export default function CandidateDetailsPage() {
   const { workspaceId, assessmentId, candidateId } = useParams<{
     workspaceId: string;
@@ -138,7 +137,11 @@ export default function CandidateDetailsPage() {
               </span>
               <span className={styles.contactItem}>
                 <IconGender size={14} aria-hidden="true" />
-                <span>{candidate.gender ? candidate.gender.charAt(0).toUpperCase() + candidate.gender.slice(1) : "--"}</span>
+                <span>
+                  {candidate.gender
+                    ? candidate.gender.charAt(0).toUpperCase() + candidate.gender.slice(1)
+                    : "--"}
+                </span>
               </span>
               <span className={styles.contactItem}>
                 <IconMapPin size={14} aria-hidden="true" />

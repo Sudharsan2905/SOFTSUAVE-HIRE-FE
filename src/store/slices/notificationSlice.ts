@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { api } from "@/utils/api";
+import { API_ENDPOINTS } from "@/constants/api";
 import type { PaginationMeta } from "@/types";
 
 export type NotificationType = "submission" | "assessment" | "interview" | "system";
@@ -54,7 +55,9 @@ export const fetchNotifications = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const { data } = await api.get(`/api/notifications?page=${page}&page_size=${pageSize}`);
+      const { data } = await api.get(
+        `${API_ENDPOINTS.NOTIFICATIONS.ROOT}?page=${page}&page_size=${pageSize}`
+      );
       return data.data as {
         notifications: Record<string, unknown>[];
         pagination: PaginationMeta;
@@ -70,7 +73,7 @@ export const markAsReadThunk = createAsyncThunk(
   "notifications/markAsRead",
   async (id: string, { rejectWithValue }) => {
     try {
-      await api.patch(`/api/notifications/${id}/read`);
+      await api.patch(API_ENDPOINTS.NOTIFICATIONS.MARK_READ(id));
       return id;
     } catch {
       return rejectWithValue("Failed to mark as read");
@@ -82,7 +85,7 @@ export const markAllReadThunk = createAsyncThunk(
   "notifications/markAllRead",
   async (_, { rejectWithValue }) => {
     try {
-      await api.patch("/api/notifications/mark-all-read");
+      await api.patch(API_ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ);
     } catch {
       return rejectWithValue("Failed to mark all as read");
     }

@@ -13,6 +13,7 @@ import { Tooltip } from "@/components/ui/Tooltip";
 import { LinkStatusScreen, LinkStatus } from "@/features/candidate/components/LinkStatusScreen";
 import { UserRole } from "@/types";
 import { isAssessmentDone } from "@/utils/assessmentSession";
+import { ROUTES } from "@/constants/routes";
 import logoUrl from "@/assets/favicon.svg";
 
 const schema = z.object({
@@ -94,7 +95,7 @@ export default function AssessmentAccessPage() {
   const onSubmit = async (values: FormData) => {
     try {
       await dispatch(candidateLogin(values)).unwrap();
-      navigate(`/assessment/${token}/instructions`, { replace: true });
+      navigate(ROUTES.ASSESSMENT.instructions(token!), { replace: true });
     } catch (e: unknown) {
       setError("root", {
         message: (e as { message?: string })?.message ?? "Invalid credentials",
@@ -117,9 +118,9 @@ export default function AssessmentAccessPage() {
   // Already authenticated candidate — skip login and go straight to assessment
   if (isCandidate && token) {
     if (isAssessmentDone(token)) {
-      return <Navigate to={`/assessment/${token}/completed`} replace />;
+      return <Navigate to={ROUTES.ASSESSMENT.completed(token)} replace />;
     }
-    return <Navigate to={`/assessment/${token}/instructions`} replace />;
+    return <Navigate to={ROUTES.ASSESSMENT.instructions(token)} replace />;
   }
 
   return (

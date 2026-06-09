@@ -6,6 +6,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
 import { IconCheck } from "@/assets/icons";
 import { isAssessmentDone } from "@/utils/assessmentSession";
+import { ROUTES } from "@/constants/routes";
 import CandidateHeader from "@/features/candidate/components/CandidateHeader";
 import { useAppSelector } from "@/store/hooks";
 
@@ -51,7 +52,12 @@ export default function CompletedPage() {
 
   // Redirect invalid access (direct URL, browser history abuse) to entry page.
   if (state === "invalid") {
-    return <Navigate to={shareLink ? `/assessment/${shareLink}` : "/candidate/login"} replace />;
+    return (
+      <Navigate
+        to={shareLink ? ROUTES.ASSESSMENT.entry(shareLink) : ROUTES.CANDIDATE.LOGIN}
+        replace
+      />
+    );
   }
 
   return (
@@ -78,7 +84,7 @@ export default function CompletedPage() {
         <Button
           variant="secondary"
           size="sm"
-          onClick={() => navigate("/candidate/login", { replace: true })}
+          onClick={() => navigate(ROUTES.CANDIDATE.LOGIN, { replace: true })}
           style={{ marginTop: 8 }}
         >
           Exit

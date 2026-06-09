@@ -7,6 +7,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { IconSearch, IconDrag, IconCheck, IconDelete } from "@/assets/icons";
 import { api } from "@/utils/api";
+import { API_ENDPOINTS } from "@/constants/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { Question, QuestionCategory } from "@/types";
 import { COMPLEXITY_OPTIONS, QUESTION_TYPE_OPTIONS } from "@/constants/app";
@@ -35,7 +36,7 @@ export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Reado
   const availableQuestions = questions.filter((q) => !selectedIds.includes(q.id));
 
   const fetchCategories = async () => {
-    const { data } = await api.get("/api/questions/categories?page_size=100");
+    const { data } = await api.get(`${API_ENDPOINTS.CATEGORIES.ROOT}?page_size=100`);
     setCategories(data.data?.categories || []);
     if (data.data?.categories?.[0]) setSelectedCategory(data.data.categories[0].id);
   };
@@ -51,7 +52,7 @@ export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Reado
         ...(questionType && { question_type: questionType }),
       });
       const { data } = await api.get(
-        `/api/questions/categories/${selectedCategory}/questions?${params}`
+        `${API_ENDPOINTS.CATEGORIES.QUESTIONS(selectedCategory)}?${params}`
       );
       setQuestions(data.data?.questions || []);
     } catch {

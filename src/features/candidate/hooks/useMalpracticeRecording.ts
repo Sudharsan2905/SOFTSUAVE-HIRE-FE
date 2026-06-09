@@ -123,7 +123,12 @@ export function useMalpracticeRecording({
 
   // ── Upload ────────────────────────────────────────────────────────────────
   const uploadCapture = useCallback(
-    async (eventIndex: number, blobs: Blob[], isVideo: boolean, mimeType: string): Promise<void> => {
+    async (
+      eventIndex: number,
+      blobs: Blob[],
+      isVideo: boolean,
+      mimeType: string
+    ): Promise<void> => {
       if (blobs.length === 0) return;
 
       const blob = new Blob(blobs, {
@@ -260,7 +265,7 @@ export function useMalpracticeRecording({
         clearTimeout(ev.timeoutId);
         // Stop the recorder (best-effort; upload whatever blobs were collected so far)
         if (ev.recorder && ev.recorder.state !== "inactive") ev.recorder.stop();
-        void uploadCapture(ev.eventIndex, ev.blobs, ev.isVideo, ev.mimeType).catch(() => {});
+        void uploadCapture(ev.eventIndex, ev.blobs, ev.isVideo, ev.mimeType).catch(() => undefined);
       }
     };
 

@@ -5,6 +5,7 @@ import { IconQuestionBank, IconAssessment, IconLiveInterview, IconUsers } from "
 import { Tooltip } from "@/components/ui/Tooltip";
 import { WorkspaceSwitcher } from "@/components/layout/WorkspaceSwitcher";
 import { UserRole } from "@/types";
+import { ROUTES } from "@/constants/routes";
 import styles from "./BottomNav.module.css";
 
 interface NavItem {
@@ -30,7 +31,7 @@ export function BottomNav() {
       key: "qbank",
       label: "Question Bank",
       icon: <IconQuestionBank size={22} />,
-      to: "/question-bank",
+      to: ROUTES.ADMIN.QUESTION_BANK,
     },
     {
       key: "assessments",
@@ -43,7 +44,7 @@ export function BottomNav() {
       key: "live",
       label: "Live Interviews",
       icon: <IconLiveInterview size={22} />,
-      to: "/live-interviews",
+      to: ROUTES.ADMIN.LIVE_INTERVIEWS,
     },
   ];
 
@@ -52,7 +53,7 @@ export function BottomNav() {
       key: "users",
       label: "Users",
       icon: <IconUsers size={22} />,
-      to: "/users",
+      to: ROUTES.ADMIN.USERS,
     });
   }
 

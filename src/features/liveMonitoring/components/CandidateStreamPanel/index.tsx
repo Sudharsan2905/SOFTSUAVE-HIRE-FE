@@ -47,7 +47,9 @@ export function CandidateStreamPanel({
     // Optional chain on screenTrack?.kind narrows screenTrack to non-null after the guard
     if (!el || screenTrack?.kind !== Track.Kind.Video) return;
     screenTrack.attach(el);
-    return () => { screenTrack.detach(el); };
+    return () => {
+      screenTrack.detach(el);
+    };
   }, [screenTrack]);
 
   const elapsedMins = session.started_at

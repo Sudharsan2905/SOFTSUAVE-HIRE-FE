@@ -12,6 +12,7 @@ import {
 import { NotificationItem } from "../NotificationItem";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { ROUTES } from "@/constants/routes";
 import styles from "./NotificationDropdown.module.css";
 
 interface Props {
@@ -61,7 +62,7 @@ export function NotificationDropdown({ anchorRef, onClose }: Props) {
   useEffect(() => {
     if (!isDesktop) {
       onClose();
-      navigate("/notifications");
+      navigate(ROUTES.ADMIN.NOTIFICATIONS);
     }
   }, [isDesktop, navigate, onClose]);
 
@@ -134,7 +135,7 @@ export function NotificationDropdown({ anchorRef, onClose }: Props) {
             className={styles.viewAllBtn}
             onClick={() => {
               onClose();
-              navigate("/notifications");
+              navigate(ROUTES.ADMIN.NOTIFICATIONS);
             }}
           >
             View all notifications

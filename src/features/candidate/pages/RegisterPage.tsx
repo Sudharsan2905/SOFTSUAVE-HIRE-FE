@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import styles from "./RegisterPage.module.css";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -12,42 +11,10 @@ import { useAppDispatch } from "@/store";
 import { candidateRegister } from "@/store/slices/authSlice";
 import { IconEye, IconEyeOff } from "@/assets/icons";
 import logoUrl from "@/assets/favicon.svg";
-
-interface GooglePrefillData {
-  email: string;
-  first_name: string;
-  last_name: string;
-  google_id: string;
-  picture: string;
-}
-
-const passwordSchema = z
-  .string()
-  .min(8, "Min 8 characters")
-  .regex(/[A-Z]/, "Must include an uppercase letter")
-  .regex(/[a-z]/, "Must include a lowercase letter")
-  .regex(/\d/, "Must include a digit")
-  .regex(/[^A-Za-z0-9]/, "Must include a special character");
-
-const schema = z
-  .object({
-    first_name: z.string().min(2, "First name must be at least 2 characters"),
-    last_name: z.string().optional(),
-    email: z.string().email("Invalid email"),
-    phone: z.string().min(10, "Enter a valid phone number"),
-    gender: z.enum(["male", "female", "other"], { required_error: "Select a gender" }),
-    dob: z.string().optional(),
-    college_name: z.string().optional(),
-    college_city: z.string().optional(),
-    password: passwordSchema,
-    confirm_password: z.string(),
-  })
-  .refine((d) => d.password === d.confirm_password, {
-    message: "Passwords do not match",
-    path: ["confirm_password"],
-  });
-
-type FormData = z.infer<typeof schema>;
+import { ROUTES } from "@/constants/routes";
+import { GENDER_OPTIONS } from "@/constants/app";
+import { candidateRegisterSchema, CandidateRegisterForm } from "@/features/auth/constants";
+import type { GooglePrefillData } from "@/features/candidate/types";
 
 export default function RegisterPage() {
   const dispatch = useAppDispatch();
@@ -68,8 +35,8 @@ export default function RegisterPage() {
     setValue,
     formState: { errors, isSubmitting },
     setError,
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
+  } = useForm<CandidateRegisterForm>({
+    resolver: zodResolver(candidateRegisterSchema),
     defaultValues: {
       first_name: googleData?.first_name ?? "",
       last_name: googleData?.last_name ?? "",
@@ -85,7 +52,7 @@ export default function RegisterPage() {
     }
   }, [googleData, setValue]);
 
-  const onSubmit = async (values: FormData) => {
+  const onSubmit = async (values: CandidateRegisterForm) => {
     const { confirm_password: _c, ...payload } = values;
     const finalPayload: Record<string, unknown> = { ...payload };
     if (googleData?.google_id) {
@@ -93,8 +60,8 @@ export default function RegisterPage() {
     }
     try {
       await dispatch(candidateRegister(finalPayload)).unwrap();
-      if (shareLink) navigate(`/candidate/login?share=${shareLink}`);
-      else navigate("/candidate/dashboard");
+      if (shareLink) navigate(`${ROUTES.CANDIDATE.LOGIN}?share=${shareLink}`);
+      else navigate(ROUTES.CANDIDATE.DASHBOARD);
     } catch (e: unknown) {
       setError("root", { message: (e as { message?: string })?.message ?? "Registration failed" });
     }
@@ -181,11 +148,7 @@ export default function RegisterPage() {
                       value={field.value}
                       onChange={field.onChange}
                       placeholder="Select gender"
-                      options={[
-                        { value: "male", label: "Male" },
-                        { value: "female", label: "Female" },
-                        { value: "other", label: "Other" },
-                      ]}
+                      options={GENDER_OPTIONS}
                       error={errors.gender?.message}
                     />
                   )}
@@ -279,7 +242,11 @@ export default function RegisterPage() {
             <p className={styles.footer}>
               Already have an account?{" "}
               <Link
-                to={shareLink ? `/candidate/login?share=${shareLink}` : "/candidate/login"}
+                to={
+                  shareLink
+                    ? `${ROUTES.CANDIDATE.LOGIN}?share=${shareLink}`
+                    : ROUTES.CANDIDATE.LOGIN
+                }
                 className={styles.link}
               >
                 Sign in

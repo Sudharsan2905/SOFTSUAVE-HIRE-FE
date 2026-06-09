@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Spinner } from "@/components/ui/Spinner";
 import { api } from "@/utils/api";
+import { API_ENDPOINTS } from "@/constants/api";
+import { ROUTES } from "@/constants/routes";
 import { Assessment } from "@/types";
 import {
   IconCamera,
@@ -101,7 +103,7 @@ export default function InstructionsPage() {
     setCheckingNetwork(true);
     setNetworkStatus("checking");
     try {
-      const { data } = await api.get(`/api/candidate/assessment/${shareLink}`);
+      const { data } = await api.get(API_ENDPOINTS.CANDIDATE.ASSESSMENT(shareLink));
       setAssessment(data?.data || null);
       setNetworkStatus("connected");
     } catch {
@@ -115,7 +117,7 @@ export default function InstructionsPage() {
     const load = async () => {
       setIsLoading(true);
       try {
-        const { data } = await api.get(`/api/candidate/assessment/${shareLink}`);
+        const { data } = await api.get(API_ENDPOINTS.CANDIDATE.ASSESSMENT(shareLink!));
         setAssessment(data?.data || null);
         setNetworkStatus("connected");
       } catch {
@@ -228,16 +230,16 @@ export default function InstructionsPage() {
 
     setStarting(true);
     try {
-      const { data } = await api.post(`/api/candidate/assessment/${shareLink}/start`);
+      const { data } = await api.post(API_ENDPOINTS.CANDIDATE.ASSESSMENT_START(shareLink!));
       const submissionId = data.data?.id;
       if (shareLink && submissionId) saveSubmissionId(shareLink, submissionId);
       if (submissionId) startSession(submissionId as string);
-      navigate(`/assessment/${shareLink}/interview/${submissionId}`, { replace: true });
+      navigate(ROUTES.ASSESSMENT.interview(shareLink!, submissionId as string), { replace: true });
     } catch (e: unknown) {
       const msg = extractStartErrorMessage(e);
       if (msg.toLowerCase().includes("already completed")) {
         if (shareLink) markAssessmentDone(shareLink);
-        navigate(`/assessment/${shareLink}/completed`, { replace: true });
+        navigate(ROUTES.ASSESSMENT.completed(shareLink!), { replace: true });
       } else {
         toast.error(msg || "Failed to start assessment");
       }

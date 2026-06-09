@@ -1,0 +1,1 @@
+export { NOTIFICATIONS_SUCCESS, NOTIFICATIONS_ERRORS } from "./messages";

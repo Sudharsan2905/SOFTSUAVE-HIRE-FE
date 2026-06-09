@@ -1,4 +1,4 @@
-import { SubmissionStatus } from "../types";
+import { SubmissionStatus } from "@/constants/enums";
 
 export interface StatusColorConfig {
   bg: string;

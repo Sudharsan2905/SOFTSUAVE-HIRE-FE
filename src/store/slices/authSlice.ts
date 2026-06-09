@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { User } from "@/types";
 import { api } from "@/utils/api";
+import { API_ENDPOINTS } from "@/constants/api";
+import { LOCAL_STORAGE_KEYS } from "@/constants/storage";
 import toast from "react-hot-toast";
 
 interface AuthState {
@@ -11,17 +13,13 @@ interface AuthState {
   isLoading: boolean;
 }
 
-const TOKEN_KEY = "ssh_access";
-const REFRESH_KEY = "ssh_refresh";
-const USER_KEY = "ssh_user";
-
 const loadFromStorage = (): Partial<AuthState> => {
   try {
     return {
-      accessToken: localStorage.getItem(TOKEN_KEY),
-      refreshToken: localStorage.getItem(REFRESH_KEY),
-      user: JSON.parse(localStorage.getItem(USER_KEY) ?? "null"),
-      isAuthenticated: !!localStorage.getItem(TOKEN_KEY),
+      accessToken: localStorage.getItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN),
+      refreshToken: localStorage.getItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN),
+      user: JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.USER) ?? "null"),
+      isAuthenticated: !!localStorage.getItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN),
     };
   } catch {
     return {};
@@ -32,7 +30,7 @@ export const adminLogin = createAsyncThunk(
   "auth/adminLogin",
   async (payload: { email: string; password: string }, { rejectWithValue }) => {
     try {
-      const { data } = await api.post("/api/auth/admin/login", payload);
+      const { data } = await api.post(API_ENDPOINTS.AUTH.ADMIN_LOGIN, payload);
       return data.data;
     } catch (err: unknown) {
       const msg =
@@ -47,7 +45,7 @@ export const candidateLogin = createAsyncThunk(
   "auth/candidateLogin",
   async (payload: { email: string; password: string }, { rejectWithValue }) => {
     try {
-      const { data } = await api.post("/api/auth/login", payload);
+      const { data } = await api.post(API_ENDPOINTS.AUTH.CANDIDATE_LOGIN, payload);
       return data.data;
     } catch (err: unknown) {
       const msg =
@@ -62,7 +60,7 @@ export const googleLogin = createAsyncThunk(
   "auth/googleLogin",
   async (credential: string, { rejectWithValue }) => {
     try {
-      const { data } = await api.post("/api/auth/google", { credential });
+      const { data } = await api.post(API_ENDPOINTS.AUTH.GOOGLE, { credential });
       return data.data;
     } catch (err: unknown) {
       const msg =
@@ -77,7 +75,7 @@ export const candidateRegister = createAsyncThunk(
   "auth/candidateRegister",
   async (payload: Record<string, unknown>, { rejectWithValue }) => {
     try {
-      const { data } = await api.post("/api/auth/register", payload);
+      const { data } = await api.post(API_ENDPOINTS.AUTH.CANDIDATE_REGISTER, payload);
       return data.data;
     } catch (err: unknown) {
       const msg =
@@ -103,7 +101,7 @@ const authSlice = createSlice({
   reducers: {
     logout(state) {
       if (state.refreshToken) {
-        api.post("/api/auth/logout", { refresh_token: state.refreshToken }).catch(() => {
+        api.post(API_ENDPOINTS.AUTH.LOGOUT, { refresh_token: state.refreshToken }).catch(() => {
           // best-effort: ignore logout API errors, user is already logged out locally
         });
       }
@@ -111,17 +109,17 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.refreshToken = null;
       state.isAuthenticated = false;
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(REFRESH_KEY);
-      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN);
+      localStorage.removeItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN);
+      localStorage.removeItem(LOCAL_STORAGE_KEYS.USER);
     },
     setTokens(state, action: PayloadAction<{ accessToken: string }>) {
       state.accessToken = action.payload.accessToken;
-      localStorage.setItem(TOKEN_KEY, action.payload.accessToken);
+      localStorage.setItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN, action.payload.accessToken);
     },
     updateUser(state, action: PayloadAction<User>) {
       state.user = action.payload;
-      localStorage.setItem(USER_KEY, JSON.stringify(action.payload));
+      localStorage.setItem(LOCAL_STORAGE_KEYS.USER, JSON.stringify(action.payload));
     },
     setAuthData(
       state,
@@ -132,9 +130,9 @@ const authSlice = createSlice({
       state.refreshToken = action.payload.refresh_token;
       state.user = action.payload.user;
       state.isAuthenticated = true;
-      localStorage.setItem(TOKEN_KEY, action.payload.access_token);
-      localStorage.setItem(REFRESH_KEY, action.payload.refresh_token);
-      localStorage.setItem(USER_KEY, JSON.stringify(action.payload.user));
+      localStorage.setItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN, action.payload.access_token);
+      localStorage.setItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN, action.payload.refresh_token);
+      localStorage.setItem(LOCAL_STORAGE_KEYS.USER, JSON.stringify(action.payload.user));
     },
   },
   extraReducers: (builder) => {
@@ -147,9 +145,9 @@ const authSlice = createSlice({
       state.refreshToken = action.payload.refresh_token;
       state.user = action.payload.user;
       state.isAuthenticated = true;
-      localStorage.setItem(TOKEN_KEY, action.payload.access_token);
-      localStorage.setItem(REFRESH_KEY, action.payload.refresh_token);
-      localStorage.setItem(USER_KEY, JSON.stringify(action.payload.user));
+      localStorage.setItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN, action.payload.access_token);
+      localStorage.setItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN, action.payload.refresh_token);
+      localStorage.setItem(LOCAL_STORAGE_KEYS.USER, JSON.stringify(action.payload.user));
     };
 
     builder

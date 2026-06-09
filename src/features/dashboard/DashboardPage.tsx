@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "@/store";
 import { Spinner } from "@/components/ui/Spinner";
 import { UserRole } from "@/types";
+import { ROUTES } from "@/constants/routes";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (activeWorkspace && activeWorkspace.name !== "Common") {
-      navigate(`/workspaces/${activeWorkspace.id}/assessments`, { replace: true });
+      navigate(ROUTES.ADMIN.assessments(activeWorkspace.id), { replace: true });
     }
   }, [activeWorkspace, navigate]);
 

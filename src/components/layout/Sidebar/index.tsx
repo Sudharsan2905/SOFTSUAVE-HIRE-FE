@@ -13,6 +13,7 @@ import {
   IconDotsVertical,
 } from "@/assets/icons";
 import { UserRole } from "@/types";
+import { ROUTES } from "@/constants/routes";
 
 const COLLAPSED_KEY = "ssh_sidebar_collapsed";
 const COLLAPSED_WIDTH = 65;
@@ -26,12 +27,12 @@ interface NavItem {
 
 const adminNav: NavItem[] = [
   {
-    to: "/question-bank",
+    to: ROUTES.ADMIN.QUESTION_BANK,
     label: "Knowledge Vault",
     icon: <IconQuestionBank size={21} />,
   },
   {
-    to: "/live-interviews",
+    to: ROUTES.ADMIN.LIVE_INTERVIEWS,
     label: "Live Interviews",
     icon: <IconLiveInterview size={20} />,
   },
@@ -118,7 +119,7 @@ export function Sidebar() {
           {isSuperAdmin && (
             <Tooltip content="Users" placement="right" disabled={!collapsed}>
               <NavLink
-                to="/users"
+                to={ROUTES.ADMIN.USERS}
                 className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ""}`}
               >
                 <IconUsers size={20} />

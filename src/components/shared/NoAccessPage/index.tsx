@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { IconLock } from "@/assets/icons";
 import logoUrl from "@/assets/favicon.svg";
+import { ROUTES } from "@/constants/routes";
 import styles from "./NoAccessPage.module.css";
 
 interface IconProps {
@@ -23,7 +24,7 @@ export function NoAccessPage({
   title = "Access Restricted",
   description = "You don't have permission to view this page. Contact your administrator if you believe this is a mistake.",
   showBackButton = true,
-  backTo = "/question-bank",
+  backTo = ROUTES.ADMIN.QUESTION_BANK,
   backLabel = "Go Back",
   icon: Icon = IconLock,
 }: Readonly<NoAccessPageProps>) {

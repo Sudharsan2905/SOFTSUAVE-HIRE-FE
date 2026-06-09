@@ -8,6 +8,7 @@ import { useAppSelector } from "@/store";
 import { UserRole } from "@/types";
 import { api } from "@/utils/api";
 import { isAssessmentDone } from "@/utils/assessmentSession";
+import { ROUTES } from "@/constants/routes";
 
 function Loading() {
   return (
@@ -78,12 +79,12 @@ export default function AssessmentEntry() {
   }
 
   if (!isCandidate) {
-    return <Navigate to={`/candidate/login?share=${shareLink}`} replace />;
+    return <Navigate to={`${ROUTES.CANDIDATE.LOGIN}?share=${shareLink}`} replace />;
   }
 
   if (shareLink && isAssessmentDone(shareLink)) {
-    return <Navigate to={`/assessment/${shareLink}/completed`} replace />;
+    return <Navigate to={ROUTES.ASSESSMENT.completed(shareLink)} replace />;
   }
 
-  return <Navigate to={`/assessment/${shareLink}/instructions`} replace />;
+  return <Navigate to={ROUTES.ASSESSMENT.instructions(shareLink!)} replace />;
 }

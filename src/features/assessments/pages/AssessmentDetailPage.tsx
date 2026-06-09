@@ -17,6 +17,9 @@ import { usePagination } from "@/hooks/usePagination";
 import { Assessment, Submission, PaginationMeta, SortOrder } from "@/types";
 import { SUBMISSION_STATUS_OPTIONS } from "@/constants/app";
 import { getStatusColor } from "@/constants/statusColors";
+import { API_ENDPOINTS } from "@/constants/api";
+import { ROUTES } from "@/constants/routes";
+import { ASSESSMENT_ERRORS } from "@/features/assessments/constants";
 import { ShareWizardModal } from "@/features/assessments/components/ShareWizard/ShareWizardModal";
 import {
   formatDateTime,
@@ -69,7 +72,7 @@ export default function AssessmentDetailPage() {
   useEffect(() => {
     if (!workspaceId || !id) return;
     api
-      .get(`/api/workspaces/${workspaceId}/assessments/${id}`)
+      .get(API_ENDPOINTS.ASSESSMENTS.BY_ID(workspaceId, id))
       .then(({ data }) => setAssessment(data.data ?? null))
       .catch(() => {
         /* non-critical */
@@ -90,13 +93,13 @@ export default function AssessmentDetailPage() {
         ...(dateRange.to && { to_date: dateRange.to }),
       });
       const { data } = await api.get(
-        `/api/workspaces/${workspaceId}/assessments/${id}/submissions?${params}`
+        `${API_ENDPOINTS.ASSESSMENTS.SUBMISSIONS(workspaceId!, id!)}?${params}`
       );
       setSubmissions(data.data?.submissions || []);
       setMeta(data.data?.pagination || null);
       if (data.data?.assessment_name) setAssessmentName(data.data.assessment_name);
     } catch {
-      toast.error("Failed to load submissions");
+      toast.error(ASSESSMENT_ERRORS.SUBMISSIONS_LOAD_FAILED);
     } finally {
       setIsLoading(false);
     }
@@ -114,7 +117,7 @@ export default function AssessmentDetailPage() {
     setExporting(true);
     try {
       const { data } = await api.get(
-        `/api/workspaces/${workspaceId}/assessments/${id}/submissions/export`
+        API_ENDPOINTS.ASSESSMENTS.SUBMISSIONS_EXPORT(workspaceId!, id!)
       );
       const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
@@ -132,7 +135,7 @@ export default function AssessmentDetailPage() {
         ],
       }).toFile(`${assessmentName || "assessment"}_submissions.xlsx`);
     } catch {
-      toast.error("Export failed");
+      toast.error(ASSESSMENT_ERRORS.EXPORT_FAILED);
     } finally {
       setExporting(false);
     }
@@ -230,9 +233,7 @@ export default function AssessmentDetailPage() {
                           <button
                             className={`${styles.actionBtn} ${styles.viewDetails}`}
                             onClick={() =>
-                              navigate(
-                                `/workspaces/${workspaceId}/assessments/${id}/candidates/${candidateId}`
-                              )
+                              navigate(ROUTES.ADMIN.candidateDetail(workspaceId!, id!, candidateId))
                             }
                             aria-label="View candidate details"
                           >
@@ -286,7 +287,7 @@ export default function AssessmentDetailPage() {
       />
 
       <button
-        onClick={() => navigate(`/workspaces/${workspaceId}/assessments`)}
+        onClick={() => navigate(ROUTES.ADMIN.assessments(workspaceId!))}
         style={{
           display: "flex",
           alignItems: "center",
