@@ -54,6 +54,7 @@
 }
 
 .videoArea {
+  position: relative;
   flex: 1;
   background: #0f172a;
   display: flex;
@@ -66,6 +67,39 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+/* Fullscreen toggle overlaid on the bottom-right of the video */
+.fullscreenBtn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+  z-index: 2;
+}
+
+.fullscreenBtn:hover {
+  background: rgba(15, 23, 42, 0.9);
+}
+
+/* When the video area itself is fullscreen, keep it centered on a dark backdrop */
+.videoArea:fullscreen {
+  background: #000;
+}
+
+.videoArea:fullscreen .fullscreenBtn {
+  bottom: 20px;
+  right: 20px;
 }
 
 .connecting,
@@ -91,10 +125,64 @@
   color: #64748b;
 }
 
+/* ── Warn candidate input ── */
+.warnInputArea {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
+.warnInput {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text-primary, #1e293b);
+  background: var(--bg-card, #ffffff);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.warnInput:focus {
+  border-color: var(--color-primary, #6366f1);
+}
+
+.warnInputActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
 .actions {
   display: flex;
   gap: 8px;
   padding: 12px 20px;
   border-top: 1px solid var(--border-color, #e2e8f0);
   justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* ── Tablet / mobile: stack actions so buttons never overflow the popup ── */
+@media (max-width: 600px) {
+  .header {
+    padding: 14px 16px;
+  }
+
+  .videoArea {
+    min-height: 240px;
+  }
+
+  .warnInputArea,
+  .actions {
+    padding: 12px 16px;
+  }
+
+  .actions button,
+  .warnInputActions button {
+    flex: 1 1 auto;
+  }
 }

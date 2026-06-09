@@ -4,6 +4,7 @@ import { RemoteTrack, Track } from "livekit-client";
 
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import { IconMaximize, IconMinimize } from "@/assets/icons";
 
 import styles from "./CandidateStreamPanel.module.css";
 
@@ -39,8 +40,10 @@ export function CandidateStreamPanel({
   onWarnCandidate,
 }: Readonly<CandidateStreamPanelProps>) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const videoAreaRef = useRef<HTMLDivElement>(null);
   const [warnMessage, setWarnMessage] = useState("");
   const [showWarnInput, setShowWarnInput] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const el = videoRef.current;
@@ -51,6 +54,31 @@ export function CandidateStreamPanel({
       screenTrack.detach(el);
     };
   }, [screenTrack]);
+
+  // Keep local state in sync with the browser's fullscreen status (covers Esc-key exits too)
+  useEffect(() => {
+    function handleFsChange() {
+      setIsFullscreen(document.fullscreenElement === videoAreaRef.current);
+    }
+    document.addEventListener("fullscreenchange", handleFsChange);
+    return () => document.removeEventListener("fullscreenchange", handleFsChange);
+  }, []);
+
+  async function toggleFullscreen() {
+    const el = videoAreaRef.current;
+    if (!el) return;
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else {
+        await el.requestFullscreen();
+      }
+    } catch {
+      /* fullscreen unsupported or denied — leave the side panel as-is */
+    }
+  }
+
+  const hasVideo = isConnected && !!screenTrack;
 
   const elapsedMins = session.started_at
     ? Math.floor((Date.now() - new Date(session.started_at).getTime()) / 60000)
@@ -107,7 +135,24 @@ export function CandidateStreamPanel({
         </button>
       </div>
 
-      <div className={styles.videoArea}>{renderVideoArea()}</div>
+      <div className={styles.videoArea} ref={videoAreaRef}>
+        {renderVideoArea()}
+        {hasVideo && (
+          <button
+            type="button"
+            className={styles.fullscreenBtn}
+            onClick={toggleFullscreen}
+            aria-label={isFullscreen ? "Exit full screen" : "View full screen"}
+            title={isFullscreen ? "Exit full screen" : "View full screen"}
+          >
+            {isFullscreen ? (
+              <IconMinimize size={18} color="#fff" />
+            ) : (
+              <IconMaximize size={18} color="#fff" />
+            )}
+          </button>
+        )}
+      </div>
 
       {showWarnInput && (
         <div className={styles.warnInputArea}>

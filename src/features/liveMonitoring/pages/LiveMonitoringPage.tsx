@@ -311,20 +311,32 @@ export default function LiveMonitoringPage() {
       </div>
 
       {selectedSession && (
-        <div className={styles.streamPanel}>
-          <CandidateStreamPanel
-            session={selectedSession}
-            screenTrack={screenTrack}
-            isConnected={lkConnected}
-            connectionError={lkError}
-            onTerminate={handleTerminate}
-            onResume={handleResume}
-            onClose={() => setSelectedSession(null)}
-            onWarnCandidate={(submissionId, message) => {
-              wsSendRef.current?.({ type: "warn_candidate", submission_id: submissionId, message });
-            }}
+        <>
+          {/* Backdrop only renders visually on tablet/mobile, where the panel is a popup */}
+          <div
+            className={styles.streamBackdrop}
+            onClick={() => setSelectedSession(null)}
+            aria-hidden="true"
           />
-        </div>
+          <div className={styles.streamPanel}>
+            <CandidateStreamPanel
+              session={selectedSession}
+              screenTrack={screenTrack}
+              isConnected={lkConnected}
+              connectionError={lkError}
+              onTerminate={handleTerminate}
+              onResume={handleResume}
+              onClose={() => setSelectedSession(null)}
+              onWarnCandidate={(submissionId, message) => {
+                wsSendRef.current?.({
+                  type: "warn_candidate",
+                  submission_id: submissionId,
+                  message,
+                });
+              }}
+            />
+          </div>
+        </>
       )}
     </div>
   );

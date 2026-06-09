@@ -86,6 +86,25 @@
   flex-shrink: 0;
 }
 
+/* ─── Mobile ─────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .overlay {
+    padding: 10px;
+  }
+
+  .header {
+    padding: 16px 16px 12px;
+  }
+
+  .body {
+    padding: 16px;
+  }
+
+  .footer {
+    padding: 12px 16px 16px;
+  }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

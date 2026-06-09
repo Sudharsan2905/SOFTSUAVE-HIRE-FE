@@ -183,6 +183,7 @@
   transform: translateY(-2px);
   border-color: var(--brand-orange);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  text-decoration: none;
 }
 
 .shareChipIcon {
@@ -419,6 +420,49 @@
   background: var(--bg-muted);
 }
 
+/* ─── Number stepper (custom chevron up/down) ───────────────────────────── */
+/* Hide the native browser spinner so our chevron buttons replace it. */
+.stepperInput::-webkit-outer-spin-button,
+.stepperInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.stepperInput[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.stepperBtns {
+  display: flex;
+  flex-direction: column;
+}
+
+.stepperBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.stepperBtn:hover {
+  color: var(--brand-orange);
+  background: var(--bg-muted);
+}
+
+.stepperBtn:active {
+  transform: scale(0.92);
+}
+
 /* ─── Generate row ───────────────────────────────────────────────────────── */
 .generateRow {
   display: flex;
@@ -600,9 +644,19 @@
 
 /* ─── Mobile ─────────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
+  /* Keep the two tabs side by side as real tabs — just compact them so the
+     labels still fit instead of stacking into two full-width rows. */
   .tabBar {
-    flex-direction: column;
+    gap: 4px;
+    padding: 4px;
     border-radius: var(--radius-lg);
+  }
+
+  .tabBtn {
+    height: 42px;
+    gap: 6px;
+    padding: 0 8px;
+    font-size: 13px;
   }
 
   .primaryActionBtn {
@@ -612,5 +666,10 @@
 
   .shareChips {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Stack the screenshot mode + interval/count fields onto their own rows. */
+  .screenshotOptions {
+    flex-direction: column;
   }
 }
