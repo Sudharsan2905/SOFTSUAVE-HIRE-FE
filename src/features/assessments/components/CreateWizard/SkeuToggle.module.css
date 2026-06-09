@@ -36,6 +36,7 @@
 }
 
 /* ── Sliding thumb ── */
+/* OFF → neutral dark slate (reads as inactive). */
 .track::before {
   content: "";
   position: absolute;
@@ -45,13 +46,17 @@
   height: 100%;
   background: #374151;
   border-radius: 5px;
-  transition: left 200ms ease;
+  transition:
+    left 200ms ease,
+    background 200ms ease;
   z-index: 0;
   box-shadow: 2px 0 6px rgba(0, 0, 0, 0.22);
 }
+/* ON → brand orange→red gradient (matches the app's primary action buttons). */
 .checked::before {
   left: 50%;
-  box-shadow: -2px 0 6px rgba(0, 0, 0, 0.22);
+  background: linear-gradient(135deg, var(--logo-color) 0%, var(--action-color) 100%);
+  box-shadow: -2px 0 6px rgba(255, 66, 61, 0.4);
 }
 
 /* ── Labels ── */
@@ -73,22 +78,19 @@
   pointer-events: none;
 }
 
-/* OFF state → thumb on left → OFF text glows magenta */
+/* OFF state → thumb on left → OFF text reads white over the neutral slate thumb. */
 .track:not(.checked) .offText {
   color: #ffffff;
-  text-shadow:
-    0 0 5px #ff33cc,
-    0 0 12px rgba(255, 51, 204, 0.9),
-    0 0 22px rgba(255, 51, 204, 0.5);
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.35);
 }
 
-/* ON state → thumb on right → ON text glows cyan */
+/* ON state → thumb on right → ON text glows in the brand orange→red. */
 .checked .onText {
   color: #ffffff;
   text-shadow:
-    0 0 5px #33cccc,
-    0 0 12px rgba(51, 204, 204, 0.9),
-    0 0 22px rgba(51, 204, 204, 0.5);
+    0 0 5px rgba(255, 108, 58, 0.95),
+    0 0 12px rgba(255, 66, 61, 0.75),
+    0 0 22px rgba(255, 66, 61, 0.45);
 }
 
 .label {

@@ -1,6 +1,7 @@
-import React, { useId } from "react";
+import React, { useId, useState, useEffect } from "react";
 import styles from "./Input.module.css";
 import { clsx } from "@/utils/helpers";
+import { IconChevronUp, IconChevronDown } from "@/assets/icons";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -78,6 +79,99 @@ function InputInner(
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(InputInner);
 Input.displayName = "Input";
+
+interface NumberFieldProps extends Omit<InputProps, "value" | "onChange" | "type" | "min" | "max"> {
+  value: number;
+  min?: number;
+  max?: number;
+  step?: number;
+  onValueChange: (value: number) => void;
+}
+
+export function NumberField({
+  value,
+  min,
+  max,
+  step = 1,
+  disabled,
+  onValueChange,
+  ...rest
+}: Readonly<NumberFieldProps>) {
+  const [text, setText] = useState(() => String(value));
+
+  useEffect(() => {
+    if (Number(text) !== value) setText(String(value));
+  }, [value]);
+
+  const clamp = (n: number) => {
+    let next = min !== undefined ? Math.max(min, n) : n;
+    if (max !== undefined) next = Math.min(max, next);
+    return next;
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Strip a leading zero ("0123" -> "123"); show "0" when the field is empty.
+    const stripped = e.target.value.replace(/^0+(?=\d)/, "");
+    const display = stripped === "" ? "0" : stripped;
+    setText(display);
+    onValueChange(Number(display));
+  };
+
+  const handleBlur = () => {
+    const next = clamp(Number(text));
+    onValueChange(next);
+    setText(String(next));
+  };
+
+  const handleStep = (direction: 1 | -1) => {
+    const next = clamp(Number(text) + direction * step);
+    onValueChange(next);
+    setText(String(next));
+  };
+
+  const current = Number(text);
+  const atMin = min !== undefined && current <= min;
+  const atMax = max !== undefined && current >= max;
+
+  const stepper = (
+    <span className={styles.stepper} aria-hidden="true">
+      <button
+        type="button"
+        tabIndex={-1}
+        className={styles.stepBtn}
+        disabled={disabled || atMax}
+        onClick={() => handleStep(1)}
+      >
+        <IconChevronUp size={12} />
+      </button>
+      <button
+        type="button"
+        tabIndex={-1}
+        className={styles.stepBtn}
+        disabled={disabled || atMin}
+        onClick={() => handleStep(-1)}
+      >
+        <IconChevronDown size={12} />
+      </button>
+    </span>
+  );
+
+  return (
+    <Input
+      {...rest}
+      type="number"
+      min={min}
+      max={max}
+      step={step}
+      disabled={disabled}
+      value={text}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      className={clsx(styles.numberInput, rest.className)}
+      rightElement={stepper}
+    />
+  );
+}
 
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;

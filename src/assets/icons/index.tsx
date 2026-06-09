@@ -112,6 +112,22 @@ export const IconDelete = icon(
   </>
 );
 export const IconClose = icon(<path d="M18 6 6 18M6 6l12 12" />);
+export const IconMaximize = icon(
+  <>
+    <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+    <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+    <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+    <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+  </>
+);
+export const IconMinimize = icon(
+  <>
+    <path d="M8 3v3a2 2 0 0 1-2 2H3" />
+    <path d="M21 8h-3a2 2 0 0 1-2-2V3" />
+    <path d="M3 16h3a2 2 0 0 1 2 2v3" />
+    <path d="M16 21v-3a2 2 0 0 1 2-2h3" />
+  </>
+);
 export const IconCheck = icon(<polyline points="20 6 9 17 4 12" />);
 export const IconChevronDown = icon(<polyline points="6 9 12 15 18 9" />);
 export const IconChevronRight = icon(<polyline points="9 18 15 12 9 6" />);
@@ -534,7 +550,7 @@ export const IconSlack = icon(
 
 // Microsoft Teams icon (official-style)
 export const IconMSTeams = icon(
-  <>
+  <g stroke="none">
     <path fill="url(#a)" d="M22 20h12a6 6 0 0 1 6 6v10a6 6 0 1 1-12 0V26a6 6 0 0 0-6-6Z" />
 
     <path
@@ -624,6 +640,6 @@ export const IconMSTeams = icon(
         <stop offset=".95" stopColor="#230F94" />
       </radialGradient>
     </defs>
-  </>,
+  </g>,
   "4 4 36 38"
 );

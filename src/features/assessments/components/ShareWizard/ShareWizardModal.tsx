@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import styles from "./ShareWizard.module.css";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Toggle } from "@/components/ui/Toggle";
+import { Input, NumberField } from "@/components/ui/Input";
+import { SkeuToggle } from "../CreateWizard/SkeuToggle";
 import { Select } from "@/components/ui/Select";
 import { DateTimePicker } from "@/components/datetime/DateTimePicker";
 import {
@@ -16,6 +16,7 @@ import {
   IconArrowRight,
   IconLink,
   IconChevronDown,
+  IconChevronUp,
   IconSettings,
   IconMonitor,
   IconMic,
@@ -153,8 +154,63 @@ function MonitoringToggleRow({
         <p className={styles.toggleLabel}>{label}</p>
         <p className={styles.toggleHint}>{hint}</p>
       </div>
-      <Toggle checked={checked} onChange={onChange} />
+      <SkeuToggle checked={checked} onChange={onChange} />
     </div>
+  );
+}
+
+// ─── Number stepper ───────────────────────────────────────────────────────────
+// Number input with custom chevron up/down steppers (native spinner hidden via CSS).
+
+interface NumberStepperProps {
+  label: string;
+  id: string;
+  value: number;
+  min?: number;
+  max?: number;
+  onChange: (value: number) => void;
+}
+
+function NumberStepper({ label, id, value, min = 1, max, onChange }: Readonly<NumberStepperProps>) {
+  const step = (delta: number) => {
+    const base = Number.isFinite(value) ? value : min;
+    let next = Math.max(min, base + delta);
+    if (max !== undefined) next = Math.min(max, next);
+    onChange(next);
+  };
+
+  return (
+    <NumberField
+      label={label}
+      id={id}
+      min={min}
+      max={max}
+      value={value}
+      className={styles.stepperInput}
+      onValueChange={onChange}
+      rightElement={
+        <span className={styles.stepperBtns}>
+          <button
+            type="button"
+            className={styles.stepperBtn}
+            onClick={() => step(1)}
+            aria-label={`Increase ${label}`}
+            tabIndex={-1}
+          >
+            <IconChevronUp size={16} />
+          </button>
+          <button
+            type="button"
+            className={styles.stepperBtn}
+            onClick={() => step(-1)}
+            aria-label={`Decrease ${label}`}
+            tabIndex={-1}
+          >
+            <IconChevronDown size={16} />
+          </button>
+        </span>
+      }
+    />
   );
 }
 
@@ -184,14 +240,14 @@ function PermanentTab({
   );
   const emailHref = `mailto:?subject=${emailSubject}&body=${emailBody}`;
   const teamsHref = `https://teams.microsoft.com/share?href=${encodeURIComponent(fullUrl)}`;
+  const slackHref = "https://slack.com/";
 
-  const handleSlackShare = async () => {
-    try {
-      await navigator.clipboard.writeText(fullUrl);
-      toast.success("Copied! Paste it in any Slack channel.");
-    } catch {
-      toast.error("Copy failed — please copy manually.");
-    }
+  // Slack has no prefilled-share URL, so open Slack in a new tab and silently
+  // copy the link to the clipboard so it's ready to paste into a channel.
+  const handleSlackShare = () => {
+    void navigator.clipboard.writeText(fullUrl).catch(() => {
+      /* clipboard may be blocked; Slack still opens */
+    });
   };
 
   return (
@@ -254,16 +310,18 @@ function PermanentTab({
           </span>
           <span className={styles.shareChipLabel}>Teams</span>
         </a>
-        <button
-          type="button"
-          onClick={() => void handleSlackShare()}
+        <a
+          href={slackHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => handleSlackShare()}
           className={clsx(styles.shareChip, styles.shareChipSlack)}
         >
           <span className={styles.shareChipIcon}>
             <IconSlack size={20} />
           </span>
           <span className={styles.shareChipLabel}>Slack</span>
-        </button>
+        </a>
       </div>
 
       <p className={styles.helperText}>
@@ -600,24 +658,20 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
                 }
               />
               {(monitoring.screenshot_mode ?? "time_interval") === "time_interval" ? (
-                <Input
-                  label="Interval (minutes)"
+                <NumberStepper
+                  label="Interval (seconds)"
                   id="screenshot-interval"
-                  type="number"
                   min={1}
                   value={monitoring.screenshot_interval_seconds ?? 5}
-                  onChange={(e) =>
-                    setMonitoringKey("screenshot_interval_seconds", Number(e.target.value))
-                  }
+                  onChange={(v) => setMonitoringKey("screenshot_interval_seconds", v)}
                 />
               ) : (
-                <Input
+                <NumberStepper
                   label="Total screenshots"
                   id="screenshot-count"
-                  type="number"
                   min={1}
                   value={monitoring.screenshot_count ?? 10}
-                  onChange={(e) => setMonitoringKey("screenshot_count", Number(e.target.value))}
+                  onChange={(v) => setMonitoringKey("screenshot_count", v)}
                 />
               )}
             </div>

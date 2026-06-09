@@ -1,11 +1,20 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import styles from "./Step1BasicInfo.module.css";
-import { Input, Textarea } from "@/components/ui/Input";
+import { Input, Textarea, NumberField } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { SkeuToggle } from "./SkeuToggle";
 import { Badge } from "@/components/ui/Badge";
-import { IconPlus, IconDelete, IconMonitor, IconShield } from "@/assets/icons";
+import {
+  IconPlus,
+  IconDelete,
+  IconMonitor,
+  IconShield,
+  IconMic,
+  IconVideoCamera,
+  IconCamera,
+  IconSettings,
+} from "@/assets/icons";
 import { AssessmentDraft, RoundSetup } from "./WizardContainer";
 import { AssessmentAccessibility, MonitoringConfig } from "@/types";
 
@@ -13,6 +22,29 @@ interface Props {
   draft: AssessmentDraft;
   onNext: (info: Partial<AssessmentDraft>) => void;
   disableNext?: boolean;
+}
+
+// ─── Monitoring toggle row — icon + label/hint on the left, toggle on the right ──
+
+interface MonitoringRowProps {
+  icon: ReactNode;
+  label: string;
+  hint: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}
+
+function MonitoringRow({ icon, label, hint, checked, onChange }: Readonly<MonitoringRowProps>) {
+  return (
+    <div className={styles.toggleRow}>
+      <div className={styles.toggleIcon}>{icon}</div>
+      <div className={styles.toggleMeta}>
+        <p className={styles.toggleLabel}>{label}</p>
+        <p className={styles.toggleHint}>{hint}</p>
+      </div>
+      <SkeuToggle checked={checked} onChange={onChange} />
+    </div>
+  );
 }
 
 export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<Props>) {
@@ -147,77 +179,82 @@ export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<
 
         {accessibility === "monitoring" && (
           <div className={styles.monitoringConfig}>
-            <h4
-              style={{
-                fontSize: 14,
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                marginBottom: 12,
-              }}
-            >
-              Monitoring Options
-            </h4>
+            <div className={styles.monitoringHeader}>
+              <span className={styles.monitoringHeaderIcon}>
+                <IconSettings size={20} />
+              </span>
+              <div className={styles.monitoringHeaderMeta}>
+                <span className={styles.monitoringTitle}>Monitoring Options</span>
+                <span className={styles.monitoringSubtitle}>
+                  Choose different monitoring settings
+                </span>
+              </div>
+            </div>
             <div className={styles.toggleList}>
-              <SkeuToggle
-                label="Tab switch detection (auto-submit on violation)"
+              <MonitoringRow
+                icon={<IconMonitor size={18} />}
+                label="Tab switch detection"
+                hint="Flag tab or window switches — auto-submits on violation"
                 checked={monitoring.tab_monitoring}
-                onChange={(v: boolean) => setMonitoring((p) => ({ ...p, tab_monitoring: v }))}
+                onChange={(v) => setMonitoring((p) => ({ ...p, tab_monitoring: v }))}
               />
-              <SkeuToggle
+              <MonitoringRow
+                icon={<IconMic size={18} />}
                 label="Voice/noise monitoring"
+                hint="Detect sustained background audio or speech"
                 checked={monitoring.audio_monitoring}
-                onChange={(v: boolean) => setMonitoring((p) => ({ ...p, audio_monitoring: v }))}
+                onChange={(v) => setMonitoring((p) => ({ ...p, audio_monitoring: v }))}
               />
-              <SkeuToggle
+              <MonitoringRow
+                icon={<IconVideoCamera size={18} />}
                 label="Camera required"
+                hint="Live camera feed checked for face presence"
                 checked={monitoring.video_monitoring}
-                onChange={(v: boolean) => setMonitoring((p) => ({ ...p, video_monitoring: v }))}
+                onChange={(v) => setMonitoring((p) => ({ ...p, video_monitoring: v }))}
               />
-              <SkeuToggle
+              <MonitoringRow
+                icon={<IconCamera size={18} />}
                 label="Screenshot capture"
+                hint="Periodic screenshots uploaded during the session"
                 checked={monitoring.screenshot_enabled}
-                onChange={(v: boolean) => setMonitoring((p) => ({ ...p, screenshot_enabled: v }))}
+                onChange={(v) => setMonitoring((p) => ({ ...p, screenshot_enabled: v }))}
               />
             </div>
-            <div style={{ marginTop: 14 }}>
-              <Select
-                label="Screenshot mode"
-                options={[
-                  { value: "time_interval", label: "Time interval" },
-                  { value: "count", label: "Total count" },
-                ]}
-                value={monitoring.screenshot_mode}
-                onChange={(v) =>
-                  setMonitoring((p) => ({ ...p, screenshot_mode: v as "time_interval" | "count" }))
-                }
-              />
-              {monitoring.screenshot_mode === "time_interval" ? (
-                <Input
-                  label="Interval (minutes)"
-                  type="number"
-                  min={1}
-                  value={monitoring.screenshot_interval_seconds ?? 5}
-                  onChange={(e) =>
+            {monitoring.screenshot_enabled && (
+              <div className={styles.screenshotOptions}>
+                <Select
+                  label="Screenshot mode"
+                  options={[
+                    { value: "time_interval", label: "Time interval" },
+                    { value: "count", label: "Total count" },
+                  ]}
+                  value={monitoring.screenshot_mode}
+                  onChange={(v) =>
                     setMonitoring((p) => ({
                       ...p,
-                      screenshot_interval_seconds: Number(e.target.value),
+                      screenshot_mode: v as "time_interval" | "count",
                     }))
                   }
-                  style={{ marginTop: 10 }}
                 />
-              ) : (
-                <Input
-                  label="Total screenshots per candidate"
-                  type="number"
-                  min={1}
-                  value={monitoring.screenshot_count ?? 10}
-                  onChange={(e) =>
-                    setMonitoring((p) => ({ ...p, screenshot_count: Number(e.target.value) }))
-                  }
-                  style={{ marginTop: 10 }}
-                />
-              )}
-            </div>
+                {monitoring.screenshot_mode === "time_interval" ? (
+                  <NumberField
+                    label="Interval (seconds)"
+                    min={1}
+                    value={monitoring.screenshot_interval_seconds ?? 5}
+                    onValueChange={(n) =>
+                      setMonitoring((p) => ({ ...p, screenshot_interval_seconds: n }))
+                    }
+                  />
+                ) : (
+                  <NumberField
+                    label="Total screenshots per candidate"
+                    min={1}
+                    value={monitoring.screenshot_count ?? 10}
+                    onValueChange={(n) => setMonitoring((p) => ({ ...p, screenshot_count: n }))}
+                  />
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
