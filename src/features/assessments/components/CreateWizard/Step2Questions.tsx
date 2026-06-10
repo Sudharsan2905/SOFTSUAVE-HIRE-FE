@@ -159,42 +159,46 @@ export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Reado
         <div className={styles.paneHeader}>
           <h3 className={styles.paneTitle}>Knowledge Vault</h3>
         </div>
-        <div className={styles.filters}>
-          <Select
-            options={categories.map((c) => ({ value: c.id, label: c.name }))}
-            value={selectedCategory}
-            onChange={setSelectedCategory}
-            placeholder="Category"
-            fullWidth={false}
-            style={{ flex: 1 }}
-          />
-          <Input
-            placeholder="Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            leftElement={<IconSearch size={13} />}
-            fullWidth={false}
-            style={{ flex: 1 }}
-          />
-          <Select
-            options={COMPLEXITY_OPTIONS}
-            value={complexity}
-            onChange={setComplexity}
-            placeholder="Complexity"
-            fullWidth={false}
-            style={{ minWidth: 110 }}
-          />
-          <Select
-            options={QUESTION_TYPE_OPTIONS}
-            value={questionType}
-            onChange={setQuestionType}
-            placeholder="Type"
-            fullWidth={false}
-            style={{ minWidth: 110 }}
-          />
-        </div>
+        <div style={{ overflow: "scroll" }}>
+          <div className={styles.filters}>
+            <Select
+              options={categories.map((c) => ({ value: c.id, label: c.name }))}
+              value={selectedCategory}
+              onChange={setSelectedCategory}
+              placeholder="Category"
+              fullWidth={false}
+              style={{ flex: 1 }}
+            />
+            <Input
+              placeholder="Search..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              leftElement={<IconSearch size={13} />}
+              fullWidth={false}
+              style={{ flex: 1 }}
+            />
+            <div style={{ width: "100%", display: "flex", gap: 8, marginTop: 8 }}>
+              <Select
+                options={COMPLEXITY_OPTIONS}
+                value={complexity}
+                onChange={setComplexity}
+                placeholder="Complexity"
+                fullWidth={false}
+                style={{ width: "50%" }}
+              />
+              <Select
+                options={QUESTION_TYPE_OPTIONS}
+                value={questionType}
+                onChange={setQuestionType}
+                placeholder="Type"
+                fullWidth={false}
+                style={{ width: "50%" }}
+              />
+            </div>
+          </div>
 
-        {browserContent}
+          {browserContent}
+        </div>
       </div>
     </div>
   );

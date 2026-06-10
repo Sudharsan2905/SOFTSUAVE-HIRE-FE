@@ -114,7 +114,7 @@ export default function CandidateLoginPage() {
                 <input
                   className={styles.input}
                   type="email"
-                  placeholder="Username"
+                  placeholder="Email or Username"
                   autoComplete="email"
                   {...register("email")}
                 />

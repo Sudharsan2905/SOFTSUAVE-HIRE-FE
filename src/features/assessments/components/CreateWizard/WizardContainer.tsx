@@ -53,8 +53,7 @@ function RoundNavigationFooter({
       }}
     >
       <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-        Selected:{" "}
-        <strong style={{ color: selectedColor }}>{roundSelected}</strong> /{" "}
+        Selected: <strong style={{ color: selectedColor }}>{roundSelected}</strong> /{" "}
         <strong>{roundRequired}</strong> required (can select more for randomization)
       </div>
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
@@ -176,21 +175,20 @@ export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
       title={modalTitle}
       size="xl"
       disableBackdropClose
+      className={step === 2 ? styles.questionStepModal : undefined}
       footer={
-        step === 1
-          ? undefined
-          : (
-            <RoundNavigationFooter
-              roundSelected={roundSelected}
-              roundRequired={roundRequired}
-              isLastRound={isLastRound}
-              saving={saving}
-              finishLabel={finishLabel}
-              onPrev={handleRoundPrev}
-              onNext={handleRoundNext}
-              onFinish={handleFinish}
-            />
-          )
+        step === 1 ? undefined : (
+          <RoundNavigationFooter
+            roundSelected={roundSelected}
+            roundRequired={roundRequired}
+            isLastRound={isLastRound}
+            saving={saving}
+            finishLabel={finishLabel}
+            onPrev={handleRoundPrev}
+            onNext={handleRoundNext}
+            onFinish={handleFinish}
+          />
+        )
       }
     >
       <div className={styles.wizard}>

@@ -20,7 +20,7 @@ function CodeBlock(props: Readonly<React.ComponentPropsWithoutRef<"code">>) {
         style={oneDark}
         language={match?.[1] ?? "text"}
         PreTag="div"
-        customStyle={{ borderRadius: 6, fontSize: 13, margin: "8px 0" }}
+        customStyle={{ borderRadius: 6, fontSize: 13, margin: "8px 0", maxWidth: "100%" }}
       >
         {codeStr}
       </SyntaxHighlighter>

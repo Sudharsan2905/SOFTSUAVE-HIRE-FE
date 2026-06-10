@@ -401,6 +401,27 @@
   max-height: 300px;
   overflow-y: auto;
 }
+
+/* Empty state — no admin users available to invite */
+.inviteEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 36px 20px;
+  text-align: center;
+  color: var(--text-tertiary);
+}
+.inviteEmptyTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.inviteEmptyHint {
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
 .inviteItem {
   display: flex;
   align-items: center;

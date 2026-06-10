@@ -46,6 +46,7 @@ interface DatePickerProps {
   disabled?: boolean;
   id?: string;
   name?: string;
+  dropdownClassName?: string;
 }
 
 export function DatePicker({
@@ -59,6 +60,7 @@ export function DatePicker({
   disabled,
   id,
   name,
+  dropdownClassName,
 }: Readonly<DatePickerProps>) {
   const uid = useId();
   const inputId = id ?? `datepicker-${uid}`;
@@ -211,7 +213,7 @@ export function DatePicker({
         createPortal(
           <section
             ref={popupRef}
-            className={styles.popup}
+            className={clsx(styles.popup, dropdownClassName)}
             style={popupStyle}
             aria-label="Date picker calendar"
           >

@@ -140,10 +140,17 @@
   border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 8px;
   font-size: 14px;
-  color: var(--text-primary, #1e293b);
-  background: var(--bg-card, #ffffff);
+  /* Pinned to explicit dark-on-white: the panel card is a fixed white surface,
+     so theme text tokens (which go light in dark mode) would be invisible here. */
+  color: #1e293b;
+  caret-color: #1e293b;
+  background: #ffffff;
   outline: none;
   transition: border-color 0.15s;
+}
+
+.warnInput::placeholder {
+  color: #94a3b8;
 }
 
 .warnInput:focus {

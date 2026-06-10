@@ -22,6 +22,7 @@ interface SelectProps {
   disabled?: boolean;
   id?: string;
   className?: string;
+  dropdownClassName?: string;
   style?: React.CSSProperties;
 }
 
@@ -38,6 +39,7 @@ export function Select({
   disabled,
   id,
   className,
+  dropdownClassName,
   style,
 }: Readonly<SelectProps>) {
   const uid = useId();
@@ -130,7 +132,11 @@ export function Select({
 
       {open &&
         createPortal(
-          <div ref={containerRef} className={styles.dropdown} style={dropdownStyle}>
+          <div
+            ref={containerRef}
+            className={clsx(styles.dropdown, dropdownClassName)}
+            style={dropdownStyle}
+          >
             {options.map((opt) => (
               <button
                 key={opt.value}

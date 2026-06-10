@@ -54,12 +54,16 @@ export function StatusBadge({ status }: Readonly<{ status: string }>) {
     in_progress: "primary",
     completed: "success",
     malpractice: "error",
+    terminated: "error",
+    on_hold: "default",
   };
   const labels: Record<string, string> = {
-    pending: "Pending",
-    in_progress: "In Progress",
+    pending: "Not Started",
+    in_progress: "Attending",
     completed: "Completed",
     malpractice: "Malpractice",
+    terminated: "Terminated",
+    on_hold: "On Hold",
   };
   return (
     <Badge variant={map[status] ?? "default"} dot>

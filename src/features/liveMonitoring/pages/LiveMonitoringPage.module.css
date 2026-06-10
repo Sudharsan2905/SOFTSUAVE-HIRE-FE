@@ -12,6 +12,10 @@
   flex-direction: column;
   min-width: 0;
   overflow-y: auto;
+  /* Explicit — without it, `overflow-y: auto` makes `overflow-x` compute to
+     `auto` too, producing a spurious horizontal scrollbar when a child (e.g. a
+     long meta line) is slightly too wide. */
+  overflow-x: hidden;
   transition: flex 0.25s ease;
 }
 
@@ -46,35 +50,43 @@
   font-size: 12px;
 }
 
-/* ── Session list ── */
 .sessionList {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  padding: 8px 0;
+  gap: 12px;
 }
 
 .sessionCard {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 20px;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  padding: 16px;
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: var(--shadow-xs, 0 1px 2px rgba(15, 23, 42, 0.04));
   cursor: pointer;
   text-align: left;
-  transition: background 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    transform 0.15s;
   width: 100%;
 }
 
 .sessionCard:hover {
-  background: var(--bg-muted, #f8fafc);
+  border-color: var(--brand-orange, #f4511e);
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(15, 23, 42, 0.08));
+  transform: translateY(-1px);
 }
 
-.sessionCardSelected {
+.sessionCardSelected,
+.sessionCardSelected:hover {
   background: var(--color-primary-light, #eef2ff);
+  border-color: transparent;
   border-left: 3px solid var(--color-primary, #6366f1);
+  box-shadow: none;
+  transform: none;
 }
 
 .cardLeft {
@@ -146,6 +158,8 @@
   margin: 0;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
   gap: 6px;
 }
 
@@ -208,6 +222,38 @@
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(15, 23, 42, 0.35);
+  }
+}
+
+/* ── Mobile: flow with the document so AppLayout's bottom-nav padding clears
+   the fixed BottomNav (matches the Assessments page). The fixed-height,
+   internally-scrolling two-pane layout is desktop-only. ── */
+@media (max-width: 768px) {
+  .pageRoot {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+  }
+
+  .listPanel {
+    overflow: visible;
+  }
+}
+
+/* ── Phone: stack the status badge & watch link onto their own row ── */
+@media (max-width: 600px) {
+  .sessionCard {
+    flex-wrap: wrap;
+  }
+
+  .cardRight {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color, #e2e8f0);
   }
 }
 

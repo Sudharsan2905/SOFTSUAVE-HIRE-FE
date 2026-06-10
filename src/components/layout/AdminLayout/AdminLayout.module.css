@@ -6,6 +6,12 @@
 /* The right-side column that holds AppHeader + page content */
 .main {
   flex: 1;
+  /* As a flex item, `min-width: auto` would let this column expand to its
+     content's min-content width (a wide code block or a non-wrapping button
+     row), pushing the whole page — including the sticky AppHeader — past the
+     viewport and causing horizontal scroll. `min-width: 0` lets it shrink to
+     the viewport so `overflow-x: clip` below can contain any wide child. */
+  min-width: 0;
   margin-left: var(--sidebar-width);
   min-height: 100vh;
   /* `clip` (not `hidden`) prevents horizontal overflow WITHOUT turning this

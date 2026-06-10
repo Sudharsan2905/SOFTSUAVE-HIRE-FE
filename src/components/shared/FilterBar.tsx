@@ -70,12 +70,13 @@ export function FilterBar({
   dateRangePlaceholder = "Date range",
   children,
 }: Readonly<FilterBarProps>) {
-  // Count active dropdown slots to choose the mobile layout condition
+  // Count active *filter* dropdown slots to choose the mobile layout condition.
+  // The sort-by dropdown is intentionally excluded — it lives in the utilities
+  // cluster (inline with the sort/view toggles), not in the filter grid.
   const dropdownCount = [
     showComplexity && onComplexityChange,
     showQuestionType && onQuestionTypeChange,
     statusOptions && onStatusChange,
-    sortByOptions && onSortByChange,
     dateRange && onDateRangeChange,
   ].filter(Boolean).length;
 
@@ -156,16 +157,6 @@ export function FilterBar({
                 />
               </div>
             )}
-            {sortByOptions && onSortByChange && (
-              <div className={styles.filterSelect}>
-                <Select
-                  options={sortByOptions}
-                  value={sortBy}
-                  onChange={onSortByChange}
-                  fullWidth
-                />
-              </div>
-            )}
             {dateRange && onDateRangeChange && (
               <div className={styles.datePickerWrap}>
                 <DateRangePicker
@@ -180,8 +171,13 @@ export function FilterBar({
           </div>
         )}
 
-        {/* Utilities: Sort order toggle + View mode switch + Export */}
+        {/* Utilities: Sort-by dropdown + Sort order toggle + View mode switch + Export */}
         <div className={styles.utilities}>
+          {sortByOptions && onSortByChange && (
+            <div className={styles.filterSelect}>
+              <Select options={sortByOptions} value={sortBy} onChange={onSortByChange} fullWidth />
+            </div>
+          )}
           <Button
             variant="secondary"
             size="md"
