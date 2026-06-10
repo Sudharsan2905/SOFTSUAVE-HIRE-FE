@@ -175,10 +175,20 @@
 }
 
 .others {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   text-align: center;
   font-size: 14px;
   color: #6a6a7e;
   margin: 26px 0 16px;
+}
+.others::before,
+.others::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e2e2ea;
 }
 .others strong {
   color: #1c1c2e;

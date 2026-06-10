@@ -227,6 +227,17 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    width: 100%;
+  }
+  /* Sort-by dropdown expands to fill the utilities row; the toggles stay fixed —
+     mirrors the single-dropdown layout (see image reference). */
+  .midMulti .utilities .filterSelect {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
+  .midMulti .utilities > :not(.filterSelect) {
+    flex-shrink: 0;
   }
 
   /* ── CONDITION B: single dropdown ─────────────────────────────

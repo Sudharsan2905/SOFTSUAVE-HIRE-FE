@@ -478,7 +478,7 @@ export default function QuestionsPage() {
         title={category?.name ?? "Questions"}
         subtitle={`${meta?.total ?? 0} questions`}
         actions={
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <Button
               variant="secondary"
               size="sm"

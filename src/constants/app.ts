@@ -21,8 +21,8 @@ export const PAGE_SIZE_OPTIONS = [20, 50, 100, 200] as const;
 export const DEFAULT_PAGE_SIZE = 20;
 
 export const SUBMISSION_STATUS_OPTIONS = [
-  { value: "pending", label: "Pending" },
-  { value: "in_progress", label: "In Progress" },
+  { value: "pending", label: "Not Started" },
+  { value: "in_progress", label: "Attending" },
   { value: "completed", label: "Completed" },
   { value: "malpractice", label: "Malpractice" },
   { value: "on_hold", label: "On Hold" },

@@ -2,6 +2,26 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  /* Fill the modal body so the question step's panes can flex to the available
+     height. On step 1 the body is content-sized, so 100% simply resolves to the
+     form's natural height — no effect. */
+  height: 100%;
+  min-height: 0;
+}
+
+/* Question step (step 2) — pin the modal to the full available viewport height
+   so its body has a definite height for the panes to flex into, eliminating the
+   outer modal scrollbar. */
+.questionStepModal {
+  height: calc(100vh - 32px);
+}
+
+@media (max-width: 768px) {
+  .questionStepModal {
+    /* Let short content size the modal naturally on mobile (panes flow + each
+       list caps its own height). */
+    height: auto;
+  }
 }
 
 .steps {

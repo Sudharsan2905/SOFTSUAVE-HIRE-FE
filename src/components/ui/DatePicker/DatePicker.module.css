@@ -257,7 +257,8 @@
     color var(--transition-fast);
 }
 .day:hover:not(:disabled) {
-  background: var(--bg-muted);
+  background: var(--brand-orange-soft);
+  color: var(--brand-orange);
 }
 .dayToday {
   font-weight: 700;

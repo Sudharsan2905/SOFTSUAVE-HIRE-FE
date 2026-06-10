@@ -134,20 +134,18 @@ export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<
                 )}
               </div>
               <div className={styles.roundGrid}>
-                <Input
+                <NumberField
                   label="No. of Questions"
-                  type="number"
                   min={1}
                   value={round.question_count}
-                  onChange={(e) => updateRound(idx, "question_count", Number(e.target.value))}
+                  onValueChange={(v) => updateRound(idx, "question_count", v)}
                   hint="You can select more for randomization"
                 />
-                <Input
+                <NumberField
                   label="Duration (minutes)"
-                  type="number"
                   min={1}
                   value={round.max_duration_minutes}
-                  onChange={(e) => updateRound(idx, "max_duration_minutes", Number(e.target.value))}
+                  onValueChange={(v) => updateRound(idx, "max_duration_minutes", v)}
                 />
               </div>
             </div>

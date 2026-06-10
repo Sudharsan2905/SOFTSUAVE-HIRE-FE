@@ -1,11 +1,12 @@
-import { useState, type ComponentType, type ReactNode } from "react";
+import { useState, useRef, type ComponentType, type ReactNode } from "react";
 import styles from "./CandidateDetailsTabs.module.css";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
+import { useClickOutside } from "@/hooks/useClickOutside";
 import { RichText } from "@/components/ui/RichText";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
-import { clsx, formatDateTime } from "@/utils/helpers";
+import { clsx, formatDateTime, downloadBlob } from "@/utils/helpers";
 import { api } from "@/utils/api";
 import { API_ENDPOINTS } from "@/constants/api";
 import toast from "react-hot-toast";
@@ -26,6 +27,8 @@ import {
   IconMic,
   IconChevronLeft,
   IconChevronRight,
+  IconChevronDown,
+  IconDownload,
 } from "@/assets/icons";
 import type {
   MalpracticeType,
@@ -353,18 +356,11 @@ function QuestionReview({ index, qa }: Readonly<{ index: number; qa: QuestionAns
     <article className={styles.questionCard}>
       <div className={styles.questionHead}>
         <span className={styles.questionNo}>Q{index + 1}</span>
-        <span className={styles.questionType}>
-          {getReviewQuestionTypeLabel(qa.question_type)}
-        </span>
+        <span className={styles.questionType}>{getReviewQuestionTypeLabel(qa.question_type)}</span>
         {qa.is_correct !== null && (
-          <span
-            className={clsx(
-              styles.correctnessBadge,
-              qa.is_correct ? styles.correctnessBadgeCorrect : styles.correctnessBadgeWrong
-            )}
-          >
+          <Badge variant={qa.is_correct ? "success" : "error"} className={styles.correctnessBadge}>
             {qa.is_correct ? "Correct" : "Incorrect"}
-          </span>
+          </Badge>
         )}
       </div>
 
@@ -373,8 +369,9 @@ function QuestionReview({ index, qa }: Readonly<{ index: number; qa: QuestionAns
       {isMcq && qa.options.length > 0 && (
         <div className={styles.optionList}>
           {qa.options.map((opt) => {
-            const isChosen = qa.candidate_answer.includes(opt.id);
+            const isChosen = candidateAnswers.includes(opt.id);
             const isCorrect = opt.is_correct === true;
+            // Only the candidate's own wrong selection is marked red.
             const wrongChoice = isChosen && !isCorrect;
             return (
               <div
@@ -421,8 +418,64 @@ function QuestionReview({ index, qa }: Readonly<{ index: number; qa: QuestionAns
   );
 }
 
-function RoundsReview({ rounds }: Readonly<{ rounds: RoundResult[] }>) {
+interface RoundsReviewProps {
+  rounds: RoundResult[];
+  workspaceId: string;
+  assessmentId: string;
+  submissionId: string;
+}
+
+function RoundsReview({
+  rounds,
+  workspaceId,
+  assessmentId,
+  submissionId,
+}: Readonly<RoundsReviewProps>) {
   const [activeRound, setActiveRound] = useState(() => rounds[0]?.round_number ?? null);
+  const [downloading, setDownloading] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useClickOutside(menuRef, () => setMenuOpen(false), menuOpen);
+
+  const fetchRoundReport = async (roundNumber: number) => {
+    const res = await api.get(
+      API_ENDPOINTS.ASSESSMENTS.SUBMISSION_ROUND_REPORT(
+        workspaceId,
+        assessmentId,
+        submissionId
+        // roundNumber
+      ),
+      { responseType: "blob" }
+    );
+    downloadBlob(res.data as Blob, `round-${roundNumber}-report.pdf`);
+  };
+
+  const handleDownloadRound = async (roundNumber: number) => {
+    setMenuOpen(false);
+    setDownloading(true);
+    try {
+      await fetchRoundReport(roundNumber);
+    } catch {
+      toast.error("Failed to download the round report.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    setMenuOpen(false);
+    setDownloading(true);
+    try {
+      for (const round of rounds) {
+        await fetchRoundReport(round.round_number);
+      }
+    } catch {
+      toast.error("Failed to download the round reports.");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   if (rounds.length === 0) {
     return <p className={styles.emptyPlaceholder}>No rounds recorded for this candidate.</p>;
@@ -432,23 +485,82 @@ function RoundsReview({ rounds }: Readonly<{ rounds: RoundResult[] }>) {
 
   return (
     <div className={styles.rounds}>
-      {/* Round selector tabs — one per round in the response. */}
-      <div className={styles.roundTabBar} role="tablist" aria-label="Rounds">
-        {rounds.map((round) => (
-          <button
-            key={round.round_number}
-            type="button"
-            role="tab"
-            aria-selected={round.round_number === selected.round_number}
-            className={clsx(
-              styles.roundTab,
-              round.round_number === selected.round_number && styles.roundTabActive
-            )}
-            onClick={() => setActiveRound(round.round_number)}
-          >
-            Round {round.round_number}
-          </button>
-        ))}
+      {/* Round sub-tabs with the PDF download control. On tablet/laptop the
+          download sits to the right of the round tabs; on mobile it stacks
+          above them. */}
+      <div className={styles.roundTabRow}>
+        {/* Round selector tabs — one per round in the response. */}
+        <div className={styles.roundTabBar} role="tablist" aria-label="Rounds">
+          {rounds.map((round) => (
+            <button
+              key={round.round_number}
+              type="button"
+              role="tab"
+              aria-selected={round.round_number === selected.round_number}
+              className={clsx(
+                styles.roundTab,
+                round.round_number === selected.round_number && styles.roundTabActive
+              )}
+              onClick={() => setActiveRound(round.round_number)}
+            >
+              Round {round.round_number}
+            </button>
+          ))}
+        </div>
+
+        {/* Download a round's PDF report */}
+        <div className={styles.roundDownloadBar}>
+          {rounds.length === 1 ? (
+            <Button
+              variant="secondary"
+              leftIcon={<IconDownload size={16} />}
+              onClick={() => void handleDownloadRound(rounds[0].round_number)}
+              isLoading={downloading}
+            >
+              Download PDF
+            </Button>
+          ) : (
+            <div className={styles.downloadDropdown} ref={menuRef}>
+              <Button
+                variant="secondary"
+                leftIcon={<IconDownload size={16} />}
+                rightIcon={<IconChevronDown size={16} />}
+                onClick={() => setMenuOpen((open) => !open)}
+                isLoading={downloading}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+              >
+                Download PDF
+              </Button>
+              {menuOpen && (
+                <ul className={styles.downloadMenu} role="menu">
+                  <li role="none">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles.downloadMenuItem}
+                      onClick={() => void handleDownloadAll()}
+                    >
+                      All Rounds
+                    </button>
+                  </li>
+                  {rounds.map((round) => (
+                    <li key={round.round_number} role="none">
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className={styles.downloadMenuItem}
+                        onClick={() => void handleDownloadRound(round.round_number)}
+                      >
+                        Round {round.round_number}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <section className={styles.round}>
@@ -847,7 +959,14 @@ export function CandidateDetailsTabs({
       />
     );
   } else if (activeTab.id === "rounds") {
-    panelContent = <RoundsReview rounds={data.rounds} />;
+    panelContent = (
+      <RoundsReview
+        rounds={data.rounds}
+        workspaceId={workspaceId}
+        assessmentId={assessmentId}
+        submissionId={data.submission_id}
+      />
+    );
   } else if (activeTab.id === "malpractice") {
     panelContent = <MalpracticeTab events={data.malpractice_events} />;
   } else if (activeTab.id === "screenshots") {

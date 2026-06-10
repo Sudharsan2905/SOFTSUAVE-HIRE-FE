@@ -151,6 +151,7 @@ export default function RegisterPage() {
                       placeholder="Select gender"
                       options={GENDER_OPTIONS}
                       error={errors.gender?.message}
+                      dropdownClassName={styles.selectMenu}
                     />
                   )}
                 />
@@ -164,6 +165,7 @@ export default function RegisterPage() {
                       onChange={field.onChange}
                       error={errors.dob?.message}
                       placeholder="Select date of birth"
+                      dropdownClassName={styles.selectMenu}
                     />
                   )}
                 />
@@ -177,63 +179,61 @@ export default function RegisterPage() {
                   {...register("college_name")}
                 />
                 <Input
-                  label="College City"
+                  label="City"
                   placeholder="City (optional)"
                   autoComplete="address-level2"
                   error={errors.college_city?.message}
                   {...register("college_city")}
                 />
               </div>
-              <div className={styles.row}>
-                <Input
-                  label="Password *"
-                  type={showPass ? "text" : "password"}
-                  placeholder="Min 8 characters"
-                  autoComplete="new-password"
-                  error={errors.password?.message}
-                  rightElement={
-                    <button
-                      type="button"
-                      onClick={() => setShowPass((p) => !p)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        color: "#9a9aae",
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                    >
-                      {showPass ? <IconEyeOff size={16} /> : <IconEye size={16} />}
-                    </button>
-                  }
-                  {...register("password")}
-                />
-                <Input
-                  label="Confirm Password *"
-                  type={showConfirm ? "text" : "password"}
-                  placeholder="Repeat password"
-                  autoComplete="new-password"
-                  error={errors.confirm_password?.message}
-                  rightElement={
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirm((p) => !p)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        color: "#9a9aae",
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                    >
-                      {showConfirm ? <IconEyeOff size={16} /> : <IconEye size={16} />}
-                    </button>
-                  }
-                  {...register("confirm_password")}
-                />
-              </div>
+              <Input
+                label="Password *"
+                type={showPass ? "text" : "password"}
+                placeholder="Min 8 characters"
+                autoComplete="new-password"
+                error={errors.password?.message}
+                rightElement={
+                  <button
+                    type="button"
+                    onClick={() => setShowPass((p) => !p)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      color: "#9a9aae",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    {showPass ? <IconEyeOff size={16} /> : <IconEye size={16} />}
+                  </button>
+                }
+                {...register("password")}
+              />
+              <Input
+                label="Confirm Password *"
+                type={showConfirm ? "text" : "password"}
+                placeholder="Repeat password"
+                autoComplete="new-password"
+                error={errors.confirm_password?.message}
+                rightElement={
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm((p) => !p)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      color: "#9a9aae",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    {showConfirm ? <IconEyeOff size={16} /> : <IconEye size={16} />}
+                  </button>
+                }
+                {...register("confirm_password")}
+              />
               {errors.root && <p className={styles.error}>{errors.root.message}</p>}
               <Button type="submit" fullWidth isLoading={isSubmitting} className={styles.submitBtn}>
                 Create Account

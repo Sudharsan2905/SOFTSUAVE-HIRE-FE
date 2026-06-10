@@ -675,40 +675,48 @@ export function WorkspaceSwitcher({ collapsed }: Readonly<{ collapsed?: boolean 
           </>
         }
       >
-        <div className={styles.inviteList}>
-          {adminUsers.map((u) => {
-            const isMember = !!activeWorkspace?.members?.some((m) => m.user_id === u.id);
-            const selected = !isMember && selectedUsers.includes(u.id);
-            return (
-              <button
-                key={u.id}
-                type="button"
-                className={`${styles.inviteItem} ${isMember ? styles.inviteItemMember : ""} ${selected ? styles.inviteItemSelected : ""}`}
-                onClick={() => handleInviteItemActivate(isMember, u.id)}
-              >
-                <div
-                  className={styles.inviteAvatar}
-                  style={{ background: getAvatarColor(getFullName(u)) }}
+        {adminUsers.length === 0 ? (
+          <div className={styles.inviteEmpty}>
+            <IconUserPlus size={28} color="var(--text-tertiary)" />
+            <p className={styles.inviteEmptyTitle}>No members to invite</p>
+            <p className={styles.inviteEmptyHint}>Create new admin users to invite them here.</p>
+          </div>
+        ) : (
+          <div className={styles.inviteList}>
+            {adminUsers.map((u) => {
+              const isMember = !!activeWorkspace?.members?.some((m) => m.user_id === u.id);
+              const selected = !isMember && selectedUsers.includes(u.id);
+              return (
+                <button
+                  key={u.id}
+                  type="button"
+                  className={`${styles.inviteItem} ${isMember ? styles.inviteItemMember : ""} ${selected ? styles.inviteItemSelected : ""}`}
+                  onClick={() => handleInviteItemActivate(isMember, u.id)}
                 >
-                  {getInitials(getFullName(u))}
-                </div>
-                <div className={styles.inviteInfo}>
-                  <p className={styles.inviteName}>{getFullName(u)}</p>
-                  <p className={styles.inviteEmail}>{u.email}</p>
-                </div>
-                {isMember ? (
-                  <span className={styles.memberBadge}>Member</span>
-                ) : (
                   <div
-                    className={`${styles.inviteCheck} ${selected ? styles.inviteCheckSelected : ""}`}
+                    className={styles.inviteAvatar}
+                    style={{ background: getAvatarColor(getFullName(u)) }}
                   >
-                    {selected && <IconCheck size={12} />}
+                    {getInitials(getFullName(u))}
                   </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
+                  <div className={styles.inviteInfo}>
+                    <p className={styles.inviteName}>{getFullName(u)}</p>
+                    <p className={styles.inviteEmail}>{u.email}</p>
+                  </div>
+                  {isMember ? (
+                    <span className={styles.memberBadge}>Member</span>
+                  ) : (
+                    <div
+                      className={`${styles.inviteCheck} ${selected ? styles.inviteCheckSelected : ""}`}
+                    >
+                      {selected && <IconCheck size={12} />}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </Modal>
 
       {/* Create Modal */}

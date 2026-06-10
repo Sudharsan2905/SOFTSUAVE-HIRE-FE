@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { RemoteTrack, Track } from "livekit-client";
 
@@ -78,8 +78,6 @@ export function CandidateStreamPanel({
     }
   }
 
-  const hasVideo = isConnected && !!screenTrack;
-
   const elapsedMins = session.started_at
     ? Math.floor((Date.now() - new Date(session.started_at).getTime()) / 60000)
     : 0;
@@ -137,21 +135,14 @@ export function CandidateStreamPanel({
 
       <div className={styles.videoArea} ref={videoAreaRef}>
         {renderVideoArea()}
-        {hasVideo && (
-          <button
-            type="button"
-            className={styles.fullscreenBtn}
-            onClick={toggleFullscreen}
-            aria-label={isFullscreen ? "Exit full screen" : "View full screen"}
-            title={isFullscreen ? "Exit full screen" : "View full screen"}
-          >
-            {isFullscreen ? (
-              <IconMinimize size={18} color="#fff" />
-            ) : (
-              <IconMaximize size={18} color="#fff" />
-            )}
-          </button>
-        )}
+        <button
+          type="button"
+          className={styles.fullscreenBtn}
+          onClick={toggleFullscreen}
+          aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+        >
+          {isFullscreen ? <IconMinimize /> : <IconMaximize />}
+        </button>
       </div>
 
       {showWarnInput && (

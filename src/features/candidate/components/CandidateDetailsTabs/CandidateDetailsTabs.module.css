@@ -87,15 +87,15 @@
   color: var(--text-secondary);
 }
 
-/* Shared empty-state message for tabs with no data (rounds, malpractice, screenshots). */
+/* Shared empty-state message for tabs with no data (rounds, malpractice, screenshots).
+   Compact, fixed-height box that scrolls if needed rather than filling the viewport. */
 .emptyPlaceholder {
   margin: 0;
-  /* Center the message in the middle of the tall panel. The min-height mirrors
-     .tabContent's min-height minus its 20px top/bottom padding (300 + 40). */
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 340px);
+  height: 200px;
+  overflow-y: auto;
   padding: 32px 16px;
   text-align: center;
   font-size: 16px;
@@ -111,8 +111,11 @@
 }
 
 .statusCard {
-  /* Plain content inside the merged card — no separate card chrome. */
-  padding: 0;
+  /* Whole Over All block wrapped as a single card. */
+  padding: 20px;
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-lg);
 }
 
 .statusCardTitle {
@@ -244,13 +247,84 @@
   gap: 16px;
 }
 
+/* Round sub-tabs row: round tabs on the left, PDF download on the right.
+   The divider lives on the row so it spans beneath both. On mobile the row
+   stacks (download above the tabs) via the breakpoint below. */
+.roundTabRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  border-bottom: 1.5px solid var(--border-default);
+}
+
+/* Round PDF download — round picker + download button, pushed to the right. */
+.roundDownloadBar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-left: auto;
+  /* Keep the button clear of the divider line. */
+  padding-bottom: 8px;
+}
+
+.downloadDropdown {
+  position: relative;
+  display: inline-flex;
+}
+
+.downloadMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  min-width: 160px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.downloadMenuItem {
+  width: 100%;
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.downloadMenuItem:hover {
+  background: var(--bg-active);
+}
+
 /* Per-round sub-tabs — underline nav style (mirrors the main tab bar), sits
    above the active round panel with a full-width divider beneath. */
 .roundTabBar {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  border-bottom: 1.5px solid var(--border-default);
+}
+
+/* Mobile: stack the download above the round tabs (original layout). */
+@media (max-width: 768px) {
+  .roundTabRow {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .roundDownloadBar {
+    margin-left: 0;
+    padding-bottom: 0;
+  }
 }
 
 .roundTab {
