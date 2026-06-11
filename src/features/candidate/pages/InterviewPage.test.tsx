@@ -94,7 +94,10 @@ vi.mock("@/features/candidate/hooks/useFullscreenEnforcement", () => ({
 }));
 
 vi.mock("@/features/candidate/hooks/useLiveKit", () => ({
-  useLiveKitPublisher: () => ({ isPublishing: false, startPublishing: vi.fn(async () => undefined) }),
+  useLiveKitPublisher: () => ({
+    isPublishing: false,
+    startPublishing: vi.fn(async () => undefined),
+  }),
 }));
 
 vi.mock("@/features/candidate/hooks/useMalpracticeCoordinator", () => ({
@@ -105,7 +108,9 @@ vi.mock("@/features/candidate/hooks/useTabMonitoring", () => ({ useTabMonitoring
 vi.mock("@/features/candidate/hooks/useAudioMonitoring", () => ({ useAudioMonitoring: vi.fn() }));
 vi.mock("@/features/candidate/hooks/useVideoMonitoring", () => ({ useVideoMonitoring: vi.fn() }));
 vi.mock("@/features/candidate/hooks/useScreenMonitoring", () => ({ useScreenMonitoring: vi.fn() }));
-vi.mock("@/features/candidate/hooks/useDevtoolsMonitoring", () => ({ useDevtoolsMonitoring: vi.fn() }));
+vi.mock("@/features/candidate/hooks/useDevtoolsMonitoring", () => ({
+  useDevtoolsMonitoring: vi.fn(),
+}));
 
 // ─── Mock child components ──────────────────────────────────────────────────
 vi.mock("@/features/candidate/components/ExamSetupScreen", () => ({
@@ -264,7 +269,12 @@ const ROUND_DATA = {
 
 const ASSESSMENT_DATA = {
   rounds: [
-    { round_number: 1, question_count: 3, max_duration_minutes: 30, question_ids: ["q1", "q2", "q3"] },
+    {
+      round_number: 1,
+      question_count: 3,
+      max_duration_minutes: 30,
+      question_ids: ["q1", "q2", "q3"],
+    },
     { round_number: 2, question_count: 2, max_duration_minutes: 20, question_ids: ["q4", "q5"] },
   ],
 };

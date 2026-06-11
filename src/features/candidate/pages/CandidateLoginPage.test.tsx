@@ -6,7 +6,11 @@ import { renderWithProviders } from "@/test/utils";
 
 vi.mock("@/assets/favicon.svg", () => ({ default: "/logo.svg" }));
 vi.mock("@/utils/api", () => ({
-  api: { post: vi.fn(), get: vi.fn(), interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } } },
+  api: {
+    post: vi.fn(),
+    get: vi.fn(),
+    interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } },
+  },
   extractApiErrorMessage: (e: unknown, fb: string) => fb,
 }));
 vi.mock("@react-oauth/google", () => ({

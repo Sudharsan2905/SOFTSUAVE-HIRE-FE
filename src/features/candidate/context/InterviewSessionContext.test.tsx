@@ -2,10 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import { renderHook } from "@testing-library/react";
 import React from "react";
-import {
-  InterviewSessionProvider,
-  useInterviewSession,
-} from "./InterviewSessionContext";
+import { InterviewSessionProvider, useInterviewSession } from "./InterviewSessionContext";
 
 // ── Mock @/store/hooks (useAppSelector) ─────────────────────────────────────
 vi.mock("@/store/hooks", () => ({
@@ -101,10 +98,7 @@ describe("InterviewSessionProvider / useInterviewSession", () => {
 
     // Simulate the network hook invoking onSessionState via the forwarding wrapper
     act(() => {
-      (capturedNetworkOptions.onSessionState as (rs: number | null, qi: number) => void)?.(
-        120,
-        2
-      );
+      (capturedNetworkOptions.onSessionState as (rs: number | null, qi: number) => void)?.(120, 2);
     });
 
     expect(onSessionState).toHaveBeenCalledWith(120, 2);
@@ -134,10 +128,7 @@ describe("InterviewSessionProvider / useInterviewSession", () => {
     });
 
     act(() => {
-      (capturedNetworkOptions.onResumeApproved as (rs: number | null, qi: number) => void)?.(
-        90,
-        1
-      );
+      (capturedNetworkOptions.onResumeApproved as (rs: number | null, qi: number) => void)?.(90, 1);
     });
 
     expect(onResumeApproved).toHaveBeenCalledWith(90, 1);
@@ -212,10 +203,7 @@ describe("InterviewSessionProvider / useInterviewSession", () => {
     });
 
     act(() => {
-      (capturedNetworkOptions.onSessionState as (rs: number | null, qi: number) => void)?.(
-        60,
-        0
-      );
+      (capturedNetworkOptions.onSessionState as (rs: number | null, qi: number) => void)?.(60, 0);
     });
     expect(onSessionState).toHaveBeenCalledWith(60, 0);
 

@@ -109,9 +109,7 @@ describe("AdminLoginPage", () => {
     it("does not show validation errors on initial render", () => {
       setup();
       expect(screen.queryByText("Enter a valid email")).not.toBeInTheDocument();
-      expect(
-        screen.queryByText("Password must be at least 6 characters")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Password must be at least 6 characters")).not.toBeInTheDocument();
     });
   });
 
@@ -177,9 +175,7 @@ describe("AdminLoginPage", () => {
       await user.click(screen.getByRole("button", { name: /sign in/i }));
 
       await waitFor(() => {
-        expect(
-          screen.getByText("Password must be at least 6 characters")
-        ).toBeInTheDocument();
+        expect(screen.getByText("Password must be at least 6 characters")).toBeInTheDocument();
       });
     });
 
@@ -189,9 +185,7 @@ describe("AdminLoginPage", () => {
 
       await waitFor(() => {
         expect(screen.getByText("Enter a valid email")).toBeInTheDocument();
-        expect(
-          screen.getByText("Password must be at least 6 characters")
-        ).toBeInTheDocument();
+        expect(screen.getByText("Password must be at least 6 characters")).toBeInTheDocument();
       });
     });
 

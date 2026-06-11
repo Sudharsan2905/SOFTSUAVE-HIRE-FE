@@ -18,7 +18,9 @@ describe("useRoundTimer", () => {
     const { result } = renderHook(() =>
       useRoundTimer({ initialSeconds: 300, active: false, onExpired: vi.fn() })
     );
-    act(() => { vi.advanceTimersByTime(3000); });
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
     expect(result.current.timeLeft).toBe(300);
   });
 
@@ -26,7 +28,9 @@ describe("useRoundTimer", () => {
     const { result } = renderHook(() =>
       useRoundTimer({ initialSeconds: 10, active: true, onExpired: vi.fn() })
     );
-    act(() => { vi.advanceTimersByTime(3000); });
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
     expect(result.current.timeLeft).toBe(7);
     expect(result.current.timeLeftRef.current).toBe(7);
   });
@@ -39,7 +43,9 @@ describe("useRoundTimer", () => {
     // Advance exactly to expiry — do not go past it, because the interval fires
     // once per second and functional updaters are batched; advancing past 0 causes
     // multiple updaters with next<=0 to all call onExpired before clearInterval takes effect.
-    act(() => { vi.advanceTimersByTime(3000); });
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
     expect(result.current.timeLeft).toBe(0);
     expect(onExpired).toHaveBeenCalledTimes(1);
   });
@@ -49,18 +55,21 @@ describe("useRoundTimer", () => {
       ({ active }) => useRoundTimer({ initialSeconds: 10, active, onExpired: vi.fn() }),
       { initialProps: { active: true } }
     );
-    act(() => { vi.advanceTimersByTime(3000); });
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
     expect(result.current.timeLeft).toBe(7);
 
     rerender({ active: false });
-    act(() => { vi.advanceTimersByTime(3000); });
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
     expect(result.current.timeLeft).toBe(7);
   });
 
   it("syncs to new initialSeconds when prop changes", () => {
     const { result, rerender } = renderHook(
-      ({ initialSeconds }) =>
-        useRoundTimer({ initialSeconds, active: false, onExpired: vi.fn() }),
+      ({ initialSeconds }) => useRoundTimer({ initialSeconds, active: false, onExpired: vi.fn() }),
       { initialProps: { initialSeconds: 300 } }
     );
     rerender({ initialSeconds: 600 });

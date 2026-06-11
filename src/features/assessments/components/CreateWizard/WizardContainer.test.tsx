@@ -133,10 +133,7 @@ vi.mock("./Step2Questions", () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Step2Questions: ({ onUpdateQuestions, currentRound }: any) => (
     <div data-testid="step2" data-round={currentRound}>
-      <button
-        data-testid="select-questions"
-        onClick={() => onUpdateQuestions(["q1", "q2"])}
-      >
+      <button data-testid="select-questions" onClick={() => onUpdateQuestions(["q1", "q2"])}>
         Select 2 Questions
       </button>
       {/* Selects enough for the multi-round test (round 2 needs 3 questions) */}
@@ -155,11 +152,7 @@ vi.mock("@/components/ui/Select", () => ({
   Select: ({ label, value, onChange, options }: any) => (
     <div>
       {label && <label>{label}</label>}
-      <select
-        aria-label={label}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
+      <select aria-label={label} value={value} onChange={(e) => onChange(e.target.value)}>
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {options?.map((o: any) => (
           <option key={o.value} value={o.value}>
@@ -267,9 +260,7 @@ describe("CreateAssessmentWizard", () => {
     const user = userEvent.setup();
     renderWizard();
     await advanceToStep2(user);
-    expect(screen.getByTestId("modal-title")).toHaveTextContent(
-      "Select Questions — Round 1 of 1"
-    );
+    expect(screen.getByTestId("modal-title")).toHaveTextContent("Select Questions — Round 1 of 1");
   });
 
   // ── 5. Back from step 2 ──────────────────────────────────────────────────
@@ -335,9 +326,7 @@ describe("CreateAssessmentWizard", () => {
     await user.click(screen.getByTestId("select-questions"));
     await user.click(screen.getByRole("button", { name: /finish & create/i }));
     await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith(
-        "Failed to create assessment. Please try again."
-      )
+      expect(toast.error).toHaveBeenCalledWith("Failed to create assessment. Please try again.")
     );
   });
 
@@ -350,10 +339,7 @@ describe("CreateAssessmentWizard", () => {
     await user.click(screen.getByTestId("select-questions"));
     await user.click(screen.getByRole("button", { name: /save changes/i }));
     await waitFor(() => expect(mockPut).toHaveBeenCalledTimes(1));
-    expect(mockPut).toHaveBeenCalledWith(
-      "/workspaces/ws-1/assessments/a-42",
-      expect.any(Object)
-    );
+    expect(mockPut).toHaveBeenCalledWith("/workspaces/ws-1/assessments/a-42", expect.any(Object));
     expect(mockPost).not.toHaveBeenCalled();
   });
 
@@ -431,13 +417,9 @@ describe("CreateAssessmentWizard", () => {
     renderWizard();
     await user.click(screen.getByTestId("step1-next-multi"));
     await user.click(screen.getByTestId("select-questions")); // satisfy round 1 count
-    expect(screen.getByTestId("modal-title")).toHaveTextContent(
-      "Select Questions — Round 1 of 2"
-    );
+    expect(screen.getByTestId("modal-title")).toHaveTextContent("Select Questions — Round 1 of 2");
     await user.click(screen.getByRole("button", { name: /next round/i }));
-    expect(screen.getByTestId("modal-title")).toHaveTextContent(
-      "Select Questions — Round 2 of 2"
-    );
+    expect(screen.getByTestId("modal-title")).toHaveTextContent("Select Questions — Round 2 of 2");
     expect(screen.getByTestId("step2")).toHaveAttribute("data-round", "1");
   });
 
@@ -530,9 +512,7 @@ describe("CreateAssessmentWizard", () => {
     await user.click(screen.getByTestId("select-questions"));
     await user.click(screen.getByRole("button", { name: /save changes/i }));
     await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith(
-        "Failed to update assessment. Please try again."
-      )
+      expect(toast.error).toHaveBeenCalledWith("Failed to update assessment. Please try again.")
     );
   });
 

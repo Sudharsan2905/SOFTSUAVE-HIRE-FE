@@ -35,13 +35,7 @@ vi.mock("@/components/shared/FilterBar", () => ({
 }));
 
 vi.mock("@/features/assessments/components/ShareWizard/ShareWizardModal", () => ({
-  ShareWizardModal: ({
-    isOpen,
-    onClose,
-  }: {
-    isOpen: boolean;
-    onClose: () => void;
-  }) =>
+  ShareWizardModal: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) =>
     isOpen ? (
       <div data-testid="share-wizard">
         <button data-testid="close-share-wizard" onClick={onClose}>
@@ -165,9 +159,7 @@ describe("AssessmentDetailPage", () => {
   it("shows empty state when no submissions", async () => {
     mockGet.mockResolvedValue(makeSubmissionsResponse([]));
     renderPage();
-    await waitFor(() =>
-      expect(screen.getByText(/no submissions yet/i)).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText(/no submissions yet/i)).toBeInTheDocument());
   });
 
   it("renders submissions table rows", async () => {
@@ -182,9 +174,7 @@ describe("AssessmentDetailPage", () => {
   it("handles API error and shows empty state", async () => {
     mockGet.mockRejectedValue(new Error("Network error"));
     renderPage();
-    await waitFor(() =>
-      expect(screen.getByText(/no submissions yet/i)).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText(/no submissions yet/i)).toBeInTheDocument());
   });
 
   it("renders the filter bar", async () => {
@@ -232,7 +222,9 @@ describe("AssessmentDetailPage", () => {
   it("shows score percentage for a submission with score_percentage=85.5", async () => {
     mockGet
       .mockResolvedValueOnce(makeAssessmentResponse())
-      .mockResolvedValueOnce(makeSubmissionsResponse([makeSingleSubmission({ score_percentage: 85.5 })]));
+      .mockResolvedValueOnce(
+        makeSubmissionsResponse([makeSingleSubmission({ score_percentage: 85.5 })])
+      );
     renderPage();
     await waitFor(() => expect(screen.getByText("85.5%")).toBeInTheDocument());
   });
@@ -286,9 +278,7 @@ describe("AssessmentDetailPage", () => {
     const shareBtn = screen.getByRole("button", { name: /share/i });
     expect(shareBtn).not.toBeDisabled();
     fireEvent.click(shareBtn);
-    await waitFor(() =>
-      expect(screen.getByTestId("share-wizard")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByTestId("share-wizard")).toBeInTheDocument());
   });
 
   // -------------------------------------------------------------------------
@@ -305,9 +295,7 @@ describe("AssessmentDetailPage", () => {
     await waitFor(() => expect(screen.getByTestId("share-wizard")).toBeInTheDocument());
     // Close modal via onClose
     fireEvent.click(screen.getByTestId("close-share-wizard"));
-    await waitFor(() =>
-      expect(screen.queryByTestId("share-wizard")).not.toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.queryByTestId("share-wizard")).not.toBeInTheDocument());
   });
 
   // -------------------------------------------------------------------------
@@ -315,9 +303,18 @@ describe("AssessmentDetailPage", () => {
   // -------------------------------------------------------------------------
   it("renders 3 rows when 3 submissions are returned", async () => {
     const subs = [
-      makeSingleSubmission({ id: "sub-1", candidate: { id: "c1", first_name: "Alice", last_name: "A", email: "a@x.com" } }),
-      makeSingleSubmission({ id: "sub-2", candidate: { id: "c2", first_name: "Bob", last_name: "B", email: "b@x.com" } }),
-      makeSingleSubmission({ id: "sub-3", candidate: { id: "c3", first_name: "Carol", last_name: "C", email: "c@x.com" } }),
+      makeSingleSubmission({
+        id: "sub-1",
+        candidate: { id: "c1", first_name: "Alice", last_name: "A", email: "a@x.com" },
+      }),
+      makeSingleSubmission({
+        id: "sub-2",
+        candidate: { id: "c2", first_name: "Bob", last_name: "B", email: "b@x.com" },
+      }),
+      makeSingleSubmission({
+        id: "sub-3",
+        candidate: { id: "c3", first_name: "Carol", last_name: "C", email: "c@x.com" },
+      }),
     ];
     mockGet
       .mockResolvedValueOnce(makeAssessmentResponse())
@@ -349,9 +346,7 @@ describe("AssessmentDetailPage", () => {
   it("clicking the candidate details action navigates to candidate detail page", async () => {
     mockGet
       .mockResolvedValueOnce(makeAssessmentResponse())
-      .mockResolvedValueOnce(
-        makeSubmissionsResponse([makeSingleSubmission()])
-      );
+      .mockResolvedValueOnce(makeSubmissionsResponse([makeSingleSubmission()]));
     renderPage();
     await waitFor(() => expect(screen.getByText("Alice Smith")).toBeInTheDocument());
     const detailBtn = screen.getByRole("button", { name: /view candidate details/i });
@@ -380,18 +375,16 @@ describe("AssessmentDetailPage", () => {
   // Pagination renders with correct total
   // -------------------------------------------------------------------------
   it("renders pagination component when submissions exist", async () => {
-    mockGet
-      .mockResolvedValueOnce(makeAssessmentResponse())
-      .mockResolvedValueOnce(
-        makeSubmissionsResponseWithPagination([makeSingleSubmission()], {
-          page: 1,
-          page_size: 10,
-          total: 1,
-          total_pages: 1,
-          has_prev: false,
-          has_next: false,
-        })
-      );
+    mockGet.mockResolvedValueOnce(makeAssessmentResponse()).mockResolvedValueOnce(
+      makeSubmissionsResponseWithPagination([makeSingleSubmission()], {
+        page: 1,
+        page_size: 10,
+        total: 1,
+        total_pages: 1,
+        has_prev: false,
+        has_next: false,
+      })
+    );
     renderPage();
     await waitFor(() => expect(screen.getByText("Alice Smith")).toBeInTheDocument());
     // Pagination renders Prev/Next nav buttons
@@ -432,9 +425,7 @@ describe("AssessmentDetailPage", () => {
     // assessment has 2 rounds
     mockGet
       .mockResolvedValueOnce(makeAssessmentResponse()) // rounds: [{id:"r1"},{id:"r2"}]
-      .mockResolvedValueOnce(
-        makeSubmissionsResponse([makeSingleSubmission({ current_round: 1 })])
-      );
+      .mockResolvedValueOnce(makeSubmissionsResponse([makeSingleSubmission({ current_round: 1 })]));
     renderPage();
     await waitFor(() => expect(screen.getByText("1 / 2")).toBeInTheDocument());
   });

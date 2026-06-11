@@ -10,9 +10,7 @@ function makeAssessment(overrides: Partial<Assessment> = {}): Assessment {
     name: "JavaScript Test",
     description: "A JS assessment",
     accessibility: "public",
-    rounds: [
-      { id: "r1", round_number: 1, question_count: 10, max_duration_minutes: 30 },
-    ],
+    rounds: [{ id: "r1", round_number: 1, question_count: 10, max_duration_minutes: 30 }],
     created_at: "2024-01-01T00:00:00Z",
     updated_at: "2024-01-01T00:00:00Z",
     submission_count: 5,

@@ -27,12 +27,10 @@ let rafCallback: FrameRequestCallback | null = null;
 beforeEach(() => {
   rafCallback = null;
 
-  vi.spyOn(globalThis, "requestAnimationFrame").mockImplementation(
-    (cb: FrameRequestCallback) => {
-      rafCallback = cb;
-      return 1;
-    }
-  );
+  vi.spyOn(globalThis, "requestAnimationFrame").mockImplementation((cb: FrameRequestCallback) => {
+    rafCallback = cb;
+    return 1;
+  });
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   vi.spyOn(globalThis, "cancelAnimationFrame").mockImplementation(() => {});
 

@@ -11,8 +11,7 @@ vi.mock("../../../utils/api", () => ({
 vi.mock("@/constants/api", () => ({
   API_ENDPOINTS: {
     CANDIDATE: {
-      SUBMISSION_MALPRACTICE: (id: string) =>
-        `/candidate/submission/${id}/malpractice`,
+      SUBMISSION_MALPRACTICE: (id: string) => `/candidate/submission/${id}/malpractice`,
     },
   },
 }));
@@ -59,19 +58,17 @@ describe("useMalpracticeCoordinator", () => {
   });
 
   it("returns flagViolation and resetFirstWarnings", () => {
-    const { result } = renderHook(
-      () => useMalpracticeCoordinator(defaultOptions),
-      { wrapper: makeWrapper(store) }
-    );
+    const { result } = renderHook(() => useMalpracticeCoordinator(defaultOptions), {
+      wrapper: makeWrapper(store),
+    });
     expect(typeof result.current.flagViolation).toBe("function");
     expect(typeof result.current.resetFirstWarnings).toBe("function");
   });
 
   it("first occurrence of two-strike type dispatches UI warning only (no POST)", async () => {
-    const { result } = renderHook(
-      () => useMalpracticeCoordinator(defaultOptions),
-      { wrapper: makeWrapper(store) }
-    );
+    const { result } = renderHook(() => useMalpracticeCoordinator(defaultOptions), {
+      wrapper: makeWrapper(store),
+    });
 
     await act(async () => {
       await result.current.flagViolation({ type: "face_absence" });
@@ -86,10 +83,9 @@ describe("useMalpracticeCoordinator", () => {
   });
 
   it("second occurrence of two-strike type goes through full POST flow", async () => {
-    const { result } = renderHook(
-      () => useMalpracticeCoordinator(defaultOptions),
-      { wrapper: makeWrapper(store) }
-    );
+    const { result } = renderHook(() => useMalpracticeCoordinator(defaultOptions), {
+      wrapper: makeWrapper(store),
+    });
 
     await act(async () => {
       await result.current.flagViolation({ type: "face_absence" });
@@ -104,10 +100,9 @@ describe("useMalpracticeCoordinator", () => {
   });
 
   it("non-two-strike type goes directly to POST on first occurrence", async () => {
-    const { result } = renderHook(
-      () => useMalpracticeCoordinator(defaultOptions),
-      { wrapper: makeWrapper(store) }
-    );
+    const { result } = renderHook(() => useMalpracticeCoordinator(defaultOptions), {
+      wrapper: makeWrapper(store),
+    });
 
     await act(async () => {
       await result.current.flagViolation({ type: "tab_switch" });
@@ -122,10 +117,9 @@ describe("useMalpracticeCoordinator", () => {
       data: { data: { malpractice_count: 2, is_terminal: false, event_index: 3 } },
     });
 
-    const { result } = renderHook(
-      () => useMalpracticeCoordinator(defaultOptions),
-      { wrapper: makeWrapper(store) }
-    );
+    const { result } = renderHook(() => useMalpracticeCoordinator(defaultOptions), {
+      wrapper: makeWrapper(store),
+    });
 
     await act(async () => {
       await result.current.flagViolation({ type: "tab_switch" });
@@ -165,10 +159,9 @@ describe("useMalpracticeCoordinator", () => {
     const captureId = Symbol("cap");
     mockPrepareCapture.mockReturnValue(captureId);
 
-    const { result } = renderHook(
-      () => useMalpracticeCoordinator(defaultOptions),
-      { wrapper: makeWrapper(store) }
-    );
+    const { result } = renderHook(() => useMalpracticeCoordinator(defaultOptions), {
+      wrapper: makeWrapper(store),
+    });
 
     await act(async () => {
       await result.current.flagViolation({ type: "tab_switch" });
@@ -183,10 +176,9 @@ describe("useMalpracticeCoordinator", () => {
     const captureId = Symbol("cap");
     mockPrepareCapture.mockReturnValue(captureId);
 
-    const { result } = renderHook(
-      () => useMalpracticeCoordinator(defaultOptions),
-      { wrapper: makeWrapper(store) }
-    );
+    const { result } = renderHook(() => useMalpracticeCoordinator(defaultOptions), {
+      wrapper: makeWrapper(store),
+    });
 
     await act(async () => {
       await result.current.flagViolation({ type: "tab_switch" });
@@ -203,10 +195,9 @@ describe("useMalpracticeCoordinator", () => {
     const captureId = Symbol("cap");
     mockPrepareCapture.mockReturnValue(captureId);
 
-    const { result } = renderHook(
-      () => useMalpracticeCoordinator(defaultOptions),
-      { wrapper: makeWrapper(store) }
-    );
+    const { result } = renderHook(() => useMalpracticeCoordinator(defaultOptions), {
+      wrapper: makeWrapper(store),
+    });
 
     await act(async () => {
       await result.current.flagViolation({ type: "tab_switch" });
@@ -217,10 +208,9 @@ describe("useMalpracticeCoordinator", () => {
   });
 
   it("resetFirstWarnings clears two-strike state so next occurrence is first again", async () => {
-    const { result } = renderHook(
-      () => useMalpracticeCoordinator(defaultOptions),
-      { wrapper: makeWrapper(store) }
-    );
+    const { result } = renderHook(() => useMalpracticeCoordinator(defaultOptions), {
+      wrapper: makeWrapper(store),
+    });
 
     // First occurrence
     await act(async () => {
@@ -241,10 +231,9 @@ describe("useMalpracticeCoordinator", () => {
   });
 
   it("includes description in POST payload when provided", async () => {
-    const { result } = renderHook(
-      () => useMalpracticeCoordinator(defaultOptions),
-      { wrapper: makeWrapper(store) }
-    );
+    const { result } = renderHook(() => useMalpracticeCoordinator(defaultOptions), {
+      wrapper: makeWrapper(store),
+    });
 
     await act(async () => {
       await result.current.flagViolation({ type: "copy_paste", description: "Ctrl+C pressed" });
@@ -256,10 +245,9 @@ describe("useMalpracticeCoordinator", () => {
   });
 
   it("uses VIOLATION_MESSAGES as description when none is provided", async () => {
-    const { result } = renderHook(
-      () => useMalpracticeCoordinator(defaultOptions),
-      { wrapper: makeWrapper(store) }
-    );
+    const { result } = renderHook(() => useMalpracticeCoordinator(defaultOptions), {
+      wrapper: makeWrapper(store),
+    });
 
     await act(async () => {
       await result.current.flagViolation({ type: "devtools_open" });
@@ -281,10 +269,9 @@ describe("useMalpracticeCoordinator", () => {
 
     for (const type of twoStrikeTypes) {
       const localStore = makeStore();
-      const { result } = renderHook(
-        () => useMalpracticeCoordinator(defaultOptions),
-        { wrapper: makeWrapper(localStore) }
-      );
+      const { result } = renderHook(() => useMalpracticeCoordinator(defaultOptions), {
+        wrapper: makeWrapper(localStore),
+      });
       await act(async () => {
         await result.current.flagViolation({ type });
       });

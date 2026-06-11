@@ -79,8 +79,7 @@ function isInValidationRange(phase: ExamPhase): boolean {
 
 function isDevtoolsDetected(): boolean {
   return (
-    window.outerWidth - window.innerWidth > 160 ||
-    window.outerHeight - window.innerHeight > 160
+    window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 160
   );
 }
 
@@ -129,14 +128,10 @@ function resolvePhaseTransition(
       return { error: null, nextPhase: nextPhaseAfter(ExamPhase.VALIDATING_DEVTOOLS) };
 
     case ExamPhase.VALIDATING_VIDEO:
-      return signals.isCameraReady
-        ? { nextPhase: nextPhaseAfter(ExamPhase.VALIDATING_VIDEO) }
-        : {};
+      return signals.isCameraReady ? { nextPhase: nextPhaseAfter(ExamPhase.VALIDATING_VIDEO) } : {};
 
     case ExamPhase.VALIDATING_AUDIO:
-      return signals.isAudioReady
-        ? { nextPhase: nextPhaseAfter(ExamPhase.VALIDATING_AUDIO) }
-        : {};
+      return signals.isAudioReady ? { nextPhase: nextPhaseAfter(ExamPhase.VALIDATING_AUDIO) } : {};
 
     case ExamPhase.VALIDATING_SCREEN_SHARE:
       return signals.isScreenShareReady

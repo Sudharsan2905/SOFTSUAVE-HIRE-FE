@@ -48,9 +48,7 @@ vi.mock("@/store/slices/authSlice", async (importOriginal) => {
 });
 
 const mockNavigate = vi.fn();
-const mockUseSearchParams = vi.hoisted(() =>
-  vi.fn(() => [new URLSearchParams(), vi.fn()])
-);
+const mockUseSearchParams = vi.hoisted(() => vi.fn(() => [new URLSearchParams(), vi.fn()]));
 const mockUseLocation = vi.hoisted(() =>
   vi.fn(() => ({ state: null, pathname: "/register", search: "", hash: "", key: "default" }))
 );
@@ -79,7 +77,13 @@ beforeEach(() => {
   mockNavigate.mockReset();
   mockCandidateRegister.mockReset();
   mockUseSearchParams.mockReturnValue([new URLSearchParams(), vi.fn()]);
-  mockUseLocation.mockReturnValue({ state: null, pathname: "/register", search: "", hash: "", key: "default" });
+  mockUseLocation.mockReturnValue({
+    state: null,
+    pathname: "/register",
+    search: "",
+    hash: "",
+    key: "default",
+  });
 });
 
 async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
@@ -100,9 +104,7 @@ describe("RegisterPage", () => {
 
   it("renders the Create Account button", () => {
     renderWithProviders(<RegisterPage />);
-    expect(
-      screen.getByRole("button", { name: /create account/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /create account/i })).toBeInTheDocument();
   });
 
   it("shows validation errors on empty submit", async () => {
@@ -212,6 +214,8 @@ describe("RegisterPage", () => {
 
     expect(screen.getByText(/continuing with google/i)).toBeInTheDocument();
     expect((screen.getByPlaceholderText("John") as HTMLInputElement).value).toBe("Jane");
-    expect((screen.getByPlaceholderText("john@email.com") as HTMLInputElement).value).toBe("jane@google.com");
+    expect((screen.getByPlaceholderText("john@email.com") as HTMLInputElement).value).toBe(
+      "jane@google.com"
+    );
   });
 });

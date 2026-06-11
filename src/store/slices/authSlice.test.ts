@@ -200,9 +200,7 @@ describe("authSlice — reducers", () => {
       const store = makeStore();
       store.dispatch(setAuthData(validPayload));
 
-      expect(localStorage.getItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN)).toBe(
-        validPayload.access_token
-      );
+      expect(localStorage.getItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN)).toBe(validPayload.access_token);
       expect(localStorage.getItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN)).toBe(
         validPayload.refresh_token
       );
@@ -227,7 +225,11 @@ describe("authSlice — async thunks", () => {
       // Use a deferred so we can check mid-flight state before resolving,
       // avoiding a hanging promise that would cause Vitest to timeout.
       let resolvePost!: (v: unknown) => void;
-      mockPost.mockReturnValueOnce(new Promise((r) => { resolvePost = r; }));
+      mockPost.mockReturnValueOnce(
+        new Promise((r) => {
+          resolvePost = r;
+        })
+      );
 
       const store = makeStore();
       const dispatchPromise = store.dispatch(adminLogin({ email: "a@b.com", password: "pass" }));

@@ -38,16 +38,16 @@ afterEach(() => {
 describe("useFullscreenEnforcement", () => {
   it("returns isFullscreen=false initially when not in fullscreen", () => {
     mockRequestFullscreen();
-    const { result } = renderHook(() =>
-      useFullscreenEnforcement({ enabled: true })
-    );
+    const { result } = renderHook(() => useFullscreenEnforcement({ enabled: true }));
     expect(result.current.isFullscreen).toBe(false);
   });
 
   it("does nothing when enabled=false", async () => {
     const rfsMock = mockRequestFullscreen();
     renderHook(() => useFullscreenEnforcement({ enabled: false }));
-    await act(async () => { vi.advanceTimersByTime(500); });
+    await act(async () => {
+      vi.advanceTimersByTime(500);
+    });
     expect(rfsMock).not.toHaveBeenCalled();
   });
 
@@ -55,7 +55,9 @@ describe("useFullscreenEnforcement", () => {
     const rfsMock = mockRequestFullscreen();
     renderHook(() => useFullscreenEnforcement({ enabled: true }));
     expect(rfsMock).not.toHaveBeenCalled();
-    await act(async () => { vi.advanceTimersByTime(300); });
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+    });
     expect(rfsMock).toHaveBeenCalledTimes(1);
   });
 
@@ -63,7 +65,9 @@ describe("useFullscreenEnforcement", () => {
     mockRequestFullscreen(false);
     const onBlockRequired = vi.fn();
     renderHook(() => useFullscreenEnforcement({ enabled: true, onBlockRequired }));
-    await act(async () => { vi.advanceTimersByTime(500); });
+    await act(async () => {
+      vi.advanceTimersByTime(500);
+    });
     expect(onBlockRequired).toHaveBeenCalledTimes(1);
   });
 
@@ -71,7 +75,9 @@ describe("useFullscreenEnforcement", () => {
     mockRequestFullscreen(true);
     const onBlockRequired = vi.fn();
     renderHook(() => useFullscreenEnforcement({ enabled: true, onBlockRequired }));
-    await act(async () => { vi.advanceTimersByTime(500); });
+    await act(async () => {
+      vi.advanceTimersByTime(500);
+    });
     expect(onBlockRequired).not.toHaveBeenCalled();
   });
 
@@ -79,7 +85,9 @@ describe("useFullscreenEnforcement", () => {
     mockRequestFullscreen(true);
     const onExit = vi.fn();
     renderHook(() => useFullscreenEnforcement({ enabled: true, onExit }));
-    await act(async () => { vi.advanceTimersByTime(500); });
+    await act(async () => {
+      vi.advanceTimersByTime(500);
+    });
 
     // Simulate exiting fullscreen
     mockFullscreenElement(null);
@@ -93,7 +101,9 @@ describe("useFullscreenEnforcement", () => {
     mockRequestFullscreen(true);
     const onExit = vi.fn();
     renderHook(() => useFullscreenEnforcement({ enabled: true, onExit }));
-    await act(async () => { vi.advanceTimersByTime(500); });
+    await act(async () => {
+      vi.advanceTimersByTime(500);
+    });
 
     mockFullscreenElement(document.documentElement);
     act(() => {
@@ -107,7 +117,9 @@ describe("useFullscreenEnforcement", () => {
     mockExitFullscreen();
     const removeSpy = vi.spyOn(document, "removeEventListener");
     const { unmount } = renderHook(() => useFullscreenEnforcement({ enabled: true }));
-    await act(async () => { vi.advanceTimersByTime(500); });
+    await act(async () => {
+      vi.advanceTimersByTime(500);
+    });
     unmount();
     expect(removeSpy).toHaveBeenCalledWith("fullscreenchange", expect.any(Function));
   });
@@ -115,7 +127,9 @@ describe("useFullscreenEnforcement", () => {
   it("requestFullscreen function can be called manually", async () => {
     const rfsMock = mockRequestFullscreen();
     const { result } = renderHook(() => useFullscreenEnforcement({ enabled: true }));
-    await act(async () => { await result.current.requestFullscreen(); });
+    await act(async () => {
+      await result.current.requestFullscreen();
+    });
     expect(rfsMock).toHaveBeenCalled();
   });
 
@@ -123,7 +137,9 @@ describe("useFullscreenEnforcement", () => {
     const rfsMock = mockRequestFullscreen();
     mockFullscreenElement(document.documentElement);
     const { result } = renderHook(() => useFullscreenEnforcement({ enabled: true }));
-    await act(async () => { await result.current.requestFullscreen(); });
+    await act(async () => {
+      await result.current.requestFullscreen();
+    });
     expect(rfsMock).not.toHaveBeenCalled();
   });
 });

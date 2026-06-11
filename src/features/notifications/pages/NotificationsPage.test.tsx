@@ -15,7 +15,15 @@ vi.mock("@/utils/api", () => ({
 }));
 
 vi.mock("@/components/layout/Header", () => ({
-  Header: ({ title, subtitle, actions }: { title: string; subtitle: string; actions?: React.ReactNode }) => (
+  Header: ({
+    title,
+    subtitle,
+    actions,
+  }: {
+    title: string;
+    subtitle: string;
+    actions?: React.ReactNode;
+  }) => (
     <div data-testid="header">
       <span>{title}</span>
       <span data-testid="subtitle">{subtitle}</span>
@@ -25,7 +33,13 @@ vi.mock("@/components/layout/Header", () => ({
 }));
 
 vi.mock("@/components/notifications/NotificationItem", () => ({
-  NotificationItem: ({ notification, onRead }: { notification: Notification; onRead: (id: string) => void }) => (
+  NotificationItem: ({
+    notification,
+    onRead,
+  }: {
+    notification: Notification;
+    onRead: (id: string) => void;
+  }) => (
     <li data-testid={`notification-${notification.id}`} onClick={() => onRead(notification.id)}>
       {notification.title}
     </li>
@@ -101,7 +115,9 @@ describe("NotificationsPage", () => {
   it("shows unread count in subtitle", async () => {
     mockGet.mockResolvedValue(makeApiResponse([makeNotification("n-1", false)], 1));
     renderWithProviders(<NotificationsPage />);
-    await waitFor(() => expect(screen.getByTestId("subtitle")).toHaveTextContent("1 unread notification"));
+    await waitFor(() =>
+      expect(screen.getByTestId("subtitle")).toHaveTextContent("1 unread notification")
+    );
   });
 
   it('shows "All caught up" subtitle when no unread', async () => {
@@ -113,7 +129,9 @@ describe("NotificationsPage", () => {
   it("shows Mark all as read button when there are unread notifications", async () => {
     mockGet.mockResolvedValue(makeApiResponse([makeNotification("n-1", false)], 1));
     renderWithProviders(<NotificationsPage />);
-    await waitFor(() => expect(screen.getByRole("button", { name: /mark all as read/i })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /mark all as read/i })).toBeInTheDocument()
+    );
   });
 
   it("dispatches mark all read when button clicked", async () => {

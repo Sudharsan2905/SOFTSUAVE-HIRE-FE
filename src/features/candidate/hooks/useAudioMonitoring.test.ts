@@ -37,8 +37,14 @@ function makeMockAudioContext(analyser: AnalyserNode) {
 function setupAudioMocks(stream: MediaStream, shouldSucceed = true) {
   const analyser = makeMockAnalyser(0);
   const audioContext = makeMockAudioContext(analyser);
-  vi.stubGlobal("AudioContext", vi.fn().mockImplementation(() => audioContext));
-  vi.stubGlobal("requestAnimationFrame", vi.fn().mockImplementation(() => 0));
+  vi.stubGlobal(
+    "AudioContext",
+    vi.fn().mockImplementation(() => audioContext)
+  );
+  vi.stubGlobal(
+    "requestAnimationFrame",
+    vi.fn().mockImplementation(() => 0)
+  );
   vi.stubGlobal("cancelAnimationFrame", vi.fn());
   const getUserMedia = shouldSucceed
     ? vi.fn().mockResolvedValue(stream)
@@ -154,9 +160,7 @@ describe("useAudioMonitoring", () => {
       configurable: true,
     });
     const onViolation = vi.fn();
-    const { unmount } = renderHook(() =>
-      useAudioMonitoring({ enabled: true, onViolation })
-    );
+    const { unmount } = renderHook(() => useAudioMonitoring({ enabled: true, onViolation }));
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     await act(async () => {});
     expect(onViolation).not.toHaveBeenCalled();

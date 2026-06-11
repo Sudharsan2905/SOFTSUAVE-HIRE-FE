@@ -26,8 +26,7 @@ vi.mock("react-hot-toast", () => ({
 vi.mock("@/constants/api", () => ({
   API_ENDPOINTS: {
     ASSESSMENTS: {
-      SHARES: (wsId: string, aId: string) =>
-        `/workspaces/${wsId}/assessments/${aId}/shares`,
+      SHARES: (wsId: string, aId: string) => `/workspaces/${wsId}/assessments/${aId}/shares`,
       SHARE_BY_ID: (wsId: string, aId: string, sId: string) =>
         `/workspaces/${wsId}/assessments/${aId}/shares/${sId}`,
     },
@@ -122,12 +121,7 @@ vi.mock("@/components/datetime/DateTimePicker", () => ({
   DateTimePicker: ({ label, id, value, onChange, error }: any) => (
     <div>
       {label && <label htmlFor={id}>{label}</label>}
-      <input
-        id={id}
-        aria-label={label}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
+      <input id={id} aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} />
       {error && <span data-testid={`error-${id}`}>{error}</span>}
     </div>
   ),
@@ -155,8 +149,7 @@ vi.mock("@/utils/helpers", () => ({
 // Icons — simple stubs
 vi.mock("@/assets/icons", () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const make = (name: string) => (props: any) =>
-    <span data-testid={`icon-${name}`} {...props} />;
+  const make = (name: string) => (props: any) => <span data-testid={`icon-${name}`} {...props} />;
   return {
     IconCopy: make("copy"),
     IconCheck: make("check"),
@@ -323,9 +316,7 @@ describe("ShareWizardModal", () => {
     installClipboardSpy();
     renderModal();
     await user.click(screen.getByRole("button", { name: /copy link/i }));
-    expect(writeText).toHaveBeenCalledWith(
-      expect.stringContaining("/assessment/abc123")
-    );
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("/assessment/abc123"));
     expect(await screen.findByText("Link Copied!")).toBeInTheDocument();
   });
 
@@ -360,9 +351,7 @@ describe("ShareWizardModal", () => {
     installClipboardSpy();
     renderModal();
     await user.click(screen.getByText("Slack").closest("a")!);
-    expect(writeText).toHaveBeenCalledWith(
-      expect.stringContaining("/assessment/abc123")
-    );
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("/assessment/abc123"));
   });
 
   // ── Tab switching ────────────────────────────────────────────────────────
@@ -386,9 +375,7 @@ describe("ShareWizardModal", () => {
     await user.click(screen.getByRole("tab", { name: /custom link/i }));
     await waitFor(() =>
       expect(mockGet).toHaveBeenCalledWith(
-        expect.stringContaining(
-          "/workspaces/ws-1/assessments/assess-1/shares?share_type=custom"
-        )
+        expect.stringContaining("/workspaces/ws-1/assessments/assess-1/shares?share_type=custom")
       )
     );
   });
@@ -397,9 +384,7 @@ describe("ShareWizardModal", () => {
     const user = userEvent.setup();
     renderModal();
     await user.click(screen.getByRole("tab", { name: /custom link/i }));
-    expect(
-      await screen.findByText(/no custom links yet/i)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/no custom links yet/i)).toBeInTheDocument();
   });
 
   it("renders existing active custom links returned from the API", async () => {
@@ -463,9 +448,7 @@ describe("ShareWizardModal", () => {
         })
       )
     );
-    await waitFor(() =>
-      expect(mockToastSuccess).toHaveBeenCalledWith("Custom link generated")
-    );
+    await waitFor(() => expect(mockToastSuccess).toHaveBeenCalledWith("Custom link generated"));
   });
 
   it("adds the newly-generated link to the existing links list", async () => {
@@ -495,9 +478,7 @@ describe("ShareWizardModal", () => {
     await user.type(screen.getByLabelText("Link Label"), "Will Fail");
     await user.click(screen.getByRole("button", { name: /generate link/i }));
 
-    await waitFor(() =>
-      expect(mockToastError).toHaveBeenCalledWith("Server rejected the link")
-    );
+    await waitFor(() => expect(mockToastError).toHaveBeenCalledWith("Server rejected the link"));
   });
 
   it("falls back to a default error message when no server message is present", async () => {
@@ -568,12 +549,8 @@ describe("ShareWizardModal", () => {
         "/workspaces/ws-1/assessments/assess-1/shares/share-99"
       )
     );
-    await waitFor(() =>
-      expect(mockToastSuccess).toHaveBeenCalledWith("Link revoked")
-    );
-    await waitFor(() =>
-      expect(screen.queryByText("Temp Link")).not.toBeInTheDocument()
-    );
+    await waitFor(() => expect(mockToastSuccess).toHaveBeenCalledWith("Link revoked"));
+    await waitFor(() => expect(screen.queryByText("Temp Link")).not.toBeInTheDocument());
   });
 
   it("shows an error toast when revoking a link fails", async () => {
@@ -590,9 +567,7 @@ describe("ShareWizardModal", () => {
     await user.click(await screen.findByText("Temp Link"));
     await user.click(screen.getByRole("button", { name: "Revoke" }));
 
-    await waitFor(() =>
-      expect(mockToastError).toHaveBeenCalledWith("Cannot revoke")
-    );
+    await waitFor(() => expect(mockToastError).toHaveBeenCalledWith("Cannot revoke"));
   });
 
   // ── Existing link card details ─────────────────────────────────────────────
@@ -601,9 +576,7 @@ describe("ShareWizardModal", () => {
     mockGet.mockResolvedValue({
       data: {
         data: {
-          shares: [
-            makeShareLink({ id: "s1", label: "Detailed", share_link: "detail-xyz" }),
-          ],
+          shares: [makeShareLink({ id: "s1", label: "Detailed", share_link: "detail-xyz" })],
         },
       },
     });
@@ -620,9 +593,7 @@ describe("ShareWizardModal", () => {
     mockGet.mockResolvedValue({
       data: {
         data: {
-          shares: [
-            makeShareLink({ id: "s1", label: "CopyMe", share_link: "copy-xyz" }),
-          ],
+          shares: [makeShareLink({ id: "s1", label: "CopyMe", share_link: "copy-xyz" })],
         },
       },
     });
@@ -633,9 +604,7 @@ describe("ShareWizardModal", () => {
     await user.click(await screen.findByText("CopyMe"));
 
     await user.click(screen.getByRole("button", { name: /^copy$/i }));
-    expect(writeText).toHaveBeenCalledWith(
-      expect.stringContaining("/assessment/copy-xyz")
-    );
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("/assessment/copy-xyz"));
   });
 
   // ── Custom tab: date validation ───────────────────────────────────────────

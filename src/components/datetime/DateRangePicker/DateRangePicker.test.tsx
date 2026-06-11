@@ -42,9 +42,7 @@ describe("DateRangePicker", () => {
   });
 
   it("renders full range label when both from and to are set", () => {
-    render(
-      <DateRangePicker value={{ from: "2026-06-10", to: "2026-06-20" }} onChange={vi.fn()} />
-    );
+    render(<DateRangePicker value={{ from: "2026-06-10", to: "2026-06-20" }} onChange={vi.fn()} />);
     expect(screen.getByText(/Jun 10\s*–\s*Jun 20, 2026/)).toBeInTheDocument();
   });
 
@@ -131,7 +129,9 @@ describe("DateRangePicker", () => {
 
   it("Clear button resets the range", () => {
     const onChange = vi.fn();
-    render(<DateRangePicker value={{ from: "2026-06-10", to: "2026-06-20" }} onChange={onChange} />);
+    render(
+      <DateRangePicker value={{ from: "2026-06-10", to: "2026-06-20" }} onChange={onChange} />
+    );
     fireEvent.click(screen.getByRole("button", { name: /Jun 10/i }));
     const popup = getPopup();
     fireEvent.click(within(popup).getByRole("button", { name: /clear/i }));
@@ -166,9 +166,7 @@ describe("DateRangePicker", () => {
   });
 
   it("applies fullWidth class when fullWidth prop set", () => {
-    const { container } = render(
-      <DateRangePicker value={EMPTY} onChange={vi.fn()} fullWidth />
-    );
+    const { container } = render(<DateRangePicker value={EMPTY} onChange={vi.fn()} fullWidth />);
     expect((container.firstChild as HTMLElement).className).toMatch(/fullWidth/);
   });
 });

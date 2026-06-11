@@ -32,11 +32,7 @@ vi.mock("@/components/ui/Tooltip", () => ({
 vi.mock("@/components/ui/Select", () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Select: ({ value, onChange, options, placeholder }: any) => (
-    <select
-      aria-label={placeholder}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    >
+    <select aria-label={placeholder} value={value} onChange={(e) => onChange(e.target.value)}>
       {placeholder && <option value="">{placeholder}</option>}
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       {options?.map((o: any) => (
@@ -161,7 +157,9 @@ describe("Step2Questions", () => {
   it("fetches categories on mount", async () => {
     renderStep();
     await waitFor(() =>
-      expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/questions/categories?page_size=100"))
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining("/questions/categories?page_size=100")
+      )
     );
   });
 
@@ -211,8 +209,9 @@ describe("Step2Questions", () => {
     expect(screen.getByText("1 / 2 required")).toBeInTheDocument();
     // q1 appears in the selected pane, not the available list
     const selectedPane = screen.getByText("Selected Questions").closest("div")!;
-    expect(within(selectedPane.parentElement as HTMLElement).getByText("What is a closure?"))
-      .toBeInTheDocument();
+    expect(
+      within(selectedPane.parentElement as HTMLElement).getByText("What is a closure?")
+    ).toBeInTheDocument();
   });
 
   // ── Selecting / deselecting ──────────────────────────────────────────────
@@ -310,9 +309,7 @@ describe("Step2Questions", () => {
     renderStep();
     expect(await screen.findByLabelText("Loading")).toBeInTheDocument();
     resolveQuestions({ data: { data: { questions: QUESTIONS } } });
-    await waitFor(() =>
-      expect(screen.queryByLabelText("Loading")).not.toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.queryByLabelText("Loading")).not.toBeInTheDocument());
   });
 
   // ── Error handling ───────────────────────────────────────────────────────
@@ -331,8 +328,7 @@ describe("Step2Questions", () => {
     await screen.findByText("What is a closure?");
     await user.type(screen.getByPlaceholderText("Search..."), "closure");
     await waitFor(
-      () =>
-        expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("search=closure")),
+      () => expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("search=closure")),
       { timeout: 1500 }
     );
   });
@@ -378,8 +374,8 @@ describe("Step2Questions", () => {
       expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("/questions/categories?"))
     );
     // No category selected → no questions endpoint call
-    const questionCalls = mockGet.mock.calls.filter((c) =>
-      String(c[0]).includes("/questions/categories/") && String(c[0]).includes("/questions")
+    const questionCalls = mockGet.mock.calls.filter(
+      (c) => String(c[0]).includes("/questions/categories/") && String(c[0]).includes("/questions")
     );
     expect(questionCalls).toHaveLength(0);
   });

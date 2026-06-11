@@ -1,14 +1,15 @@
-import { useState, useRef, type ComponentType, type ReactNode } from "react";
+import { useState, type ComponentType, type ReactNode } from "react";
 import styles from "./CandidateDetailsTabs.module.css";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
-import { useClickOutside } from "@/hooks/useClickOutside";
+
 import { RichText } from "@/components/ui/RichText";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
-import { clsx, formatDateTime, downloadBlob } from "@/utils/helpers";
+import { clsx, formatDateTime } from "@/utils/helpers";
 import { api } from "@/utils/api";
 import { API_ENDPOINTS } from "@/constants/api";
+import { generateAndDownloadPDF } from "@/features/candidate/components/SubmissionReportPDF";
 import toast from "react-hot-toast";
 import {
   IconOverview,
@@ -27,7 +28,6 @@ import {
   IconMic,
   IconChevronLeft,
   IconChevronRight,
-  IconChevronDown,
   IconDownload,
 } from "@/assets/icons";
 import type {
@@ -420,58 +420,31 @@ function QuestionReview({ index, qa }: Readonly<{ index: number; qa: QuestionAns
 
 interface RoundsReviewProps {
   rounds: RoundResult[];
-  workspaceId: string;
-  assessmentId: string;
-  submissionId: string;
+  submissionData: CandidateSubmissionDetail;
 }
 
-function RoundsReview({
-  rounds,
-  workspaceId,
-  assessmentId,
-  submissionId,
-}: Readonly<RoundsReviewProps>) {
+function RoundsReview({ rounds, submissionData }: Readonly<RoundsReviewProps>) {
   const [activeRound, setActiveRound] = useState(() => rounds[0]?.round_number ?? null);
   const [downloading, setDownloading] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useClickOutside(menuRef, () => setMenuOpen(false), menuOpen);
-
-  const fetchRoundReport = async (roundNumber: number) => {
-    const res = await api.get(
-      API_ENDPOINTS.ASSESSMENTS.SUBMISSION_ROUND_REPORT(
-        workspaceId,
-        assessmentId,
-        submissionId
-        // roundNumber
-      ),
-      { responseType: "blob" }
-    );
-    downloadBlob(res.data as Blob, `round-${roundNumber}-report.pdf`);
-  };
 
   const handleDownloadRound = async (roundNumber: number) => {
-    setMenuOpen(false);
     setDownloading(true);
     try {
-      await fetchRoundReport(roundNumber);
+      const roundData = rounds.filter((r) => r.round_number === roundNumber);
+      await generateAndDownloadPDF(submissionData, roundData, `Round ${roundNumber}`);
     } catch {
-      toast.error("Failed to download the round report.");
+      toast.error("Failed to generate the round report.");
     } finally {
       setDownloading(false);
     }
   };
 
   const handleDownloadAll = async () => {
-    setMenuOpen(false);
     setDownloading(true);
     try {
-      for (const round of rounds) {
-        await fetchRoundReport(round.round_number);
-      }
+      await generateAndDownloadPDF(submissionData, rounds, "All Rounds");
     } catch {
-      toast.error("Failed to download the round reports.");
+      toast.error("Failed to generate the report.");
     } finally {
       setDownloading(false);
     }
@@ -520,45 +493,23 @@ function RoundsReview({
               Download PDF
             </Button>
           ) : (
-            <div className={styles.downloadDropdown} ref={menuRef}>
-              <Button
-                variant="secondary"
-                leftIcon={<IconDownload size={16} />}
-                rightIcon={<IconChevronDown size={16} />}
-                onClick={() => setMenuOpen((open) => !open)}
-                isLoading={downloading}
-                aria-haspopup="menu"
-                aria-expanded={menuOpen}
-              >
-                Download PDF
-              </Button>
-              {menuOpen && (
-                <ul className={styles.downloadMenu} role="menu">
-                  <li role="none">
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={styles.downloadMenuItem}
-                      onClick={() => void handleDownloadAll()}
-                    >
-                      All Rounds
-                    </button>
-                  </li>
-                  {rounds.map((round) => (
-                    <li key={round.round_number} role="none">
-                      <button
-                        type="button"
-                        role="menuitem"
-                        className={styles.downloadMenuItem}
-                        onClick={() => void handleDownloadRound(round.round_number)}
-                      >
-                        Round {round.round_number}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <Select
+              placeholder="Download PDF"
+              leftIcon={<IconDownload size={16} />}
+              fullWidth={false}
+              disabled={downloading}
+              options={[
+                { value: "all", label: "All Rounds" },
+                ...rounds.map((r) => ({
+                  value: String(r.round_number),
+                  label: `Round ${r.round_number}`,
+                })),
+              ]}
+              onChange={(val) => {
+                if (val === "all") void handleDownloadAll();
+                else void handleDownloadRound(Number(val));
+              }}
+            />
           )}
         </div>
       </div>
@@ -959,14 +910,7 @@ export function CandidateDetailsTabs({
       />
     );
   } else if (activeTab.id === "rounds") {
-    panelContent = (
-      <RoundsReview
-        rounds={data.rounds}
-        workspaceId={workspaceId}
-        assessmentId={assessmentId}
-        submissionId={data.submission_id}
-      />
-    );
+    panelContent = <RoundsReview rounds={data.rounds} submissionData={data} />;
   } else if (activeTab.id === "malpractice") {
     panelContent = <MalpracticeTab events={data.malpractice_events} />;
   } else if (activeTab.id === "screenshots") {

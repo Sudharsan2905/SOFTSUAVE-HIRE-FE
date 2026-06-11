@@ -61,7 +61,9 @@ describe("useTabMonitoring", () => {
     fireVisibilityVisible();
 
     expect(onViolation).toHaveBeenCalledTimes(1);
-    expect(onViolation).toHaveBeenCalledWith(expect.stringContaining("away from the assessment tab"));
+    expect(onViolation).toHaveBeenCalledWith(
+      expect.stringContaining("away from the assessment tab")
+    );
     unmount();
   });
 

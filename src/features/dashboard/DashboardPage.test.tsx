@@ -74,9 +74,8 @@ describe("DashboardPage", () => {
         workspace: { activeWorkspace: realWorkspace, workspaces: [realWorkspace] },
       },
     });
-    expect(mockNavigate).toHaveBeenCalledWith(
-      expect.stringContaining(realWorkspace.id),
-      { replace: true }
-    );
+    expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining(realWorkspace.id), {
+      replace: true,
+    });
   });
 });

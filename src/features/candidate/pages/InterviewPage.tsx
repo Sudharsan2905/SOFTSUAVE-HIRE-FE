@@ -151,9 +151,7 @@ function renderMonitoringBadges(
   sm: Record<string, string>
 ) {
   const screenBadgeClass = isScreenCapturing ? sm.monitorBadgeGreen : sm.monitorBadgeOrange;
-  const screenBadgeLabel = isScreenCapturing
-    ? "Screen Capture Active"
-    : "Screen Capture Inactive";
+  const screenBadgeLabel = isScreenCapturing ? "Screen Capture Active" : "Screen Capture Inactive";
   return (
     <div className={sm.monitorBadgeList}>
       {cfg.video_monitoring && (
@@ -194,10 +192,7 @@ function renderMcqSingle(
       {q.options?.map((opt) => {
         const selected = answers[q.id] === opt.text;
         return (
-          <label
-            key={opt.text}
-            className={`${sm.option} ${selected ? sm.optionSelected : ""}`}
-          >
+          <label key={opt.text} className={`${sm.option} ${selected ? sm.optionSelected : ""}`}>
             <input
               type="radio"
               className={sm.optionInput}
@@ -224,10 +219,7 @@ function renderMcqMultiple(
       {q.options?.map((opt) => {
         const selected = ((answers[q.id] as string[]) || []).includes(opt.text);
         return (
-          <label
-            key={opt.text}
-            className={`${sm.option} ${selected ? sm.optionSelected : ""}`}
-          >
+          <label key={opt.text} className={`${sm.option} ${selected ? sm.optionSelected : ""}`}>
             <input
               type="checkbox"
               className={sm.optionInput}
@@ -263,9 +255,7 @@ function renderEssay(
         onChange={(e) => setAnswer(q.id, e.target.value)}
         rows={10}
       />
-      <span className={sm.charCount}>
-        {((answers[q.id] as string) || "").length} characters
-      </span>
+      <span className={sm.charCount}>{((answers[q.id] as string) || "").length} characters</span>
     </div>
   );
 }

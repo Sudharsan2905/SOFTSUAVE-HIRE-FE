@@ -9,8 +9,7 @@ vi.mock("../../../utils/api", () => ({
 vi.mock("@/constants/api", () => ({
   API_ENDPOINTS: {
     CANDIDATE: {
-      SUBMISSION_LIVEKIT_TOKEN: (id: string) =>
-        `/candidate/submission/${id}/livekit-token`,
+      SUBMISSION_LIVEKIT_TOKEN: (id: string) => `/candidate/submission/${id}/livekit-token`,
     },
     LIVE_MONITORING: {
       LIVEKIT_TOKEN: "/live-interviews/livekit-token",
@@ -124,9 +123,7 @@ vi.mock("livekit-client", () => ({
 import api from "../../../utils/api";
 import { useLiveKitPublisher, useLiveKitViewer } from "./useLiveKit";
 
-const mockPost = vi.mocked(
-  (api as unknown as { post: (...args: unknown[]) => unknown }).post
-);
+const mockPost = vi.mocked((api as unknown as { post: (...args: unknown[]) => unknown }).post);
 
 // ── Mock stream/track helpers ────────────────────────────────────────────────
 function makeMockTrack() {
@@ -140,10 +137,7 @@ function makeMockTrack() {
   };
 }
 
-function makeStreamRef(opts: {
-  video?: boolean;
-  audio?: boolean;
-}): RefObject<MediaStream | null> {
+function makeStreamRef(opts: { video?: boolean; audio?: boolean }): RefObject<MediaStream | null> {
   const videoTracks = opts.video ? [makeMockTrack()] : [];
   const audioTracks = opts.audio ? [makeMockTrack()] : [];
   const stream = {
@@ -179,9 +173,7 @@ describe("useLiveKitPublisher", () => {
   });
 
   it("startPublishing is a no-op when disabled", async () => {
-    const { result } = renderHook(() =>
-      useLiveKitPublisher({ ...baseOpts, enabled: false })
-    );
+    const { result } = renderHook(() => useLiveKitPublisher({ ...baseOpts, enabled: false }));
     await act(async () => {
       await result.current.startPublishing();
     });
@@ -191,9 +183,7 @@ describe("useLiveKitPublisher", () => {
   });
 
   it("startPublishing is a no-op when submissionId is null", async () => {
-    const { result } = renderHook(() =>
-      useLiveKitPublisher({ ...baseOpts, submissionId: null })
-    );
+    const { result } = renderHook(() => useLiveKitPublisher({ ...baseOpts, submissionId: null }));
     await act(async () => {
       await result.current.startPublishing();
     });
@@ -207,14 +197,9 @@ describe("useLiveKitPublisher", () => {
       await result.current.startPublishing();
     });
 
-    expect(mockPost).toHaveBeenCalledWith(
-      "/candidate/submission/sub-1/livekit-token"
-    );
+    expect(mockPost).toHaveBeenCalledWith("/candidate/submission/sub-1/livekit-token");
     expect(roomInstances).toHaveLength(1);
-    expect(roomInstances[0].connect).toHaveBeenCalledWith(
-      expect.any(String),
-      "tok-123"
-    );
+    expect(roomInstances[0].connect).toHaveBeenCalledWith(expect.any(String), "tok-123");
     expect(result.current.isPublishing).toBe(true);
   });
 
@@ -252,17 +237,13 @@ describe("useLiveKitPublisher", () => {
       addEventListener: ReturnType<typeof vi.fn>;
     };
 
-    const { result } = renderHook(() =>
-      useLiveKitPublisher({ ...baseOpts, screenStreamRef })
-    );
+    const { result } = renderHook(() => useLiveKitPublisher({ ...baseOpts, screenStreamRef }));
 
     await act(async () => {
       await result.current.startPublishing();
     });
 
-    const endedCall = rawScreenTrack.addEventListener.mock.calls.find(
-      (c) => c[0] === "ended"
-    );
+    const endedCall = rawScreenTrack.addEventListener.mock.calls.find((c) => c[0] === "ended");
     expect(endedCall).toBeDefined();
 
     // Firing the 'ended' handler tears down publishing
@@ -275,9 +256,7 @@ describe("useLiveKitPublisher", () => {
 
   it("does not publish a screen track when the screen stream has no video track", async () => {
     const screenStreamRef = makeStreamRef({ video: false });
-    const { result } = renderHook(() =>
-      useLiveKitPublisher({ ...baseOpts, screenStreamRef })
-    );
+    const { result } = renderHook(() => useLiveKitPublisher({ ...baseOpts, screenStreamRef }));
     await act(async () => {
       await result.current.startPublishing();
     });
@@ -302,9 +281,7 @@ describe("useLiveKitPublisher", () => {
 
   it("stopPublishing stops published tracks, disconnects the room, and clears state", async () => {
     const cameraStreamRef = makeStreamRef({ video: true });
-    const { result } = renderHook(() =>
-      useLiveKitPublisher({ ...baseOpts, cameraStreamRef })
-    );
+    const { result } = renderHook(() => useLiveKitPublisher({ ...baseOpts, cameraStreamRef }));
 
     await act(async () => {
       await result.current.startPublishing();
@@ -360,10 +337,7 @@ describe("useLiveKitPublisher", () => {
     await act(async () => {
       await result.current.startPublishing();
     });
-    expect(roomInstances[0].connect).toHaveBeenCalledWith(
-      "wss://pub.example.com",
-      "tok-123"
-    );
+    expect(roomInstances[0].connect).toHaveBeenCalledWith("wss://pub.example.com", "tok-123");
     vi.unstubAllEnvs();
   });
 });
@@ -401,9 +375,7 @@ describe("useLiveKitViewer", () => {
 
   it("fetches admin token and connects with autoSubscribe false", async () => {
     mockPost.mockResolvedValue({ data: { data: { token: "admin-tok" } } });
-    renderHook(() =>
-      useLiveKitViewer({ workspaceId: "ws-1", targetSubmissionId: null })
-    );
+    renderHook(() => useLiveKitViewer({ workspaceId: "ws-1", targetSubmissionId: null }));
 
     await act(async () => {
       await Promise.resolve();
@@ -414,11 +386,9 @@ describe("useLiveKitViewer", () => {
       workspace_id: "ws-1",
     });
     expect(roomInstances).toHaveLength(1);
-    expect(roomInstances[0].connect).toHaveBeenCalledWith(
-      expect.any(String),
-      "admin-tok",
-      { autoSubscribe: false }
-    );
+    expect(roomInstances[0].connect).toHaveBeenCalledWith(expect.any(String), "admin-tok", {
+      autoSubscribe: false,
+    });
   });
 
   it("sets isConnected and syncs subscriptions on the Connected event", async () => {
@@ -430,10 +400,7 @@ describe("useLiveKitViewer", () => {
     );
 
     const created = roomInstances[roomInstances.length - 1];
-    created.remoteParticipants.set(
-      "p1",
-      makeParticipant("candidate-cand-1", [targetPub])
-    );
+    created.remoteParticipants.set("p1", makeParticipant("candidate-cand-1", [targetPub]));
 
     await act(async () => {
       created.emit(RoomEvent.Connected);
@@ -445,18 +412,12 @@ describe("useLiveKitViewer", () => {
 
   it("subscribes to target candidate's screen share on TrackPublished", async () => {
     mockPost.mockResolvedValue({ data: { data: { token: "admin-tok" } } });
-    renderHook(() =>
-      useLiveKitViewer({ workspaceId: "ws-1", targetSubmissionId: "cand-9" })
-    );
+    renderHook(() => useLiveKitViewer({ workspaceId: "ws-1", targetSubmissionId: "cand-9" }));
     const room = roomInstances[roomInstances.length - 1];
     const pub = makePublication({ source: Track.Source.ScreenShare });
 
     await act(async () => {
-      room.emit(
-        RoomEvent.TrackPublished,
-        pub,
-        { identity: "candidate-cand-9" }
-      );
+      room.emit(RoomEvent.TrackPublished, pub, { identity: "candidate-cand-9" });
     });
 
     expect(pub.setSubscribed).toHaveBeenCalledWith(true);
@@ -464,9 +425,7 @@ describe("useLiveKitViewer", () => {
 
   it("ignores TrackPublished from non-target participants", async () => {
     mockPost.mockResolvedValue({ data: { data: { token: "admin-tok" } } });
-    renderHook(() =>
-      useLiveKitViewer({ workspaceId: "ws-1", targetSubmissionId: "cand-9" })
-    );
+    renderHook(() => useLiveKitViewer({ workspaceId: "ws-1", targetSubmissionId: "cand-9" }));
     const room = roomInstances[roomInstances.length - 1];
     const pub = makePublication({ source: Track.Source.ScreenShare });
 
@@ -486,12 +445,7 @@ describe("useLiveKitViewer", () => {
     const track = { source: Track.Source.ScreenShare } as unknown;
 
     await act(async () => {
-      room.emit(
-        RoomEvent.TrackSubscribed,
-        track,
-        {},
-        { identity: "candidate-cand-3" }
-      );
+      room.emit(RoomEvent.TrackSubscribed, track, {}, { identity: "candidate-cand-3" });
     });
     expect(result.current.screenTrack).toBe(track);
 
@@ -510,12 +464,7 @@ describe("useLiveKitViewer", () => {
     const track = { source: Track.Source.ScreenShare } as unknown;
 
     await act(async () => {
-      room.emit(
-        RoomEvent.TrackSubscribed,
-        track,
-        {},
-        { identity: "candidate-cand-3" }
-      );
+      room.emit(RoomEvent.TrackSubscribed, track, {}, { identity: "candidate-cand-3" });
     });
     expect(result.current.screenTrack).toBe(track);
 
@@ -564,10 +513,7 @@ describe("useLiveKitViewer", () => {
       { initialProps: { target: "cand-1" as string | null } }
     );
     const room = roomInstances[roomInstances.length - 1];
-    room.remoteParticipants.set(
-      "p1",
-      makeParticipant("candidate-cand-2", [targetPub])
-    );
+    room.remoteParticipants.set("p1", makeParticipant("candidate-cand-2", [targetPub]));
 
     // Connect first
     await act(async () => {
@@ -592,12 +538,7 @@ describe("useLiveKitViewer", () => {
     const cameraTrack = { source: Track.Source.Camera } as unknown;
 
     await act(async () => {
-      room.emit(
-        RoomEvent.TrackSubscribed,
-        cameraTrack,
-        {},
-        { identity: "candidate-cand-3" }
-      );
+      room.emit(RoomEvent.TrackSubscribed, cameraTrack, {}, { identity: "candidate-cand-3" });
     });
 
     expect(result.current.screenTrack).toBeNull();
@@ -613,12 +554,7 @@ describe("useLiveKitViewer", () => {
     const otherTrack = { source: Track.Source.ScreenShare } as unknown;
 
     await act(async () => {
-      room.emit(
-        RoomEvent.TrackSubscribed,
-        track,
-        {},
-        { identity: "candidate-cand-3" }
-      );
+      room.emit(RoomEvent.TrackSubscribed, track, {}, { identity: "candidate-cand-3" });
     });
     expect(result.current.screenTrack).toBe(track);
 
@@ -633,9 +569,7 @@ describe("useLiveKitViewer", () => {
     vi.stubEnv("VITE_LIVEKIT_HOST", "wss://livekit.example.com");
     mockPost.mockResolvedValue({ data: { data: { token: "admin-tok" } } });
 
-    renderHook(() =>
-      useLiveKitViewer({ workspaceId: "ws-env", targetSubmissionId: null })
-    );
+    renderHook(() => useLiveKitViewer({ workspaceId: "ws-env", targetSubmissionId: null }));
 
     await act(async () => {
       await Promise.resolve();
@@ -643,11 +577,9 @@ describe("useLiveKitViewer", () => {
     });
 
     const room = roomInstances[roomInstances.length - 1];
-    expect(room.connect).toHaveBeenCalledWith(
-      "wss://livekit.example.com",
-      "admin-tok",
-      { autoSubscribe: false }
-    );
+    expect(room.connect).toHaveBeenCalledWith("wss://livekit.example.com", "admin-tok", {
+      autoSubscribe: false,
+    });
     vi.unstubAllEnvs();
   });
 });

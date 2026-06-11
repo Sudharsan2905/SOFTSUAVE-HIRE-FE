@@ -290,7 +290,9 @@ describe("CategoriesPage", () => {
     it("calls the categories API on mount", async () => {
       mockGet.mockResolvedValue(makeCategoriesResponse());
       renderPage();
-      await waitFor(() => expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("categories")));
+      await waitFor(() =>
+        expect(mockGet).toHaveBeenCalledWith(expect.stringContaining("categories"))
+      );
     });
 
     it("handles API error gracefully and still renders header", async () => {
@@ -318,9 +320,7 @@ describe("CategoriesPage", () => {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       mockGet.mockImplementation(() => new Promise(() => {}));
       renderPage();
-      await waitFor(() =>
-        expect(screen.getByRole("status", { hidden: true })).toBeInTheDocument()
-      );
+      await waitFor(() => expect(screen.getByRole("status", { hidden: true })).toBeInTheDocument());
     });
 
     it("removes the spinner after categories load", async () => {
@@ -392,9 +392,7 @@ describe("CategoriesPage", () => {
     });
 
     it("renders Edit category button for each card", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       renderPage();
       await waitFor(() => expect(mockGet).toHaveBeenCalled());
       const editBtns = screen.getAllByRole("button", { name: /edit category/i });
@@ -402,9 +400,7 @@ describe("CategoriesPage", () => {
     });
 
     it("renders Delete category button for each card", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       renderPage();
       await waitFor(() => expect(mockGet).toHaveBeenCalled());
       const deleteBtns = screen.getAllByRole("button", { name: /delete category/i });
@@ -416,9 +412,7 @@ describe("CategoriesPage", () => {
 
   describe("navigation", () => {
     it("navigates to the category questions page when nav button is clicked", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       renderPage();
       const user = userEvent.setup();
       await waitFor(() => expect(mockGet).toHaveBeenCalled());
@@ -525,9 +519,7 @@ describe("CategoriesPage", () => {
         within(screen.getByTestId("modal-footer")).getByRole("button", { name: /^create$/i })
       );
       await waitFor(() =>
-        expect(mockToastSuccess).toHaveBeenCalledWith(
-          expect.stringContaining("Category created")
-        )
+        expect(mockToastSuccess).toHaveBeenCalledWith(expect.stringContaining("Category created"))
       );
     });
 
@@ -586,9 +578,7 @@ describe("CategoriesPage", () => {
 
   describe("edit modal", () => {
     it("opens edit modal when Edit category button is clicked", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       renderPage();
       const user = userEvent.setup();
       await waitFor(() =>
@@ -600,9 +590,7 @@ describe("CategoriesPage", () => {
     });
 
     it("pre-fills category name in edit modal", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       renderPage();
       const user = userEvent.setup();
       await waitFor(() =>
@@ -617,9 +605,7 @@ describe("CategoriesPage", () => {
     });
 
     it("closes edit modal when Cancel is clicked", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       renderPage();
       const user = userEvent.setup();
       await waitFor(() =>
@@ -634,9 +620,7 @@ describe("CategoriesPage", () => {
     });
 
     it("calls PUT API when Save is clicked in edit modal", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       mockPut.mockResolvedValue({ data: {} });
       renderPage();
       const user = userEvent.setup();
@@ -649,17 +633,12 @@ describe("CategoriesPage", () => {
         within(screen.getByTestId("modal-footer")).getByRole("button", { name: /^save$/i })
       );
       await waitFor(() =>
-        expect(mockPut).toHaveBeenCalledWith(
-          expect.stringContaining("cat-1"),
-          expect.any(Object)
-        )
+        expect(mockPut).toHaveBeenCalledWith(expect.stringContaining("cat-1"), expect.any(Object))
       );
     });
 
     it("shows success toast after editing a category", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       mockPut.mockResolvedValue({ data: {} });
       renderPage();
       const user = userEvent.setup();
@@ -672,16 +651,12 @@ describe("CategoriesPage", () => {
         within(screen.getByTestId("modal-footer")).getByRole("button", { name: /^save$/i })
       );
       await waitFor(() =>
-        expect(mockToastSuccess).toHaveBeenCalledWith(
-          expect.stringContaining("Category updated")
-        )
+        expect(mockToastSuccess).toHaveBeenCalledWith(expect.stringContaining("Category updated"))
       );
     });
 
     it("closes edit modal and re-fetches after successful save", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       mockPut.mockResolvedValue({ data: {} });
       renderPage();
       const user = userEvent.setup();
@@ -699,9 +674,7 @@ describe("CategoriesPage", () => {
     });
 
     it("shows error toast when edit API fails", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       mockPut.mockRejectedValue(new Error("Server error"));
       renderPage();
       const user = userEvent.setup();
@@ -725,13 +698,13 @@ describe("CategoriesPage", () => {
 
   describe("delete modal", () => {
     it("opens delete modal when Delete category button is clicked", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       renderPage();
       const user = userEvent.setup();
       await waitFor(() =>
-        expect(screen.getAllByRole("button", { name: /delete category/i }).length).toBeGreaterThan(0)
+        expect(screen.getAllByRole("button", { name: /delete category/i }).length).toBeGreaterThan(
+          0
+        )
       );
       await user.click(screen.getAllByRole("button", { name: /delete category/i })[0]);
       await waitFor(() => expect(screen.getByTestId("modal")).toBeInTheDocument());
@@ -739,13 +712,13 @@ describe("CategoriesPage", () => {
     });
 
     it("shows category name in delete confirmation modal", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       renderPage();
       const user = userEvent.setup();
       await waitFor(() =>
-        expect(screen.getAllByRole("button", { name: /delete category/i }).length).toBeGreaterThan(0)
+        expect(screen.getAllByRole("button", { name: /delete category/i }).length).toBeGreaterThan(
+          0
+        )
       );
       await user.click(screen.getAllByRole("button", { name: /delete category/i })[0]);
       await waitFor(() => expect(screen.getByTestId("modal-body")).toBeInTheDocument());
@@ -753,13 +726,13 @@ describe("CategoriesPage", () => {
     });
 
     it("closes delete modal when Cancel is clicked", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       renderPage();
       const user = userEvent.setup();
       await waitFor(() =>
-        expect(screen.getAllByRole("button", { name: /delete category/i }).length).toBeGreaterThan(0)
+        expect(screen.getAllByRole("button", { name: /delete category/i }).length).toBeGreaterThan(
+          0
+        )
       );
       await user.click(screen.getAllByRole("button", { name: /delete category/i })[0]);
       await waitFor(() => expect(screen.getByTestId("modal")).toBeInTheDocument());
@@ -770,14 +743,14 @@ describe("CategoriesPage", () => {
     });
 
     it("calls DELETE API when Delete button is confirmed", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       mockDelete.mockResolvedValue({ data: {} });
       renderPage();
       const user = userEvent.setup();
       await waitFor(() =>
-        expect(screen.getAllByRole("button", { name: /delete category/i }).length).toBeGreaterThan(0)
+        expect(screen.getAllByRole("button", { name: /delete category/i }).length).toBeGreaterThan(
+          0
+        )
       );
       await user.click(screen.getAllByRole("button", { name: /delete category/i })[0]);
       await waitFor(() => expect(screen.getByTestId("modal")).toBeInTheDocument());
@@ -790,14 +763,14 @@ describe("CategoriesPage", () => {
     });
 
     it("shows success toast after deleting a category", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       mockDelete.mockResolvedValue({ data: {} });
       renderPage();
       const user = userEvent.setup();
       await waitFor(() =>
-        expect(screen.getAllByRole("button", { name: /delete category/i }).length).toBeGreaterThan(0)
+        expect(screen.getAllByRole("button", { name: /delete category/i }).length).toBeGreaterThan(
+          0
+        )
       );
       await user.click(screen.getAllByRole("button", { name: /delete category/i })[0]);
       await waitFor(() => expect(screen.getByTestId("modal")).toBeInTheDocument());
@@ -805,21 +778,19 @@ describe("CategoriesPage", () => {
         within(screen.getByTestId("modal-footer")).getByRole("button", { name: /^delete$/i })
       );
       await waitFor(() =>
-        expect(mockToastSuccess).toHaveBeenCalledWith(
-          expect.stringContaining("Category deleted")
-        )
+        expect(mockToastSuccess).toHaveBeenCalledWith(expect.stringContaining("Category deleted"))
       );
     });
 
     it("closes delete modal and re-fetches after successful delete", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       mockDelete.mockResolvedValue({ data: {} });
       renderPage();
       const user = userEvent.setup();
       await waitFor(() =>
-        expect(screen.getAllByRole("button", { name: /delete category/i }).length).toBeGreaterThan(0)
+        expect(screen.getAllByRole("button", { name: /delete category/i }).length).toBeGreaterThan(
+          0
+        )
       );
       const callsBefore = mockGet.mock.calls.length;
       await user.click(screen.getAllByRole("button", { name: /delete category/i })[0]);
@@ -832,14 +803,14 @@ describe("CategoriesPage", () => {
     });
 
     it("shows error toast when delete API fails", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       mockDelete.mockRejectedValue(new Error("Server error"));
       renderPage();
       const user = userEvent.setup();
       await waitFor(() =>
-        expect(screen.getAllByRole("button", { name: /delete category/i }).length).toBeGreaterThan(0)
+        expect(screen.getAllByRole("button", { name: /delete category/i }).length).toBeGreaterThan(
+          0
+        )
       );
       await user.click(screen.getAllByRole("button", { name: /delete category/i })[0]);
       await waitFor(() => expect(screen.getByTestId("modal")).toBeInTheDocument());
@@ -872,9 +843,7 @@ describe("CategoriesPage", () => {
 
   describe("pagination", () => {
     it("renders Pagination component when categories are returned", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       renderPage();
       await waitFor(() => expect(screen.getByTestId("pagination")).toBeInTheDocument());
     });
@@ -887,15 +856,11 @@ describe("CategoriesPage", () => {
         ])
       );
       renderPage();
-      await waitFor(() =>
-        expect(screen.getByTestId("pagination-total")).toHaveTextContent("2")
-      );
+      await waitFor(() => expect(screen.getByTestId("pagination-total")).toHaveTextContent("2"));
     });
 
     it("re-fetches when pagination Next button is clicked", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       renderPage();
       const user = userEvent.setup();
       await waitFor(() => expect(screen.getByTestId("pagination-next")).toBeInTheDocument());
@@ -915,9 +880,7 @@ describe("CategoriesPage", () => {
       await waitFor(() => expect(screen.getByTestId("sort-order-toggle")).toBeInTheDocument());
       expect(screen.getByTestId("sort-order-toggle")).toHaveTextContent("desc");
       await user.click(screen.getByTestId("sort-order-toggle"));
-      await waitFor(() =>
-        expect(screen.getByTestId("sort-order-toggle")).toHaveTextContent("asc")
-      );
+      await waitFor(() => expect(screen.getByTestId("sort-order-toggle")).toHaveTextContent("asc"));
     });
   });
 
@@ -925,9 +888,7 @@ describe("CategoriesPage", () => {
 
   describe("view mode switch", () => {
     it("switches to list view when list button is clicked", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       renderPage();
       const user = userEvent.setup();
       await waitFor(() => expect(screen.getByTestId("view-mode-list")).toBeInTheDocument());
@@ -937,9 +898,7 @@ describe("CategoriesPage", () => {
     });
 
     it("switches to grid view when grid button is clicked", async () => {
-      mockGet.mockResolvedValue(
-        makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }])
-      );
+      mockGet.mockResolvedValue(makeCategoriesResponse([{ id: "cat-1", name: "JavaScript" }]));
       renderPage();
       const user = userEvent.setup();
       await waitFor(() => expect(screen.getByTestId("view-mode-grid")).toBeInTheDocument());

@@ -104,9 +104,7 @@ describe("BottomNav", () => {
     });
 
     await user.click(screen.getByRole("link", { name: /assessments/i }));
-    await waitFor(() =>
-      expect(mockNavigate).toHaveBeenCalledWith("/workspaces/ws-1/assessments")
-    );
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/workspaces/ws-1/assessments"));
   });
 
   it("disables the assessments link when there is no active workspace", async () => {

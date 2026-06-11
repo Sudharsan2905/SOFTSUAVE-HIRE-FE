@@ -38,8 +38,7 @@ export function makeStore(preloadedState: Partial<RootState> = {}) {
       notifications: notificationReducer,
       proctoring: proctoringReducer,
     },
-    middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware({ serializableCheck: false }),
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
     preloadedState: preloadedState as Parameters<typeof configureStore>[0]["preloadedState"],
   });
 }

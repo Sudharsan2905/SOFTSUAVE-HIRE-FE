@@ -41,9 +41,7 @@ describe("DateTimePicker", () => {
   });
 
   it("renders label and error", () => {
-    render(
-      <DateTimePicker value="" onChange={vi.fn()} label="Start" error="Required" id="dt1" />
-    );
+    render(<DateTimePicker value="" onChange={vi.fn()} label="Start" error="Required" id="dt1" />);
     expect(screen.getByText("Start")).toBeInTheDocument();
     expect(screen.getByText("Required")).toBeInTheDocument();
   });

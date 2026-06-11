@@ -157,7 +157,11 @@ describe("notificationSlice — async thunks", () => {
   describe("fetchNotifications", () => {
     it("sets isLoading=true while pending", async () => {
       let resolve!: (v: unknown) => void;
-      mockGet.mockReturnValueOnce(new Promise((r) => { resolve = r; }));
+      mockGet.mockReturnValueOnce(
+        new Promise((r) => {
+          resolve = r;
+        })
+      );
       const store = makeStore();
       const promise = store.dispatch(fetchNotifications({}));
       expect(store.getState().notifications.isLoading).toBe(true);

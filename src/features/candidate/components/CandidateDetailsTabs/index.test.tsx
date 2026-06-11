@@ -2,7 +2,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { CandidateDetailsTabs } from "./index";
 import { renderWithProviders } from "@/test/utils";
-import type { CandidateSubmissionDetail, MalpracticeEvent, RoundResult, QuestionAnswer } from "@/types";
+import type {
+  CandidateSubmissionDetail,
+  MalpracticeEvent,
+  RoundResult,
+  QuestionAnswer,
+} from "@/types";
 import { SubmissionStatus, MalpracticeType, QuestionType } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -123,9 +128,7 @@ const defaultProps = {
 };
 
 function renderComponent(data: CandidateSubmissionDetail = makeSubmissionDetail()) {
-  return renderWithProviders(
-    <CandidateDetailsTabs {...defaultProps} data={data} />
-  );
+  return renderWithProviders(<CandidateDetailsTabs {...defaultProps} data={data} />);
 }
 
 beforeEach(() => {
@@ -178,10 +181,7 @@ describe("CandidateDetailsTabs", () => {
     it("switches to Rounds tab when clicked", () => {
       renderComponent();
       fireEvent.click(screen.getByRole("tab", { name: /rounds/i }));
-      expect(screen.getByRole("tab", { name: /rounds/i })).toHaveAttribute(
-        "aria-selected",
-        "true"
-      );
+      expect(screen.getByRole("tab", { name: /rounds/i })).toHaveAttribute("aria-selected", "true");
     });
 
     it("switches to Malpractice tab when clicked", () => {
@@ -403,9 +403,7 @@ describe("CandidateDetailsTabs", () => {
     it("shows empty placeholder when no rounds", () => {
       renderComponent(makeSubmissionDetail({ rounds: [] }));
       goToRoundsTab();
-      expect(
-        screen.getByText(/no rounds recorded for this candidate/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/no rounds recorded for this candidate/i)).toBeInTheDocument();
     });
 
     it("renders round tab buttons for each round", () => {
@@ -430,8 +428,16 @@ describe("CandidateDetailsTabs", () => {
     it("switches between rounds when round tab is clicked", () => {
       const data = makeSubmissionDetail({
         rounds: [
-          makeRoundResult({ round_number: 1, question_answers: [makeQuestionAnswer({ question_text: "Question in Round 1" })] }),
-          makeRoundResult({ round_number: 2, question_answers: [makeQuestionAnswer({ question_id: "q-2", question_text: "Question in Round 2" })] }),
+          makeRoundResult({
+            round_number: 1,
+            question_answers: [makeQuestionAnswer({ question_text: "Question in Round 1" })],
+          }),
+          makeRoundResult({
+            round_number: 2,
+            question_answers: [
+              makeQuestionAnswer({ question_id: "q-2", question_text: "Question in Round 2" }),
+            ],
+          }),
         ],
       });
       renderComponent(data);
@@ -454,7 +460,13 @@ describe("CandidateDetailsTabs", () => {
 
     it("shows Incorrect badge for wrong answers", () => {
       const data = makeSubmissionDetail({
-        rounds: [makeRoundResult({ question_answers: [makeQuestionAnswer({ is_correct: false, candidate_answer: "opt-a" })] })],
+        rounds: [
+          makeRoundResult({
+            question_answers: [
+              makeQuestionAnswer({ is_correct: false, candidate_answer: "opt-a" }),
+            ],
+          }),
+        ],
       });
       renderComponent(data);
       goToRoundsTab();
@@ -469,7 +481,16 @@ describe("CandidateDetailsTabs", () => {
 
     it("shows Multiple Select label for mcq_multi questions", () => {
       const data = makeSubmissionDetail({
-        rounds: [makeRoundResult({ question_answers: [makeQuestionAnswer({ question_type: QuestionType.MCQ_MULTI, candidate_answer: ["opt-b"] })] })],
+        rounds: [
+          makeRoundResult({
+            question_answers: [
+              makeQuestionAnswer({
+                question_type: QuestionType.MCQ_MULTI,
+                candidate_answer: ["opt-b"],
+              }),
+            ],
+          }),
+        ],
       });
       renderComponent(data);
       goToRoundsTab();
@@ -478,7 +499,18 @@ describe("CandidateDetailsTabs", () => {
 
     it("shows Descriptive label for essay questions", () => {
       const data = makeSubmissionDetail({
-        rounds: [makeRoundResult({ question_answers: [makeQuestionAnswer({ question_type: QuestionType.ESSAY, options: [], candidate_answer: "My answer", is_correct: null })] })],
+        rounds: [
+          makeRoundResult({
+            question_answers: [
+              makeQuestionAnswer({
+                question_type: QuestionType.ESSAY,
+                options: [],
+                candidate_answer: "My answer",
+                is_correct: null,
+              }),
+            ],
+          }),
+        ],
       });
       renderComponent(data);
       goToRoundsTab();
@@ -487,7 +519,18 @@ describe("CandidateDetailsTabs", () => {
 
     it("shows candidate answer text for essay questions", () => {
       const data = makeSubmissionDetail({
-        rounds: [makeRoundResult({ question_answers: [makeQuestionAnswer({ question_type: QuestionType.ESSAY, options: [], candidate_answer: "My essay answer", is_correct: null })] })],
+        rounds: [
+          makeRoundResult({
+            question_answers: [
+              makeQuestionAnswer({
+                question_type: QuestionType.ESSAY,
+                options: [],
+                candidate_answer: "My essay answer",
+                is_correct: null,
+              }),
+            ],
+          }),
+        ],
       });
       renderComponent(data);
       goToRoundsTab();
@@ -548,7 +591,9 @@ describe("CandidateDetailsTabs", () => {
 
     it("renders face image when face_image_url is provided", () => {
       const data = makeSubmissionDetail({
-        malpractice_events: [makeMalpracticeEvent({ face_image_url: "http://example.com/face.jpg" })],
+        malpractice_events: [
+          makeMalpracticeEvent({ face_image_url: "http://example.com/face.jpg" }),
+        ],
       });
       renderComponent(data);
       goToMalpracticeTab();
@@ -557,7 +602,9 @@ describe("CandidateDetailsTabs", () => {
 
     it("renders screen image thumbnail when screen_image_url is provided", () => {
       const data = makeSubmissionDetail({
-        malpractice_events: [makeMalpracticeEvent({ screen_image_url: "http://example.com/screen.jpg" })],
+        malpractice_events: [
+          makeMalpracticeEvent({ screen_image_url: "http://example.com/screen.jpg" }),
+        ],
       });
       renderComponent(data);
       goToMalpracticeTab();
@@ -566,7 +613,9 @@ describe("CandidateDetailsTabs", () => {
 
     it("renders play video button when screen_video_url is provided", () => {
       const data = makeSubmissionDetail({
-        malpractice_events: [makeMalpracticeEvent({ screen_video_url: "http://example.com/vid.mp4" })],
+        malpractice_events: [
+          makeMalpracticeEvent({ screen_video_url: "http://example.com/vid.mp4" }),
+        ],
       });
       renderComponent(data);
       goToMalpracticeTab();
@@ -575,7 +624,9 @@ describe("CandidateDetailsTabs", () => {
 
     it("renders play audio button when audio_clip_url is provided", () => {
       const data = makeSubmissionDetail({
-        malpractice_events: [makeMalpracticeEvent({ audio_clip_url: "http://example.com/audio.mp3" })],
+        malpractice_events: [
+          makeMalpracticeEvent({ audio_clip_url: "http://example.com/audio.mp3" }),
+        ],
       });
       renderComponent(data);
       goToMalpracticeTab();
@@ -600,9 +651,7 @@ describe("CandidateDetailsTabs", () => {
       renderComponent(data);
       goToMalpracticeTab();
       fireEvent.click(screen.getByAltText("Face capture").closest("button")!);
-      await waitFor(() =>
-        expect(screen.getByText(/face capture/i)).toBeInTheDocument()
-      );
+      await waitFor(() => expect(screen.getByText(/face capture/i)).toBeInTheDocument());
     });
 
     it("paginates when more than 8 malpractice events exist", () => {
@@ -674,9 +723,7 @@ describe("CandidateDetailsTabs", () => {
       renderComponent(data);
       goToScreenshotsTab();
       fireEvent.click(screen.getByAltText("Screenshot from Round 1").closest("button")!);
-      await waitFor(() =>
-        expect(screen.getAllByRole("dialog").length).toBeGreaterThan(0)
-      );
+      await waitFor(() => expect(screen.getAllByRole("dialog").length).toBeGreaterThan(0));
     });
 
     it("renders multiple screenshots", () => {

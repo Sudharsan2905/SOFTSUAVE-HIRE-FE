@@ -17,12 +17,7 @@ import { screen } from "@testing-library/react";
 import { Routes, Route } from "react-router-dom";
 
 import { renderWithProviders } from "@/test/utils";
-import {
-  makeAdminUser,
-  makeSuperAdminUser,
-  makeCandidateUser,
-  makeAuthState,
-} from "@/test/mocks";
+import { makeAdminUser, makeSuperAdminUser, makeCandidateUser, makeAuthState } from "@/test/mocks";
 import { AdminLayout } from "./index";
 
 // ---------------------------------------------------------------------------
@@ -89,16 +84,12 @@ describe("AdminLayout", () => {
 
   describe("role-based access control", () => {
     it("redirects a candidate to /admin/no-access", () => {
-      renderAdminLayout(
-        makeAuthState({ isAuthenticated: true, user: makeCandidateUser() })
-      );
+      renderAdminLayout(makeAuthState({ isAuthenticated: true, user: makeCandidateUser() }));
       expect(screen.getByText("No Access")).toBeInTheDocument();
     });
 
     it("does not render layout shell for a candidate", () => {
-      renderAdminLayout(
-        makeAuthState({ isAuthenticated: true, user: makeCandidateUser() })
-      );
+      renderAdminLayout(makeAuthState({ isAuthenticated: true, user: makeCandidateUser() }));
       expect(screen.queryByTestId("sidebar")).not.toBeInTheDocument();
     });
 
@@ -113,16 +104,12 @@ describe("AdminLayout", () => {
     });
 
     it("allows access for the admin role", () => {
-      renderAdminLayout(
-        makeAuthState({ isAuthenticated: true, user: makeAdminUser() })
-      );
+      renderAdminLayout(makeAuthState({ isAuthenticated: true, user: makeAdminUser() }));
       expect(screen.getByText("Dashboard Content")).toBeInTheDocument();
     });
 
     it("allows access for the super_admin role", () => {
-      renderAdminLayout(
-        makeAuthState({ isAuthenticated: true, user: makeSuperAdminUser() })
-      );
+      renderAdminLayout(makeAuthState({ isAuthenticated: true, user: makeSuperAdminUser() }));
       expect(screen.getByText("Dashboard Content")).toBeInTheDocument();
     });
   });
@@ -131,30 +118,22 @@ describe("AdminLayout", () => {
 
   describe("layout structure for authenticated admins", () => {
     it("renders the Sidebar", () => {
-      renderAdminLayout(
-        makeAuthState({ isAuthenticated: true, user: makeAdminUser() })
-      );
+      renderAdminLayout(makeAuthState({ isAuthenticated: true, user: makeAdminUser() }));
       expect(screen.getByTestId("sidebar")).toBeInTheDocument();
     });
 
     it("renders the AppHeader", () => {
-      renderAdminLayout(
-        makeAuthState({ isAuthenticated: true, user: makeAdminUser() })
-      );
+      renderAdminLayout(makeAuthState({ isAuthenticated: true, user: makeAdminUser() }));
       expect(screen.getByTestId("app-header")).toBeInTheDocument();
     });
 
     it("renders the BottomNav", () => {
-      renderAdminLayout(
-        makeAuthState({ isAuthenticated: true, user: makeAdminUser() })
-      );
+      renderAdminLayout(makeAuthState({ isAuthenticated: true, user: makeAdminUser() }));
       expect(screen.getByTestId("bottom-nav")).toBeInTheDocument();
     });
 
     it("renders the Outlet (child route) inside the layout", () => {
-      renderAdminLayout(
-        makeAuthState({ isAuthenticated: true, user: makeAdminUser() })
-      );
+      renderAdminLayout(makeAuthState({ isAuthenticated: true, user: makeAdminUser() }));
       expect(screen.getByText("Dashboard Content")).toBeInTheDocument();
     });
 
@@ -171,9 +150,7 @@ describe("AdminLayout", () => {
 
   describe("edge cases", () => {
     it("redirects to /admin/login when authenticated but user object is null", () => {
-      renderAdminLayout(
-        makeAuthState({ isAuthenticated: true, user: null })
-      );
+      renderAdminLayout(makeAuthState({ isAuthenticated: true, user: null }));
       // user.role is undefined — the else-if(!isAdmin) branch fires
       expect(screen.getByText("Admin Login")).toBeInTheDocument();
     });

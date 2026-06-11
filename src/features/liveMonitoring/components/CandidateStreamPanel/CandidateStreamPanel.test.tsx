@@ -163,9 +163,7 @@ describe("CandidateStreamPanel", () => {
   it("shows Resume Session button when status is on_hold", () => {
     props.session = makeSession({ status: "on_hold" });
     render(<CandidateStreamPanel {...props} />);
-    expect(
-      screen.getByRole("button", { name: /resume session/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /resume session/i })).toBeInTheDocument();
   });
 
   // 7 ─────────────────────────────────────────────────────────────────────────
@@ -180,14 +178,19 @@ describe("CandidateStreamPanel", () => {
   it("does not show Resume Session when status is not on_hold", () => {
     props.session = makeSession({ status: "active" });
     render(<CandidateStreamPanel {...props} />);
-    expect(
-      screen.queryByRole("button", { name: /resume session/i })
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /resume session/i })).not.toBeInTheDocument();
   });
 
   // 9 ─────────────────────────────────────────────────────────────────────────
   it("shows connecting state when not connected and no error", () => {
-    render(<CandidateStreamPanel {...props} isConnected={false} screenTrack={null} connectionError={null} />);
+    render(
+      <CandidateStreamPanel
+        {...props}
+        isConnected={false}
+        screenTrack={null}
+        connectionError={null}
+      />
+    );
     expect(screen.getByTestId("spinner")).toBeInTheDocument();
     expect(screen.getByText(/Connecting to stream/)).toBeInTheDocument();
   });
@@ -195,11 +198,7 @@ describe("CandidateStreamPanel", () => {
   // 10 ────────────────────────────────────────────────────────────────────────
   it("shows connection error message when connectionError is set", () => {
     render(
-      <CandidateStreamPanel
-        {...props}
-        connectionError="Connection refused"
-        isConnected={false}
-      />
+      <CandidateStreamPanel {...props} connectionError="Connection refused" isConnected={false} />
     );
     expect(screen.getByText("Stream connection failed")).toBeInTheDocument();
     expect(screen.getByText("Connection refused")).toBeInTheDocument();
@@ -216,9 +215,7 @@ describe("CandidateStreamPanel", () => {
       />
     );
     expect(screen.getByText("Screen share not available")).toBeInTheDocument();
-    expect(
-      screen.getByText(/Candidate may not have enabled screen sharing/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Candidate may not have enabled screen sharing/)).toBeInTheDocument();
   });
 
   // 12 ────────────────────────────────────────────────────────────────────────
@@ -249,9 +246,7 @@ describe("CandidateStreamPanel", () => {
         connectionError={null}
       />
     );
-    expect(
-      screen.getByRole("button", { name: /view full screen/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /view full screen/i })).toBeInTheDocument();
   });
 
   // 14 ────────────────────────────────────────────────────────────────────────
@@ -259,15 +254,11 @@ describe("CandidateStreamPanel", () => {
     render(<CandidateStreamPanel {...props} />);
 
     // Initially hidden
-    expect(
-      screen.queryByPlaceholderText(/type a warning message/i)
-    ).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/type a warning message/i)).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: /warn candidate/i }));
 
-    expect(
-      screen.getByPlaceholderText(/type a warning message/i)
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/type a warning message/i)).toBeInTheDocument();
   });
 
   // 15 ────────────────────────────────────────────────────────────────────────
@@ -313,9 +304,7 @@ describe("CandidateStreamPanel", () => {
     await userEvent.click(screen.getByRole("button", { name: /^send$/i }));
 
     await waitFor(() => {
-      expect(
-        screen.queryByPlaceholderText("Type a warning message…")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText("Type a warning message…")).not.toBeInTheDocument();
     });
   });
 
@@ -324,9 +313,7 @@ describe("CandidateStreamPanel", () => {
     render(<CandidateStreamPanel {...props} />);
     await userEvent.click(screen.getByRole("button", { name: /warn candidate/i }));
 
-    expect(
-      screen.getByPlaceholderText("Type a warning message…")
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Type a warning message…")).toBeInTheDocument();
 
     // There are two Cancel-like buttons once warn input is open:
     // "Cancel" inside warnInputActions and "Cancel Warn" in the actions row.
@@ -334,9 +321,7 @@ describe("CandidateStreamPanel", () => {
     await userEvent.click(screen.getByRole("button", { name: /^cancel$/i }));
 
     await waitFor(() => {
-      expect(
-        screen.queryByPlaceholderText("Type a warning message…")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText("Type a warning message…")).not.toBeInTheDocument();
     });
   });
 
@@ -352,9 +337,7 @@ describe("CandidateStreamPanel", () => {
     expect(props.onWarnCandidate).toHaveBeenCalledWith("sub-1", "Final warning");
 
     await waitFor(() => {
-      expect(
-        screen.queryByPlaceholderText("Type a warning message…")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText("Type a warning message…")).not.toBeInTheDocument();
     });
   });
 

@@ -117,9 +117,7 @@ describe("UsersPage", () => {
   it("shows empty state when no users found", async () => {
     mockGet.mockResolvedValue(makeUsersResponse([]));
     renderPage(withWorkspace);
-    await waitFor(() =>
-      expect(screen.queryByRole("row")).not.toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.queryByRole("row")).not.toBeInTheDocument());
   });
 
   it("handles API error gracefully", async () => {
@@ -184,9 +182,7 @@ describe("UsersPage", () => {
     mockGet.mockResolvedValue(makeUsersResponse());
     renderPage(noWorkspace);
 
-    await waitFor(() =>
-      expect(screen.getByText("Create a workspace first")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText("Create a workspace first")).toBeInTheDocument());
   });
 
   it("does not show FilterBar when there are no workspaces", async () => {
@@ -208,9 +204,7 @@ describe("UsersPage", () => {
     const newAdminBtn = await screen.findByRole("button", { name: /New Admin/i });
     await user.click(newAdminBtn);
 
-    await waitFor(() =>
-      expect(screen.getByText("Create Admin User")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText("Create Admin User")).toBeInTheDocument());
   });
 
   it("Cancel button in create modal closes the modal", async () => {
@@ -226,9 +220,7 @@ describe("UsersPage", () => {
     const cancelBtn = screen.getByRole("button", { name: /Cancel/i });
     await user.click(cancelBtn);
 
-    await waitFor(() =>
-      expect(screen.queryByText("Create Admin User")).not.toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.queryByText("Create Admin User")).not.toBeInTheDocument());
   });
 
   it("Create button is disabled when all form fields are empty", async () => {
@@ -341,9 +333,7 @@ describe("UsersPage", () => {
 
     await waitFor(() => expect(mockPost).toHaveBeenCalled());
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith("User created successfully."));
-    await waitFor(() =>
-      expect(screen.queryByText("Create Admin User")).not.toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.queryByText("Create Admin User")).not.toBeInTheDocument());
   });
 
   it("failed create shows error toast", async () => {
@@ -373,9 +363,7 @@ describe("UsersPage", () => {
     await waitFor(() => expect(createBtn).not.toBeDisabled());
     await user.click(createBtn);
 
-    await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith("Email already taken")
-    );
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Email already taken"));
   });
 
   it("failed create with no server message shows fallback error toast", async () => {
@@ -440,9 +428,7 @@ describe("UsersPage", () => {
     mockGet.mockRejectedValue(new Error("Server error"));
     renderPage(withWorkspace);
 
-    await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith("Failed to load users.")
-    );
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Failed to load users."));
   });
 
   it("workspace checkbox toggles selection in create modal", async () => {
@@ -487,9 +473,7 @@ describe("UsersPage", () => {
     await user.click(superAdminOption);
 
     // Workspace section should now be gone
-    expect(
-      screen.queryByText("Select at least one workspace to assign")
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Select at least one workspace to assign")).not.toBeInTheDocument();
   });
 
   it("modal can be closed via the X close button", async () => {
@@ -505,8 +489,6 @@ describe("UsersPage", () => {
     const closeBtn = screen.getByRole("button", { name: /Close/i });
     await user.click(closeBtn);
 
-    await waitFor(() =>
-      expect(screen.queryByText("Create Admin User")).not.toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.queryByText("Create Admin User")).not.toBeInTheDocument());
   });
 });
