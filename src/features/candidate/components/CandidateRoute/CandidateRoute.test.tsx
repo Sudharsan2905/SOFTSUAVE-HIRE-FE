@@ -65,14 +65,8 @@ function renderCandidateRoute(
   return renderWithProviders(
     <Routes>
       <Route element={<CandidateRoute />}>
-        <Route
-          path="/assessment/:shareLink/instructions"
-          element={<div>Instructions Page</div>}
-        />
-        <Route
-          path="/assessment/:shareLink/completed"
-          element={<div>Completed Page</div>}
-        />
+        <Route path="/assessment/:shareLink/instructions" element={<div>Instructions Page</div>} />
+        <Route path="/assessment/:shareLink/completed" element={<div>Completed Page</div>} />
       </Route>
 
       {/* Redirect targets */}
@@ -118,9 +112,7 @@ describe("CandidateRoute", () => {
 
     it("shows NoAccessPage with 'Candidate Access Only' title for a non-candidate user", async () => {
       // Admin tries to access a candidate route
-      renderCandidateRoute(
-        makeAuthState({ isAuthenticated: true, user: makeAdminUser() })
-      );
+      renderCandidateRoute(makeAuthState({ isAuthenticated: true, user: makeAdminUser() }));
 
       await waitFor(() => {
         expect(screen.getByText("Candidate Access Only")).toBeInTheDocument();
@@ -136,9 +128,7 @@ describe("CandidateRoute", () => {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       mockGet.mockReturnValue(new Promise(() => {}));
 
-      renderCandidateRoute(
-        makeAuthState({ isAuthenticated: true, user: makeCandidateUser() })
-      );
+      renderCandidateRoute(makeAuthState({ isAuthenticated: true, user: makeCandidateUser() }));
 
       // Child should not have appeared yet
       expect(screen.queryByText("Instructions Page")).not.toBeInTheDocument();
@@ -153,9 +143,7 @@ describe("CandidateRoute", () => {
         data: { data: { status: SubmissionStatus.IN_PROGRESS } },
       });
 
-      renderCandidateRoute(
-        makeAuthState({ isAuthenticated: true, user: makeCandidateUser() })
-      );
+      renderCandidateRoute(makeAuthState({ isAuthenticated: true, user: makeCandidateUser() }));
 
       await waitFor(() => {
         expect(screen.getByText("Instructions Page")).toBeInTheDocument();
@@ -167,9 +155,7 @@ describe("CandidateRoute", () => {
         data: { data: { status: SubmissionStatus.PENDING } },
       });
 
-      renderCandidateRoute(
-        makeAuthState({ isAuthenticated: true, user: makeCandidateUser() })
-      );
+      renderCandidateRoute(makeAuthState({ isAuthenticated: true, user: makeCandidateUser() }));
 
       await waitFor(() => {
         expect(screen.getByText("Instructions Page")).toBeInTheDocument();
@@ -179,9 +165,7 @@ describe("CandidateRoute", () => {
     it("renders children when no submission exists (null status)", async () => {
       mockGet.mockResolvedValueOnce({ data: { data: null } });
 
-      renderCandidateRoute(
-        makeAuthState({ isAuthenticated: true, user: makeCandidateUser() })
-      );
+      renderCandidateRoute(makeAuthState({ isAuthenticated: true, user: makeCandidateUser() }));
 
       await waitFor(() => {
         expect(screen.getByText("Instructions Page")).toBeInTheDocument();
@@ -195,9 +179,7 @@ describe("CandidateRoute", () => {
         data: { data: { status: SubmissionStatus.COMPLETED } },
       });
 
-      renderCandidateRoute(
-        makeAuthState({ isAuthenticated: true, user: makeCandidateUser() })
-      );
+      renderCandidateRoute(makeAuthState({ isAuthenticated: true, user: makeCandidateUser() }));
 
       await waitFor(() => {
         expect(screen.getByText("Completed Page")).toBeInTheDocument();
@@ -209,9 +191,7 @@ describe("CandidateRoute", () => {
         data: { data: { status: SubmissionStatus.COMPLETED } },
       });
 
-      renderCandidateRoute(
-        makeAuthState({ isAuthenticated: true, user: makeCandidateUser() })
-      );
+      renderCandidateRoute(makeAuthState({ isAuthenticated: true, user: makeCandidateUser() }));
 
       await waitFor(() => {
         expect(mockMarkDone).toHaveBeenCalledWith("abc123");
@@ -223,9 +203,7 @@ describe("CandidateRoute", () => {
         data: { data: { status: SubmissionStatus.ON_HOLD } },
       });
 
-      renderCandidateRoute(
-        makeAuthState({ isAuthenticated: true, user: makeCandidateUser() })
-      );
+      renderCandidateRoute(makeAuthState({ isAuthenticated: true, user: makeCandidateUser() }));
 
       await waitFor(() => {
         expect(screen.getByText("Interview Temporarily Paused")).toBeInTheDocument();
@@ -237,9 +215,7 @@ describe("CandidateRoute", () => {
         data: { data: { status: SubmissionStatus.ON_HOLD } },
       });
 
-      renderCandidateRoute(
-        makeAuthState({ isAuthenticated: true, user: makeCandidateUser() })
-      );
+      renderCandidateRoute(makeAuthState({ isAuthenticated: true, user: makeCandidateUser() }));
 
       await waitFor(() => {
         expect(screen.getByText("Interview Temporarily Paused")).toBeInTheDocument();
@@ -253,9 +229,7 @@ describe("CandidateRoute", () => {
         data: { data: { status: SubmissionStatus.TERMINATED } },
       });
 
-      renderCandidateRoute(
-        makeAuthState({ isAuthenticated: true, user: makeCandidateUser() })
-      );
+      renderCandidateRoute(makeAuthState({ isAuthenticated: true, user: makeCandidateUser() }));
 
       await waitFor(() => {
         expect(screen.getByText("Interview Session Terminated")).toBeInTheDocument();
@@ -267,9 +241,7 @@ describe("CandidateRoute", () => {
         data: { data: { status: SubmissionStatus.MALPRACTICE } },
       });
 
-      renderCandidateRoute(
-        makeAuthState({ isAuthenticated: true, user: makeCandidateUser() })
-      );
+      renderCandidateRoute(makeAuthState({ isAuthenticated: true, user: makeCandidateUser() }));
 
       await waitFor(() => {
         expect(screen.getByText("Assessment Ended — Policy Violation")).toBeInTheDocument();
@@ -301,9 +273,7 @@ describe("CandidateRoute", () => {
     it("renders children (fail-open) when the submission status API call throws", async () => {
       mockGet.mockRejectedValueOnce(new Error("Network Error"));
 
-      renderCandidateRoute(
-        makeAuthState({ isAuthenticated: true, user: makeCandidateUser() })
-      );
+      renderCandidateRoute(makeAuthState({ isAuthenticated: true, user: makeCandidateUser() }));
 
       await waitFor(() => {
         expect(screen.getByText("Instructions Page")).toBeInTheDocument();
@@ -313,9 +283,7 @@ describe("CandidateRoute", () => {
     it("renders children when the API returns an unexpected shape", async () => {
       mockGet.mockResolvedValueOnce({ data: {} }); // no data.data property
 
-      renderCandidateRoute(
-        makeAuthState({ isAuthenticated: true, user: makeCandidateUser() })
-      );
+      renderCandidateRoute(makeAuthState({ isAuthenticated: true, user: makeCandidateUser() }));
 
       await waitFor(() => {
         expect(screen.getByText("Instructions Page")).toBeInTheDocument();

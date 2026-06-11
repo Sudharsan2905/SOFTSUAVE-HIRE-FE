@@ -44,9 +44,7 @@ async function flushInit() {
   }
 }
 
-function makeVideoRef(
-  readyState = 4
-): MutableRefObject<HTMLVideoElement | null> {
+function makeVideoRef(readyState = 4): MutableRefObject<HTMLVideoElement | null> {
   const ref = createRef<HTMLVideoElement | null>() as MutableRefObject<HTMLVideoElement | null>;
   ref.current = { readyState } as unknown as HTMLVideoElement;
   return ref;
@@ -70,12 +68,10 @@ beforeEach(() => {
   forVisionTasks.mockClear();
   forVisionTasks.mockResolvedValue({});
 
-  vi.spyOn(globalThis, "requestAnimationFrame").mockImplementation(
-    (cb: FrameRequestCallback) => {
-      rafCallbacks.push(cb);
-      return ++rafId;
-    }
-  );
+  vi.spyOn(globalThis, "requestAnimationFrame").mockImplementation((cb: FrameRequestCallback) => {
+    rafCallbacks.push(cb);
+    return ++rafId;
+  });
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   vi.spyOn(globalThis, "cancelAnimationFrame").mockImplementation(() => {});
   vi.spyOn(performance, "now").mockImplementation(() => nowValue);
@@ -97,18 +93,14 @@ describe("useVideoMonitoring", () => {
 
   it("does nothing (no detector init) when disabled", () => {
     const onViolation = vi.fn();
-    renderHook(() =>
-      useVideoMonitoring({ enabled: false, videoRef: makeVideoRef(), onViolation })
-    );
+    renderHook(() => useVideoMonitoring({ enabled: false, videoRef: makeVideoRef(), onViolation }));
     expect(forVisionTasks).not.toHaveBeenCalled();
     expect(createFromOptions).not.toHaveBeenCalled();
   });
 
   it("initializes the MediaPipe detector and starts the rAF loop when enabled", async () => {
     const onViolation = vi.fn();
-    renderHook(() =>
-      useVideoMonitoring({ enabled: true, videoRef: makeVideoRef(), onViolation })
-    );
+    renderHook(() => useVideoMonitoring({ enabled: true, videoRef: makeVideoRef(), onViolation }));
 
     await act(async () => {
       await flushInit();
@@ -123,9 +115,7 @@ describe("useVideoMonitoring", () => {
   it("bails out of init when detector creation throws (no loop scheduled)", async () => {
     createFromOptions.mockRejectedValueOnce(new Error("gpu unavailable"));
     const onViolation = vi.fn();
-    renderHook(() =>
-      useVideoMonitoring({ enabled: true, videoRef: makeVideoRef(), onViolation })
-    );
+    renderHook(() => useVideoMonitoring({ enabled: true, videoRef: makeVideoRef(), onViolation }));
 
     await act(async () => {
       await flushInit();
@@ -139,9 +129,7 @@ describe("useVideoMonitoring", () => {
   it("updates faceCount and flags face_absence after the absence threshold", async () => {
     const onViolation = vi.fn();
     const videoRef = makeVideoRef(4);
-    renderHook(() =>
-      useVideoMonitoring({ enabled: true, videoRef, onViolation })
-    );
+    renderHook(() => useVideoMonitoring({ enabled: true, videoRef, onViolation }));
     await act(async () => {
       await flushInit();
     });
@@ -168,9 +156,7 @@ describe("useVideoMonitoring", () => {
   it("flags multiple_faces when more than one face is detected", async () => {
     const onViolation = vi.fn();
     const videoRef = makeVideoRef(4);
-    renderHook(() =>
-      useVideoMonitoring({ enabled: true, videoRef, onViolation })
-    );
+    renderHook(() => useVideoMonitoring({ enabled: true, videoRef, onViolation }));
     await act(async () => {
       await flushInit();
     });
@@ -189,9 +175,7 @@ describe("useVideoMonitoring", () => {
   it("does not flag when exactly one face is detected and resets absence", async () => {
     const onViolation = vi.fn();
     const videoRef = makeVideoRef(4);
-    renderHook(() =>
-      useVideoMonitoring({ enabled: true, videoRef, onViolation })
-    );
+    renderHook(() => useVideoMonitoring({ enabled: true, videoRef, onViolation }));
     await act(async () => {
       await flushInit();
     });
@@ -208,9 +192,7 @@ describe("useVideoMonitoring", () => {
   it("respects the violation cooldown (does not double-flag within 15s)", async () => {
     const onViolation = vi.fn();
     const videoRef = makeVideoRef(4);
-    renderHook(() =>
-      useVideoMonitoring({ enabled: true, videoRef, onViolation })
-    );
+    renderHook(() => useVideoMonitoring({ enabled: true, videoRef, onViolation }));
     await act(async () => {
       await flushInit();
     });
@@ -236,9 +218,7 @@ describe("useVideoMonitoring", () => {
   it("skips detection when video is not ready (readyState < 2)", async () => {
     const onViolation = vi.fn();
     const videoRef = makeVideoRef(1); // HAVE_METADATA, < HAVE_CURRENT_DATA
-    renderHook(() =>
-      useVideoMonitoring({ enabled: true, videoRef, onViolation })
-    );
+    renderHook(() => useVideoMonitoring({ enabled: true, videoRef, onViolation }));
     await act(async () => {
       await flushInit();
     });
@@ -254,9 +234,7 @@ describe("useVideoMonitoring", () => {
   it("does not run detection before the detection interval elapses", async () => {
     const onViolation = vi.fn();
     const videoRef = makeVideoRef(4);
-    renderHook(() =>
-      useVideoMonitoring({ enabled: true, videoRef, onViolation })
-    );
+    renderHook(() => useVideoMonitoring({ enabled: true, videoRef, onViolation }));
     await act(async () => {
       await flushInit();
     });
@@ -272,9 +250,7 @@ describe("useVideoMonitoring", () => {
   it("swallows detector errors during a frame without throwing", async () => {
     const onViolation = vi.fn();
     const videoRef = makeVideoRef(4);
-    renderHook(() =>
-      useVideoMonitoring({ enabled: true, videoRef, onViolation })
-    );
+    renderHook(() => useVideoMonitoring({ enabled: true, videoRef, onViolation }));
     await act(async () => {
       await flushInit();
     });

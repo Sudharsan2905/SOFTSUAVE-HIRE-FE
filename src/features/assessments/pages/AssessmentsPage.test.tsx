@@ -110,7 +110,10 @@ describe("AssessmentsPage", () => {
 
   it("renders assessment cards when data is loaded", async () => {
     mockGet.mockResolvedValue(
-      makeAssessmentsResponse([{ id: "a-1", name: "JS Test" }, { id: "a-2", name: "Python Test" }])
+      makeAssessmentsResponse([
+        { id: "a-1", name: "JS Test" },
+        { id: "a-2", name: "Python Test" },
+      ])
     );
     renderWithProviders(<AssessmentsPage />, {
       preloadedState: {
@@ -154,7 +157,9 @@ describe("AssessmentsPage", () => {
         workspace: { activeWorkspace: ws, workspaces: [ws] },
       },
     });
-    await waitFor(() => expect(screen.getByRole("button", { name: /create assessment/i })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /create assessment/i })).toBeInTheDocument()
+    );
     await userEvent.click(screen.getByRole("button", { name: /create assessment/i }));
     await waitFor(() => expect(screen.getByTestId("wizard")).toBeInTheDocument());
   });

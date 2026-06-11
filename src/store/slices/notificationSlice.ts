@@ -26,7 +26,8 @@ const initialState: NotificationState = {
 };
 
 const asString = (v: unknown): string => (typeof v === "string" ? v : "");
-const asOptionalString = (v: unknown): string | undefined => (typeof v === "string" ? v : undefined);
+const asOptionalString = (v: unknown): string | undefined =>
+  typeof v === "string" ? v : undefined;
 
 /* Normalise snake_case API response → camelCase Notification */
 const normalise = (raw: Record<string, unknown>): Notification => ({

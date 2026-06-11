@@ -162,9 +162,7 @@ describe("useNetworkMonitoring", () => {
 
   it("handles terminated message and calls onTerminated", () => {
     const onTerminated = vi.fn();
-    const { result } = renderHook(() =>
-      useNetworkMonitoring({ ...defaultOptions, onTerminated })
-    );
+    const { result } = renderHook(() => useNetworkMonitoring({ ...defaultOptions, onTerminated }));
     act(() => {
       wsInstances[0].simulateOpen();
       wsInstances[0].simulateMessage({ type: "terminated" });
@@ -175,9 +173,7 @@ describe("useNetworkMonitoring", () => {
 
   it("handles admin_warning message and calls onAdminWarning with message", () => {
     const onAdminWarning = vi.fn();
-    renderHook(() =>
-      useNetworkMonitoring({ ...defaultOptions, onAdminWarning })
-    );
+    renderHook(() => useNetworkMonitoring({ ...defaultOptions, onAdminWarning }));
     act(() => {
       wsInstances[0].simulateOpen();
       wsInstances[0].simulateMessage({ type: "admin_warning", message: "Please focus" });
@@ -187,9 +183,7 @@ describe("useNetworkMonitoring", () => {
 
   it("ignores admin_warning with no message body", () => {
     const onAdminWarning = vi.fn();
-    renderHook(() =>
-      useNetworkMonitoring({ ...defaultOptions, onAdminWarning })
-    );
+    renderHook(() => useNetworkMonitoring({ ...defaultOptions, onAdminWarning }));
     act(() => {
       wsInstances[0].simulateOpen();
       wsInstances[0].simulateMessage({ type: "admin_warning" });
@@ -217,9 +211,7 @@ describe("useNetworkMonitoring", () => {
       wsInstances[0].simulateOpen();
       vi.advanceTimersByTime(200);
     });
-    expect(wsInstances[0].send).toHaveBeenCalledWith(
-      expect.stringContaining('"type":"ping"')
-    );
+    expect(wsInstances[0].send).toHaveBeenCalledWith(expect.stringContaining('"type":"ping"'));
   });
 
   it("schedules reconnect after WebSocket close", () => {

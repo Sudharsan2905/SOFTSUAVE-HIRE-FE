@@ -31,7 +31,10 @@ vi.mock("@/store/slices/authSlice", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/store/slices/authSlice")>();
   return {
     ...actual,
-    candidateLogin: vi.fn(() => ({ type: "auth/candidateLogin", unwrap: vi.fn().mockResolvedValue({}) })),
+    candidateLogin: vi.fn(() => ({
+      type: "auth/candidateLogin",
+      unwrap: vi.fn().mockResolvedValue({}),
+    })),
   };
 });
 
@@ -72,9 +75,7 @@ describe("AssessmentAccessPage", () => {
       },
     });
     renderWithProviders(<AssessmentAccessPage />);
-    await waitFor(() =>
-      expect(screen.getByTestId("link-status")).toHaveTextContent("expired")
-    );
+    await waitFor(() => expect(screen.getByTestId("link-status")).toHaveTextContent("expired"));
   });
 
   it("shows link status screen when link is not yet started", async () => {
@@ -84,9 +85,7 @@ describe("AssessmentAccessPage", () => {
       },
     });
     renderWithProviders(<AssessmentAccessPage />);
-    await waitFor(() =>
-      expect(screen.getByTestId("link-status")).toHaveTextContent("not_started")
-    );
+    await waitFor(() => expect(screen.getByTestId("link-status")).toHaveTextContent("not_started"));
   });
 
   it("shows link status screen when link is invalid", async () => {
@@ -94,17 +93,13 @@ describe("AssessmentAccessPage", () => {
       data: { data: { can_allow: false, is_expirable: false, message: "Invalid" } },
     });
     renderWithProviders(<AssessmentAccessPage />);
-    await waitFor(() =>
-      expect(screen.getByTestId("link-status")).toHaveTextContent("invalid")
-    );
+    await waitFor(() => expect(screen.getByTestId("link-status")).toHaveTextContent("invalid"));
   });
 
   it("shows invalid status when token is missing", async () => {
     mockUseParams.mockReturnValue({ token: undefined });
     renderWithProviders(<AssessmentAccessPage />);
-    await waitFor(() =>
-      expect(screen.getByTestId("link-status")).toHaveTextContent("invalid")
-    );
+    await waitFor(() => expect(screen.getByTestId("link-status")).toHaveTextContent("invalid"));
   });
 
   it("shows login form when link is valid", async () => {
@@ -147,9 +142,7 @@ describe("AssessmentAccessPage", () => {
     renderWithProviders(<AssessmentAccessPage />);
     await waitFor(() => screen.getByRole("button", { name: /start assessment/i }));
     await userEvent.click(screen.getByRole("button", { name: /start assessment/i }));
-    await waitFor(() =>
-      expect(screen.getByText("Invalid email")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText("Invalid email")).toBeInTheDocument());
   });
 
   it("treats network error as valid link and shows login form", async () => {

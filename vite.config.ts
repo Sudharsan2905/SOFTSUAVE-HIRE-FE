@@ -1,26 +1,22 @@
-import { defineConfig, loadEnv } from 'vite';
-import react from '@vitejs/plugin-react';
-import path from 'path';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "node:path";
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
+export default defineConfig(() => {
   return {
-    define: {
-      'import.meta.env.VITE_API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL),
-      'import.meta.env.VITE_GOOGLE_CLIENT_ID': JSON.stringify(env.VITE_GOOGLE_CLIENT_ID),
-      'import.meta.env.VITE_APP_NAME': JSON.stringify(env.VITE_APP_NAME),
-    },
     plugins: [react()],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, './src'),
+        "@": path.resolve(__dirname, "./src"),
       },
     },
     server: {
       port: 5173,
+      allowedHosts: ["outsider-curtsy-concert.ngrok-free.dev"],
       proxy: {
-        '/api': {
-          target: 'http://localhost:8000',
+        "/api": {
+          target: "http://localhost:8000",
+          // target: "http://13.236.235.236",
           changeOrigin: true,
           ws: true,
         },

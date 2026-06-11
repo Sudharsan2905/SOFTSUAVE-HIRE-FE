@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useId } from "react";
+import React, { useState, useRef, useEffect, useId, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import styles from "./Select.module.css";
 import { clsx } from "@/utils/helpers";
@@ -21,6 +21,7 @@ interface SelectProps {
   showRequired?: boolean;
   disabled?: boolean;
   id?: string;
+  leftIcon?: ReactNode;
   className?: string;
   dropdownClassName?: string;
   style?: React.CSSProperties;
@@ -38,6 +39,7 @@ export function Select({
   showRequired,
   disabled,
   id,
+  leftIcon,
   className,
   dropdownClassName,
   style,
@@ -123,6 +125,7 @@ export function Select({
           onClick={openDropdown}
           disabled={disabled}
         >
+          {leftIcon}
           <span className={selected ? styles.triggerValue : styles.triggerPlaceholder}>
             {selected ? selected.label : (placeholder ?? "Select…")}
           </span>

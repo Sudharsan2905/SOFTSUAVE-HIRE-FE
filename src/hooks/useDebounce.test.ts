@@ -31,7 +31,9 @@ describe("useDebounce", () => {
     });
 
     rerender({ value: "updated" });
-    act(() => { vi.advanceTimersByTime(300); });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
 
     expect(result.current).toBe("updated");
   });
@@ -42,14 +44,20 @@ describe("useDebounce", () => {
     });
 
     rerender({ value: "b" });
-    act(() => { vi.advanceTimersByTime(200); }); // partially into the delay
+    act(() => {
+      vi.advanceTimersByTime(200);
+    }); // partially into the delay
 
     rerender({ value: "c" });
-    act(() => { vi.advanceTimersByTime(200); }); // still 100ms short for "c"
+    act(() => {
+      vi.advanceTimersByTime(200);
+    }); // still 100ms short for "c"
 
     expect(result.current).toBe("a"); // still held at "a"
 
-    act(() => { vi.advanceTimersByTime(100); }); // full 300ms from "c"
+    act(() => {
+      vi.advanceTimersByTime(100);
+    }); // full 300ms from "c"
     expect(result.current).toBe("c");
   });
 
@@ -62,10 +70,14 @@ describe("useDebounce", () => {
 
     rerender({ value: "second" });
 
-    act(() => { vi.advanceTimersByTime(299); });
+    act(() => {
+      vi.advanceTimersByTime(299);
+    });
     expect(result.current).toBe("first"); // not yet
 
-    act(() => { vi.advanceTimersByTime(1); });
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
     expect(result.current).toBe("second"); // exactly at 300 ms
   });
 
@@ -77,7 +89,9 @@ describe("useDebounce", () => {
     });
 
     rerender({ value: 42 });
-    act(() => { vi.advanceTimersByTime(200); });
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
 
     expect(result.current).toBe(42);
   });
@@ -91,7 +105,9 @@ describe("useDebounce", () => {
     });
 
     rerender({ value: updated });
-    act(() => { vi.advanceTimersByTime(100); });
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
 
     expect(result.current).toEqual(updated);
   });

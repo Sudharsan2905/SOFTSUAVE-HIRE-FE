@@ -162,9 +162,7 @@ describe("WorkspaceSwitcher", () => {
       auth: makeAuthState({ user: superAdmin, isAuthenticated: true }),
       workspace: { activeWorkspace: null, workspaces: [] },
     });
-    await waitFor(() =>
-      expect(screen.getByText("No workspaces yet")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText("No workspaces yet")).toBeInTheDocument());
     expect(screen.getByRole("button", { name: /create workspace/i })).toBeInTheDocument();
   });
 
@@ -258,9 +256,7 @@ describe("WorkspaceSwitcher", () => {
     await user.click(screen.getByRole("button", { name: /engineering/i }));
     await user.click(await screen.findByText("Sales"));
 
-    await waitFor(() =>
-      expect(store.getState().workspace.activeWorkspace?.id).toBe("ws-2")
-    );
+    await waitFor(() => expect(store.getState().workspace.activeWorkspace?.id).toBe("ws-2"));
   });
 
   it("navigates to assessments when switching while on a /workspaces route", async () => {
@@ -275,9 +271,7 @@ describe("WorkspaceSwitcher", () => {
     await user.click(screen.getByRole("button", { name: /engineering/i }));
     await user.click(await screen.findByText("Sales"));
 
-    await waitFor(() =>
-      expect(mockNavigate).toHaveBeenCalledWith("/workspaces/ws-2/assessments")
-    );
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/workspaces/ws-2/assessments"));
   });
 
   it("does not navigate when switching while not on a /workspaces route", async () => {
@@ -388,9 +382,7 @@ describe("WorkspaceSwitcher", () => {
     await user.type(within(dialog).getByPlaceholderText(/Engineering Hiring/i), "X");
     await user.click(within(dialog).getByRole("button", { name: /^Create$/i }));
 
-    await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith("Failed to create workspace")
-    );
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Failed to create workspace"));
   });
 
   it("create modal can be cancelled", async () => {
@@ -477,7 +469,9 @@ describe("WorkspaceSwitcher", () => {
     await user.click(await screen.findByRole("button", { name: /settings/i }));
 
     const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).queryByRole("button", { name: /invite members/i })).not.toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole("button", { name: /invite members/i })
+    ).not.toBeInTheDocument();
     expect(within(dialog).queryByRole("button", { name: /delete/i })).not.toBeInTheDocument();
   });
 
@@ -497,9 +491,7 @@ describe("WorkspaceSwitcher", () => {
     await user.click(within(dialog).getByRole("button", { name: /^edit$/i }));
     await user.click(within(dialog).getByRole("button", { name: /save changes/i }));
 
-    await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith("Failed to update workspace")
-    );
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Failed to update workspace"));
   });
 
   // ──────────────────────────────────────────────────────────────
@@ -525,12 +517,8 @@ describe("WorkspaceSwitcher", () => {
     dialog = await screen.findByRole("dialog", { name: /delete workspace/i });
     await user.click(within(dialog).getByRole("button", { name: /^delete$/i }));
 
-    await waitFor(() =>
-      expect(mockDelete).toHaveBeenCalledWith("/api/workspaces/ws-1")
-    );
-    await waitFor(() =>
-      expect(toast.success).toHaveBeenCalledWith('"Engineering" deleted')
-    );
+    await waitFor(() => expect(mockDelete).toHaveBeenCalledWith("/api/workspaces/ws-1"));
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith('"Engineering" deleted'));
   });
 
   it("delete failure shows error toast", async () => {
@@ -550,9 +538,7 @@ describe("WorkspaceSwitcher", () => {
     dialog = await screen.findByRole("dialog", { name: /delete workspace/i });
     await user.click(within(dialog).getByRole("button", { name: /^delete$/i }));
 
-    await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith("Failed to delete workspace")
-    );
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Failed to delete workspace"));
   });
 
   // ──────────────────────────────────────────────────────────────
@@ -618,9 +604,7 @@ describe("WorkspaceSwitcher", () => {
     dialog = await screen.findByRole("dialog", { name: /invite members/i });
     await user.click(within(dialog).getByRole("button", { name: /^save$/i }));
 
-    await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith("Failed to update members")
-    );
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Failed to update members"));
   });
 
   // ──────────────────────────────────────────────────────────────

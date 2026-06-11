@@ -27,9 +27,7 @@ describe("LinkStatusScreen", () => {
 
   it("shows fallback description when no message provided", () => {
     render(<LinkStatusScreen status="expired" />);
-    expect(
-      screen.getByText("This interview session is no longer available.")
-    ).toBeInTheDocument();
+    expect(screen.getByText("This interview session is no longer available.")).toBeInTheDocument();
   });
 
   it("shows start time for not_started status", () => {

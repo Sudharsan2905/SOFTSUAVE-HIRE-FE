@@ -30,7 +30,13 @@ vi.mock("@/store/slices/notificationSlice", async (importOriginal) => {
 });
 
 vi.mock("../NotificationItem", () => ({
-  NotificationItem: ({ notification, onRead }: { notification: { id: string; title: string }; onRead: (id: string) => void }) => (
+  NotificationItem: ({
+    notification,
+    onRead,
+  }: {
+    notification: { id: string; title: string };
+    onRead: (id: string) => void;
+  }) => (
     <li data-testid={`notif-${notification.id}`}>
       <span>{notification.title}</span>
       <button onClick={() => onRead(notification.id)}>Mark read</button>
@@ -71,14 +77,11 @@ describe("NotificationDropdown", () => {
   });
 
   function renderDropdown(notifState = {}) {
-    return renderWithProviders(
-      <NotificationDropdown anchorRef={anchorRef} onClose={onClose} />,
-      {
-        preloadedState: {
-          notifications: makeNotificationsState(notifState),
-        },
-      }
-    );
+    return renderWithProviders(<NotificationDropdown anchorRef={anchorRef} onClose={onClose} />, {
+      preloadedState: {
+        notifications: makeNotificationsState(notifState),
+      },
+    });
   }
 
   it("renders Notifications heading", () => {

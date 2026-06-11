@@ -144,7 +144,9 @@ describe("VideoMonitor", () => {
       render(<VideoMonitor videoRef={ref} />);
       patchVideoElement(ref);
       // trigger another interval tick so check() runs with the patched element
-      act(() => { vi.advanceTimersByTime(3000); });
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
       expect(screen.getByText("Live")).toBeInTheDocument();
     });
 
@@ -152,7 +154,9 @@ describe("VideoMonitor", () => {
       const ref = makeVideoRef();
       const { container } = render(<VideoMonitor videoRef={ref} />);
       patchVideoElement(ref);
-      act(() => { vi.advanceTimersByTime(3000); });
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
       expect(container.querySelector(".badgeDot")).toBeInTheDocument();
     });
   });
@@ -168,7 +172,9 @@ describe("VideoMonitor", () => {
       const ref = makeVideoRef();
       render(<VideoMonitor videoRef={ref} />);
       patchVideoElement(ref);
-      act(() => { vi.advanceTimersByTime(3000); });
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
       expect(screen.getByText("No Feed")).toBeInTheDocument();
     });
 
@@ -176,7 +182,9 @@ describe("VideoMonitor", () => {
       const ref = makeVideoRef();
       const { container } = render(<VideoMonitor videoRef={ref} />);
       patchVideoElement(ref);
-      act(() => { vi.advanceTimersByTime(3000); });
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
       expect(container.querySelector(".badgeDot")).not.toBeInTheDocument();
     });
   });
@@ -188,7 +196,9 @@ describe("VideoMonitor", () => {
       const ref = makeVideoRef();
       render(<VideoMonitor videoRef={ref} />);
       patchVideoElement(ref, { readyState: 1, videoWidth: 640 });
-      act(() => { vi.advanceTimersByTime(3000); });
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
       expect(screen.getByText("No Feed")).toBeInTheDocument();
     });
 
@@ -196,7 +206,9 @@ describe("VideoMonitor", () => {
       const ref = makeVideoRef();
       render(<VideoMonitor videoRef={ref} />);
       patchVideoElement(ref, { readyState: 4, videoWidth: 0 });
-      act(() => { vi.advanceTimersByTime(3000); });
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
       expect(screen.getByText("No Feed")).toBeInTheDocument();
     });
   });
@@ -209,8 +221,8 @@ describe("VideoMonitor", () => {
       render(<VideoMonitor videoRef={ref} />);
       expect(
         screen.queryByText("Live") ??
-        screen.queryByText("No Feed") ??
-        screen.queryByText("Checking")
+          screen.queryByText("No Feed") ??
+          screen.queryByText("Checking")
       ).toBeTruthy();
     });
   });
@@ -231,7 +243,9 @@ describe("VideoMonitor", () => {
       patchVideoElement(ref); // readyState=4, videoWidth=640
 
       for (let i = 0; i < 5; i++) {
-        act(() => { vi.advanceTimersByTime(3000); });
+        act(() => {
+          vi.advanceTimersByTime(3000);
+        });
       }
       expect(onWarning).toHaveBeenCalled();
     });
@@ -244,7 +258,9 @@ describe("VideoMonitor", () => {
       render(<VideoMonitor videoRef={ref} onWarning={onWarning} />);
       patchVideoElement(ref);
 
-      act(() => { vi.advanceTimersByTime(15000); });
+      act(() => {
+        vi.advanceTimersByTime(15000);
+      });
       expect(onWarning).not.toHaveBeenCalled();
     });
 
@@ -268,7 +284,9 @@ describe("VideoMonitor", () => {
       patchVideoElement(ref);
 
       for (let i = 0; i < 4; i++) {
-        act(() => { vi.advanceTimersByTime(3000); });
+        act(() => {
+          vi.advanceTimersByTime(3000);
+        });
       }
       expect(onWarning).not.toHaveBeenCalled();
     });
@@ -304,12 +322,16 @@ describe("VideoMonitor", () => {
       patchVideoElement(ref);
 
       // First tick: bright → "Live"
-      act(() => { vi.advanceTimersByTime(3000); });
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
       expect(screen.getByText("Live")).toBeInTheDocument();
 
       // Second tick: dark → "No Feed"
       dark = true;
-      act(() => { vi.advanceTimersByTime(3000); });
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
       expect(screen.getByText("No Feed")).toBeInTheDocument();
     });
 
@@ -327,11 +349,15 @@ describe("VideoMonitor", () => {
       render(<VideoMonitor videoRef={ref} />);
       patchVideoElement(ref);
 
-      act(() => { vi.advanceTimersByTime(3000); });
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
       expect(screen.getByText("No Feed")).toBeInTheDocument();
 
       bright = true;
-      act(() => { vi.advanceTimersByTime(3000); });
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
       expect(screen.getByText("Live")).toBeInTheDocument();
     });
   });

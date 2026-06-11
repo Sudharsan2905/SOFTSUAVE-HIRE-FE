@@ -55,8 +55,24 @@ const renderSuperAdminOwnProfile = () =>
       workspace: {
         activeWorkspace: null,
         workspaces: [
-          { id: "ws-1", name: "Workspace One", description: "", created_by: "user-1", members: [], created_at: "2024-01-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z" },
-          { id: "ws-2", name: "Workspace Two", description: "", created_by: "user-1", members: [], created_at: "2024-01-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z" },
+          {
+            id: "ws-1",
+            name: "Workspace One",
+            description: "",
+            created_by: "user-1",
+            members: [],
+            created_at: "2024-01-01T00:00:00Z",
+            updated_at: "2024-01-01T00:00:00Z",
+          },
+          {
+            id: "ws-2",
+            name: "Workspace Two",
+            description: "",
+            created_by: "user-1",
+            members: [],
+            created_at: "2024-01-01T00:00:00Z",
+            updated_at: "2024-01-01T00:00:00Z",
+          },
         ],
       },
     },
@@ -82,8 +98,24 @@ const renderViewingOtherAsSuperAdmin = (otherUserOverrides = {}) => {
       workspace: {
         activeWorkspace: null,
         workspaces: [
-          { id: "ws-1", name: "Workspace One", description: "", created_by: "user-1", members: [], created_at: "2024-01-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z" },
-          { id: "ws-2", name: "Workspace Two", description: "", created_by: "user-1", members: [], created_at: "2024-01-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z" },
+          {
+            id: "ws-1",
+            name: "Workspace One",
+            description: "",
+            created_by: "user-1",
+            members: [],
+            created_at: "2024-01-01T00:00:00Z",
+            updated_at: "2024-01-01T00:00:00Z",
+          },
+          {
+            id: "ws-2",
+            name: "Workspace Two",
+            description: "",
+            created_by: "user-1",
+            members: [],
+            created_at: "2024-01-01T00:00:00Z",
+            updated_at: "2024-01-01T00:00:00Z",
+          },
         ],
       },
     },
@@ -185,7 +217,9 @@ describe("UserProfilePage — own profile", () => {
     await userEvent.clear(firstNameInput);
     await userEvent.type(firstNameInput, "NewName");
     await userEvent.click(screen.getByRole("button", { name: /save changes/i }));
-    await waitFor(() => expect(mockToastSuccess).toHaveBeenCalledWith("Profile updated successfully."));
+    await waitFor(() =>
+      expect(mockToastSuccess).toHaveBeenCalledWith("Profile updated successfully.")
+    );
   });
 
   it("shows toast error when PATCH fails on save", async () => {
@@ -264,9 +298,7 @@ describe("UserProfilePage — own profile", () => {
     await userEvent.type(screen.getByPlaceholderText(/enter new password/i), "NewPass123");
     await userEvent.type(screen.getByPlaceholderText(/confirm new password/i), "DifferentPass");
     await userEvent.click(screen.getByRole("button", { name: /^save$/i }));
-    await waitFor(() =>
-      expect(mockToastError).toHaveBeenCalledWith("New passwords do not match")
-    );
+    await waitFor(() => expect(mockToastError).toHaveBeenCalledWith("New passwords do not match"));
   });
 
   it("shows validation error when current password is missing", async () => {
@@ -315,9 +347,7 @@ describe("UserProfilePage — own profile", () => {
     await userEvent.type(screen.getByPlaceholderText(/confirm new password/i), "NewPass123!");
     await userEvent.click(screen.getByRole("button", { name: /^save$/i }));
     await waitFor(() =>
-      expect(mockToastError).toHaveBeenCalledWith(
-        "Failed to change password. Please try again."
-      )
+      expect(mockToastError).toHaveBeenCalledWith("Failed to change password. Please try again.")
     );
   });
 
@@ -390,9 +420,7 @@ describe("UserProfilePage — viewing another user (super admin)", () => {
         auth: makeAuthState({ user: superAdminUser, isAuthenticated: true }),
       },
     });
-    await waitFor(() =>
-      expect(mockToastError).toHaveBeenCalledWith("Failed to load profile.")
-    );
+    await waitFor(() => expect(mockToastError).toHaveBeenCalledWith("Failed to load profile."));
   });
 
   it("shows Edit Profile button for super admin viewing another user", async () => {
@@ -496,9 +524,7 @@ describe("UserProfilePage — viewing another user (super admin)", () => {
       expect(screen.getByRole("button", { name: /edit profile/i })).toBeInTheDocument()
     );
     await userEvent.click(screen.getByRole("button", { name: /edit profile/i }));
-    expect(
-      screen.getByText(/select workspaces to assign to this user/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/select workspaces to assign to this user/i)).toBeInTheDocument();
   });
 
   it("toggles workspace assignment chip when clicked", async () => {
@@ -507,9 +533,7 @@ describe("UserProfilePage — viewing another user (super admin)", () => {
       expect(screen.getByRole("button", { name: /edit profile/i })).toBeInTheDocument()
     );
     await userEvent.click(screen.getByRole("button", { name: /edit profile/i }));
-    await waitFor(() =>
-      expect(screen.getByText("Workspace Two")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText("Workspace Two")).toBeInTheDocument());
     const wsChip = screen.getByRole("button", { name: /workspace two/i });
     expect(wsChip).toHaveAttribute("aria-pressed", "false");
     await userEvent.click(wsChip);

@@ -61,13 +61,7 @@ describe("FilterBar", () => {
   });
 
   it("renders grid/list view toggle when viewMode and onViewModeChange provided", () => {
-    renderWithProviders(
-      <FilterBar
-        {...defaultProps}
-        viewMode="grid"
-        onViewModeChange={vi.fn()}
-      />
-    );
+    renderWithProviders(<FilterBar {...defaultProps} viewMode="grid" onViewModeChange={vi.fn()} />);
     expect(screen.getByLabelText(/grid view/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/list view/i)).toBeInTheDocument();
   });
@@ -76,7 +70,10 @@ describe("FilterBar", () => {
     const { container } = renderWithProviders(
       <FilterBar
         {...defaultProps}
-        sortByOptions={[{ value: "name", label: "Name" }, { value: "date", label: "Date" }]}
+        sortByOptions={[
+          { value: "name", label: "Name" },
+          { value: "date", label: "Date" },
+        ]}
         onSortByChange={vi.fn()}
       />
     );
@@ -119,11 +116,7 @@ describe("FilterBar", () => {
 
   it("renders date range picker when dateRange and onDateRangeChange provided", () => {
     renderWithProviders(
-      <FilterBar
-        {...defaultProps}
-        dateRange={{ from: "", to: "" }}
-        onDateRangeChange={vi.fn()}
-      />
+      <FilterBar {...defaultProps} dateRange={{ from: "", to: "" }} onDateRangeChange={vi.fn()} />
     );
     expect(screen.getByTestId("date-range-picker")).toBeInTheDocument();
   });

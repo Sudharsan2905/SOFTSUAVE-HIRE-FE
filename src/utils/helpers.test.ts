@@ -164,9 +164,7 @@ describe("downloadBlob", () => {
   it("creates an anchor element, sets href+download, clicks it, then revokes the URL", () => {
     const clickMock = vi.fn();
     const anchorEl = { href: "", download: "", click: clickMock } as unknown as HTMLAnchorElement;
-    const createElementSpy = vi
-      .spyOn(document, "createElement")
-      .mockReturnValueOnce(anchorEl);
+    const createElementSpy = vi.spyOn(document, "createElement").mockReturnValueOnce(anchorEl);
 
     const blob = new Blob(["data"], { type: "text/plain" });
     downloadBlob(blob, "report.txt");

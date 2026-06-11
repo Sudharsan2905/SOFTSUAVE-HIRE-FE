@@ -29,16 +29,12 @@ describe("useExamOrchestrator", () => {
   });
 
   it("does not advance when enabled is false", () => {
-    const { result } = renderHook(() =>
-      useExamOrchestrator({ ...defaultOptions, enabled: false })
-    );
+    const { result } = renderHook(() => useExamOrchestrator({ ...defaultOptions, enabled: false }));
     expect(result.current.phase).toBe(ExamPhase.IDLE);
   });
 
   it("advances from VALIDATING_NETWORK to ACTIVE when no monitoring config and connected", () => {
-    const { result } = renderHook(() =>
-      useExamOrchestrator({ ...defaultOptions, config: {} })
-    );
+    const { result } = renderHook(() => useExamOrchestrator({ ...defaultOptions, config: {} }));
     // With no monitoring, network step should go straight to ACTIVE
     expect(result.current.phase).toBe(ExamPhase.ACTIVE);
   });
@@ -66,10 +62,9 @@ describe("useExamOrchestrator", () => {
   });
 
   it("does not advance from VALIDATING_VIDEO until isCameraReady is true", () => {
-    const { result, rerender } = renderHook(
-      (props) => useExamOrchestrator(props),
-      { initialProps: { ...defaultOptions, config: { video_monitoring: true }, isCameraReady: false } }
-    );
+    const { result, rerender } = renderHook((props) => useExamOrchestrator(props), {
+      initialProps: { ...defaultOptions, config: { video_monitoring: true }, isCameraReady: false },
+    });
     expect(result.current.phase).toBe(ExamPhase.VALIDATING_VIDEO);
 
     rerender({ ...defaultOptions, config: { video_monitoring: true }, isCameraReady: true });
@@ -77,10 +72,9 @@ describe("useExamOrchestrator", () => {
   });
 
   it("does not advance from VALIDATING_AUDIO until isAudioReady is true", () => {
-    const { result, rerender } = renderHook(
-      (props) => useExamOrchestrator(props),
-      { initialProps: { ...defaultOptions, config: { audio_monitoring: true }, isAudioReady: false } }
-    );
+    const { result, rerender } = renderHook((props) => useExamOrchestrator(props), {
+      initialProps: { ...defaultOptions, config: { audio_monitoring: true }, isAudioReady: false },
+    });
     expect(result.current.phase).toBe(ExamPhase.VALIDATING_AUDIO);
 
     rerender({ ...defaultOptions, config: { audio_monitoring: true }, isAudioReady: true });
@@ -88,16 +82,13 @@ describe("useExamOrchestrator", () => {
   });
 
   it("does not advance from VALIDATING_SCREEN_SHARE until isScreenShareReady", () => {
-    const { result, rerender } = renderHook(
-      (props) => useExamOrchestrator(props),
-      {
-        initialProps: {
-          ...defaultOptions,
-          config: { screenshot_enabled: true },
-          isScreenShareReady: false,
-        },
-      }
-    );
+    const { result, rerender } = renderHook((props) => useExamOrchestrator(props), {
+      initialProps: {
+        ...defaultOptions,
+        config: { screenshot_enabled: true },
+        isScreenShareReady: false,
+      },
+    });
     expect(result.current.phase).toBe(ExamPhase.VALIDATING_SCREEN_SHARE);
 
     rerender({ ...defaultOptions, config: { screenshot_enabled: true }, isScreenShareReady: true });
@@ -105,17 +96,14 @@ describe("useExamOrchestrator", () => {
   });
 
   it("does not advance from VALIDATING_FULLSCREEN until isFullscreen", () => {
-    const { result, rerender } = renderHook(
-      (props) => useExamOrchestrator(props),
-      {
-        initialProps: {
-          ...defaultOptions,
-          config: { tab_monitoring: true },
-          isFullscreen: false,
-          isScreenShareReady: true,
-        },
-      }
-    );
+    const { result, rerender } = renderHook((props) => useExamOrchestrator(props), {
+      initialProps: {
+        ...defaultOptions,
+        config: { tab_monitoring: true },
+        isFullscreen: false,
+        isScreenShareReady: true,
+      },
+    });
     expect(result.current.phase).toBe(ExamPhase.VALIDATING_FULLSCREEN);
 
     rerender({
@@ -182,10 +170,9 @@ describe("useExamOrchestrator", () => {
   });
 
   it("examActiveRef is true only when ACTIVE and connected", () => {
-    const { result } = renderHook(
-      (props) => useExamOrchestrator(props),
-      { initialProps: { ...defaultOptions, config: {} } }
-    );
+    const { result } = renderHook((props) => useExamOrchestrator(props), {
+      initialProps: { ...defaultOptions, config: {} },
+    });
     expect(result.current.phase).toBe(ExamPhase.ACTIVE);
     expect(result.current.examActiveRef.current).toBe(true);
 
@@ -263,20 +250,25 @@ describe("useExamOrchestrator", () => {
 
   it("shows devtools error when devtools are detected during validation", () => {
     // Simulate devtools open by making outer/innerWidth differ by > 160
-    Object.defineProperty(globalThis, "outerWidth", { value: 1200, writable: true, configurable: true });
-    Object.defineProperty(globalThis, "innerWidth", { value: 800, writable: true, configurable: true });
+    Object.defineProperty(globalThis, "outerWidth", {
+      value: 1200,
+      writable: true,
+      configurable: true,
+    });
+    Object.defineProperty(globalThis, "innerWidth", {
+      value: 800,
+      writable: true,
+      configurable: true,
+    });
 
-    const { result } = renderHook(
-      (props) => useExamOrchestrator(props),
-      {
-        initialProps: {
-          ...defaultOptions,
-          config: { tab_monitoring: true },
-          isScreenShareReady: true,
-          isFullscreen: false,
-        },
-      }
-    );
+    const { result } = renderHook((props) => useExamOrchestrator(props), {
+      initialProps: {
+        ...defaultOptions,
+        config: { tab_monitoring: true },
+        isScreenShareReady: true,
+        isFullscreen: false,
+      },
+    });
 
     // Force resize event to trigger devtools detection
     act(() => {
@@ -287,7 +279,15 @@ describe("useExamOrchestrator", () => {
     expect(result.current.phase).toBeDefined();
 
     // Reset window dimensions
-    Object.defineProperty(globalThis, "outerWidth", { value: 1024, writable: true, configurable: true });
-    Object.defineProperty(globalThis, "innerWidth", { value: 1024, writable: true, configurable: true });
+    Object.defineProperty(globalThis, "outerWidth", {
+      value: 1024,
+      writable: true,
+      configurable: true,
+    });
+    Object.defineProperty(globalThis, "innerWidth", {
+      value: 1024,
+      writable: true,
+      configurable: true,
+    });
   });
 });

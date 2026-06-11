@@ -18,7 +18,15 @@ vi.mock("../WorkspaceSwitcher", () => ({
   ),
 }));
 
-const workspace = { id: "ws-1", name: "Test Workspace", description: "", created_by: "user-1", members: [], created_at: "2024-01-01T00:00:00Z", updated_at: "2024-01-01T00:00:00Z" };
+const workspace = {
+  id: "ws-1",
+  name: "Test Workspace",
+  description: "",
+  created_by: "user-1",
+  members: [],
+  created_at: "2024-01-01T00:00:00Z",
+  updated_at: "2024-01-01T00:00:00Z",
+};
 
 function makeAuthState(user = makeAdminUser()) {
   return {

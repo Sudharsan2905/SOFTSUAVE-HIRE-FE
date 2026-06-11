@@ -158,7 +158,9 @@ export default function CandidateDetailsPage() {
             data={data}
             workspaceId={workspaceId!}
             assessmentId={assessmentId!}
-            onRefresh={async () => { await fetchSubmission(selectedVersion); }}
+            onRefresh={async () => {
+              await fetchSubmission(selectedVersion);
+            }}
           />
         </div>
       </div>

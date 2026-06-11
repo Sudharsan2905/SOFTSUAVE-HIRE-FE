@@ -177,7 +177,9 @@ describe("useMalpracticeRecording", () => {
     });
 
     // Before 20s: upload not called
-    act(() => { vi.advanceTimersByTime(15_000); });
+    act(() => {
+      vi.advanceTimersByTime(15_000);
+    });
     expect(mockPost).not.toHaveBeenCalled();
 
     // Advance past the 20s window and flush the async chain
@@ -210,10 +212,9 @@ describe("useMalpracticeRecording", () => {
   });
 
   it("responds to stream changes — new tracks create recorders on next prepareCapture", () => {
-    const { rerender, result } = renderHook(
-      (props) => useMalpracticeRecording(props),
-      { initialProps: { ...defaultOptions } }
-    );
+    const { rerender, result } = renderHook((props) => useMalpracticeRecording(props), {
+      initialProps: { ...defaultOptions },
+    });
 
     const screenStream = makeMockStream(1);
     rerender({ ...defaultOptions, screenStream, hasScreenMonitoring: true });

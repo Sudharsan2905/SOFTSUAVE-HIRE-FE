@@ -46,7 +46,9 @@ describe("AssessmentEntry", () => {
 
   it("shows expired status when link is expired", async () => {
     mockGet.mockResolvedValue({
-      data: { data: { can_allow: false, is_expirable: true, is_expired: true, message: "Expired" } },
+      data: {
+        data: { can_allow: false, is_expirable: true, is_expired: true, message: "Expired" },
+      },
     });
     renderWithProviders(<AssessmentEntry />);
     await waitFor(() => expect(screen.getByTestId("link-status")).toHaveTextContent("expired"));

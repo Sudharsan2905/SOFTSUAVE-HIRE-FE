@@ -61,10 +61,18 @@ vi.mock("@/components/ui/NeonLoader", () => ({
   default: () => <div data-testid="neon-loader">Loading...</div>,
 }));
 vi.mock("@/components/layout/AdminLayout", () => ({
-  AdminLayout: () => <div data-testid="admin-layout"><div /></div>,
+  AdminLayout: () => (
+    <div data-testid="admin-layout">
+      <div />
+    </div>
+  ),
 }));
 vi.mock("@/features/candidate/components/CandidateRoute", () => ({
-  CandidateRoute: () => <div data-testid="candidate-route"><div /></div>,
+  CandidateRoute: () => (
+    <div data-testid="candidate-route">
+      <div />
+    </div>
+  ),
 }));
 vi.mock("@/components/shared/NoAccessPage", () => ({
   NoAccessPage: ({ title }: { title: string }) => <div data-testid="no-access-page">{title}</div>,

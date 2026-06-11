@@ -167,9 +167,9 @@ describe("Step1BasicInfo", () => {
 
     // Remove buttons are icon-only buttons (no text) that appear once per round
     // when there is more than one round.
-    const removeButtons = Array.from(
-      document.querySelectorAll("button")
-    ).filter((b) => b.textContent?.trim() === "" && b.querySelector("svg"));
+    const removeButtons = Array.from(document.querySelectorAll("button")).filter(
+      (b) => b.textContent?.trim() === "" && b.querySelector("svg")
+    );
     expect(removeButtons.length).toBe(3);
     // Remove the first round's delete button
     await user.click(removeButtons[0]);

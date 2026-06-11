@@ -41,18 +41,14 @@ describe("useScreenMonitoring", () => {
   }
 
   it("returns startScreenShare, stopScreenShare, and screenStream", () => {
-    const { result } = renderHook(() =>
-      useScreenMonitoring({ enabled: true, onViolation })
-    );
+    const { result } = renderHook(() => useScreenMonitoring({ enabled: true, onViolation }));
     expect(typeof result.current.startScreenShare).toBe("function");
     expect(typeof result.current.stopScreenShare).toBe("function");
     expect(result.current.screenStream).toBeDefined();
   });
 
   it("returns null from startScreenShare when disabled", async () => {
-    const { result } = renderHook(() =>
-      useScreenMonitoring({ enabled: false, onViolation })
-    );
+    const { result } = renderHook(() => useScreenMonitoring({ enabled: false, onViolation }));
     let stream: MediaStream | null = null;
     await act(async () => {
       stream = await result.current.startScreenShare();
@@ -68,9 +64,7 @@ describe("useScreenMonitoring", () => {
       },
     });
 
-    const { result } = renderHook(() =>
-      useScreenMonitoring({ enabled: true, onViolation })
-    );
+    const { result } = renderHook(() => useScreenMonitoring({ enabled: true, onViolation }));
     let stream: MediaStream | null = null;
     await act(async () => {
       stream = await result.current.startScreenShare();
@@ -87,9 +81,7 @@ describe("useScreenMonitoring", () => {
       },
     });
 
-    const { result } = renderHook(() =>
-      useScreenMonitoring({ enabled: true, onViolation })
-    );
+    const { result } = renderHook(() => useScreenMonitoring({ enabled: true, onViolation }));
     let stream: MediaStream | null = null;
     await act(async () => {
       stream = await result.current.startScreenShare();
@@ -114,9 +106,7 @@ describe("useScreenMonitoring", () => {
       },
     });
 
-    const { result } = renderHook(() =>
-      useScreenMonitoring({ enabled: true, onViolation })
-    );
+    const { result } = renderHook(() => useScreenMonitoring({ enabled: true, onViolation }));
     await act(async () => {
       await result.current.startScreenShare();
     });
@@ -144,9 +134,7 @@ describe("useScreenMonitoring", () => {
       },
     });
 
-    const { result } = renderHook(() =>
-      useScreenMonitoring({ enabled: true, onViolation })
-    );
+    const { result } = renderHook(() => useScreenMonitoring({ enabled: true, onViolation }));
     await act(async () => {
       await result.current.startScreenShare();
     });
@@ -173,9 +161,7 @@ describe("useScreenMonitoring", () => {
       },
     });
 
-    const { result } = renderHook(() =>
-      useScreenMonitoring({ enabled: true, onViolation })
-    );
+    const { result } = renderHook(() => useScreenMonitoring({ enabled: true, onViolation }));
     await act(async () => {
       await result.current.startScreenShare();
     });
@@ -216,9 +202,7 @@ describe("useScreenMonitoring", () => {
   });
 
   it("stopScreenShare on already-stopped stream is a no-op", () => {
-    const { result } = renderHook(() =>
-      useScreenMonitoring({ enabled: true, onViolation })
-    );
+    const { result } = renderHook(() => useScreenMonitoring({ enabled: true, onViolation }));
     // Nothing is capturing; calling stopScreenShare should not throw
     act(() => {
       result.current.stopScreenShare();

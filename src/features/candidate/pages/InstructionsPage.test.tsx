@@ -159,7 +159,12 @@ describe("InstructionsPage", () => {
       data: {
         data: makeAssessment({
           accessibility: "monitoring",
-          monitoring_config: { tab_monitoring: true, video_monitoring: false, audio_monitoring: false, screenshot_enabled: false },
+          monitoring_config: {
+            tab_monitoring: true,
+            video_monitoring: false,
+            audio_monitoring: false,
+            screenshot_enabled: false,
+          },
         }),
       },
     });
@@ -170,9 +175,7 @@ describe("InstructionsPage", () => {
   it("shows general instructions list", async () => {
     mockGet.mockResolvedValue({ data: { data: makeAssessment() } });
     renderPage();
-    await waitFor(() =>
-      expect(screen.getByText(/general instructions/i)).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText(/general instructions/i)).toBeInTheDocument());
     expect(screen.getByText(/stable internet connection/i)).toBeInTheDocument();
   });
 });

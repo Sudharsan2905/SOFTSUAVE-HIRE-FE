@@ -83,7 +83,9 @@ describe("useApi", () => {
       mockApi.mockReturnValueOnce(new Promise(() => {}));
       const { result } = renderHook(() => useApi("/test"));
 
-      act(() => { void result.current.execute(); });
+      act(() => {
+        void result.current.execute();
+      });
 
       expect(result.current.isLoading).toBe(true);
     });
@@ -137,7 +139,9 @@ describe("useApi", () => {
 
       const { result } = renderHook(() => useApi<typeof payload>("/test"));
       let returned: unknown;
-      await act(async () => { returned = await result.current.execute(); });
+      await act(async () => {
+        returned = await result.current.execute();
+      });
 
       expect(returned).toEqual(payload);
     });
@@ -191,9 +195,7 @@ describe("useApi", () => {
       const onError = vi.fn();
       mockApi.mockRejectedValueOnce({ response: { data: { message: "Server Error" } } });
 
-      const { result } = renderHook(() =>
-        useApi("/test", undefined, { onError })
-      );
+      const { result } = renderHook(() => useApi("/test", undefined, { onError }));
       await act(() => silentlySwallowThrow(result.current.execute()));
 
       expect(onError).toHaveBeenCalledWith("Server Error");
@@ -252,7 +254,9 @@ describe("useApi", () => {
     it("allows a manual data update without triggering a network call", () => {
       const { result } = renderHook(() => useApi<string>("/test"));
 
-      act(() => { result.current.setData("manual-override"); });
+      act(() => {
+        result.current.setData("manual-override");
+      });
 
       expect(result.current.data).toBe("manual-override");
       expect(mockApi).not.toHaveBeenCalled();
@@ -268,8 +272,12 @@ describe("useApi", () => {
 
       const { result } = renderHook(() => useApi<{ seq: number }>("/test"));
 
-      act(() => { void result.current.execute(); });
-      act(() => { void result.current.execute(); });
+      act(() => {
+        void result.current.execute();
+      });
+      act(() => {
+        void result.current.execute();
+      });
 
       await waitFor(() => expect(result.current.isLoading).toBe(false));
       // No error should be set from the canceled first request

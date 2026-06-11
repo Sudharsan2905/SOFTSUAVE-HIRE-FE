@@ -27,11 +27,7 @@ vi.mock("react-router-dom", async (importOriginal) => {
   return { ...actual, useNavigate: () => mockNavigate };
 });
 
-function makeState(
-  userOverrides = {},
-  uiTheme: "light" | "dark" = "light",
-  unreadCount = 0
-) {
+function makeState(userOverrides = {}, uiTheme: "light" | "dark" = "light", unreadCount = 0) {
   return {
     auth: makeAuthState({ user: makeAdminUser(userOverrides), isAuthenticated: true }),
     ui: { theme: uiTheme, sidebarCollapsed: false },

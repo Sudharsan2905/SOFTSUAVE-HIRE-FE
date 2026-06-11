@@ -146,9 +146,7 @@ vi.mock("@/components/ui/Modal", () => ({
 }));
 
 vi.mock("@/components/ui/RichText", () => ({
-  RichText: ({ children }: { children: string }) => (
-    <div data-testid="rich-text">{children}</div>
-  ),
+  RichText: ({ children }: { children: string }) => <div data-testid="rich-text">{children}</div>,
 }));
 
 vi.mock("@/components/ui/Pagination", () => ({
@@ -171,7 +169,9 @@ vi.mock("@/components/ui/Pagination", () => ({
 vi.mock("read-excel-file/browser", () => ({ default: vi.fn() }));
 
 const mockNavigate = vi.fn();
-const mockUseParams = vi.fn<() => { categoryId: string | undefined }>(() => ({ categoryId: "cat-1" }));
+const mockUseParams = vi.fn<() => { categoryId: string | undefined }>(() => ({
+  categoryId: "cat-1",
+}));
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router-dom")>();
   return { ...actual, useNavigate: () => mockNavigate, useParams: () => mockUseParams() };
@@ -330,9 +330,7 @@ describe("QuestionsPage", () => {
     it("renders the back-to-categories button", async () => {
       setupGetMocks();
       renderPage();
-      await waitFor(() =>
-        expect(screen.getByText(/back to categories/i)).toBeInTheDocument()
-      );
+      await waitFor(() => expect(screen.getByText(/back to categories/i)).toBeInTheDocument());
     });
 
     it("displays the category name in the header when the category is found", async () => {
@@ -347,9 +345,7 @@ describe("QuestionsPage", () => {
       setupGetMocks();
       renderPage();
       await waitFor(() => expect(mockGet).toHaveBeenCalled());
-      const calls = (mockGet as ReturnType<typeof vi.fn>).mock.calls.map(
-        (c: string[]) => c[0]
-      );
+      const calls = (mockGet as ReturnType<typeof vi.fn>).mock.calls.map((c: string[]) => c[0]);
       expect(calls.some((url: string) => url.includes("cat-1"))).toBe(true);
     });
 
@@ -431,9 +427,7 @@ describe("QuestionsPage", () => {
     it("shows header subtitle with total question count", async () => {
       setupGetMocks([makeQuestion()], { total: 42 });
       renderPage();
-      await waitFor(() =>
-        expect(screen.getByTestId("header-subtitle")).toHaveTextContent("42")
-      );
+      await waitFor(() => expect(screen.getByTestId("header-subtitle")).toHaveTextContent("42"));
     });
   });
 
@@ -443,9 +437,11 @@ describe("QuestionsPage", () => {
     it("shows a toast error when questions API fails", async () => {
       mockGet.mockRejectedValue(new Error("Network error"));
       renderPage();
-      await waitFor(() => expect(mockToastError).toHaveBeenCalledWith(
-        expect.stringContaining("Failed to load questions")
-      ));
+      await waitFor(() =>
+        expect(mockToastError).toHaveBeenCalledWith(
+          expect.stringContaining("Failed to load questions")
+        )
+      );
     });
 
     it("does not crash when categoryId is missing", async () => {
@@ -469,9 +465,7 @@ describe("QuestionsPage", () => {
       setupGetMocks();
       renderPage();
       const user = userEvent.setup();
-      await waitFor(() =>
-        expect(screen.getByText(/back to categories/i)).toBeInTheDocument()
-      );
+      await waitFor(() => expect(screen.getByText(/back to categories/i)).toBeInTheDocument());
       await user.click(screen.getByText(/back to categories/i));
       expect(mockNavigate).toHaveBeenCalledWith("/question-bank");
     });
@@ -631,10 +625,7 @@ describe("QuestionsPage", () => {
       await waitFor(() => expect(screen.getByTestId("modal-body")).toBeInTheDocument());
       await user.click(screen.getByRole("button", { name: /save changes/i }));
       await waitFor(() =>
-        expect(mockPut).toHaveBeenCalledWith(
-          expect.stringContaining("q-1"),
-          expect.any(Object)
-        )
+        expect(mockPut).toHaveBeenCalledWith(expect.stringContaining("q-1"), expect.any(Object))
       );
     });
 
@@ -693,9 +684,7 @@ describe("QuestionsPage", () => {
       await user.click(screen.getByRole("button", { name: /delete question/i }));
       await waitFor(() => expect(screen.getByTestId("modal")).toBeInTheDocument());
       await user.click(screen.getByRole("button", { name: /^delete$/i }));
-      await waitFor(() =>
-        expect(mockDelete).toHaveBeenCalledWith(expect.stringContaining("q-1"))
-      );
+      await waitFor(() => expect(mockDelete).toHaveBeenCalledWith(expect.stringContaining("q-1")));
     });
 
     it("shows success toast after deleting a question", async () => {
@@ -802,9 +791,7 @@ describe("QuestionsPage", () => {
         within(screen.getByTestId("modal-footer")).getByRole("button", { name: /generate/i })
       );
       await waitFor(() =>
-        expect(mockToastError).toHaveBeenCalledWith(
-          expect.stringContaining("AI generation failed")
-        )
+        expect(mockToastError).toHaveBeenCalledWith(expect.stringContaining("AI generation failed"))
       );
     });
 
@@ -830,9 +817,7 @@ describe("QuestionsPage", () => {
       renderPage();
       const user = userEvent.setup();
       await waitFor(() => expect(screen.getByTestId("header-actions")).toBeInTheDocument());
-      await user.click(
-        within(screen.getByTestId("header-actions")).getByText(/excel import/i)
-      );
+      await user.click(within(screen.getByTestId("header-actions")).getByText(/excel import/i));
       await waitFor(() => expect(screen.getByTestId("modal")).toBeInTheDocument());
       expect(screen.getByTestId("modal-title")).toHaveTextContent(/excel import/i);
     });
@@ -842,9 +827,7 @@ describe("QuestionsPage", () => {
       renderPage();
       const user = userEvent.setup();
       await waitFor(() => expect(screen.getByTestId("header-actions")).toBeInTheDocument());
-      await user.click(
-        within(screen.getByTestId("header-actions")).getByText(/excel import/i)
-      );
+      await user.click(within(screen.getByTestId("header-actions")).getByText(/excel import/i));
       await waitFor(() => expect(screen.getByTestId("modal-footer")).toBeInTheDocument());
       expect(
         within(screen.getByTestId("modal-footer")).getByRole("button", {
@@ -858,9 +841,7 @@ describe("QuestionsPage", () => {
       renderPage();
       const user = userEvent.setup();
       await waitFor(() => expect(screen.getByTestId("header-actions")).toBeInTheDocument());
-      await user.click(
-        within(screen.getByTestId("header-actions")).getByText(/excel import/i)
-      );
+      await user.click(within(screen.getByTestId("header-actions")).getByText(/excel import/i));
       await waitFor(() => expect(screen.getByTestId("modal")).toBeInTheDocument());
       await user.click(
         within(screen.getByTestId("modal-footer")).getByRole("button", { name: /cancel/i })
@@ -886,9 +867,7 @@ describe("QuestionsPage", () => {
     it("shows correct total count in pagination", async () => {
       setupGetMocks([makeQuestion()], { total: 99 });
       renderPage();
-      await waitFor(() =>
-        expect(screen.getByTestId("pagination-total")).toHaveTextContent("99")
-      );
+      await waitFor(() => expect(screen.getByTestId("pagination-total")).toHaveTextContent("99"));
     });
 
     it("re-fetches when pagination Next button is clicked", async () => {
@@ -936,9 +915,7 @@ describe("QuestionsPage", () => {
       const user = userEvent.setup();
       await waitFor(() => expect(screen.getByTestId("sort-order-toggle")).toBeInTheDocument());
       await user.click(screen.getByTestId("sort-order-toggle"));
-      await waitFor(() =>
-        expect(screen.getByTestId("sort-order-toggle")).toHaveTextContent("asc")
-      );
+      await waitFor(() => expect(screen.getByTestId("sort-order-toggle")).toHaveTextContent("asc"));
     });
   });
 
@@ -976,9 +953,7 @@ describe("QuestionsPage", () => {
       await waitFor(() => expect(screen.getByTestId("header-actions")).toBeInTheDocument());
       await user.click(within(screen.getByTestId("header-actions")).getByText(/^add$/i));
       await waitFor(() =>
-        expect(
-          screen.getByRole("button", { name: /add another question/i })
-        ).toBeInTheDocument()
+        expect(screen.getByRole("button", { name: /add another question/i })).toBeInTheDocument()
       );
       await user.click(screen.getByRole("button", { name: /add another question/i }));
       // Now there should be 2 textareas
@@ -994,9 +969,7 @@ describe("QuestionsPage", () => {
       await waitFor(() => expect(screen.getByTestId("header-actions")).toBeInTheDocument());
       await user.click(within(screen.getByTestId("header-actions")).getByText(/^add$/i));
       await waitFor(() =>
-        expect(
-          screen.getByRole("button", { name: /add another question/i })
-        ).toBeInTheDocument()
+        expect(screen.getByRole("button", { name: /add another question/i })).toBeInTheDocument()
       );
       // Fill first form so we can add another
       const [firstTextarea] = screen.getAllByPlaceholderText(/enter the question/i);

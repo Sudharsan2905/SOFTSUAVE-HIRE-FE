@@ -211,9 +211,7 @@ function MonitoringRequirements({
         <div className={styles.permissionSetup}>
           <div className={styles.permissionRow}>
             <p className={styles.permissionLabel}>
-              {needsAnyPermission
-                ? "Step 2: Grant Screen Access"
-                : "Step 1: Grant Screen Access"}
+              {needsAnyPermission ? "Step 2: Grant Screen Access" : "Step 1: Grant Screen Access"}
             </p>
             <div className={styles.permissionPills}>
               <span
@@ -588,7 +586,15 @@ export default function InstructionsPage() {
               fullWidth
               onClick={handleStart}
               isLoading={starting}
-              disabled={!isAssessmentReady(assessment, networkStatus, videoGranted, audioGranted, screenGranted)}
+              disabled={
+                !isAssessmentReady(
+                  assessment,
+                  networkStatus,
+                  videoGranted,
+                  audioGranted,
+                  screenGranted
+                )
+              }
             >
               {startButtonLabel}
             </Button>

@@ -79,9 +79,7 @@ describe("CandidateDetailsPage", () => {
   it("shows error state when API fails", async () => {
     mockGet.mockRejectedValue(new Error("Not found"));
     renderPage();
-    await waitFor(() =>
-      expect(screen.getByText(/failed to load|not found/i)).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText(/failed to load|not found/i)).toBeInTheDocument());
   });
 
   it("renders candidate name after load", async () => {
@@ -120,7 +118,10 @@ describe("CandidateDetailsPage", () => {
     mockGet.mockResolvedValue({ data: { data: makeCandidateData() } });
     renderPage();
     await waitFor(() => expect(screen.getByText(/back to assessment/i)).toBeInTheDocument());
-    screen.getByText(/back to assessment/i).closest("button")?.click();
+    screen
+      .getByText(/back to assessment/i)
+      .closest("button")
+      ?.click();
     expect(mockNavigate).toHaveBeenCalled();
   });
 });

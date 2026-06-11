@@ -59,7 +59,13 @@ vi.mock("@/components/layout/Header", () => ({
 }));
 
 vi.mock("@/components/shared/FilterBar", () => ({
-  FilterBar: ({ search, onSearchChange }: { search: string; onSearchChange: (v: string) => void }) => (
+  FilterBar: ({
+    search,
+    onSearchChange,
+  }: {
+    search: string;
+    onSearchChange: (v: string) => void;
+  }) => (
     <input
       data-testid="search-input"
       value={search}
@@ -140,17 +146,13 @@ describe("LiveMonitoringPage", () => {
   it("shows empty state when no active sessions", async () => {
     mockGet.mockResolvedValue({ data: { data: { live_interviews: [] } } });
     renderPage();
-    await waitFor(() =>
-      expect(screen.getByText(/no active interviews/i)).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText(/no active interviews/i)).toBeInTheDocument());
   });
 
   it("renders the header", async () => {
     mockGet.mockResolvedValue({ data: { data: { live_interviews: [] } } });
     renderPage();
-    await waitFor(() =>
-      expect(screen.getByText("Live Monitoring")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText("Live Monitoring")).toBeInTheDocument());
   });
 
   it("renders session cards when sessions exist", async () => {
@@ -167,25 +169,19 @@ describe("LiveMonitoringPage", () => {
       data: { data: { live_interviews: [makeSession()] } },
     });
     renderPage();
-    await waitFor(() =>
-      expect(screen.getByTestId("subtitle")).toHaveTextContent(/1 candidate/)
-    );
+    await waitFor(() => expect(screen.getByTestId("subtitle")).toHaveTextContent(/1 candidate/));
   });
 
   it("shows 0 candidates in subtitle when empty", async () => {
     mockGet.mockResolvedValue({ data: { data: { live_interviews: [] } } });
     renderPage();
-    await waitFor(() =>
-      expect(screen.getByTestId("subtitle")).toHaveTextContent(/0 candidate/)
-    );
+    await waitFor(() => expect(screen.getByTestId("subtitle")).toHaveTextContent(/0 candidate/));
   });
 
   it("handles API error gracefully", async () => {
     mockGet.mockRejectedValue(new Error("Network error"));
     renderPage();
-    await waitFor(() =>
-      expect(screen.queryByLabelText(/loading/i)).not.toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.queryByLabelText(/loading/i)).not.toBeInTheDocument());
     expect(screen.getByText(/no active interviews/i)).toBeInTheDocument();
   });
 
@@ -198,9 +194,7 @@ describe("LiveMonitoringPage", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /alice smith/i }));
 
-    await waitFor(() =>
-      expect(screen.getByTestId("stream-panel")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByTestId("stream-panel")).toBeInTheDocument());
     expect(screen.getByTestId("stream-panel-name")).toHaveTextContent("Alice Smith");
   });
 
@@ -216,9 +210,7 @@ describe("LiveMonitoringPage", () => {
     await waitFor(() => expect(screen.getByTestId("stream-panel")).toBeInTheDocument());
 
     await userEvent.click(btn);
-    await waitFor(() =>
-      expect(screen.queryByTestId("stream-panel")).not.toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.queryByTestId("stream-panel")).not.toBeInTheDocument());
   });
 
   it("stream panel Close button deselects session", async () => {
@@ -232,9 +224,7 @@ describe("LiveMonitoringPage", () => {
     await waitFor(() => expect(screen.getByTestId("stream-panel")).toBeInTheDocument());
 
     await userEvent.click(screen.getByRole("button", { name: /close/i }));
-    await waitFor(() =>
-      expect(screen.queryByTestId("stream-panel")).not.toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.queryByTestId("stream-panel")).not.toBeInTheDocument());
   });
 
   it("stream panel Terminate calls api.post", async () => {
@@ -297,9 +287,7 @@ describe("LiveMonitoringPage", () => {
     const ws = wsInstances.at(-1);
     ws?.simulateMessage({ type: "candidate_disconnected", submission_id: "sub-1" });
 
-    await waitFor(() =>
-      expect(screen.queryByText("Alice Smith")).not.toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.queryByText("Alice Smith")).not.toBeInTheDocument());
   });
 
   it("WS submission_status_change updates session status", async () => {
@@ -310,7 +298,11 @@ describe("LiveMonitoringPage", () => {
     await waitFor(() => expect(screen.getByText("Alice Smith")).toBeInTheDocument());
 
     const ws = wsInstances.at(-1);
-    ws?.simulateMessage({ type: "submission_status_change", submission_id: "sub-1", status: "on_hold" });
+    ws?.simulateMessage({
+      type: "submission_status_change",
+      submission_id: "sub-1",
+      status: "on_hold",
+    });
 
     await waitFor(() => {
       // The status label should change (On Hold, etc.)
@@ -355,7 +347,9 @@ describe("LiveMonitoringPage", () => {
       },
     });
     renderPage();
-    await waitFor(() => expect(screen.getAllByRole("button", { name: /smith|jones/i })).toHaveLength(2));
+    await waitFor(() =>
+      expect(screen.getAllByRole("button", { name: /smith|jones/i })).toHaveLength(2)
+    );
 
     fireEvent.change(screen.getByTestId("search-input"), { target: { value: "alice" } });
 
