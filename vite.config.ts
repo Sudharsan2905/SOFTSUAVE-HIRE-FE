@@ -1,8 +1,11 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+  const apiTarget = env.VITE_PROXY_TARGET || "http://localhost:8000";
+  console.log("APITARGET", apiTarget);
   return {
     plugins: [react()],
     resolve: {
@@ -14,11 +17,14 @@ export default defineConfig(() => {
       port: 5173,
       allowedHosts: ["outsider-curtsy-concert.ngrok-free.dev"],
       proxy: {
-        "/api": {
-          target: "http://localhost:8000",
-          // target: "http://13.236.235.236",
+        "/api/ws": {
+          target: apiTarget.replace(/^https?/, (p) => (p === "https" ? "wss" : "ws")),
           changeOrigin: true,
           ws: true,
+        },
+        "/api": {
+          target: apiTarget,
+          changeOrigin: true,
         },
       },
     },
