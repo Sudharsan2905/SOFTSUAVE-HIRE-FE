@@ -40,13 +40,15 @@ interface SubmissionWithCandidate extends Omit<Submission, "candidate"> {
   score_percentage?: number;
 }
 
+type ExportRound = { round_number: number; percentage: number };
+
 type ExportRow = {
   name: string;
   email: string;
   phone: string;
   percentage: number;
-  rounds_count: number;
-  completed_at: string;
+  rounds: ExportRound[];
+  completed_at: string | null;
 };
 
 export default function AssessmentDetailPage() {
@@ -119,18 +121,25 @@ export default function AssessmentDetailPage() {
         API_ENDPOINTS.ASSESSMENTS.SUBMISSIONS_EXPORT(workspaceId!, id!)
       );
       const formatDate = (dateStr: string) => {
+        if (!dateStr) return " - ";
         const date = new Date(dateStr);
         return Number.isNaN(date.getTime()) ? "Invalid Date" : formatDateTime(dateStr);
       };
       const rows: ExportRow[] = data.data ?? data;
+      const maxRoundCount = Math.max(...rows.map((r) => r.rounds?.length ?? 0), 0);
+      const roundColumns = Array.from({ length: maxRoundCount }, (_, i) => ({
+        header: `Round ${i + 1} (%)`,
+        cell: (r: ExportRow) => r.rounds?.[i]?.percentage ?? "",
+      }));
       await writeXlsxFile<ExportRow>(rows, {
         columns: [
           { header: "Name", cell: (r: ExportRow) => r.name },
           { header: "Email", cell: (r: ExportRow) => r.email },
           { header: "Phone", cell: (r: ExportRow) => r.phone },
           { header: "Score (%)", cell: (r: ExportRow) => r.percentage },
-          { header: "Rounds", cell: (r: ExportRow) => r.rounds_count },
-          { header: "Completed At", cell: (r: ExportRow) => formatDate(r.completed_at) },
+          { header: "Rounds", cell: (r: ExportRow) => r.rounds?.length ?? 0 },
+          ...roundColumns,
+          { header: "Completed At", cell: (r: ExportRow) => formatDate(r.completed_at ?? "") },
         ],
       }).toFile(`${assessmentName || "assessment"}_submissions.xlsx`);
     } catch {

@@ -52,6 +52,19 @@ function titleCase(s: string): string {
   return s.replaceAll("_", " ").replaceAll(/\b\w/g, (c: string) => c.toUpperCase());
 }
 
+function formatDate(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
 // ── styles ────────────────────────────────────────────────────────────────────
 
 const S = StyleSheet.create({
@@ -402,27 +415,27 @@ export function SubmissionReportDocument({
               </View>
             </View>
             <View style={S.statBox}>
-              <Text style={S.statLabel}>Score</Text>
-              <Text style={S.statValue}>{data.score}</Text>
-            </View>
-            <View style={S.statBox}>
               <Text style={S.statLabel}>Percentage</Text>
               <Text style={S.statValue}>{data.percentage}%</Text>
+            </View>
+            <View style={S.statBox}>
+              <Text style={S.statLabel}>Rounds</Text>
+              <Text style={S.statValue}>{data.rounds.length}</Text>
             </View>
           </View>
 
           <View style={S.statsRow}>
             <View style={S.statBox}>
-              <Text style={S.statLabel}>Rounds</Text>
-              <Text style={S.statValue}>{data.rounds.length}</Text>
-            </View>
-            <View style={S.statBox}>
               <Text style={S.statLabel}>Malpractice Count</Text>
               <Text style={S.statValue}>{data.malpractice_count}</Text>
             </View>
             <View style={S.statBox}>
-              <Text style={S.statLabel}>Re-access Count</Text>
-              <Text style={S.statValue}>{data.reaccess_count}</Text>
+              <Text style={S.statLabel}>Started At</Text>
+              <Text style={S.statValue}>{formatDate(data.started_at)}</Text>
+            </View>
+            <View style={S.statBox}>
+              <Text style={S.statLabel}>Completed At</Text>
+              <Text style={S.statValue}>{formatDate(data.completed_at)}</Text>
             </View>
           </View>
         </View>
