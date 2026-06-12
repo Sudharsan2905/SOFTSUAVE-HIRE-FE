@@ -26,6 +26,12 @@ export default defineConfig(({ mode }) => {
           target: apiTarget,
           changeOrigin: true,
         },
+        "/livekit": {
+          target: env.VITE_LIVEKIT_SERVER || "ws://13.236.235.236:7880",
+          changeOrigin: true,
+          ws: true,
+          rewrite: (path) => path.replace(/^\/livekit/, ""),
+        },
       },
     },
   };

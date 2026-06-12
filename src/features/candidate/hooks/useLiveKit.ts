@@ -11,6 +11,7 @@ import {
 } from "livekit-client";
 import api from "@/utils/api";
 import { API_ENDPOINTS } from "@/constants/api";
+import { CONFIG } from "@/constants/config";
 
 // ─── Candidate publisher ──────────────────────────────────────────────────────
 
@@ -61,11 +62,8 @@ export function useLiveKitPublisher({
 
       const room = new Room();
       roomRef.current = room;
-      const liveKitHost =
-        (import.meta.env.VITE_LIVEKIT_HOST as string | undefined) ??
-        `${globalThis.location.protocol === "https:" ? "wss" : "ws"}://${globalThis.location.host}/livekit`;
-      await room.connect(liveKitHost, token);
-      console.warn(`[LiveKit] Room connected: host=${liveKitHost} submission=${submissionId}`);
+      await room.connect(CONFIG.LIVEKIT_URL, token);
+      console.warn(`[LiveKit] Room connected: host=${CONFIG.LIVEKIT_URL} submission=${submissionId}`);
 
       // Screen share — reuse the pre-acquired stream (no second getDisplayMedia prompt)
       const screenStream = screenStreamRef?.current;
@@ -244,14 +242,11 @@ export function useLiveKitViewer({ workspaceId, targetSubmissionId }: ViewerOpti
       .post(API_ENDPOINTS.LIVE_MONITORING.LIVEKIT_TOKEN, { workspace_id: workspaceId })
       .then(({ data }) => {
         if (!active) return;
-        const liveKitHost =
-          (import.meta.env.VITE_LIVEKIT_HOST as string | undefined) ??
-          `${globalThis.location.protocol === "https:" ? "wss" : "ws"}://${globalThis.location.host}/livekit`;
-        console.warn(`[LiveKit] Viewer: token received, connecting to ${liveKitHost}`);
+        console.warn(`[LiveKit] Viewer: token received, connecting to ${CONFIG.LIVEKIT_URL}`);
         // autoSubscribe: false — admin explicitly subscribes only to the selected
         // candidate's screen track. Without this, LiveKit auto-subscribes to every
         // participant in the room (all candidates), wasting bandwidth at scale.
-        return room.connect(liveKitHost, data.data.token as string, { autoSubscribe: false });
+        return room.connect(CONFIG.LIVEKIT_URL, data.data.token as string, { autoSubscribe: false });
       })
       .catch((err: unknown) => {
         if (!active) return;

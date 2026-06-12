@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { WS_HEARTBEAT_INTERVAL_MS } from "@/constants/app";
 import type { WsMessage } from "@/types";
+import { CONFIG } from "@/constants";
 
 const MAX_RETRIES = 10;
 const BASE_BACKOFF_MS = 1_000;
@@ -217,8 +218,7 @@ export function useNetworkMonitoring({
   const connect = useCallback(() => {
     if (!submissionId || !accessToken || unmountedRef.current) return;
 
-    const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-    const url = `${apiBase.replace(/^https/, "wss").replace(/^http/, "ws")}/api/ws/interview/${submissionId}?token=${accessToken}`;
+    const url = `${CONFIG.WS_URL}/api/ws/interview/${submissionId}?token=${accessToken}`;
 
     console.warn(`[WS] Connecting: submission=${submissionId}`);
     const ws = new WebSocket(url);
