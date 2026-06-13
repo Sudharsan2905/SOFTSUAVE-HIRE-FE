@@ -87,8 +87,10 @@ export function useMalpracticeRecording({
 
   // Captures pending a POST response (opaque symbol → session)
   const pendingRef = useRef<Map<symbol, CaptureSession>>(new Map());
-  // Captures committed and accumulating footage (eventIndex → session + timer)
-  const activeEventsRef = useRef<Map<number, ActiveEvent>>(new Map());
+  // Captures committed and accumulating footage (captureId symbol → session + timer).
+  // Keyed by the capture symbol (not eventIndex) so two rapid violations can never
+  // overwrite each other even if the server somehow returns the same event_index.
+  const activeEventsRef = useRef<Map<symbol, ActiveEvent>>(new Map());
 
   // ── Track current stream configuration ───────────────────────────────────
   useEffect(() => {
@@ -149,12 +151,12 @@ export function useMalpracticeRecording({
 
   // ── Finalize an active event (20 s timeout or early flush) ────────────────
   const finalizeActive = useCallback(
-    async (eventIndex: number): Promise<void> => {
-      const ev = activeEventsRef.current.get(eventIndex);
+    async (captureId: symbol): Promise<void> => {
+      const ev = activeEventsRef.current.get(captureId);
       if (!ev) return; // already finalized (idempotent)
 
       clearTimeout(ev.timeoutId);
-      activeEventsRef.current.delete(eventIndex);
+      activeEventsRef.current.delete(captureId);
 
       // Stop the dedicated recorder and wait for its final ondataavailable
       if (ev.recorder && ev.recorder.state !== "inactive") {
@@ -166,9 +168,9 @@ export function useMalpracticeRecording({
       }
 
       try {
-        await uploadCapture(eventIndex, ev.blobs, ev.isVideo, ev.mimeType);
+        await uploadCapture(ev.eventIndex, ev.blobs, ev.isVideo, ev.mimeType);
       } catch (err) {
-        console.warn(`Malpractice media upload failed for event ${eventIndex}:`, err);
+        console.warn(`Malpractice media upload failed for event ${ev.eventIndex}:`, err);
       }
     },
     [uploadCapture]
@@ -227,10 +229,12 @@ export function useMalpracticeRecording({
       pendingRef.current.delete(id);
 
       const timeoutId = setTimeout(() => {
-        void finalizeActive(eventIndex);
+        void finalizeActive(id);
       }, FORWARD_RECORD_MS);
 
-      activeEventsRef.current.set(eventIndex, {
+      // Use the capture symbol (id) as the map key so each violation always
+      // gets its own slot, even when multiple events fire within 20 seconds.
+      activeEventsRef.current.set(id, {
         ...pending,
         eventIndex,
         timeoutId,

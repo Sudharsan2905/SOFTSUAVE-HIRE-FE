@@ -1,11 +1,11 @@
 import { useEffect, useRef, MutableRefObject } from "react";
 
-// Tab must be away longer than this before a violation is recorded.
-// Covers legitimate flows: screen-share picker, browser permission dialogs,
-// OS notifications that briefly steal focus.
+// Candidate must be away for longer than this before a violation fires.
+// Covers accidental Alt-Tab, OS notifications, and the brief focus loss
+// when a browser permission dialog (screen-share picker) opens.
 const TAB_SWITCH_GRACE_MS = 1_000;
 
-// Minimum time between successive tab-switch violations of the same session.
+// Minimum gap between successive tab-switch violations in the same session.
 const VIOLATION_LOCK_MS = 1_000;
 
 interface UseTabMonitoringOptions {
@@ -35,57 +35,49 @@ export function useTabMonitoring({
     onViolationRef.current = onViolation;
   });
 
-  // Timestamp (performance.now) when the tab was last hidden/blurred.
-  // null means the tab is currently visible/focused.
-  const tabLeaveTimeRef = useRef<number | null>(null);
+  // Holds the pending grace-period timeout. null = tab is currently visible.
+  const tabSwitchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastViolationRef = useRef<number>(0);
 
   useEffect(() => {
     if (!enabled) return;
 
-    // Called whenever the tab returns to visibility or the window regains focus.
-    // Fires a violation only if the absence exceeded the grace period.
-    const maybeFlag = () => {
-      if (tabLeaveTimeRef.current === null) return;
-      const duration = performance.now() - tabLeaveTimeRef.current;
-      tabLeaveTimeRef.current = null;
+    // Start the 1-second grace-period timer when the tab leaves focus.
+    // If the candidate returns before it fires, cancelTimeout() clears it.
+    // If it fires, the absence exceeded the grace period → record violation.
+    const startTimeout = () => {
+      if (tabSwitchTimeoutRef.current !== null || isPermissionFlowActiveRef.current) return;
+      tabSwitchTimeoutRef.current = setTimeout(() => {
+        tabSwitchTimeoutRef.current = null;
+        if (!examActiveRef.current || isPermissionFlowActiveRef.current) return;
+        const now = performance.now();
+        if (now - lastViolationRef.current <= VIOLATION_LOCK_MS) return;
+        lastViolationRef.current = now;
+        onViolationRef.current(
+          "Candidate switched away from the assessment tab for more than 1 second"
+        );
+      }, TAB_SWITCH_GRACE_MS);
+    };
 
-      if (!examActiveRef.current || isPermissionFlowActiveRef.current) return;
-      if (duration <= TAB_SWITCH_GRACE_MS) return;
-
-      const now = performance.now();
-      if (now - lastViolationRef.current <= VIOLATION_LOCK_MS) return;
-
-      lastViolationRef.current = now;
-      const secs = Math.round(duration / 1_000);
-      onViolationRef.current(
-        `Candidate was away from the assessment tab for ${secs} second${secs === 1 ? "" : "s"}`
-      );
+    const cancelTimeout = () => {
+      if (tabSwitchTimeoutRef.current !== null) {
+        clearTimeout(tabSwitchTimeoutRef.current);
+        tabSwitchTimeoutRef.current = null;
+      }
     };
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
-        // Record the leave time unconditionally (unless a permission dialog is open).
-        // examActiveRef is checked later in maybeFlag — guarding it here caused the
-        // timestamp to be skipped when the ref was momentarily false (async effect lag
-        // or brief network blip), so the switch was silently missed on return.
-        if (!isPermissionFlowActiveRef.current) {
-          tabLeaveTimeRef.current ??= performance.now();
-        }
+        startTimeout();
       } else {
-        maybeFlag();
+        cancelTimeout();
       }
     };
 
-    const handleBlur = () => {
-      if (!isPermissionFlowActiveRef.current) {
-        tabLeaveTimeRef.current ??= performance.now();
-      }
-    };
-
-    const handleFocus = () => {
-      maybeFlag();
-    };
+    // blur/focus cover window-level focus loss without a full tab switch
+    // (e.g. Alt-Tab to another app while the tab remains "visible").
+    const handleBlur = () => startTimeout();
+    const handleFocus = () => cancelTimeout();
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("blur", handleBlur);
@@ -95,7 +87,7 @@ export function useTabMonitoring({
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("blur", handleBlur);
       window.removeEventListener("focus", handleFocus);
-      tabLeaveTimeRef.current = null;
+      cancelTimeout();
     };
   }, [enabled, examActiveRef, isPermissionFlowActiveRef]);
 }
