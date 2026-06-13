@@ -335,6 +335,11 @@ export default function InterviewPage() {
   const [timerActive, setTimerActive] = useState(false);
   const [audioActive, setAudioActive] = useState(false);
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
+  // Tracks whether the backend has been told the exam started and the FE
+  // timer is allowed to tick. Stays false until the exam reaches ACTIVE.
+  const [interviewStarted, setInterviewStarted] = useState(false);
+  // Error message shown when the round API returns a server / network error.
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Readiness signals — fed into the orchestrator
   const [isCameraReady, setIsCameraReady] = useState(false);
@@ -356,6 +361,8 @@ export default function InterviewPage() {
   const currentIdxRef = useRef(0);
   const roundDataRef = useRef<InterviewRoundData | null>(null);
   const violationCooldownRef = useRef<Partial<Record<string, number>>>({});
+  // Guards the one-shot start-API call so it fires at most once per round.
+  const interviewStartedRef = useRef(false);
 
   useEffect(() => {
     submittingRef.current = submitting;
@@ -482,14 +489,31 @@ export default function InterviewPage() {
     }
   }, [shouldAcquireScreen, shouldInitScreenCapture]);
 
-  // Timer only runs once the exam is ACTIVE — paused during setup and on network loss
+  // Timer only runs after the backend has been notified of exam start and
+  // the network is connected. Both conditions must hold.
   useEffect(() => {
     const isOffline =
       networkStatus === "offline" ||
       networkStatus === "reconnecting" ||
       networkStatus === "on_hold";
-    setTimerActive(phase >= ExamPhase.ACTIVE && !isOffline);
-  }, [networkStatus, phase]);
+    setTimerActive(interviewStarted && !isOffline);
+  }, [networkStatus, interviewStarted]);
+
+  // When the orchestrator reaches ACTIVE and fresh round data is loaded, notify
+  // the backend that the interview has begun and enable the FE timer.
+  // roundData is a dependency so the effect re-fires on round 2, 3, … when the
+  // orchestrator stays at ACTIVE (it never resets between rounds). The !roundData
+  // guard prevents a spurious call during the brief null window of a transition.
+  // The call is fire-and-forget — the timer still starts even if it fails.
+  useEffect(() => {
+    if (phase !== ExamPhase.ACTIVE || interviewStartedRef.current || !submissionId || !roundData)
+      return;
+    interviewStartedRef.current = true;
+    void api
+      .post(API_ENDPOINTS.SUBMISSIONS.START(submissionId))
+      .catch(() => undefined)
+      .finally(() => setInterviewStarted(true));
+  }, [phase, submissionId, roundData]);
 
   // ── Data fetching ───────────────────────────────────────────────────────────
   const fetchRound = useCallback(async () => {
@@ -526,12 +550,19 @@ export default function InterviewPage() {
         ? (e as { response?: { status?: number } }).response?.status
         : undefined;
       const msg = extractApiErrorMessage(e, "");
+
       if (status === 403) {
         if (shareLink) markAssessmentDone(shareLink);
         const isRevoked = msg.toLowerCase().includes("revoked");
         navigate(
           isRevoked ? ROUTES.ASSESSMENT.entry(shareLink!) : ROUTES.ASSESSMENT.completed(shareLink!),
           { replace: true }
+        );
+      } else if (!status || status >= 500) {
+        // Server error or no response (network failure / timeout)
+        console.error("Round API failed:", e);
+        setLoadError(
+          "Your interview could not be started due to an internal server issue. Please contact the administrator."
         );
       } else {
         toast.error("Failed to load questions");
@@ -622,6 +653,8 @@ export default function InterviewPage() {
           setIsCameraReady(false);
           setIsAudioReady(false);
           setShouldInitScreenCapture(false);
+          setInterviewStarted(false);
+          interviewStartedRef.current = false;
           setSubmitting(false);
           submittingRef.current = false;
           await loadData();
@@ -966,6 +999,14 @@ export default function InterviewPage() {
     return (
       <div className={styles.loadingScreen}>
         <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className={styles.emptyScreen}>
+        <p>{loadError}</p>
       </div>
     );
   }
