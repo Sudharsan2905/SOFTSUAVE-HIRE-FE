@@ -8,16 +8,17 @@ const TAB_SWITCH_GRACE_MS = 1_000;
 const _VIOLATION_LOCK_MS = 1_000;
 
 function setup(enabled = true, examActive = true, permissionFlowActive = false) {
-  const onViolation = vi.fn();
+  const onTabSwitch = vi.fn();
+  const onFocusViolation = vi.fn();
 
   const { result, unmount } = renderHook(() => {
     const examActiveRef = useRef(examActive);
     const isPermissionFlowActiveRef = useRef(permissionFlowActive);
-    useTabMonitoring({ enabled, examActiveRef, isPermissionFlowActiveRef, onViolation });
+    useTabMonitoring({ enabled, examActiveRef, isPermissionFlowActiveRef, onTabSwitch, onFocusViolation });
     return { examActiveRef, isPermissionFlowActiveRef };
   });
 
-  return { onViolation, result, unmount };
+  return { onTabSwitch, onFocusViolation, result, unmount };
 }
 
 function fireVisibilityHidden() {
@@ -41,70 +42,70 @@ describe("useTabMonitoring", () => {
   });
 
   it("does not fire when enabled=false", () => {
-    const { onViolation, unmount } = setup(false);
+    const { onTabSwitch, unmount } = setup(false);
 
     vi.spyOn(performance, "now").mockReturnValue(0);
     fireVisibilityHidden();
     vi.spyOn(performance, "now").mockReturnValue(TAB_SWITCH_GRACE_MS + 100);
     fireVisibilityVisible();
 
-    expect(onViolation).not.toHaveBeenCalled();
+    expect(onTabSwitch).not.toHaveBeenCalled();
     unmount();
   });
 
   it("fires a violation when tab is hidden longer than grace period", () => {
-    const { onViolation, unmount } = setup();
+    const { onTabSwitch, unmount } = setup();
 
     vi.spyOn(performance, "now").mockReturnValue(0);
     fireVisibilityHidden();
     vi.spyOn(performance, "now").mockReturnValue(TAB_SWITCH_GRACE_MS + 500);
     fireVisibilityVisible();
 
-    expect(onViolation).toHaveBeenCalledTimes(1);
-    expect(onViolation).toHaveBeenCalledWith(
+    expect(onTabSwitch).toHaveBeenCalledTimes(1);
+    expect(onTabSwitch).toHaveBeenCalledWith(
       expect.stringContaining("away from the assessment tab")
     );
     unmount();
   });
 
   it("does NOT fire when tab is hidden within the grace period", () => {
-    const { onViolation, unmount } = setup();
+    const { onTabSwitch, unmount } = setup();
 
     vi.spyOn(performance, "now").mockReturnValue(0);
     fireVisibilityHidden();
     vi.spyOn(performance, "now").mockReturnValue(500);
     fireVisibilityVisible();
 
-    expect(onViolation).not.toHaveBeenCalled();
+    expect(onTabSwitch).not.toHaveBeenCalled();
     unmount();
   });
 
   it("does NOT fire when exam is not active", () => {
-    const { onViolation, unmount } = setup(true, false);
+    const { onTabSwitch, unmount } = setup(true, false);
 
     vi.spyOn(performance, "now").mockReturnValue(0);
     fireVisibilityHidden();
     vi.spyOn(performance, "now").mockReturnValue(TAB_SWITCH_GRACE_MS + 500);
     fireVisibilityVisible();
 
-    expect(onViolation).not.toHaveBeenCalled();
+    expect(onTabSwitch).not.toHaveBeenCalled();
     unmount();
   });
 
   it("does NOT fire during a permission flow", () => {
-    const { onViolation, unmount } = setup(true, true, true);
+    const { onTabSwitch, unmount } = setup(true, true, true);
 
     vi.spyOn(performance, "now").mockReturnValue(0);
     fireVisibilityHidden();
     vi.spyOn(performance, "now").mockReturnValue(TAB_SWITCH_GRACE_MS + 500);
     fireVisibilityVisible();
 
-    expect(onViolation).not.toHaveBeenCalled();
+    expect(onTabSwitch).not.toHaveBeenCalled();
     unmount();
   });
 
   it("respects the violation lock — ignores second violation within lock period", () => {
-    const { onViolation, unmount } = setup();
+    const { onTabSwitch, unmount } = setup();
 
     // First violation: hidden at t=0, visible at t=1500 (exceeds grace of 1000ms)
     // lastViolationRef is set to 1500
@@ -112,7 +113,7 @@ describe("useTabMonitoring", () => {
     fireVisibilityHidden();
     vi.spyOn(performance, "now").mockReturnValue(1500);
     fireVisibilityVisible();
-    expect(onViolation).toHaveBeenCalledTimes(1);
+    expect(onTabSwitch).toHaveBeenCalledTimes(1);
 
     // Second hide/show: hidden at t=2000, visible at t=3400
     // Duration = 1400ms > grace. But t=3400 - lastViolation=1500 = 1900ms.
@@ -123,7 +124,7 @@ describe("useTabMonitoring", () => {
     // Return at t=2400 (duration=400ms < grace of 1000ms) → no violation because duration ≤ grace
     vi.spyOn(performance, "now").mockReturnValue(2400);
     fireVisibilityVisible();
-    expect(onViolation).toHaveBeenCalledTimes(1);
+    expect(onTabSwitch).toHaveBeenCalledTimes(1);
 
     // Third hide/show at t=3000 → visible at t=4500. Duration=1500>grace. But now=4500, lastViolation=1500, diff=3000>1000 → fires
     vi.spyOn(performance, "now").mockReturnValue(3000);
@@ -137,14 +138,14 @@ describe("useTabMonitoring", () => {
   });
 
   it("ignores second violation when it falls within the VIOLATION_LOCK_MS window", () => {
-    const { onViolation, unmount } = setup();
+    const { onTabSwitch, unmount } = setup();
 
     // First violation: hidden at t=0, visible at t=1500 → lastViolation=1500
     vi.spyOn(performance, "now").mockReturnValue(0);
     fireVisibilityHidden();
     vi.spyOn(performance, "now").mockReturnValue(1500);
     fireVisibilityVisible();
-    expect(onViolation).toHaveBeenCalledTimes(1);
+    expect(onTabSwitch).toHaveBeenCalledTimes(1);
 
     // Second violation attempt: hidden at t=1600, visible at t=2700
     // Duration = 1100ms > grace (1000ms). But now=2700, lastViolation=1500, diff=1200 > 1000 → fires
@@ -154,20 +155,20 @@ describe("useTabMonitoring", () => {
     vi.spyOn(performance, "now").mockReturnValue(2499); // 2499-1500=999 < VIOLATION_LOCK_MS (1000)
     fireVisibilityVisible();
     // duration = 2499-1600 = 899ms ≤ grace (1000ms) → won't fire anyway due to grace check
-    expect(onViolation).toHaveBeenCalledTimes(1);
+    expect(onTabSwitch).toHaveBeenCalledTimes(1);
 
     unmount();
   });
 
   it("fires via window blur/focus events as well", () => {
-    const { onViolation, unmount } = setup();
+    const { onFocusViolation, unmount } = setup();
 
     vi.spyOn(performance, "now").mockReturnValue(0);
     fireEvent.blur(globalThis as unknown as Window);
     vi.spyOn(performance, "now").mockReturnValue(TAB_SWITCH_GRACE_MS + 500);
     fireEvent.focus(globalThis as unknown as Window);
 
-    expect(onViolation).toHaveBeenCalledTimes(1);
+    expect(onFocusViolation).toHaveBeenCalledTimes(1);
     unmount();
   });
 

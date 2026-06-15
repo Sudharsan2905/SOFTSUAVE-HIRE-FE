@@ -80,7 +80,6 @@ export const API_ENDPOINTS = {
   SUBMISSIONS: {
     ROOT: `${API_BASE_PATH}/submissions`,
     BY_ID: (id: string) => `${API_BASE_PATH}/submissions/${id}`,
-    START: (id: string) => `${API_BASE_PATH}/submissions/${id}/start`,
     ANSWER: (id: string) => `${API_BASE_PATH}/submissions/${id}/answer`,
     COMPLETE: (id: string) => `${API_BASE_PATH}/submissions/${id}/complete`,
     MALPRACTICE: (id: string) => `${API_BASE_PATH}/submissions/${id}/malpractice`,
@@ -118,6 +117,8 @@ export const API_ENDPOINTS = {
       `${API_BASE_PATH}/candidate/submission/${id}/malpractice/${eventIndex}/media`,
     SUBMISSION_LIVEKIT_TOKEN: (id: string) =>
       `${API_BASE_PATH}/candidate/submission/${id}/livekit-token`,
+    SUBMISSION_START: (id: string) =>
+      `${API_BASE_PATH}/candidate/submission/${id}/start`,
   },
 
   LIVE_MONITORING: {

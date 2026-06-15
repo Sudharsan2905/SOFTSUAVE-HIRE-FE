@@ -32,6 +32,9 @@ import { API_ENDPOINTS } from "@/constants/api";
 import { ShareLink, MonitoringOverrides } from "@/types";
 import toast from "react-hot-toast";
 import { clsx } from "@/utils/helpers";
+import { RestrictionMode } from "@/constants/enums";
+import { CandidateAccessRestriction } from "./CandidateAccessRestriction";
+import { useRestrictedEmails } from "./useRestrictedEmails";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -442,6 +445,9 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
     screenshot_mode: "time_interval",
     screenshot_interval_seconds: 5,
   });
+  const [restrictEnabled, setRestrictEnabled] = useState(false);
+  const [restrictionMode, setRestrictionMode] = useState<RestrictionMode>(RestrictionMode.INCLUDE);
+  const emailState = useRestrictedEmails();
   const [generating, setGenerating] = useState(false);
   const [existingLinks, setExistingLinks] = useState<ShareLink[]>([]);
   const [loadingLinks, setLoadingLinks] = useState(true);
@@ -508,12 +514,21 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
 
   const handleGenerate = async () => {
     if (!validate()) return;
+
+    if (restrictEnabled && emailState.emails.length === 0) {
+      toast.error("Add at least one email to the access restriction list.");
+      return;
+    }
+
     setGenerating(true);
     try {
       const payload: Record<string, unknown> = {
         share_type: "custom",
         label: linkLabel.trim(),
         monitoring_overrides: monitoring,
+        restrict_candidate_access: restrictEnabled,
+        restriction_mode: restrictEnabled ? restrictionMode : null,
+        restricted_emails: restrictEnabled ? emailState.emails : [],
       };
       if (startTime) payload.start_time = new Date(startTime).toISOString();
       if (endTime) payload.end_time = new Date(endTime).toISOString();
@@ -527,6 +542,9 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
       setLinkLabel("");
       setStartTime("");
       setEndTime("");
+      setRestrictEnabled(false);
+      setRestrictionMode(RestrictionMode.INCLUDE);
+      emailState.reset();
       toast.success("Custom link generated");
     } catch (e: unknown) {
       const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
@@ -606,6 +624,15 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
           />
         </div>
       </div>
+
+      {/* Candidate access restriction */}
+      <CandidateAccessRestriction
+        enabled={restrictEnabled}
+        onToggle={setRestrictEnabled}
+        mode={restrictionMode}
+        onModeChange={setRestrictionMode}
+        emailState={emailState}
+      />
 
       {/* Monitoring accordion */}
       <Accordion

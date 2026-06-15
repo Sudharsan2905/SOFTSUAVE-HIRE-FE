@@ -6,6 +6,7 @@ import type {
   MalpracticeType,
   WsMessageType,
   ShareType,
+  RestrictionMode,
 } from "@/constants/enums";
 import type { User } from "./auth.types";
 
@@ -83,6 +84,9 @@ export interface ShareLink {
   end_time: string | null;
   is_active: boolean;
   created_at: string;
+  restrict_candidate_access: boolean;
+  restriction_mode: RestrictionMode | null;
+  restricted_emails: string[];
 }
 
 // ─── Candidate Interview ──────────────────────────────────────────────────────

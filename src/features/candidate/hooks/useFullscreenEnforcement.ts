@@ -34,6 +34,8 @@ export function useFullscreenEnforcement({
   const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
   const onExitRef = useRef(onExit);
   const onBlockRequiredRef = useRef(onBlockRequired);
+  // Pending violation timer — mirrors TAB_SWITCH_GRACE_MS in useTabMonitoring.
+  const exitDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     onExitRef.current = onExit;
@@ -69,10 +71,23 @@ export function useFullscreenEnforcement({
     const handleChange = () => {
       const nowFullscreen = !!document.fullscreenElement;
       setIsFullscreen(nowFullscreen);
-      // Only call onExit when the user actively leaves fullscreen after it was active.
-      // This is a violation signal — NOT called on initial enforcement failure.
-      if (!nowFullscreen) {
-        onExitRef.current?.("Candidate exited fullscreen mode");
+
+      if (nowFullscreen) {
+        // Candidate returned to fullscreen before the grace period expired — cancel.
+        if (exitDebounceRef.current !== null) {
+          clearTimeout(exitDebounceRef.current);
+          exitDebounceRef.current = null;
+        }
+      } else {
+        // Start a 1-second grace period matching the tab-switch debounce pattern.
+        // If the candidate restores fullscreen within that window, no violation fires.
+        if (exitDebounceRef.current !== null) return;
+        exitDebounceRef.current = setTimeout(() => {
+          exitDebounceRef.current = null;
+          if (!document.fullscreenElement) {
+            onExitRef.current?.("Candidate exited fullscreen mode");
+          }
+        }, 1_000);
       }
     };
 
@@ -96,6 +111,10 @@ export function useFullscreenEnforcement({
     return () => {
       cancelled = true;
       clearTimeout(timeout);
+      if (exitDebounceRef.current !== null) {
+        clearTimeout(exitDebounceRef.current);
+        exitDebounceRef.current = null;
+      }
       FS_EVENTS.forEach((ev) => document.removeEventListener(ev, handleChange));
     };
   }, [enabled, requestFullscreen]);

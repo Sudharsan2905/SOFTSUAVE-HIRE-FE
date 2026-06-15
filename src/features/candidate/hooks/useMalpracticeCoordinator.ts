@@ -24,6 +24,7 @@ const VIOLATION_MESSAGES: Record<MalpracticeType, string> = {
   background_noise: "Background noise detected",
   audio_violation: "Audio violation detected",
   speaking: "Speaking detected",
+  notification_received: "OS notification interaction detected",
 };
 
 const TWO_STRIKE_TYPES = new Set<MalpracticeType>([

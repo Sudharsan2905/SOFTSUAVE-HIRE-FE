@@ -31,6 +31,7 @@ export const MalpracticeType = {
   BACKGROUND_NOISE: "background_noise",
   AUDIO_VIOLATION: "audio_violation",
   SPEAKING: "speaking",
+  NOTIFICATION_RECEIVED: "notification_received",
 } as const;
 export type MalpracticeType = (typeof MalpracticeType)[keyof typeof MalpracticeType];
 
@@ -90,3 +91,9 @@ export const Gender = {
   OTHER: "other",
 } as const;
 export type Gender = (typeof Gender)[keyof typeof Gender];
+
+export const RestrictionMode = {
+  INCLUDE: "INCLUDE",
+  EXCLUDE: "EXCLUDE",
+} as const;
+export type RestrictionMode = (typeof RestrictionMode)[keyof typeof RestrictionMode];

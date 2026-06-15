@@ -40,7 +40,7 @@ export const adminLogin = createAsyncThunk(
 
 export const candidateLogin = createAsyncThunk(
   "auth/candidateLogin",
-  async (payload: { email: string; password: string }, { rejectWithValue }) => {
+  async (payload: { email: string; password: string; share_link?: string }, { rejectWithValue }) => {
     try {
       const { data } = await api.post(API_ENDPOINTS.AUTH.CANDIDATE_LOGIN, payload);
       return data.data;

@@ -66,7 +66,7 @@ export default function CandidateLoginPage() {
 
   const onSubmit = async (values: CandidateLoginForm) => {
     try {
-      await dispatch(candidateLogin(values)).unwrap();
+      await dispatch(candidateLogin({ ...values, ...(shareLink ? { share_link: shareLink } : {}) })).unwrap();
       goNext();
     } catch (e: unknown) {
       // unwrap() throws the rejectWithValue payload, which is already a plain string

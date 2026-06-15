@@ -603,6 +603,11 @@ const MALPRACTICE_META: Record<MalpracticeType, MalpracticeMeta> = {
     description: "Another person was detected speaking in the background",
     Icon: IconUsers,
   },
+  notification_received: {
+    label: "Notification",
+    description: "OS notification interaction detected during the interview",
+    Icon: IconMalpractice,
+  },
 };
 
 const FALLBACK_MALPRACTICE_META: MalpracticeMeta = {

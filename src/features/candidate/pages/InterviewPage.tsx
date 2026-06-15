@@ -29,6 +29,7 @@ import { useFullscreenEnforcement } from "@/features/candidate/hooks/useFullscre
 import { useScreenCapture } from "@/features/candidate/hooks/useScreenCapture";
 import { useLiveKitPublisher } from "@/features/candidate/hooks/useLiveKit";
 import { MalpracticeWarningModal } from "@/features/candidate/components/MalpracticeWarningModal";
+import { RoundInstructions } from "@/features/candidate/components/RoundInstructions";
 import { useInterviewSession } from "@/features/candidate/context/InterviewSessionContext";
 import { useAppSelector } from "@/store/hooks";
 import { markAssessmentDone } from "@/utils/assessmentSession";
@@ -329,6 +330,8 @@ export default function InterviewPage() {
   // These modals only appear AFTER the exam is ACTIVE
   const [fullscreenBlocked, setFullscreenBlocked] = useState(false);
   const [screenShareBlocked, setScreenShareBlocked] = useState(false);
+  // Mandatory entry popup shown once per round before the timer starts
+  const [showIntroModal, setShowIntroModal] = useState(false);
 
   const [assessmentRounds, setAssessmentRounds] = useState<RoundConfig[]>([]);
   const [monitoringConfig, setMonitoringConfig] = useState<Partial<MonitoringConfig>>({});
@@ -361,7 +364,8 @@ export default function InterviewPage() {
   const currentIdxRef = useRef(0);
   const roundDataRef = useRef<InterviewRoundData | null>(null);
   const violationCooldownRef = useRef<Partial<Record<string, number>>>({});
-  // Guards the one-shot start-API call so it fires at most once per round.
+  // Guards the start-API call so it fires exactly once per round.
+  // Reset to false in handleFinishRound before loading the next round.
   const interviewStartedRef = useRef(false);
 
   useEffect(() => {
@@ -499,21 +503,26 @@ export default function InterviewPage() {
     setTimerActive(interviewStarted && !isOffline);
   }, [networkStatus, interviewStarted]);
 
-  // When the orchestrator reaches ACTIVE and fresh round data is loaded, notify
-  // the backend that the interview has begun and enable the FE timer.
-  // roundData is a dependency so the effect re-fires on round 2, 3, … when the
-  // orchestrator stays at ACTIVE (it never resets between rounds). The !roundData
-  // guard prevents a spurious call during the brief null window of a transition.
-  // The call is fire-and-forget — the timer still starts even if it fails.
+  // When the orchestrator reaches ACTIVE with fresh round data, show the mandatory
+  // intro modal. The candidate must click "Let Me In" before the timer starts.
+  // interviewStartedRef prevents re-triggering within the same round.
   useEffect(() => {
     if (phase !== ExamPhase.ACTIVE || interviewStartedRef.current || !submissionId || !roundData)
       return;
+    setShowIntroModal(true);
+  }, [phase, submissionId, roundData]);
+
+  // Called when candidate clicks "Let Me In" in the intro modal.
+  // Fires SUBMISSION_START fire-and-forget; timer starts regardless of API outcome.
+  const handleLetMeIn = useCallback(() => {
+    if (interviewStartedRef.current) return;
     interviewStartedRef.current = true;
+    setShowIntroModal(false);
     void api
-      .post(API_ENDPOINTS.SUBMISSIONS.START(submissionId))
+      .post(API_ENDPOINTS.CANDIDATE.SUBMISSION_START(submissionId!))
       .catch(() => undefined)
       .finally(() => setInterviewStarted(true));
-  }, [phase, submissionId, roundData]);
+  }, [submissionId]);
 
   // ── Data fetching ───────────────────────────────────────────────────────────
   const fetchRound = useCallback(async () => {
@@ -655,6 +664,7 @@ export default function InterviewPage() {
           setShouldInitScreenCapture(false);
           setInterviewStarted(false);
           interviewStartedRef.current = false;
+          setShowIntroModal(false);
           setSubmitting(false);
           submittingRef.current = false;
           await loadData();
@@ -830,13 +840,21 @@ export default function InterviewPage() {
   });
 
   // ── Tab monitoring ──────────────────────────────────────────────────────────
+  // onTabSwitch: real tab switch (visibilitychange → hidden after grace period).
+  // onFocusViolation: blur while tab is still visible — OS notification / DND bypass.
   useTabMonitoring({
     enabled: monitoringConfig.tab_monitoring ?? false,
     examActiveRef,
     isPermissionFlowActiveRef,
-    onViolation: useCallback(
+    onTabSwitch: useCallback(
       (description: string) => {
         void flagViolationSafe({ type: "tab_switch", description });
+      },
+      [flagViolationSafe]
+    ),
+    onFocusViolation: useCallback(
+      (description: string) => {
+        void flagViolationSafe({ type: "notification_received", description });
       },
       [flagViolationSafe]
     ),
@@ -1248,6 +1266,25 @@ export default function InterviewPage() {
       </div>
 
       {/* ── Modals (active exam only) ── */}
+
+      {/* Mandatory entry popup — shown once per round before the timer starts */}
+      <RoundInstructions
+        isOpen={showIntroModal}
+        roundNumber={roundData.round_number}
+        roundConfig={
+          assessmentRounds.find((r) => r.round_number === roundData.round_number) ?? {
+            round_number: roundData.round_number,
+            question_count: roundData.questions.length,
+            max_duration_minutes: roundData.max_duration_minutes,
+            question_ids: [],
+          }
+        }
+        totalRounds={assessmentRounds.length || 1}
+        onStart={handleLetMeIn}
+        mandatory
+        ctaLabel="Let Me In"
+        motivationalText="Stay focused and give your best. This assessment is monitored for integrity and fairness."
+      />
 
       <Modal
         isOpen={showSubmitConfirm}

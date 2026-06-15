@@ -136,3 +136,13 @@
   color: var(--text-secondary, #475569);
   line-height: 1.5;
 }
+
+.motivationalText {
+  font-size: 14px;
+  font-style: italic;
+  color: var(--text-primary, #1e293b);
+  border-left: 3px solid var(--color-primary, #6366f1);
+  padding-left: 12px;
+  margin: 0;
+  line-height: 1.6;
+}

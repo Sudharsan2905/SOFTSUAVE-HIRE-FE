@@ -12,6 +12,12 @@ interface RoundInstructionsProps {
   roundConfig: RoundConfig | null;
   totalRounds: number;
   onStart: () => void;
+  /** When true: disables backdrop close, ESC, and the close icon. Use for mandatory exam entry. */
+  mandatory?: boolean;
+  /** Override the CTA button label. Defaults to "Start Round {N}". */
+  ctaLabel?: string;
+  /** Optional motivational line shown below the rules list. */
+  motivationalText?: string;
 }
 
 function getProgressStepClass(stepNum: number, currentRound: number): string {
@@ -26,6 +32,9 @@ export function RoundInstructions({
   roundConfig,
   totalRounds,
   onStart,
+  mandatory = false,
+  ctaLabel,
+  motivationalText,
 }: Readonly<RoundInstructionsProps>) {
   if (!roundConfig) return null;
 
@@ -43,7 +52,14 @@ export function RoundInstructions({
       onClose={onStart}
       title={`Round ${roundNumber} — Instructions`}
       size="md"
-      footer={<Button onClick={onStart}>Start Round {roundNumber}</Button>}
+      showClose={!mandatory}
+      disableBackdropClose={mandatory}
+      disableEscapeKey={mandatory}
+      footer={
+        <Button fullWidth={mandatory} onClick={onStart}>
+          {ctaLabel ?? `Start Round ${roundNumber}`}
+        </Button>
+      }
     >
       <div className={styles.container}>
         <div className={styles.progressRow}>
@@ -82,7 +98,19 @@ export function RoundInstructions({
           <li>You can navigate between questions freely before submitting.</li>
           <li>Once you submit this round you cannot go back.</li>
           <li>Ensure a stable internet connection before starting.</li>
+          {mandatory && (
+            <>
+              <li>Remain in fullscreen mode for the entire duration.</li>
+              <li>Do not switch tabs, applications, or browser windows.</li>
+              <li>Enable Do Not Disturb to prevent notification interruptions.</li>
+              <li>Camera and microphone must remain active and visible.</li>
+            </>
+          )}
         </ul>
+
+        {motivationalText && (
+          <p className={styles.motivationalText}>{motivationalText}</p>
+        )}
       </div>
     </Modal>
   );
