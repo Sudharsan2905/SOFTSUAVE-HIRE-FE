@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Pagination } from "@/components/ui/Pagination";
 import { Spinner } from "@/components/ui/Spinner";
 import { Badge, StatusBadge } from "@/components/ui/Badge";
+import { Select } from "@/components/ui/Select";
 import { IconDownload, IconChevronLeft, IconCircleInfo, IconShare } from "@/assets/icons";
 import { Tooltip } from "@/components/ui/Tooltip";
 import type { DateRange } from "@/components/datetime/DateRangePicker";
@@ -31,8 +32,8 @@ import toast from "react-hot-toast";
 
 const SORT_OPTIONS = [
   { value: "started_at", label: "Started Time" },
-  { value: "candidate_name", label: "Name" },
-  { value: "candidate_email", label: "Email" },
+  { value: "first_name", label: "Name" },
+  { value: "email", label: "Email" },
 ];
 
 interface SubmissionWithCandidate extends Omit<Submission, "candidate"> {
@@ -65,6 +66,7 @@ export default function AssessmentDetailPage() {
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [showSchedule, setShowSchedule] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportType, setExportType] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
   const { page, pageSize, goToPage, reset, changePageSize } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
@@ -114,12 +116,35 @@ export default function AssessmentDetailPage() {
     reset();
   }, [debouncedSearch, sortBy, sortOrder, status, dateRange]);
 
-  const handleExport = async () => {
+  const EXPORT_OPTIONS = [
+    { value: "all", label: "Export All" },
+    { value: "filtered", label: "Export With Filters" },
+  ] as const;
+
+  const handleExportSelect = (value: string) => {
+    setExportType("");
+    if (value === "all") handleExport(false);
+    else if (value === "filtered") handleExport(true);
+  };
+
+  const handleExport = async (withFilters = false) => {
     setExporting(true);
     try {
-      const { data } = await api.get(
-        API_ENDPOINTS.ASSESSMENTS.SUBMISSIONS_EXPORT(workspaceId!, id!)
-      );
+      const baseUrl = API_ENDPOINTS.ASSESSMENTS.SUBMISSIONS_EXPORT(workspaceId!, id!);
+      const url = withFilters
+        ? (() => {
+            const params = new URLSearchParams({
+              sort_by: sortBy,
+              sort_order: sortOrder,
+              ...(debouncedSearch && { search: debouncedSearch }),
+              ...(status && { status }),
+              ...(dateRange.from && { from_date: dateRange.from }),
+              ...(dateRange.to && { to_date: dateRange.to }),
+            });
+            return `${baseUrl}?${params}`;
+          })()
+        : baseUrl;
+      const { data } = await api.get(url);
       const formatDate = (dateStr: string) => {
         if (!dateStr) return " - ";
         const date = new Date(dateStr);
@@ -271,14 +296,17 @@ export default function AssessmentDetailPage() {
         subtitle={`${meta?.total ?? 0} submissions`}
         actions={
           <div style={{ display: "flex", gap: 8 }}>
-            <Button
-              variant="secondary"
-              leftIcon={<IconDownload size={16} />}
-              onClick={handleExport}
-              isLoading={exporting}
-            >
-              Export
-            </Button>
+            <Select
+              value={exportType}
+              onChange={handleExportSelect}
+              options={EXPORT_OPTIONS}
+              placeholder={exporting ? "Exporting…" : "Export as CSV"}
+              leftIcon={exporting ? <Spinner size="sm" /> : <IconDownload size={16} />}
+              fullWidth={false}
+              hideArrow={true}
+              disabled={exporting}
+              style={{ minWidth: 145 }}
+            />
             <Button
               leftIcon={<IconShare size={14} />}
               onClick={() => setShowSchedule(true)}

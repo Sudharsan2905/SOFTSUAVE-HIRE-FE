@@ -20,6 +20,7 @@ interface SelectProps {
   onChange?: (value: string) => void;
   showRequired?: boolean;
   disabled?: boolean;
+  hideArrow?: boolean;
   id?: string;
   leftIcon?: ReactNode;
   className?: string;
@@ -34,6 +35,7 @@ export function Select({
   options,
   placeholder,
   fullWidth = true,
+  hideArrow = false,
   value,
   onChange,
   showRequired,
@@ -129,7 +131,12 @@ export function Select({
           <span className={selected ? styles.triggerValue : styles.triggerPlaceholder}>
             {selected ? selected.label : (placeholder ?? "Select…")}
           </span>
-          <IconChevronDown size={14} className={clsx(styles.chevron, open && styles.chevronOpen)} />
+          {!hideArrow && (
+            <IconChevronDown
+              size={14}
+              className={clsx(styles.chevron, open && styles.chevronOpen)}
+            />
+          )}
         </button>
       </div>
 

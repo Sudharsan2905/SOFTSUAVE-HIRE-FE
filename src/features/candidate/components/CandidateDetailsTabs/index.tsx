@@ -494,9 +494,10 @@ function RoundsReview({ rounds, submissionData }: Readonly<RoundsReviewProps>) {
             </Button>
           ) : (
             <Select
-              placeholder="Download PDF"
+              placeholder="Export as PDF"
               leftIcon={<IconDownload size={16} />}
               fullWidth={false}
+              hideArrow={true}
               disabled={downloading}
               options={[
                 { value: "all", label: "All Rounds" },
