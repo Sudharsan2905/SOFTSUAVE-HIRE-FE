@@ -13,6 +13,7 @@ import { Badge, ComplexityBadge } from "@/components/ui/Badge";
 import { Spinner } from "@/components/ui/Spinner";
 import { RichText } from "@/components/ui/RichText";
 import { Tooltip } from "@/components/ui/Tooltip";
+import { MarkdownEditor } from "@/components/ui/MarkdownEditor";
 import {
   IconPlus,
   IconEdit,
@@ -226,7 +227,7 @@ export default function QuestionsPage() {
           question_text: f.question_text,
           question_type: f.question_type,
           complexity: f.complexity,
-          options: f.question_type !== "essay" ? f.options.filter((o) => o.text) : [],
+          options: f.question_type === "essay" ? [] : f.options.filter((o) => o.text),
           correct_answer: f.question_type === "essay" ? f.correct_answer : undefined,
         };
         await api.put(API_ENDPOINTS.QUESTIONS.BY_ID(selected.id), payload);
@@ -236,7 +237,7 @@ export default function QuestionsPage() {
           question_text: f.question_text,
           question_type: f.question_type,
           complexity: f.complexity,
-          options: f.question_type !== "essay" ? f.options.filter((o) => o.text) : [],
+          options: f.question_type === "essay" ? [] : f.options.filter((o) => o.text),
           correct_answer: f.question_type === "essay" ? f.correct_answer : undefined,
         }));
         const { data } = await api.post(API_ENDPOINTS.CATEGORIES.BULK_CREATE(categoryId!), {
@@ -611,18 +612,14 @@ export default function QuestionsPage() {
               >
                 <div className={styles.accordionInner}>
                   <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    <div>
-                      <Textarea
-                        label="Question Text"
-                        placeholder="Enter the question..."
-                        value={f.question_text}
-                        onChange={(e) => updateForm(idx, { question_text: e.target.value })}
-                        rows={3}
-                      />
-                      <p style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 4 }}>
-                        Markdown supported — wrap code in ``` code fences ```
-                      </p>
-                    </div>
+                    <MarkdownEditor
+                      label="Question Text"
+                      placeholder="Enter the question..."
+                      value={f.question_text}
+                      onChange={(value) => updateForm(idx, { question_text: value })}
+                      rows={5}
+                      hint="Markdown supported — wrap code in ``` code fences ```"
+                    />
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                       <Select
                         label="Question Type"

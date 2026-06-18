@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styles from "./InterviewPage.module.css";
 import { Button } from "@/components/ui/Button";
@@ -247,16 +247,45 @@ function renderEssay(
   setAnswer: SetAnswerFn,
   sm: Record<string, string>
 ) {
+  const value = (answers[q.id] as string) || "";
+  const charLen = value.length;
+  const isTouched = charLen > 0;
+  const isValid = charLen >= MIN_ESSAY_CHARS;
+  const showError = isTouched && !isValid;
+  const remaining = MIN_ESSAY_CHARS - charLen;
+
+  let statusNode: React.ReactNode;
+  if (showError) {
+    statusNode = (
+      <span className={sm.essayError}>
+        {remaining} more character{remaining === 1 ? "" : "s"} needed
+      </span>
+    );
+  } else if (isValid) {
+    statusNode = <span className={sm.essaySuccess}>Minimum length met</span>;
+  } else {
+    statusNode = <span className={sm.essayHint}>Minimum 150 characters required</span>;
+  }
+
+  let charCountClass = sm.charCount;
+  if (showError) charCountClass += ` ${sm.charCountError}`;
+  else if (isValid) charCountClass += ` ${sm.charCountSuccess}`;
+
   return (
     <div className={sm.essayWrapper}>
       <textarea
-        className={sm.essayBox}
+        className={`${sm.essayBox} ${showError ? sm.essayBoxError : ""}`}
         placeholder="Write your answer here..."
-        value={answers[q.id] || ""}
+        value={value}
         onChange={(e) => setAnswer(q.id, e.target.value)}
         rows={10}
       />
-      <span className={sm.charCount}>{((answers[q.id] as string) || "").length} characters</span>
+      <div className={sm.essayFooter}>
+        {statusNode}
+        <span className={charCountClass}>
+          {charLen} / {MIN_ESSAY_CHARS}
+        </span>
+      </div>
     </div>
   );
 }
@@ -307,6 +336,7 @@ function renderRoundCard(
 }
 
 const VIOLATION_DEBOUNCE_MS = 2_000;
+const MIN_ESSAY_CHARS = 150;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -687,8 +717,8 @@ export default function InterviewPage() {
     submissionId: submissionId ?? "",
     monitoringConfig,
     onTerminated: useCallback(() => {
-      setTimeout(() => void finishRoundRef.current(true), 500);
-    }, []),
+      navigate(ROUTES.ASSESSMENT.instructions(shareLink ?? ""), { replace: true });
+    }, [navigate, shareLink]),
     videoRef,
     screenStreamRef,
     audioStreamRef,
@@ -1189,9 +1219,40 @@ export default function InterviewPage() {
             </Button>
             <div className={styles.navRight}>
               {isNext ? (
-                <Button onClick={() => navigateTo(currentIdx + 1)}>Next</Button>
+                <Button
+                  onClick={() => {
+                    if (currentQuestion.type === "essay") {
+                      const essayVal = (answers[currentQuestion.id] as string) || "";
+                      if (essayVal.length < MIN_ESSAY_CHARS) {
+                        toast.error(
+                          `Please write at least ${MIN_ESSAY_CHARS} characters before moving on.`
+                        );
+                        return;
+                      }
+                    }
+                    navigateTo(currentIdx + 1);
+                  }}
+                >
+                  Next
+                </Button>
               ) : (
-                <Button onClick={() => setShowSubmitConfirm(true)} isLoading={submitting}>
+                <Button
+                  onClick={() => {
+                    const insufficientEssays = questions.filter(
+                      (q) =>
+                        q.type === "essay" &&
+                        ((answers[q.id] as string) || "").length < MIN_ESSAY_CHARS
+                    );
+                    if (insufficientEssays.length > 0) {
+                      toast.error(
+                        `${insufficientEssays.length} essay answer${insufficientEssays.length === 1 ? "" : "s"} must be at least ${MIN_ESSAY_CHARS} characters.`
+                      );
+                      return;
+                    }
+                    setShowSubmitConfirm(true);
+                  }}
+                  isLoading={submitting}
+                >
                   Submit Round
                 </Button>
               )}

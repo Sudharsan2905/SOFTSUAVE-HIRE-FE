@@ -37,6 +37,7 @@
     "@react-oauth/google": "^0.12.1",
     "@react-pdf/renderer": "^4.5.1",
     "@reduxjs/toolkit": "^2.3.0",
+    "@uiw/react-md-editor": "^4.1.1",
     "axios": "^1.15.3",
     "date-fns": "^4.1.0",
     "devtools-detect": "^4.0.2",

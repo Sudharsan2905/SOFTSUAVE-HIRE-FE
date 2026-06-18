@@ -55,7 +55,7 @@ export function StatusBadge({ status }: Readonly<{ status: string }>) {
     completed: "success",
     malpractice: "error",
     terminated: "error",
-    on_hold: "default",
+    on_hold: "warning",
   };
   const labels: Record<string, string> = {
     pending: "Not Started",

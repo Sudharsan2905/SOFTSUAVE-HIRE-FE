@@ -1,0 +1,42 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.container :global(.w-md-editor) {
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: none;
+  background: var(--bg-surface);
+}
+
+.container :global(.w-md-editor.w-md-editor-focus) {
+  border-color: #fb4d3d;
+  box-shadow: 0 0 0 2px rgba(251, 77, 61, 0.45);
+}
+
+.hasError :global(.w-md-editor) {
+  border-color: var(--error-500);
+}
+
+.hasError :global(.w-md-editor.w-md-editor-focus) {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+.error {
+  font-size: 12px;
+  color: var(--error-500);
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}

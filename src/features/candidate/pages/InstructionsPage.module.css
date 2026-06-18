@@ -1,4 +1,4 @@
-/* ── Page shell: flex column so CandidateHeader is sticky at the top ──────── */
+/* ── Page shell ──────────────────────────────────────────────────────────── */
 .page {
   min-height: 100vh;
   background: var(--bg-default);
@@ -6,22 +6,22 @@
   flex-direction: column;
 }
 
-/* ── Scrollable content area beneath the sticky header ─────────────────── */
+/* ── Scrollable content area ─────────────────────────────────────────────── */
 .content {
   flex: 1;
   overflow-y: auto;
   display: flex;
   justify-content: center;
-  padding: 40px 24px;
+  padding: 40px 24px 56px;
 }
 
-/* ── Centred container ───────────────────────────────────────────────────── */
+/* ── Centered container ──────────────────────────────────────────────────── */
 .container {
   width: 100%;
   max-width: 720px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
 /* ── Assessment header card ──────────────────────────────────────────────── */
@@ -29,19 +29,30 @@
   background: var(--bg-surface);
   border: 1.5px solid var(--border-default);
   border-radius: var(--radius-xl);
-  padding: 32px;
+  padding: 28px 32px;
+}
+
+.headerTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
 }
 
 .title {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 8px;
+  line-height: 1.3;
 }
+
 .desc {
   font-size: 14px;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.65;
+  margin-top: 4px;
 }
 
 /* ── Stats row ───────────────────────────────────────────────────────────── */
@@ -55,213 +66,295 @@
   background: var(--bg-surface);
   border: 1.5px solid var(--border-default);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 16px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   text-align: center;
 }
+
 .statValue {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--text-primary);
 }
+
 .statLabel {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-/* ── Instructions section ────────────────────────────────────────────────── */
+.statIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Section card (General Instructions) ────────────────────────────────── */
 .section {
   background: var(--bg-surface);
   border: 1.5px solid var(--border-default);
   border-radius: var(--radius-xl);
-  padding: 24px 32px;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .sectionTitle {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 14px;
 }
 
-.list {
+/* ── Instruction rows ────────────────────────────────────────────────────── */
+.instructionList {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-left: 20px;
-}
-.list li {
-  font-size: 14px;
-  color: var(--text-secondary);
-  line-height: 1.6;
+  gap: 8px;
 }
 
-/* ── Monitoring section — accent-400 border ──────────────────────────────── */
-.monitoringSection {
+.instructionRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background: var(--bg-default);
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+  cursor: default;
+}
+
+.instructionRow:hover {
+  background: var(--bg-muted);
+  border-color: var(--border-strong, var(--border-default));
+}
+
+.instructionIconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.instructionText {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+/* ── DND warning banner ──────────────────────────────────────────────────── */
+.dndBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  background: var(--warning-50, #fffbeb);
+  border: 1.5px solid var(--warning-300, #fcd34d);
+  border-radius: 12px;
+}
+
+.dndBannerIconBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--warning-100, #fef3c7);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.dndBannerTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--warning-800, #92400e);
+  margin-bottom: 3px;
+}
+
+.dndBannerDesc {
+  font-size: 13px;
+  color: var(--warning-700, #b45309);
+  line-height: 1.55;
+}
+
+/* ── Assessment Setup card ───────────────────────────────────────────────── */
+.setupSection {
   background: var(--bg-surface);
-  border: 1.5px solid var(--accent-400, #a78bfa);
+  border: 1.5px solid var(--accent-300, #c4b5fd);
   border-radius: var(--radius-xl);
-  padding: 24px 32px;
+  padding: 24px 28px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.monitoringCards {
+/* ── Progress bar ────────────────────────────────────────────────────────── */
+.progressBarTrack {
+  height: 6px;
+  background: var(--bg-muted);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background: var(--success-500, #22c55e);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* ── Permission rows ─────────────────────────────────────────────────────── */
+.permissionRows {
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-.monitorCard {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px;
-  background: var(--bg-muted);
-  border-radius: var(--radius-md);
-}
-.monitorTitle {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 2px;
-}
-.monitorDesc {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-/* ── Permission request area ─────────────────────────────────────────────── */
-.permissionSetup {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding-top: 4px;
 }
 
 .permissionRow {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 18px;
+  background: var(--bg-default);
+  border: 1.5px solid var(--border-default);
+  border-radius: 14px;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 }
 
-.permissionLabel {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-secondary);
+.permissionRowGranted {
+  border-color: var(--success-200, #bbf7d0);
+  background: var(--success-50, #f0fdf4);
+}
+
+.permRowIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   flex-shrink: 0;
 }
 
-.permissionPills {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+.permRowBody {
+  flex: 1;
+  min-width: 0;
 }
 
-/* ── Status pill badges ──────────────────────────────────────────────────── */
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 500;
-  border: 1px solid transparent;
-}
-
-.pillPending {
-  background: var(--bg-muted);
-  color: var(--text-tertiary);
-  border-color: var(--border-default);
-}
-
-.pillGranted {
-  background: var(--success-50, #f0fdf4);
-  color: var(--success-700, #15803d);
-  border-color: var(--success-200, #bbf7d0);
-}
-
-.pillWarning {
-  background: var(--warning-50, #fffbeb);
-  color: var(--warning-700, #b45309);
-  border-color: var(--warning-200, #fde68a);
-}
-
-.pillError {
-  background: var(--error-50, #fef2f2);
-  color: var(--error-700, #b91c1c);
-  border-color: var(--error-200, #fecaca);
-}
-
-/* ── Assessment overview / progress section ──────────────────────────────── */
-.progressSection {
-  background: var(--bg-surface);
-  border: 1.5px solid var(--border-default);
-  border-radius: var(--radius-xl);
-  padding: 24px 32px;
-}
-
-.progressSection h3 {
-  font-size: 16px;
+.permRowTitle {
+  font-size: 14px;
   font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 14px;
+  margin-bottom: 2px;
 }
 
-.roundsList {
+.permRowHelper {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+
+.cameraPreviewWrap {
+  margin-top: 10px;
+}
+
+.cameraPreview {
+  width: 120px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-default);
+  background: #000;
+  display: block;
+}
+
+.permRowActions {
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: 8px;
+  flex-shrink: 0;
 }
 
-.roundItem {
+/* ── Launch card (encouragement + action button combined) ────────────────── */
+.launchCard {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 28px;
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--primary-200, #bfdbfe);
+  border-radius: var(--radius-xl);
+}
+
+.launchLeft {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 10px 14px;
-  background: var(--bg-muted);
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  color: var(--text-secondary);
+  flex: 1;
+  min-width: 0;
 }
 
-.roundBadge {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--primary-700, #1d4ed8);
-  background: var(--primary-50, #eff6ff);
-  border: 1px solid var(--primary-200, #bfdbfe);
-  border-radius: 999px;
-  padding: 2px 10px;
+.launchIconBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  background: var(--primary-100, #dbeafe);
+  border-radius: 14px;
   flex-shrink: 0;
 }
 
-/* ── Do Not Disturb tip card ─────────────────────────────────────────────── */
-.dndTip {
-  background: var(--warning-50, #fffbeb);
-  border: 1.5px solid var(--warning-200, #fde68a);
-  border-radius: var(--radius-xl);
-  padding: 14px 20px;
-  font-size: 14px;
-  color: var(--warning-800, #92400e);
-  line-height: 1.6;
+.launchTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
 }
 
-/* ── Footer / start button ───────────────────────────────────────────────── */
-.footer {
-  background: var(--bg-surface);
-  border: 1.5px solid var(--border-default);
-  border-radius: var(--radius-xl);
-  padding: 24px 32px;
+.launchDesc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.55;
 }
 
-/* ── Screen instruction modal content ────────────────────────────────────── */
+.launchDivider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--border-default);
+  flex-shrink: 0;
+}
+
+.launchRight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.launchNote {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+/* ── Screen instruction modal ────────────────────────────────────────────── */
 .modalContent {
   display: flex;
   flex-direction: column;
@@ -270,6 +363,7 @@
   padding: 10px;
   color: var(--text-secondary);
 }
+
 .modalDesc {
   font-size: 14px;
   color: var(--text-secondary);
@@ -293,7 +387,7 @@
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 560px) {
   .content {
-    padding: 24px 16px;
+    padding: 20px 16px 40px;
   }
 
   .statsRow {
@@ -302,13 +396,55 @@
 
   .header,
   .section,
-  .monitoringSection,
-  .footer {
-    padding: 20px;
+  .setupSection {
+    padding: 18px 20px;
+  }
+
+  .launchCard {
+    padding: 18px 20px;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .headerTop {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .permissionRow {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .permRowActions {
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+  }
+
+  .launchLeft {
     flex-direction: column;
-    align-items: flex-start;
+    text-align: center;
+    align-items: center;
+  }
+
+  .launchDivider {
+    width: 100%;
+    height: 1px;
+    align-self: auto;
+  }
+
+  .launchRight {
+    width: 100%;
+  }
+
+  .launchRight > button {
+    width: 100%;
+  }
+
+  .launchNote {
+    justify-content: center;
+    white-space: normal;
+    text-align: center;
   }
 }

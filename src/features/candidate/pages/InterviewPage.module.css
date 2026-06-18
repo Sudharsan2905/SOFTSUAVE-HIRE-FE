@@ -417,10 +417,48 @@
   border-color: var(--primary-400);
 }
 
-.charCount {
-  align-self: flex-end;
+.essayBoxError {
+  border-color: var(--error-500, #ef4444) !important;
+}
+
+.essayBoxError:focus {
+  border-color: var(--error-500, #ef4444) !important;
+}
+
+.essayFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.essayHint {
   font-size: 11px;
   color: var(--text-tertiary);
+}
+
+.essayError {
+  font-size: 11px;
+  color: var(--error-500, #ef4444);
+}
+
+.essaySuccess {
+  font-size: 11px;
+  color: var(--success-600, #16a34a);
+}
+
+.charCount {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.charCountError {
+  color: var(--error-500, #ef4444);
+}
+
+.charCountSuccess {
+  color: var(--success-600, #16a34a);
 }
 
 /* ── Navigation row ──────────────────────────────────────────────────────── */
