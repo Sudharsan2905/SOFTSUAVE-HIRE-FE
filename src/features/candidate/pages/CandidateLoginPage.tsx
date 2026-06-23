@@ -66,10 +66,11 @@ export default function CandidateLoginPage() {
 
   const onSubmit = async (values: CandidateLoginForm) => {
     try {
-      await dispatch(candidateLogin({ ...values, ...(shareLink ? { share_link: shareLink } : {}) })).unwrap();
+      await dispatch(
+        candidateLogin({ ...values, ...(shareLink ? { share_link: shareLink } : {}) })
+      ).unwrap();
       goNext();
     } catch (e: unknown) {
-      // unwrap() throws the rejectWithValue payload, which is already a plain string
       setError("root", { message: typeof e === "string" ? e : "Invalid credentials" });
     }
   };
@@ -81,12 +82,10 @@ export default function CandidateLoginPage() {
         credential: credentialResponse.credential,
       });
       const result = data.data;
-
       if (result?.needs_registration) {
         navigate(registerPath, { state: { googleData: result.google_data } });
         return;
       }
-
       dispatch(setAuthData(result));
       goNext();
     } catch (err: unknown) {
@@ -95,20 +94,26 @@ export default function CandidateLoginPage() {
   };
 
   return (
-    <div className={styles.page}>
-      <div className={styles.card}>
-        {/* Left: login form */}
-        <div className={styles.left}>
-          <div className={styles.formWrap}>
-            <div className={styles.brand}>
-              <img src={logoUrl} width="44" height="44" alt="SoftSuave Hire" />
-              <h1 className={styles.brandName}>SoftSuave Hire</h1>
-              <span className={styles.portalPill}>Candidate Portal</span>
-            </div>
+    <div className={styles.pageContainer}>
+      {/* Left side - Form */}
+      <div className={styles.formSection}>
+        <div className={styles.formWrapper}>
+          <div className={styles.logo}>
+            <img
+              src={logoUrl}
+              width="48"
+              height="48"
+              alt="SoftSuave Hire"
+              className={styles.logoIcon}
+            />
+            <h1 className={styles.appName}>SoftSuave Hire</h1>
+            <span className={styles.tagline}>Candidate Portal</span>
+          </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-              <div className={styles.field}>
-                <span className={styles.fieldIcon}>
+          <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+            <div className={styles.formGroup}>
+              <div className={styles.inputWrapper}>
+                <span className={styles.inputIcon}>
                   <IconUser size={18} />
                 </span>
                 <input
@@ -120,13 +125,15 @@ export default function CandidateLoginPage() {
                 />
               </div>
               {errors.email && <p className={styles.error}>{errors.email.message}</p>}
+            </div>
 
-              <div className={styles.field}>
-                <span className={styles.fieldIcon}>
+            <div className={styles.formGroup}>
+              <div className={styles.inputWrapper}>
+                <span className={styles.inputIcon}>
                   <IconLock size={18} />
                 </span>
                 <input
-                  className={styles.input}
+                  className={`${styles.input} ${styles.inputPassword}`}
                   type={showPass ? "text" : "password"}
                   placeholder="Password"
                   autoComplete="current-password"
@@ -135,7 +142,7 @@ export default function CandidateLoginPage() {
                 <Tooltip content={showPass ? "Hide password" : "Show password"}>
                   <button
                     type="button"
-                    className={styles.fieldIconBtn}
+                    className={styles.togglePassword}
                     onClick={() => setShowPass((p) => !p)}
                     aria-label={showPass ? "Hide password" : "Show password"}
                   >
@@ -144,60 +151,63 @@ export default function CandidateLoginPage() {
                 </Tooltip>
               </div>
               {errors.password && <p className={styles.error}>{errors.password.message}</p>}
-
-              {errors.root && <p className={styles.error}>{errors.root.message}</p>}
-
-              <button type="submit" className={styles.loginBtn} disabled={isSubmitting}>
-                {isSubmitting ? "Signing in..." : "Login Now"}
-              </button>
-            </form>
-
-            <p className={styles.others}>
-              <strong>Login</strong> with Others
-            </p>
-
-            {/* Custom-styled Google button with the real widget overlaid transparently */}
-            <div className={styles.socialWrap}>
-              <button type="button" className={styles.socialBtn} tabIndex={-1}>
-                <GoogleIcon />
-                <span>
-                  Login with <strong>google</strong>
-                </span>
-              </button>
-              <div className={styles.googleOverlay}>
-                <GoogleLogin
-                  onSuccess={handleGoogleLogin}
-                  onError={() => undefined}
-                  width="320"
-                  text="continue_with"
-                  shape="rectangular"
-                />
-              </div>
             </div>
 
-            <p className={styles.footer}>
-              Don't have an account?{" "}
-              <Link to={registerPath} className={styles.link}>
-                Register here
-              </Link>
-            </p>
-          </div>
-        </div>
+            {errors.root && <p className={styles.error}>{errors.root.message}</p>}
 
-        {/* Right: gradient hero panel */}
-        <div className={styles.right}>
-          <div className={styles.badge} aria-hidden="true">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="#FBBF24">
-              <path d="M13 2L4.5 13.5H11l-1 8.5L19.5 10H13z" />
-            </svg>
+            <button type="submit" className={styles.loginBtn} disabled={isSubmitting}>
+              {isSubmitting ? "Signing in..." : "Login Now"}
+            </button>
+          </form>
+
+          <p className={styles.divider}>
+            <strong>Login</strong> with Others
+          </p>
+
+          <div className={styles.socialWrap}>
+            <button type="button" className={styles.socialBtn} tabIndex={-1}>
+              <GoogleIcon />
+              <span>
+                Login with <strong>google</strong>
+              </span>
+            </button>
+            <div className={styles.googleOverlay}>
+              <GoogleLogin
+                onSuccess={handleGoogleLogin}
+                onError={() => undefined}
+                width="320"
+                text="continue_with"
+                shape="rectangular"
+              />
+            </div>
           </div>
-          <div className={styles.heroCard}>
-            <img src="/person.svg" alt="" className={styles.heroImg} />
-          </div>
-          <div className={styles.welcome}>
-            <h2 className={styles.welcomeTitle}>Welcome Back!</h2>
-            <p className={styles.welcomeSub}>Please sign in to your account</p>
-          </div>
+
+          <p className={styles.footer}>
+            Don't have an account?{" "}
+            <Link to={registerPath} className={styles.link}>
+              Register here
+            </Link>
+          </p>
+        </div>
+      </div>
+
+      {/* Right side - Image only */}
+      <div className={styles.featuresSection}>
+        <img
+          src="/candidate/login.png"
+          alt="Candidate Login"
+          className={styles.heroImage}
+          onContextMenu={(e) => e.preventDefault()}
+          draggable={false}
+        />
+        <div className={styles.imageCaption}>
+          <p className={styles.captionTitle}>
+            Welcome Back, <span className={styles.captionHighlight}>Candidate</span>
+          </p>
+          <span className={styles.captionAccent} />
+          <p className={styles.captionSub}>
+            Access your assessment portal securely and continue your hiring journey with confidence.
+          </p>
         </div>
       </div>
     </div>

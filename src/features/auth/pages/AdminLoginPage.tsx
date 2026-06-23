@@ -37,26 +37,24 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className={styles.page}>
-      <div className={styles.card}>
-        {/* Left: login form */}
-        <div className={styles.left}>
-          <div className={styles.formWrap}>
-            <div className={styles.logoArea}>
-              <div className={styles.logoIcon}>
-                <img src={logoUrl} width="48" height="48" alt="SoftSuave Hire" />
-              </div>
-              <h1 className={styles.appName}>SoftSuave Hire</h1>
-              <p className={styles.tagline}>Administrator Portal</p>
-            </div>
+    <div className={styles.pageContainer}>
+      {/* Left side - Form */}
+      <div className={styles.formSection}>
+        <div className={styles.formWrapper}>
+          <div className={styles.logo}>
+            <img src={logoUrl} width="48" height="48" alt="SoftSuave Hire" className={styles.logoIcon} />
+            <h1 className={styles.appName}>SoftSuave Hire</h1>
+            <span className={styles.tagline}>Administrator Portal</span>
+          </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-              <div className={styles.field}>
-                <span className={styles.fieldIcon}>
-                  <IconMail size={15} />
-                </span>
+          <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+            <div className={styles.formGroup}>
+              <label htmlFor="admin-email" className={styles.label}>Email Address</label>
+              <div className={styles.inputWrapper}>
+                <span className={styles.inputIcon}><IconMail size={18} /></span>
                 <input
-                  className={styles.fieldInput}
+                  id="admin-email"
+                  className={styles.input}
                   type="email"
                   placeholder="Enter email"
                   autoComplete="email"
@@ -64,13 +62,15 @@ export default function AdminLoginPage() {
                 />
               </div>
               {errors.email && <p className={styles.error}>{errors.email.message}</p>}
+            </div>
 
-              <div className={styles.field}>
-                <span className={styles.fieldIcon}>
-                  <IconLock size={15} />
-                </span>
+            <div className={styles.formGroup}>
+              <label htmlFor="admin-password" className={styles.label}>Password</label>
+              <div className={styles.inputWrapper}>
+                <span className={styles.inputIcon}><IconLock size={18} /></span>
                 <input
-                  className={styles.fieldInput}
+                  id="admin-password"
+                  className={`${styles.input} ${styles.inputPassword}`}
                   type={showPass ? "text" : "password"}
                   placeholder="Enter password"
                   autoComplete="current-password"
@@ -79,44 +79,92 @@ export default function AdminLoginPage() {
                 <Tooltip content={showPass ? "Hide password" : "Show password"}>
                   <button
                     type="button"
-                    className={styles.fieldIconBtn}
+                    className={styles.togglePassword}
                     onClick={() => setShowPass(!showPass)}
                     aria-label={showPass ? "Hide password" : "Show password"}
                   >
-                    {showPass ? <IconEyeOff size={15} /> : <IconEye size={15} />}
+                    {showPass ? <IconEyeOff size={18} /> : <IconEye size={18} />}
                   </button>
                 </Tooltip>
               </div>
               {errors.password && <p className={styles.error}>{errors.password.message}</p>}
+            </div>
 
-              <Button
-                type="submit"
-                fullWidth
-                isLoading={isLoading}
-                size="lg"
-                className={styles.submitBtn}
-              >
-                Sign In
-              </Button>
-            </form>
+            <Button
+              type="submit"
+              fullWidth
+              isLoading={isLoading}
+              size="lg"
+              className={styles.submitBtn}
+            >
+              Sign In
+            </Button>
+          </form>
 
-            <p className={styles.footer}>SoftSuave Hire &copy; {new Date().getFullYear()}</p>
-          </div>
+          <p className={styles.footer}>© SoftSuave Hire {new Date().getFullYear()}</p>
         </div>
+      </div>
 
-        {/* Right: gradient hero panel */}
-        <div className={styles.right}>
-          <div className={styles.badge} aria-hidden="true">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="#FBBF24">
-              <path d="M13 2L4.5 13.5H11l-1 8.5L19.5 10H13z" />
-            </svg>
+      {/* Right side - Features */}
+      <div className={styles.featuresSection}>
+        <div className={styles.decorativeCircleTop} />
+        <div className={styles.decorativeCircleBottom} />
+
+        <div className={styles.featuresContent}>
+          <div className={styles.featureCards}>
+            <div className={styles.featureCard}>
+              <div className={styles.cardImage}>
+                <img src="/admin-login/card-ai-essay.webp" alt="AI Essay Grading" />
+              </div>
+              <h3>AI Essay Grading</h3>
+              <p>Leverage AI to grade essays and generate insights.</p>
+            </div>
+
+            <div className={styles.featureCard}>
+              <div className={styles.cardImage}>
+                <img src="/admin-login/card-analytics.webp" alt="Candidate Data Analyst" />
+              </div>
+              <h3>Candidate Data Analyst</h3>
+              <p>Analyze candidate data and performance metrics.</p>
+            </div>
+
+            <div className={styles.featureCard}>
+              <div className={styles.cardImage}>
+                <img src="/admin-login/card-monitoring.webp" alt="Live Monitoring" />
+              </div>
+              <h3>Live Monitoring</h3>
+              <p>Monitor assessments in real-time with live screen tracking.</p>
+            </div>
+
+            <div className={styles.featureCard}>
+              <div className={styles.cardImage}>
+                <img src="/admin-login/card-admin.webp" alt="Administrator" />
+              </div>
+              <h3>Administrator</h3>
+              <p>Manage users, settings, and system configurations.</p>
+            </div>
           </div>
-          <div className={styles.heroCard}>
-            <img src="/person.svg" alt="" className={styles.heroImg} />
-          </div>
-          <div className={styles.welcome}>
-            <h2 className={styles.welcomeTitle}>Welcome Back!</h2>
-            <p className={styles.welcomeSub}>Please sign in to your account</p>
+
+          <div className={styles.welcomeSection}>
+            <h2 className={styles.welcomeTitle}>Welcome Admin!</h2>
+            <p className={styles.welcomeSub}>
+              Manage exams, review candidate assessments, and leverage AI-powered essay evaluation to make data-driven hiring decisions.
+            </p>
+            <div className={styles.actionButtons}>
+              <button className={styles.btnSecondary}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                </svg>
+                AI Grading
+              </button>
+              <button className={`${styles.btnSecondary} ${styles.btnSecondaryDelayed}`}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="12" y1="2" x2="12" y2="22" />
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+                Analytics
+              </button>
+            </div>
           </div>
         </div>
       </div>

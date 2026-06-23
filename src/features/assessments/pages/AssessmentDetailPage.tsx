@@ -21,13 +21,7 @@ import { API_ENDPOINTS } from "@/constants/api";
 import { ROUTES } from "@/constants/routes";
 import { ASSESSMENT_ERRORS } from "@/features/assessments/constants";
 import { ShareWizardModal } from "@/features/assessments/components/ShareWizard/ShareWizardModal";
-import {
-  formatDateTime,
-  getAvatarColor,
-  getInitials,
-  getFullName,
-  percentageBadgeColor,
-} from "@/utils/helpers";
+import { formatDateTime, getAvatarColor, getInitials, getFullName } from "@/utils/helpers";
 import toast from "react-hot-toast";
 
 const SORT_OPTIONS = [
@@ -201,7 +195,7 @@ export default function AssessmentDetailPage() {
               <tr>
                 <th>Candidate</th>
                 <th>Status</th>
-                <th>Score</th>
+                <th>Percentage</th>
                 <th>Round</th>
                 <th>Malpractice</th>
                 <th>Started</th>
@@ -213,7 +207,7 @@ export default function AssessmentDetailPage() {
                 const name = sub.candidate
                   ? getFullName(sub.candidate as { first_name: string; last_name?: string })
                   : "Unknown";
-                const pct = sub.score_percentage;
+                const pct = sub.percentage;
                 const candidateId = sub.candidate?.id ?? "";
                 return (
                   <tr key={sub.id}>
@@ -235,12 +229,12 @@ export default function AssessmentDetailPage() {
                       {pct === undefined || pct === null ? (
                         <span style={{ color: "var(--text-tertiary)", fontSize: 13 }}>—</span>
                       ) : (
-                        <Badge variant={percentageBadgeColor(pct)}>{pct.toFixed(1)}%</Badge>
+                        <Badge variant="default">{pct.toFixed(1)}%</Badge>
                       )}
                     </td>
                     <td style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                       {sub.current_round}
-                      {maxRounds !== null ? ` / ${maxRounds}` : ""}
+                      {maxRounds === null ? "" : ` / ${maxRounds}`}
                     </td>
                     <td
                       style={{

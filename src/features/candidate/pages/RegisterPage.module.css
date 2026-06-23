@@ -1,66 +1,32 @@
-.page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 24px;
-  background: #fbe9e3;
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ---------- Floating card ---------- */
-.card {
-  position: relative;
-  isolation: isolate;
-  display: flex;
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(1.06); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ---- Page layout ---- */
+.pageContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   width: 100%;
-  max-width: 1040px;
-  min-height: 640px;
-  border-radius: 28px;
-  background: #ffffff;
-  box-shadow: 0 40px 90px rgba(243, 30, 70, 0.18);
+  height: 100vh;
 }
 
-/* Decorative accent circle (peeks out from behind the left edge) */
-.card::before {
-  content: "";
-  position: absolute;
-  top: -28px;
-  left: -28px;
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #ff7a33, #f31e46);
-  z-index: -1;
-  pointer-events: none;
-}
-
-/* Decorative light circle (bottom-right, peeking out) */
-.card::after {
-  content: "";
-  position: absolute;
-  bottom: -34px;
-  right: -34px;
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.7);
-  z-index: 0;
-  pointer-events: none;
-}
-
-/* ---------- Left: form ---------- */
-.left {
-  flex: 1;
-  position: relative;
-  z-index: 1;
+/* ---- Left: Scrollable form section ---- */
+.formSection {
+  background: #fffdfb;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 30px 44px;
-  border-radius: 28px 0 0 28px;
-  background: #ffffff;
+  padding: 40px 20px;
+  position: relative;
+  overflow-y: auto;
 
-  /* Pin all child inputs/selects/datepickers to CandidateLogin light colors */
+  /* CSS custom properties consumed by Input / Select / DatePicker child components */
   --bg-surface: #f1eff9;
   --border-default: transparent;
   --border-strong: #d8d3ef;
@@ -71,7 +37,6 @@
   --bg-hover: #ece8f7;
   --bg-active: rgba(243, 30, 70, 0.08);
   --radius-md: 10px;
-  /* Replace blue primary brand with red/orange brand for Select/DatePicker accents */
   --primary-50: #fef2f2;
   --primary-100: #fee2e2;
   --primary-400: #fb8072;
@@ -80,32 +45,72 @@
   --primary-700: #dc2626;
 }
 
-.formWrap {
-  width: 100%;
-  max-width: 460px;
+.formSection::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 100px;
+  height: 100px;
+  background-image: radial-gradient(circle, #ff6b35 2px, transparent 2px);
+  background-size: 15px 15px;
+  opacity: 0.12;
+  pointer-events: none;
 }
 
-.brand {
+/* Custom scrollbar */
+.formSection::-webkit-scrollbar {
+  width: 6px;
+}
+.formSection::-webkit-scrollbar-track {
+  background: transparent;
+}
+.formSection::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #ff6b35, #e84a1a);
+  border-radius: 6px;
+}
+
+.formWrapper {
+  width: 100%;
+  max-width: 460px;
+  position: relative;
+  z-index: 1;
+  animation: fadeUp 0.7s ease both;
+  padding: 20px 0;
+}
+
+.logo {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  margin-bottom: 24px;
-}
-.brandName {
-  font-size: 20px;
-  font-weight: 800;
-  color: #0f172a;
-  letter-spacing: -0.03em;
-}
-.portalPill {
-  font-size: 13px;
-  color: #94a3b8;
-  background: #f1f5f9;
-  padding: 2px 12px;
-  border-radius: 9999px;
+  margin-bottom: 28px;
+  text-align: center;
 }
 
+.logoIcon {
+  margin-bottom: 8px;
+}
+
+.appName {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #1a1a1a;
+}
+
+.tagline {
+  display: inline-block;
+  background: rgba(255, 107, 53, 0.12);
+  color: #1a1a1a;
+  padding: 5px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+
+/* ---- Google prefill banner ---- */
 .googleBanner {
   display: flex;
   align-items: center;
@@ -114,16 +119,18 @@
   border: 1px solid #bbf7d0;
   border-radius: 8px;
   padding: 10px 14px;
-  margin-bottom: 4px;
+  margin-bottom: 16px;
   font-size: 13px;
   font-weight: 500;
   color: #15803d;
   line-height: 1.4;
 }
+
 .googleBanner svg {
   flex-shrink: 0;
 }
 
+/* ---- Form layout ---- */
 .form {
   display: flex;
   flex-direction: column;
@@ -138,129 +145,49 @@
 
 .error {
   font-size: 13px;
-  color: #dc2626;
+  color: #991b1b;
   background: #fef2f2;
   border: 1px solid #fecaca;
   border-radius: 6px;
   padding: 8px 12px;
 }
 
-/* Gradient submit button to match the candidate login */
 .submitBtn {
   margin-top: 4px;
-  background: linear-gradient(135deg, #ff7a33 0%, #fb4d3d 50%, #f31e46 100%) !important;
+  background: var(--brand-orange);
   border-color: transparent !important;
   color: #ffffff !important;
   font-weight: 700;
-  box-shadow: 0 12px 22px rgba(243, 30, 70, 0.45);
+  box-shadow: 0 12px 22px rgba(176, 64, 16, 0.45);
 }
+
 .submitBtn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 16px 28px rgba(243, 30, 70, 0.55);
 }
 
+/* ---- Footer ---- */
 .footer {
-  position: relative;
-  z-index: 1;
   margin-top: 20px;
   text-align: center;
   font-size: 13px;
   color: #6a6a7e;
 }
+
 .link {
   color: #f4452e;
   font-weight: 600;
   text-decoration: none;
 }
+
 .link:hover {
   text-decoration: underline;
 }
 
-/* ---------- Right: gradient hero ---------- */
-.right {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0;
-  padding: 80px 45px 40px;
-  border-radius: 0 28px 28px 0;
-  background: linear-gradient(135deg, #ff7a33 0%, #fb4d3d 50%, #f31e46 100%);
-  opacity: 80%;
-}
-
-/* Topographic contour texture */
-.right::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: url("/topo-pattern.svg");
-  background-size: cover;
-  background-position: center;
-  opacity: 0.65;
-  pointer-events: none;
-}
-
-.heroCard {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 380px;
-  flex: 0.2 0 auto;
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.22);
-}
-.heroImg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.welcome {
-  position: absolute;
-  z-index: 3;
-  bottom: 200px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  color: #ffffff;
-}
-.welcomeTitle {
-  font-size: 30px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-.welcomeSub {
-  margin-top: 8px;
-  font-size: 18px;
-  color: rgba(255, 255, 255, 0.92);
-  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  font-weight: 600;
-}
-
-.badge {
-  position: absolute;
-  z-index: 2;
-  top: 58px;
-  left: max(24px, calc(43% - 175px));
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
-}
-
-/* These pages are light-only, but their dropdowns/calendars are portaled to
-   <body> and inherit the global theme (which may be dark). Re-declaring the
-   neutral design tokens here forces the whole portaled subtree to render light,
-   instead of repainting individual elements. */
+/* ---- Portaled dropdown light-mode override ---- */
+/* These pages are light-only, but dropdowns/calendars are portaled to <body>
+   and may inherit the global dark theme. Re-declaring tokens here forces
+   the whole portaled subtree to render in light mode. */
 .selectMenu {
   --bg-surface: #ffffff;
   --bg-elevated: #ffffff;
@@ -275,25 +202,155 @@
   --text-disabled: #cbd5e1;
 }
 
-/* ---------- Responsive ---------- */
-@media (max-width: 900px) {
-  .card {
-    max-width: 520px;
-    min-height: 0;
+/* ---- Password strength indicators ---- */
+.strengthList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: -4px;
+  padding: 10px 14px;
+  background: #f8f7fe;
+  border: 1px solid #e8e6f4;
+  border-radius: 8px;
+}
+
+.strengthItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.strengthMet {
+  color: #15803d;
+}
+
+.strengthUnmet {
+  color: #9a9aae;
+}
+
+.strengthIcon {
+  font-size: 11px;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.strengthMet .strengthIcon {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.strengthUnmet .strengthIcon {
+  background: #f1f0f9;
+  color: #9a9aae;
+}
+
+/* ---- Right: Image Section ---- */
+.featuresSection {
+  position: relative;
+  overflow: hidden;
+}
+
+.heroImage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+  z-index: 0;
+  animation: fadeInScale 1s ease both;
+}
+
+.featuresSection::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 10%, rgba(0, 0, 0, 0.35) 39%, transparent 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.imageCaption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 28px 32px 32px;
+  pointer-events: none;
+  z-index: 2;
+  animation: fadeUp 0.8s 0.5s ease both;
+}
+
+.captionTitle {
+  font-size: 33px;
+  font-weight: 700;
+  color: #ffff;
+  margin: 0 0 10px;
+  line-height: 1.35;
+}
+
+.captionHighlight {
+  background: linear-gradient(90deg, #4f6ef7 0%, #9b59f5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.captionAccent {
+  display: block;
+  width: 10em;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #4f6ef7, #9b59f5);
+  margin-bottom: 12px;
+}
+
+.captionSub {
+  font-size: 14px;  
+  color: lightgray;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 1024px) {
+  .pageContainer {
+    grid-template-columns: 1fr;
+    height: auto;
   }
-  .right {
-    display: none;
+  .formSection {
+    min-height: 100vh;
+    overflow-y: visible;
   }
-  .left {
-    border-radius: 28px;
+  .featuresSection {
+    min-height: 60vh;
   }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 768px) {
+  .featuresSection {
+    display: none;
+  }
+  .formSection {
+    min-height: 100vh;
+    overflow-y: visible;
+  }
   .row {
     grid-template-columns: 1fr;
-  }
-  .left {
-    padding: 32px 22px;
   }
 }
