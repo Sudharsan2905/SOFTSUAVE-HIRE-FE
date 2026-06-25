@@ -16,6 +16,27 @@
        Row 2: [Dropdown flex-1] [Sort] [View switch]  ← one combined row
    ════════════════════════════════════════════════════════════════ */
 
+/* ── Compact mode: strip card chrome, sit inline in a flex parent ─
+   Applied via the `compact` prop.  Layout behaviour (flex-wrap, gap,
+   justify-content) is intentionally preserved so responsive rules
+   below still work. The only overrides are presentational.        */
+.filterBar.compactBar {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  margin-bottom: 0;
+  width: auto;
+  max-width: none;
+}
+@media (max-width: 767px) {
+  .filterBar.compactBar {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
 /* ── Height token: matches Input/Select (38px) ──────────────────
    All interactive controls in the bar share this exact height.   */
 .filterBar {
@@ -46,6 +67,79 @@
 .filterDrops,
 .utilities {
   display: contents;
+}
+
+/* ── Tabs + compact bar layout ───────────────────────────────────
+   When tabs are present the bar becomes a full-width row:
+     [tabsSection flex-1] [controlsSection flex-shrink-0]         */
+.tabsCompactBar {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.tabsSection {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.controlsSection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Tab pills ───────────────────────────────────────────────────── */
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+  white-space: nowrap;
+}
+.tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-muted);
+}
+.tabActive {
+  background: linear-gradient(135deg, rgb(255, 107, 44) 0%, rgb(255, 138, 74) 100%) !important;
+  color: #fff !important;
+}
+.tabActive .tabCount {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #fff !important;
+}
+.tabIcon {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+}
+.tabLabel {
+  display: inline;
+}
+.tabCount {
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  border-radius: 10px;
+  padding: 2px 7px;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 /* ── Refresh icon button ─────────────────────────────────────── */
@@ -81,9 +175,9 @@
 
 /* ── Filter dropdown wrappers ────────────────────────────────── */
 .filterSelect {
-  width: 140px;
+  width: 170px;
   flex-shrink: 1;
-  min-width: 100px;
+  min-width: 110px;
 }
 
 /* ── Date range picker wrapper ───────────────────────────────── */
@@ -124,8 +218,7 @@
   color: var(--brand-orange);
   background: var(--brand-orange-soft);
 }
-/* Active view uses the brand orange (logo color); the tokens adapt to
-   light/dark automatically, so no per-theme override is needed. */
+/* Active view uses the brand orange; tokens adapt to light/dark automatically. */
 .viewActive {
   color: var(--brand-orange);
   background: var(--brand-orange-soft);
@@ -136,14 +229,10 @@
 }
 
 /* ── Unified focus ring ──────────────────────────────────────────
-   Every control in the bar shows the same coral focus border as the
-   search Input (see Input.module.css). The coral values are theme-
-   neutral, so the ring stays clearly visible in both light and dark
-   mode. Field-style controls (search, dropdown, the view pill) light
-   up on focus-within — i.e. on click; the standalone icon/label
-   buttons use :focus-visible so the ring is keyboard-only.            */
+   Every control in the bar shows the same coral focus border.    */
 .refreshBtn:focus-visible,
 .utilities > button:focus-visible,
+.controlsSection > button:focus-visible,
 .viewToggle:focus-within,
 .filterSelect:focus-within button {
   outline: none;
@@ -151,19 +240,44 @@
   box-shadow: 0 0 0 2px rgba(251, 77, 61, 0.45);
 }
 
-/* The pill already carries the ring, so drop the inner buttons' outline. */
 .viewBtn:focus,
 .viewBtn:focus-visible {
   outline: none;
 }
 
-/* Hover for the bar's standalone buttons (Sort, Export). Scoped to the toolbar.
-   No background fill on hover — only an orange border accent. The bg is pinned
-   to the resting surface so the base secondary grey hover doesn't show through. */
-.utilities > button:hover:not(:disabled) {
+/* Hover for standalone buttons (Sort, Export). */
+.utilities > button:hover:not(:disabled),
+.controlsSection > button:hover:not(:disabled) {
   color: var(--text-primary);
   background: var(--bg-surface);
   border-color: var(--brand-orange);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Tablet / narrow desktop (≤1024px) — tabs compact two-row
+   Tabs take the full first row (spread with space-between).
+   All controls take the full second row in a single flex line.
+   ════════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .tabsSection {
+    flex: 0 0 100%;
+    justify-content: space-between;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .controlsSection {
+    flex: 0 0 100%;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  .controlsSection .searchWrap {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+  }
+  .controlsSection .sortDropWrap {
+    flex: 0 0 auto;
+  }
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -173,7 +287,6 @@
   .filterBar {
     flex-wrap: wrap;
     gap: 10px;
-    /* Full-width card on mobile instead of a shrink-to-fit right-aligned one. */
     width: 100%;
     margin-left: 0;
   }
@@ -198,30 +311,24 @@
     width: 100%;
   }
 
-  /* ── CONDITION A: multiple dropdowns ──────────────────────────
-     midSection stacks vertically:
-       sub-Row 2 — dropdowns in a balanced 2-col grid
-       sub-Row 3 — sort + view utilities inline              */
+  /* ── CONDITION A: multiple dropdowns ────────────────────────── */
   .midMulti {
     flex-direction: column;
     gap: 10px;
   }
   .midMulti .filterDrops {
     display: grid;
-    /* minmax(0, …) lets the cells shrink below the dropdowns' min-content so
-       they never push past the viewport on narrow screens. */
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 8px;
     width: 100%;
   }
-  /* A lone dropdown occupies the full row instead of a half cell */
   .midMulti .filterDrops > :only-child {
     grid-column: 1 / -1;
   }
   .midMulti .filterSelect,
   .midMulti .datePickerWrap {
     width: 100%;
-    min-width: 0; /* override the desktop min-widths so cells can shrink */
+    min-width: 0;
   }
   .midMulti .utilities {
     display: flex;
@@ -229,8 +336,6 @@
     gap: 8px;
     width: 100%;
   }
-  /* Sort-by dropdown expands to fill the utilities row; the toggles stay fixed —
-     mirrors the single-dropdown layout (see image reference). */
   .midMulti .utilities .filterSelect {
     flex: 1;
     width: auto;
@@ -240,15 +345,12 @@
     flex-shrink: 0;
   }
 
-  /* ── CONDITION B: single dropdown ─────────────────────────────
-     midSection is a single flex row:
-       [dropdown — flex-1] [sort] [view switch]              */
+  /* ── CONDITION B: single dropdown ──────────────────────────── */
   .midSingle {
     flex-direction: row;
     align-items: center;
     gap: 8px;
   }
-  /* Dissolve filterDrops so filterSelect is a direct flex child */
   .midSingle .filterDrops {
     display: contents;
   }
@@ -265,18 +367,133 @@
     flex-shrink: 0;
   }
 
+  /* ── Tabs+compact bar on mobile ─────────────────────────────── */
+  /* tabsSection + controlsSection inherit full-width from the 1024px block */
+  .tabLabel {
+    display: none; /* icon-only tabs on mobile */
+  }
+  .controlsSection {
+    flex-wrap: wrap; /* controls wrap into two sub-rows */
+  }
+  /* Row 1 of controls: Refresh (fixed) + Search (fills rest) */
+  .controlsSection .searchWrap {
+    flex: 1 1 calc(100% - 50px); /* large basis → fills first row beside refresh */
+    min-width: 0;
+    width: auto;
+  }
+  /* Row 2 of controls: Sort (grows) + View toggle (fixed) */
+  .controlsSection .sortDropWrap {
+    flex: 1;
+    min-width: 0;
+  }
+  .controlsSection .filterSelect {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+  }
+
   /* Icon-only on mobile — text labels add no value at this width */
   .btnLabel {
     display: none;
   }
 }
 
+/* ── SortDropdown ────────────────────────────────────────────────── */
+.sortDropWrap {
+  flex-shrink: 0;
+}
+
+.sortTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--ctrl-h, 38px);
+  padding: 0 12px;
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s ease;
+}
+.sortTrigger:hover {
+  border-color: var(--brand-orange);
+}
+.sortTriggerOpen {
+  border-color: var(--primary-600);
+  box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.15);
+}
+.sortTriggerLabel {
+  flex: 1;
+  text-align: left;
+}
+.sortChevron {
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+.sortChevronOpen {
+  transform: rotate(180deg);
+}
+
+.sortDropdown {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 4px 0;
+}
+.sortOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s ease;
+}
+.sortOption:hover {
+  background: var(--bg-muted);
+}
+.sortOptionActive {
+  color: var(--primary-600);
+  font-weight: 500;
+}
+.sortOptionCheck {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  flex-shrink: 0;
+  color: var(--primary-600);
+}
+.sortDirIcon {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+.sortDivider {
+  height: 1px;
+  background: var(--border-default);
+  margin: 4px 0;
+}
+
 /* ════════════════════════════════════════════════════════════════
-   Small phones (<480px) — stack the filter dropdowns one per row so
-   nothing is ever clipped by the narrow viewport.
+   Small phones (<480px)
    ════════════════════════════════════════════════════════════════ */
 @media (max-width: 480px) {
   .midMulti .filterDrops {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .tab {
+    padding: 6px 10px;
   }
 }

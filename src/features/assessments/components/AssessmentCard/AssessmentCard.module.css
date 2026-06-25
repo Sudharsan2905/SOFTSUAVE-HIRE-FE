@@ -3,10 +3,11 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  gap: 14px;
   background: var(--bg-surface);
-  border: 1.5px solid rgba(244, 81, 30, 0.25);
+  border: 1.5px solid var(--border-default);
   border-radius: var(--radius-lg);
-  padding: 18px;
+  padding: 20px;
   cursor: pointer;
   transition:
     border-color var(--transition-fast),
@@ -14,15 +15,15 @@
     transform var(--transition-fast);
 }
 .card:hover {
-  border-color: var(--brand-orange);
-  box-shadow: var(--shadow-md);
+  border-color: var(--primary-400);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.09);
   transform: translateY(-2px);
 }
 .cardMenuOpen {
   z-index: 10;
 }
 
-/* Transparent stretched anchor — the real navigation target */
+/* Transparent stretched anchor */
 .overlay {
   position: absolute;
   inset: 0;
@@ -30,29 +31,73 @@
   border-radius: inherit;
 }
 
-/* All content must clear the overlay */
-.body,
-.meta,
+/* Everything above the overlay */
+.cardTop,
+.metaRow,
+.progressSection,
 .footer {
   position: relative;
   z-index: 1;
 }
 
-/* ── Header ───────────────────────────────────────────────────────────────── */
-/* No z-index here — keeps header out of a stacking context so menuWrap's
-   z-index: 10 is evaluated at the card level, above body/meta/footer (z: 1) */
-.header {
+/* ── Header: badge row + menu ─────────────────────────────────────────────── */
+/* z-index: 2 keeps the three-dot dropdown above cardTop/metaRow siblings (z-index: 1) */
+.cardHeader {
   position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 12px;
 }
-.badges {
+
+/* ── Badge row ────────────────────────────────────────────────────────────── */
+.badgeRow {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
   flex-wrap: wrap;
+}
+.modeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+.modeBadgeMonitor {
+  background: rgb(22, 199, 132);
+  color: rgb(255, 255, 255);
+}
+.modeBadgeNormal {
+  background: rgb(59, 130, 246);
+  color: rgb(255, 255, 255);
+}
+.modeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.modeBadgeMonitor .modeDot {
+  background: rgba(255, 255, 255, 0.75);
+}
+.modeBadgeNormal .modeDot {
+  background: #6b7280;
+}
+
+.roundBadge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1.5px solid var(--border-default);
 }
 
 /* ── Three-dot menu ───────────────────────────────────────────────────────── */
@@ -65,23 +110,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
   background: transparent;
-  border: none;
+  border: 1.5px solid var(--border-default);
   cursor: pointer;
   transition:
     background var(--transition-fast),
-    color var(--transition-fast);
-  flex-shrink: 0;
+    color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 .menuTrigger:hover,
-.menuTrigger:active,
 .menuTriggerOpen {
-  background: rgba(37, 99, 255, 0.12);
-  color: #000000;
+  background: var(--bg-muted);
+  color: var(--text-primary);
+  border-color: var(--primary-400);
 }
 .menuTrigger svg {
   pointer-events: none;
@@ -92,7 +137,7 @@
   top: calc(100% + 6px);
   right: 0;
   z-index: 50;
-  min-width: 160px;
+  min-width: 152px;
   background: var(--bg-surface);
   border: 1.5px solid var(--border-default);
   border-radius: var(--radius-md);
@@ -100,10 +145,9 @@
     0 8px 24px rgba(0, 0, 0, 0.12),
     0 2px 8px rgba(0, 0, 0, 0.08);
   padding: 6px;
-  animation: fadeIn 120ms ease;
+  animation: ddFadeIn 120ms ease;
 }
-
-@keyframes fadeIn {
+@keyframes ddFadeIn {
   from {
     opacity: 0;
     transform: translateY(-4px);
@@ -113,13 +157,12 @@
     transform: translateY(0);
   }
 }
-
 .menuItem {
   display: flex;
   align-items: center;
   gap: 9px;
   width: 100%;
-  padding: 9px 12px;
+  padding: 8px 11px;
   border-radius: var(--radius-sm);
   border: none;
   background: none;
@@ -145,46 +188,100 @@
   margin: 4px 0;
 }
 
-/* ── Body ─────────────────────────────────────────────────────────────────── */
-.body {
+/* ── Body: avatar + title ────────────────────────────────────────────────── */
+.cardTop {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.avatar {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  user-select: none;
+}
+.titleBlock {
   flex: 1;
-  margin-bottom: 10px;
+  min-width: 0;
+  padding-top: 2px;
 }
 .name {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 4px;
+  margin: 0 0 4px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 .desc {
-  font-size: 13px;
+  font-size: 12.5px;
+  font-weight: 500;
   color: var(--text-secondary);
   line-height: 1.5;
+  margin: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
 /* ── Meta row ─────────────────────────────────────────────────────────────── */
-.meta {
+.metaRow {
   display: flex;
-  gap: 14px;
+  gap: 18px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
 }
 .metaItem {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
+}
+
+/* ── Progress ─────────────────────────────────────────────────────────────── */
+.progressSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.progressLabelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.progressLabel {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.progressPct {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary-600);
+}
+.progressTrack {
+  height: 6px;
+  background: var(--text-disabled);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  background: var(--primary-600);
+  border-radius: 999px;
+  transition: width 0.5s ease;
 }
 
 /* ── Footer ───────────────────────────────────────────────────────────────── */
@@ -192,154 +289,157 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 10px;
+  padding-top: 12px;
   border-top: 1px solid var(--border-default);
   margin-top: auto;
 }
 .date {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 12px;
   color: var(--text-tertiary);
 }
 .viewBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
-  color: var(--brand-orange);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: color var(--transition-fast);
+  color: var(--primary-600);
   text-decoration: none;
+  transition: color var(--transition-fast);
 }
 .viewBtn:hover {
-  color: #d84315;
+  color: var(--primary-700, #4338ca);
 }
 
 /* ── List-mode overrides ──────────────────────────────────────────────────── */
 .listCard {
   flex-direction: row;
   align-items: center;
-  padding: 11px 16px;
+  padding: 12px 16px;
   gap: 0;
-  min-height: unset;
 }
 .listCard:hover {
   transform: none;
 }
-.listCard .body {
+
+.listCard .cardTop {
   order: 1;
   flex: 1;
   min-width: 0;
-  margin: 0;
+  gap: 10px;
+  align-items: center;
+}
+.listCard .avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+.listCard .titleBlock {
+  min-width: 0;
+  padding-top: 0;
 }
 .listCard .name {
-  font-size: 14px;
+  font-size: 13.5px;
+  font-weight: 600;
   -webkit-line-clamp: 1;
-  margin: 0;
-  padding-right: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   display: block;
+  margin: 0;
 }
 .listCard .desc {
   display: none;
 }
-.listCard .header {
+
+.listCard .cardHeader {
   order: 2;
   flex-shrink: 0;
-  margin: 0;
   padding: 0 14px;
   border-left: 1px solid var(--border-default);
   border-right: 1px solid var(--border-default);
-  min-width: 220px;
+  min-width: 190px;
 }
-.listCard .meta {
+.listCard .menuWrap {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+}
+
+.listCard .metaRow {
   order: 3;
   flex-shrink: 0;
   flex-direction: column;
-  gap: 3px;
-  margin: 0;
+  gap: 2px;
   padding: 0 14px;
   border-right: 1px solid var(--border-default);
   min-width: 120px;
 }
-.listCard .footer {
+.listCard .progressSection {
   order: 4;
+  flex-shrink: 0;
+  min-width: 110px;
+  padding: 0 14px;
+}
+.listCard .footer {
+  order: 5;
   flex-shrink: 0;
   flex-direction: column;
   align-items: flex-end;
-  gap: 3px;
-  padding: 0 0 0 14px;
+  gap: 2px;
+  padding: 0 36px 0 14px;
   border-top: none;
-  min-width: 110px;
+  min-width: 130px;
   margin: 0;
 }
 .listCard .viewBtn {
   font-size: 11px;
 }
 
-/* ── List-mode responsive: stack vertically on mobile (<640px) ────────────── */
+/* ── Mobile (<640px): stack vertically ───────────────────────────────────── */
 @media (max-width: 639px) {
   .listCard {
     flex-direction: column;
     align-items: stretch;
     padding: 14px;
-    gap: 8px;
+    gap: 10px;
   }
-
-  /* Let DOM order (header → body → meta → footer) flow naturally */
-  .listCard .header,
-  .listCard .body,
-  .listCard .meta,
+  .listCard .cardTop,
+  .listCard .cardHeader,
+  .listCard .metaRow,
+  .listCard .progressSection,
   .listCard .footer {
     order: unset;
-  }
-
-  /* Header: reset column constraints, revert to standard badges-left / menu-right row */
-  .listCard .header {
-    min-width: 0;
     padding: 0;
-    border-left: none;
-    border-right: none;
-    margin-bottom: 0;
-  }
-
-  /* Body: reset margins, keep single-line truncation */
-  .listCard .body {
-    margin: 0;
-  }
-  .listCard .name {
-    padding-right: 0;
-    font-size: 14px;
-    /* Inherits: white-space: nowrap; overflow: hidden; text-overflow: ellipsis */
-  }
-
-  /* Meta: switch back to row, allow badges to wrap if needed */
-  .listCard .meta {
+    border: none;
     min-width: 0;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 0;
-    border-right: none;
-    margin: 0;
   }
-
-  /* Footer: date on left, link on right — separated by a hairline */
+  .listCard .menuWrap {
+    position: static;
+    transform: none;
+  }
+  .listCard .cardHeader {
+    justify-content: space-between;
+  }
   .listCard .footer {
-    min-width: 0;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 0 0;
+    padding-top: 8px;
     border-top: 1px solid var(--border-default);
     margin: 0;
   }
   .listCard .viewBtn {
     font-size: 12px;
+  }
+  .listCard .metaRow {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 }

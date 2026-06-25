@@ -30,6 +30,8 @@ export const API_ENDPOINTS = {
     ROOT: (workspaceId: string) => `${API_BASE_PATH}/workspaces/${workspaceId}/assessments`,
     BY_ID: (workspaceId: string, id: string) =>
       `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${id}`,
+    STATS: (workspaceId: string) =>
+      `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/stats`,
     SHARE_LINKS: (workspaceId: string, id: string) =>
       `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${id}/share-links`,
     SHARE_LINK_BY_ID: (workspaceId: string, assessmentId: string, linkId: string) =>

@@ -56,6 +56,18 @@ export const IconAssessment = icon(
     <path d="M9 12h6M9 16h4" />
   </>
 );
+export const IconRectangleList = icon(
+  <>
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="M7 9h10M7 12h10M7 15h6" />
+  </>
+);
+export const IconCheckCircle = icon(
+  <>
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="9 12 11 14 15 9" />
+  </>
+);
 export const IconLiveInterview = icon(
   <>
     <circle cx="12" cy="12" r="3" />

@@ -17,6 +17,7 @@ export interface AssessmentDraft {
   rounds: RoundSetup[];
   accessibility: AssessmentAccessibility;
   monitoring_config: MonitoringConfig;
+  expected_candidates?: number;
 }
 
 export interface AssessmentWizardProps {

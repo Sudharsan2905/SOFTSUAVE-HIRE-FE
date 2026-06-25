@@ -431,6 +431,134 @@
   margin-top: -4px;
 }
 
+/* ── Page entrance animation ─────────────────────────────────────────────── */
+@keyframes fadeInPage {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.pageWrapper {
+  animation: fadeInPage 0.35s ease both;
+}
+
+/* ── Dashboard Stats Grid ─────────────────────────────────────────────────── */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 24px 0 8px;
+}
+.statCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+  animation: fadeInPage 0.4s ease both;
+}
+.statCard:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.statCard:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.statCard:nth-child(3) {
+  animation-delay: 0.15s;
+}
+.statCard:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.statCard:hover {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+.statCardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.statCardIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.statCardValue {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+}
+.statCardBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.statCardLabel {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.statCardLiveBadge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #065f46;
+  background: #d1fae5;
+  padding: 3px 8px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+/* ── Section Wrapper ──────────────────────────────────────────────────────── */
+.sectionWrapper {
+  margin-top: 12px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+}
+.sectionHeader {
+  position: sticky;
+  top: var(--header-height);
+  z-index: 10;
+  padding: 10px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-default);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px;
+}
+.cardsContainer {
+  padding: 20px;
+  background: var(--bg-surface);
+}
+
+/* Responsive stats grid */
+@media (max-width: 1100px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Share modal — misc ───────────────────────────────────────────────────── */
 /* Share modal — misc */
 .shareLinkTypeLabel {
   font-size: 11px;

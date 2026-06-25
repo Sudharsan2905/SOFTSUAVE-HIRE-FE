@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import styles from "./AssessmentsPage.module.css";
 import { Header } from "@/components/layout/Header";
-import { FilterBar } from "@/components/shared/FilterBar";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Pagination } from "@/components/ui/Pagination";
 import { Spinner } from "@/components/ui/Spinner";
+import { FilterBar, TabOption } from "@/components/shared/FilterBar";
 import {
   IconPlus,
   IconAssessment,
@@ -14,6 +14,11 @@ import {
   IconMail,
   IconWhatsApp,
   IconWorkspace,
+  IconUsers,
+  IconRectangleList,
+  IconCheckCircle,
+  IconShield,
+  IconMonitor,
 } from "@/assets/icons";
 import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -28,11 +33,170 @@ import { CreateAssessmentWizard } from "../components/CreateWizard/WizardContain
 import { AssessmentCard } from "../components/AssessmentCard";
 import { useAppSelector } from "@/store";
 
-const SORT_OPTIONS = [
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface AssessmentStats {
+  total: number;
+  monitoring: number;
+  standard: number;
+  submissions_30d: number;
+  avg_completion: number;
+}
+
+const STATS_DEFAULT: AssessmentStats = {
+  total: 0,
+  monitoring: 0,
+  standard: 0,
+  submissions_30d: 0,
+  avg_completion: 0,
+};
+
+// ─── Counter animation hook ───────────────────────────────────────────────────
+
+function useCountUp(target: number): number {
+  const [value, setValue] = useState(0);
+  const rafRef = useRef<number | null>(null);
+  const currentRef = useRef(0);
+
+  useEffect(() => {
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    const from = currentRef.current;
+    let startTime: number | null = null;
+
+    const step = (timestamp: number) => {
+      startTime ??= timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / 1000, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const next = Math.round(from + (target - from) * eased);
+      currentRef.current = next;
+      setValue(next);
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(step);
+      } else {
+        currentRef.current = target;
+        rafRef.current = null;
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(step);
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
+  }, [target]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return value;
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const SORT_FIELD_OPTIONS = [
   { value: "created_at", label: "Created Date" },
   { value: "updated_at", label: "Updated Date" },
   { value: "name", label: "Name" },
 ];
+
+const COMPLETION_CIRCUMFERENCE = 138.2; // 2 * π * r22
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function NoWorkspaceState({ isSuperAdmin }: { readonly isSuperAdmin: boolean }) {
+  return (
+    <div className={styles.empty}>
+      <IconWorkspace size={48} color="var(--text-tertiary)" />
+      <p>{isSuperAdmin ? "Create a workspace to get started" : "No workspace access"}</p>
+      <p
+        style={{
+          fontSize: 13,
+          color: "var(--text-tertiary)",
+          maxWidth: 380,
+          textAlign: "center",
+          lineHeight: 1.6,
+        }}
+      >
+        {isSuperAdmin
+          ? "Use the workspace switcher in the sidebar to create your first workspace."
+          : "You have no workspace assigned. Please contact your administrator to get access."}
+      </p>
+    </div>
+  );
+}
+
+interface ListContentProps {
+  isLoading: boolean;
+  assessments: Assessment[];
+  viewMode: ViewMode;
+  workspaceId: string;
+  meta: PaginationMeta | null;
+  pageSize: number;
+  onGoToPage: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+  onCreateClick: () => void;
+  onEdit: (a: Assessment) => void;
+  onClone: (a: Assessment) => void;
+  onDeleteRequest: (a: Assessment) => void;
+}
+
+function AssessmentListContent({
+  isLoading,
+  assessments,
+  viewMode,
+  workspaceId,
+  meta,
+  pageSize,
+  onGoToPage,
+  onPageSizeChange,
+  onCreateClick,
+  onEdit,
+  onClone,
+  onDeleteRequest,
+}: Readonly<ListContentProps>) {
+  if (isLoading) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+  if (assessments.length === 0) {
+    return (
+      <div className={styles.empty}>
+        <IconAssessment size={48} color="var(--text-tertiary)" />
+        <p>No assessments yet</p>
+        <Button leftIcon={<IconPlus size={15} />} onClick={onCreateClick}>
+          Create Assessment
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <>
+      <div className={viewMode === "grid" ? styles.grid : styles.list}>
+        {assessments.map((a) => (
+          <AssessmentCard
+            key={a.id}
+            assessment={a}
+            workspaceId={workspaceId}
+            viewMode={viewMode}
+            onEdit={onEdit}
+            onClone={onClone}
+            onDelete={onDeleteRequest}
+          />
+        ))}
+      </div>
+      {meta && (
+        <Pagination
+          meta={meta}
+          onPageChange={onGoToPage}
+          pageSize={pageSize}
+          onPageSizeChange={onPageSizeChange}
+        />
+      )}
+    </>
+  );
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function AssessmentsPage() {
   const { workspaceId } = useParams<{ workspaceId: string }>();
@@ -40,6 +204,7 @@ export default function AssessmentsPage() {
   const user = useAppSelector((s) => s.auth.user);
   const isSuperAdmin = user?.role === UserRole.SUPER_ADMIN;
 
+  // ── List state ──────────────────────────────────────────────────────────────
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,6 +212,12 @@ export default function AssessmentsPage() {
   const [sortBy, setSortBy] = useState("created_at");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+
+  // ── Stats + filter tab ──────────────────────────────────────────────────────
+  const [stats, setStats] = useState<AssessmentStats>(STATS_DEFAULT);
+  const [accessibilityFilter, setAccessibilityFilter] = useState<"" | "monitoring" | "normal">("");
+
+  // ── Wizard / modals ─────────────────────────────────────────────────────────
   const [showWizard, setShowWizard] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
@@ -60,8 +231,27 @@ export default function AssessmentsPage() {
   const [shareExpireFrom, setShareExpireFrom] = useState("");
   const [shareExpireTo, setShareExpireTo] = useState("");
   const [generatingLink, setGeneratingLink] = useState(false);
+
+  // ── Counter animations ──────────────────────────────────────────────────────
+  const animTotal = useCountUp(stats.total);
+  const animMonitoring = useCountUp(stats.monitoring);
+  const animSubmissions = useCountUp(stats.submissions_30d);
+  const animCompletion = useCountUp(stats.avg_completion);
+
   const { page, pageSize, goToPage, reset, changePageSize } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
+
+  // ── Data fetching ────────────────────────────────────────────────────────────
+
+  const fetchStats = useCallback(async () => {
+    if (!workspaceId) return;
+    try {
+      const { data } = await api.get(API_ENDPOINTS.ASSESSMENTS.STATS(workspaceId));
+      setStats(data.data ?? STATS_DEFAULT);
+    } catch {
+      // stats are decorative — fail silently
+    }
+  }, [workspaceId]);
 
   const fetchAssessments = useCallback(async () => {
     if (!workspaceId) return;
@@ -73,6 +263,7 @@ export default function AssessmentsPage() {
         sort_by: sortBy,
         sort_order: sortOrder,
         ...(debouncedSearch && { search: debouncedSearch }),
+        ...(accessibilityFilter && { accessibility: accessibilityFilter }),
       });
       const { data } = await api.get(`${API_ENDPOINTS.ASSESSMENTS.ROOT(workspaceId)}?${params}`);
       setAssessments(data.data?.assessments || []);
@@ -82,7 +273,9 @@ export default function AssessmentsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [workspaceId, page, pageSize, sortBy, sortOrder, debouncedSearch]);
+  }, [workspaceId, page, pageSize, sortBy, sortOrder, debouncedSearch, accessibilityFilter]);
+
+  // ── Wizard handlers ──────────────────────────────────────────────────────────
 
   const handleWizardClose = useCallback(() => {
     setShowWizard(false);
@@ -95,14 +288,22 @@ export default function AssessmentsPage() {
     setWizardPrefill(null);
     setCloneWorkspaces([]);
     fetchAssessments();
-  }, [fetchAssessments]);
+    fetchStats();
+  }, [fetchAssessments, fetchStats]);
 
+  // ── Effects ──────────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
   useEffect(() => {
     fetchAssessments();
   }, [fetchAssessments]);
   useEffect(() => {
     reset();
-  }, [debouncedSearch, sortBy, sortOrder]);
+  }, [debouncedSearch, sortBy, sortOrder, accessibilityFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Action handlers ──────────────────────────────────────────────────────────
 
   const handleEditClick = (a: Assessment) => {
     setEditTarget(a);
@@ -134,6 +335,7 @@ export default function AssessmentsPage() {
       toast.success(ASSESSMENT_SUCCESS.DELETED);
       setShowDelete(false);
       fetchAssessments();
+      fetchStats();
     } catch {
       toast.error(ASSESSMENT_ERRORS.DELETE_FAILED);
     } finally {
@@ -141,119 +343,228 @@ export default function AssessmentsPage() {
     }
   };
 
-  if (!activeWorkspace) {
-    return (
-      <div>
-        <Header title="Assessments" subtitle="" />
-        <div className={styles.empty}>
-          <IconWorkspace size={48} color="var(--text-tertiary)" />
-          <p>{isSuperAdmin ? "Create a workspace to get started" : "No workspace access"}</p>
-          <p
-            style={{
-              fontSize: 13,
-              color: "var(--text-tertiary)",
-              maxWidth: 380,
-              textAlign: "center",
-              lineHeight: 1.6,
-            }}
-          >
-            {isSuperAdmin
-              ? "Use the workspace switcher in the sidebar to create your first workspace."
-              : "You have no workspace assigned. Please contact your administrator to get access."}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const handleDeleteRequest = (a: Assessment) => {
+    setSelected(a);
+    setShowDelete(true);
+  };
 
-  let assessmentContent: React.ReactNode;
-  if (isLoading) {
-    assessmentContent = (
-      <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
-        <Spinner size="lg" />
-      </div>
-    );
-  } else if (assessments.length === 0) {
-    assessmentContent = (
-      <div className={styles.empty}>
-        <IconAssessment size={48} color="var(--text-tertiary)" />
-        <p>No assessments yet</p>
-        <Button
-          leftIcon={<IconPlus size={15} />}
-          onClick={() => {
-            setWizardPrefill(null);
-            setShowWizard(true);
-          }}
-        >
-          Create Assessment
-        </Button>
-      </div>
-    );
-  } else {
-    assessmentContent = (
-      <>
-        <div className={viewMode === "grid" ? styles.grid : styles.list}>
-          {assessments.map((a) => (
-            <AssessmentCard
-              key={a.id}
-              assessment={a}
-              workspaceId={workspaceId!}
-              viewMode={viewMode}
-              onEdit={handleEditClick}
-              onClone={handleCloneClick}
-              onDelete={(assessment) => {
-                setSelected(assessment);
-                setShowDelete(true);
-              }}
-            />
-          ))}
-        </div>
-        {meta && (
-          <Pagination
-            meta={meta}
-            onPageChange={goToPage}
-            pageSize={pageSize}
-            onPageSizeChange={changePageSize}
-          />
-        )}
-      </>
-    );
-  }
+  const handleGenerateExpirableLink = async () => {
+    if (!selected || !workspaceId) return;
+    const start = new Date(shareExpireFrom);
+    const end = new Date(shareExpireTo);
+    const now = new Date();
+    if (start < new Date(now.getTime() - 60000)) {
+      toast.error("Start time must be now or in the future.");
+      return;
+    }
+    if (end <= start) {
+      toast.error("End time must be after start time.");
+      return;
+    }
+    setGeneratingLink(true);
+    try {
+      const { data } = await api.post(API_ENDPOINTS.ASSESSMENTS.SHARE_EXPIRABLE(workspaceId), {
+        assessment_id: selected.id,
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
+      });
+      setShareUrl(generateShareUrl(data.data.share_link));
+      setShareStep("ready");
+    } catch {
+      toast.error(ASSESSMENT_ERRORS.LINK_CREATE_FAILED);
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
+  // ── Derived values ───────────────────────────────────────────────────────────
+
+  const completionDash = `${(animCompletion / 100) * COMPLETION_CIRCUMFERENCE} ${COMPLETION_CIRCUMFERENCE}`;
+
+  // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <div>
+    <div className={styles.pageWrapper}>
       <Header
         title="Assessments"
-        subtitle={`${meta?.total ?? 0} assessments`}
+        subtitle="Create and monitor AI-powered hiring assessments"
         actions={
-          <Button
-            leftIcon={<IconPlus size={16} />}
-            onClick={() => {
-              setWizardPrefill(null);
-              setShowWizard(true);
-            }}
-          >
-            Create Assessment
-          </Button>
+          activeWorkspace ? (
+            <Button
+              leftIcon={<IconPlus size={16} />}
+              onClick={() => {
+                setWizardPrefill(null);
+                setShowWizard(true);
+              }}
+              style={{ background: "linear-gradient(135deg, rgb(255, 107, 44) 0%, rgb(255, 138, 74) 100%)", border: "none" }}
+            >
+              Create Assessment
+            </Button>
+          ) : undefined
         }
       />
 
-      <FilterBar
-        search={search}
-        onSearchChange={setSearch}
-        sortBy={sortBy}
-        onSortByChange={setSortBy}
-        sortByOptions={SORT_OPTIONS}
-        sortOrder={sortOrder}
-        onSortOrderToggle={() => setSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        onRefresh={fetchAssessments}
-      />
+      {activeWorkspace ? (
+        <>
+          {/* ── Analytics Stats ─────────────────────────────────────────── */}
+          <div className={styles.statsGrid}>
+            {/* Total Assessments */}
+            <div className={styles.statCard}>
+              <div className={styles.statCardTop}>
+                <div
+                  className={styles.statCardIcon}
+                  style={{ background: "rgba(108,99,255,0.09)", color: "var(--primary-600)" }}
+                >
+                  <IconRectangleList size={22} />
+                </div>
+                <span className={styles.statCardValue}>{animTotal}</span>
+              </div>
+              <div className={styles.statCardBottom}>
+                <span className={styles.statCardLabel}>Total Assessments</span>
+              </div>
+            </div>
 
-      {assessmentContent}
+            {/* Active Right Now */}
+            <div className={styles.statCard}>
+              <div className={styles.statCardTop}>
+                <div
+                  className={styles.statCardIcon}
+                  style={{ background: "rgba(22,199,132,0.1)", color: "#0b7a52" }}
+                >
+                  <IconCheckCircle size={22} />
+                </div>
+                <span className={styles.statCardValue}>{animMonitoring}</span>
+              </div>
+              <div className={styles.statCardBottom}>
+                <span className={styles.statCardLabel}>Active Right Now</span>
+                <span className={styles.statCardLiveBadge}>Live</span>
+              </div>
+            </div>
 
-      {/* Create / Clone Wizard */}
+            {/* Submissions (30d) */}
+            <div className={styles.statCard}>
+              <div className={styles.statCardTop}>
+                <div
+                  className={styles.statCardIcon}
+                  style={{ background: "rgba(255,107,44,0.09)", color: "#cc4f15" }}
+                >
+                  <IconUsers size={22} />
+                </div>
+                <span className={styles.statCardValue}>{animSubmissions}</span>
+              </div>
+              <div className={styles.statCardBottom}>
+                <span className={styles.statCardLabel}>Submissions (30d)</span>
+              </div>
+            </div>
+
+            {/* Avg. Completion */}
+            <div className={styles.statCard}>
+              <div className={styles.statCardTop}>
+                <svg
+                  width="52"
+                  height="52"
+                  viewBox="0 0 56 56"
+                  style={{ flexShrink: 0, marginLeft: -2 }}
+                >
+                  <circle
+                    cx="28"
+                    cy="28"
+                    r="22"
+                    fill="none"
+                    stroke="var(--border-default)"
+                    strokeWidth="3.5"
+                  />
+                  <circle
+                    cx="28"
+                    cy="28"
+                    r="22"
+                    fill="none"
+                    stroke="var(--primary-600)"
+                    strokeWidth="3.5"
+                    strokeDasharray={completionDash}
+                    strokeLinecap="round"
+                    transform="rotate(-90 28 28)"
+                    style={{ transition: "stroke-dasharray 0.4s ease" }}
+                  />
+                </svg>
+                <span className={styles.statCardValue}>{animCompletion}%</span>
+              </div>
+              <div className={styles.statCardBottom}>
+                <span className={styles.statCardLabel}>Avg. Completion</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Section Wrapper: filter header + cards ──────────────────── */}
+          <div className={styles.sectionWrapper}>
+            {/* Section Header — FilterBar owns tabs + controls */}
+            <div className={styles.sectionHeader}>
+              <FilterBar
+                compact
+                tabs={
+                  [
+                    {
+                      value: "",
+                      label: "All",
+                      count: stats.total,
+                      icon: <IconRectangleList size={14} />,
+                    },
+                    {
+                      value: "monitoring",
+                      label: "Monitoring",
+                      count: stats.monitoring,
+                      icon: <IconShield size={14} />,
+                    },
+                    {
+                      value: "normal",
+                      label: "Standard",
+                      count: stats.standard,
+                      icon: <IconMonitor size={14} />,
+                    },
+                  ] satisfies TabOption[]
+                }
+                activeTab={accessibilityFilter}
+                onTabChange={(v) => setAccessibilityFilter(v as "" | "monitoring" | "normal")}
+                search={search}
+                onSearchChange={setSearch}
+                sortByOptions={SORT_FIELD_OPTIONS}
+                sortBy={sortBy}
+                onSortByChange={setSortBy}
+                sortOrder={sortOrder}
+                onSortOrderChange={setSortOrder}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+                onRefresh={fetchAssessments}
+              />
+            </div>
+
+            {/* Cards */}
+            <div className={styles.cardsContainer}>
+              <AssessmentListContent
+                isLoading={isLoading}
+                assessments={assessments}
+                viewMode={viewMode}
+                workspaceId={workspaceId!}
+                meta={meta}
+                pageSize={pageSize}
+                onGoToPage={goToPage}
+                onPageSizeChange={changePageSize}
+                onCreateClick={() => {
+                  setWizardPrefill(null);
+                  setShowWizard(true);
+                }}
+                onEdit={handleEditClick}
+                onClone={handleCloneClick}
+                onDeleteRequest={handleDeleteRequest}
+              />
+            </div>
+          </div>
+        </>
+      ) : (
+        <NoWorkspaceState isSuperAdmin={isSuperAdmin} />
+      )}
+
+      {/* ── Create / Clone Wizard ──────────────────────────────────────── */}
       {showWizard && workspaceId && (
         <CreateAssessmentWizard
           workspaceId={workspaceId}
@@ -264,7 +575,7 @@ export default function AssessmentsPage() {
         />
       )}
 
-      {/* Edit Wizard */}
+      {/* ── Edit Wizard ─────────────────────────────────────────────────── */}
       {editTarget && workspaceId && (
         <CreateAssessmentWizard
           workspaceId={workspaceId}
@@ -281,16 +592,18 @@ export default function AssessmentsPage() {
             })),
             accessibility: editTarget.accessibility,
             monitoring_config: editTarget.monitoring_config,
+            expected_candidates: editTarget.expected_candidates,
           }}
           onClose={() => setEditTarget(null)}
           onSuccess={() => {
             setEditTarget(null);
             fetchAssessments();
+            fetchStats();
           }}
         />
       )}
 
-      {/* Share Modal */}
+      {/* ── Share Modal ─────────────────────────────────────────────────── */}
       <Modal
         isOpen={showShare}
         onClose={() => setShowShare(false)}
@@ -392,37 +705,7 @@ export default function AssessmentsPage() {
             <Button
               isLoading={generatingLink}
               disabled={!shareExpireFrom || !shareExpireTo || generatingLink}
-              onClick={async () => {
-                if (!selected || !workspaceId) return;
-                const start = new Date(shareExpireFrom);
-                const end = new Date(shareExpireTo);
-                const now = new Date();
-                if (start < new Date(now.getTime() - 60000)) {
-                  toast.error("Start time must be now or in the future.");
-                  return;
-                }
-                if (end <= start) {
-                  toast.error("End time must be after start time.");
-                  return;
-                }
-                setGeneratingLink(true);
-                try {
-                  const { data } = await api.post(
-                    API_ENDPOINTS.ASSESSMENTS.SHARE_EXPIRABLE(workspaceId),
-                    {
-                      assessment_id: selected.id,
-                      start_time: start.toISOString(),
-                      end_time: end.toISOString(),
-                    }
-                  );
-                  setShareUrl(generateShareUrl(data.data.share_link));
-                  setShareStep("ready");
-                } catch {
-                  toast.error(ASSESSMENT_ERRORS.LINK_CREATE_FAILED);
-                } finally {
-                  setGeneratingLink(false);
-                }
-              }}
+              onClick={handleGenerateExpirableLink}
             >
               Generate Link
             </Button>
@@ -488,7 +771,7 @@ export default function AssessmentsPage() {
         )}
       </Modal>
 
-      {/* Delete Modal */}
+      {/* ── Delete Modal ─────────────────────────────────────────────────── */}
       <Modal
         isOpen={showDelete}
         onClose={() => setShowDelete(false)}

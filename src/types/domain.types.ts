@@ -71,6 +71,7 @@ export interface Assessment {
   share_link: string;
   created_by: string;
   submission_count?: number;
+  expected_candidates?: number;
   created_at: string;
   updated_at: string;
 }

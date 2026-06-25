@@ -201,7 +201,7 @@
   content: '';
   position: absolute;
   inset: -40px;
-  background: url('/admin-login/bg1.png') center/cover no-repeat;
+  background: url('/admin-login/bg-office.png') center/cover no-repeat;
   filter: blur(9px) brightness(0.88);
   transform: scale(1.12);
   z-index: 0;
