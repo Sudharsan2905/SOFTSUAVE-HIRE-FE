@@ -20,7 +20,11 @@ import {
   IconHourglass,
   IconCircleCheck,
   IconPeopleGroup,
+  IconRefresh,
+  IconPlay,
+  IconPower,
 } from "@/assets/icons";
+import { Modal } from "@/components/ui/Modal";
 import { Tooltip } from "@/components/ui/Tooltip";
 import type { DateRange } from "@/components/datetime/DateRangePicker";
 import { api } from "@/utils/api";
@@ -39,6 +43,25 @@ const SORT_OPTIONS = [
   { value: "started_at", label: "Started Time" },
   { value: "first_name", label: "Name" },
   { value: "email", label: "Email" },
+];
+
+const REACCESS_CATEGORY_OPTIONS = [
+  {
+    value: "poor_network",
+    label: "Poor Network",
+    description: "Candidate experienced connectivity issues during the assessment.",
+  },
+  {
+    value: "candidate_request",
+    label: "Candidate Request",
+    description: "Candidate made a personal request for re-access.",
+  },
+  {
+    value: "technical_issue",
+    label: "Technical Issue",
+    description: "A technical problem on our end disrupted the candidate's session.",
+  },
+  { value: "other", label: "Other", description: "" },
 ];
 
 interface SubmissionWithCandidate extends Omit<Submission, "candidate"> {
@@ -122,6 +145,13 @@ export default function AssessmentDetailPage() {
   const [exportType, setExportType] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
   const [submissionStats, setSubmissionStats] = useState<SubmissionStats | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
+  const [showReaccessModal, setShowReaccessModal] = useState(false);
+  const [reaccessSubId, setReaccessSubId] = useState("");
+  const [reaccessCategory, setReaccessCategory] = useState("poor_network");
+  const [reaccessReason, setReaccessReason] = useState("");
+  const [reaccessSubmitting, setReaccessSubmitting] = useState(false);
   const { page, pageSize, goToPage, reset, changePageSize } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
 
@@ -142,6 +172,83 @@ export default function AssessmentDetailPage() {
       .then(({ data }) => setSubmissionStats(data.data ?? null))
       .catch(() => {});
   }, [workspaceId, id]);
+
+  // Close open menu on any outside click
+  useEffect(() => {
+    if (!openMenuId) return;
+    const close = () => setOpenMenuId(null);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [openMenuId]);
+
+  const setSubLoading = (subId: string, val: boolean) =>
+    setActionLoading((prev) => ({ ...prev, [subId]: val }));
+
+  const handleResume = async (submissionId: string) => {
+    setSubLoading(submissionId, true);
+    setOpenMenuId(null);
+    try {
+      await api.post(API_ENDPOINTS.ASSESSMENTS.SUBMISSION_RESUME(workspaceId!, id!, submissionId));
+      toast.success("Candidate can continue.");
+      fetchSubmissions();
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg ?? "Failed to resume");
+    } finally {
+      setSubLoading(submissionId, false);
+    }
+  };
+
+  const handleTerminate = async (submissionId: string) => {
+    setSubLoading(submissionId, true);
+    setOpenMenuId(null);
+    try {
+      await api.post(
+        API_ENDPOINTS.ASSESSMENTS.SUBMISSION_TERMINATE(workspaceId!, id!, submissionId),
+        { reason: "Terminated by admin" }
+      );
+      toast.success("Submission terminated.");
+      fetchSubmissions();
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg ?? "Failed to terminate");
+    } finally {
+      setSubLoading(submissionId, false);
+    }
+  };
+
+  const openReaccessModal = (submissionId: string) => {
+    setReaccessSubId(submissionId);
+    setReaccessCategory("poor_network");
+    setReaccessReason("");
+    setShowReaccessModal(true);
+    setOpenMenuId(null);
+  };
+
+  const handleReaccess = async () => {
+    if (reaccessCategory === "other" && !reaccessReason.trim()) {
+      toast.error("Please provide a reason for re-access.");
+      return;
+    }
+    setReaccessSubmitting(true);
+    try {
+      const selectedOption = REACCESS_CATEGORY_OPTIONS.find((o) => o.value === reaccessCategory);
+      const reason =
+        reaccessCategory === "other" ? reaccessReason.trim() : (selectedOption?.description ?? "");
+      await api.post(
+        API_ENDPOINTS.ASSESSMENTS.SUBMISSION_REACCESS(workspaceId!, id!, reaccessSubId),
+        { reason, reason_category: reaccessCategory }
+      );
+      toast.success("Re-access granted.");
+      setShowReaccessModal(false);
+      fetchSubmissions();
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg ?? "Failed to grant re-access");
+    } finally {
+      setReaccessSubmitting(false);
+    }
+  };
 
   const fetchSubmissions = useCallback(async () => {
     setIsLoading(true);
@@ -283,10 +390,7 @@ export default function AssessmentDetailPage() {
                   <tr key={sub.id}>
                     <td>
                       <div className={styles.candidateCell}>
-                        <div
-                          className={styles.avatar}
-                          style={{ background: getAvatarColor(name) }}
-                        >
+                        <div className={styles.avatar} style={{ background: getAvatarColor(name) }}>
                           {getInitials(name)}
                         </div>
                         <div>
@@ -324,18 +428,69 @@ export default function AssessmentDetailPage() {
                           <button
                             className={styles.actionBtn}
                             onClick={() =>
-                              navigate(
-                                ROUTES.ADMIN.candidateDetail(workspaceId!, id!, candidateId)
-                              )
+                              navigate(ROUTES.ADMIN.candidateDetail(workspaceId!, id!, candidateId))
                             }
                             aria-label="View candidate details"
                           >
                             <IconEye size={14} />
                           </button>
                         </Tooltip>
-                        <button className={styles.actionBtn} aria-label="More options">
-                          <IconDotsVertical size={14} />
-                        </button>
+                        <div className={styles.menuWrapper}>
+                          <button
+                            className={styles.actionBtn}
+                            aria-label="More options"
+                            aria-haspopup="true"
+                            aria-expanded={openMenuId === sub.id}
+                            disabled={actionLoading[sub.id]}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuId((prev) => (prev === sub.id ? null : sub.id));
+                            }}
+                          >
+                            {actionLoading[sub.id] ? (
+                              <Spinner size="sm" />
+                            ) : (
+                              <IconDotsVertical size={14} />
+                            )}
+                          </button>
+                          {openMenuId === sub.id && (
+                            <div className={styles.menu}>
+                              {["completed", "malpractice", "terminated"].includes(sub.status) && (
+                                <button
+                                  className={`${styles.menuItem} ${styles.menuItemPrimary}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openReaccessModal(sub.id);
+                                  }}
+                                >
+                                  <IconRefresh size={13} /> Re-access
+                                </button>
+                              )}
+                              {sub.status === "on_hold" && (
+                                <button
+                                  className={`${styles.menuItem} ${styles.menuItemPrimary}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleResume(sub.id);
+                                  }}
+                                >
+                                  <IconPlay size={13} /> Resume
+                                </button>
+                              )}
+                              {["in_progress", "pending"].includes(sub.status) && (
+                                <button
+                                  className={`${styles.menuItem} ${styles.menuItemDanger}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleTerminate(sub.id);
+                                  }}
+                                >
+                                  <IconPower size={13} /> Terminate
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -378,6 +533,10 @@ export default function AssessmentDetailPage() {
               leftIcon={<IconShare size={14} />}
               onClick={() => setShowSchedule(true)}
               disabled={!assessment}
+              style={{
+                background: "linear-gradient(135deg, rgb(255, 107, 44) 0%, rgb(255, 138, 74) 100%)",
+                border: "none",
+              }}
             >
               Share
             </Button>
@@ -497,6 +656,86 @@ export default function AssessmentDetailPage() {
           }}
         />
       )}
+
+      <Modal
+        isOpen={showReaccessModal}
+        onClose={() => setShowReaccessModal(false)}
+        title="Grant Re-access"
+        footer={
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+            <Button variant="secondary" onClick={() => setShowReaccessModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleReaccess} isLoading={reaccessSubmitting}>
+              Grant Re-access
+            </Button>
+          </div>
+        }
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div>
+            <label
+              htmlFor="reaccess-category"
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--text-secondary)",
+                display: "block",
+                marginBottom: 6,
+              }}
+            >
+              Reason Category
+            </label>
+            <Select
+              id="reaccess-category"
+              value={reaccessCategory}
+              onChange={setReaccessCategory}
+              options={REACCESS_CATEGORY_OPTIONS}
+              fullWidth
+            />
+            {reaccessCategory !== "other" && (
+              <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 6 }}>
+                {REACCESS_CATEGORY_OPTIONS.find((o) => o.value === reaccessCategory)?.description}
+              </p>
+            )}
+          </div>
+          {reaccessCategory === "other" && (
+            <div>
+              <label
+                htmlFor="reaccess-reason"
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "var(--text-secondary)",
+                  display: "block",
+                  marginBottom: 6,
+                }}
+              >
+                Reason <span style={{ color: "var(--color-error-600)" }}>*</span>
+              </label>
+              <textarea
+                id="reaccess-reason"
+                value={reaccessReason}
+                onChange={(e) => setReaccessReason(e.target.value)}
+                placeholder="Describe the reason for re-access…"
+                rows={3}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  borderRadius: "var(--radius-md)",
+                  border: "1.5px solid var(--border-default)",
+                  fontSize: 13,
+                  resize: "vertical",
+                  fontFamily: "inherit",
+                  color: "var(--text-primary)",
+                  background: "var(--bg-surface)",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -252,6 +252,7 @@ export interface RoundResult {
   started_at: string | null;
   completed_at: string | null;
   question_answers: QuestionAnswer[];
+  is_validated: boolean;
 }
 
 export interface CandidateSubmissionDetail {

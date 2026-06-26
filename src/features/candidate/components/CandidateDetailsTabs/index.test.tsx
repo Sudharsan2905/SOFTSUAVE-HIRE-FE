@@ -65,6 +65,7 @@ function makeRoundResult(overrides: Partial<RoundResult> = {}): RoundResult {
     started_at: "2024-06-01T10:00:00Z",
     completed_at: "2024-06-01T10:30:00Z",
     question_answers: [makeQuestionAnswer()],
+    is_validated: false,
     ...overrides,
   };
 }

@@ -348,18 +348,34 @@ function getReviewQuestionTypeLabel(type: string): string {
   return "Descriptive";
 }
 
-function QuestionReview({ index, qa }: Readonly<{ index: number; qa: QuestionAnswer }>) {
+function QuestionReview({
+  index,
+  qa,
+  isValidated,
+}: Readonly<{ index: number; qa: QuestionAnswer; isValidated: boolean }>) {
   const isMcq = qa.question_type === "mcq_single" || qa.question_type === "mcq_multi";
   const candidateAnswers = toCandidateAnswerArray(qa.candidate_answer);
+  let answerClassName: string | undefined;
+  if (qa.is_correct === true) answerClassName = styles.answerCorrect;
+  else if (qa.is_correct === false) answerClassName = styles.answerWrong;
 
   return (
     <article className={styles.questionCard}>
       <div className={styles.questionHead}>
         <span className={styles.questionNo}>Q{index + 1}</span>
         <span className={styles.questionType}>{getReviewQuestionTypeLabel(qa.question_type)}</span>
-        {qa.is_correct !== null && (
-          <Badge variant={qa.is_correct ? "success" : "error"} className={styles.correctnessBadge}>
-            {qa.is_correct ? "Correct" : "Incorrect"}
+        {isValidated ? (
+          qa.is_correct !== null && (
+            <Badge
+              variant={qa.is_correct ? "success" : "error"}
+              className={styles.correctnessBadge}
+            >
+              {qa.is_correct ? "Correct" : "Incorrect"}
+            </Badge>
+          )
+        ) : (
+          <Badge variant="info" className={styles.correctnessBadge}>
+            Not Validated
           </Badge>
         )}
       </div>
@@ -371,8 +387,8 @@ function QuestionReview({ index, qa }: Readonly<{ index: number; qa: QuestionAns
           {qa.options.map((opt) => {
             const isChosen = candidateAnswers.includes(opt.id);
             const isCorrect = opt.is_correct === true;
-            // Only the candidate's own wrong selection is marked red.
-            const wrongChoice = isChosen && !isCorrect;
+            // Only mark red when is_correct is explicitly false (not null/unknown).
+            const wrongChoice = isChosen && opt.is_correct === false;
             return (
               <div
                 key={opt.id}
@@ -400,7 +416,7 @@ function QuestionReview({ index, qa }: Readonly<{ index: number; qa: QuestionAns
       {isMcq ? (
         <p className={styles.answerLine}>
           <span className={styles.answerLineLabel}>Candidate Answer: </span>
-          <span className={qa.is_correct ? styles.answerCorrect : styles.answerWrong}>
+          <span className={answerClassName}>
             {candidateAnswers.length > 0 ? candidateAnswers.join(", ") : "—"}
           </span>
         </p>
@@ -526,7 +542,12 @@ function RoundsReview({ rounds, submissionData }: Readonly<RoundsReviewProps>) {
         </div>
         <div className={styles.questionList}>
           {selected.question_answers.map((qa, index) => (
-            <QuestionReview key={qa.question_id} index={index} qa={qa} />
+            <QuestionReview
+              key={qa.question_id}
+              index={index}
+              qa={qa}
+              isValidated={selected.is_validated}
+            />
           ))}
         </div>
       </section>
