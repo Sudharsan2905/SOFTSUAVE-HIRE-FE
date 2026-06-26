@@ -132,6 +132,7 @@ export interface RoundData {
   answers: Record<string, string | string[]>;
   completed: boolean;
   started_at?: string;
+  percentage?: number;
 }
 
 export interface Submission {
@@ -253,6 +254,7 @@ export interface RoundResult {
   completed_at: string | null;
   question_answers: QuestionAnswer[];
   is_validated: boolean;
+  max_duration_minutes?: number;
 }
 
 export interface CandidateSubmissionDetail {

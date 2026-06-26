@@ -30,7 +30,7 @@ import type { DateRange } from "@/components/datetime/DateRangePicker";
 import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
-import { Assessment, Submission, PaginationMeta, SortOrder } from "@/types";
+import { Assessment, Submission, PaginationMeta, SortOrder, RoundData } from "@/types";
 import { SUBMISSION_STATUS_OPTIONS } from "@/constants/app";
 import { API_ENDPOINTS } from "@/constants/api";
 import { ROUTES } from "@/constants/routes";
@@ -88,7 +88,7 @@ type ExportRow = {
   completed_at: string | null;
 };
 
-function ScoreRing({ pct }: Readonly<{ pct: number }>) {
+function ScoreRing({ pct, roundsData }: Readonly<{ pct: number; roundsData?: RoundData[] }>) {
   const r = 15;
   const C = 2 * Math.PI * r;
   const filled = (pct / 100) * C;
@@ -96,8 +96,9 @@ function ScoreRing({ pct }: Readonly<{ pct: number }>) {
   if (pct >= 50) ringColor = "#7c5cff";
   else if (pct > 0) ringColor = "#16b674";
   const txtColor = pct > 0 ? "#1e2330" : "#9aa0ac";
-  return (
-    <svg width={46} height={46} viewBox="0 0 40 40">
+
+  const svg = (
+    <svg width={46} height={46} viewBox="0 0 40 40" style={{ cursor: roundsData?.length ? "pointer" : "default" }}>
       <circle cx={20} cy={20} r={r} fill="none" stroke="#edeef2" strokeWidth={4} />
       {pct > 0 && (
         <circle
@@ -125,6 +126,24 @@ function ScoreRing({ pct }: Readonly<{ pct: number }>) {
         {pct}%
       </text>
     </svg>
+  );
+
+  if (!roundsData?.length) return svg;
+
+  const tooltipContent = (
+    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      {roundsData.map((rd, i) => (
+        <span key={rd.round_number ?? i}>
+          Round {rd.round_number ?? i + 1} — {rd.percentage ?? 0}%
+        </span>
+      ))}
+    </div>
+  );
+
+  return (
+    <Tooltip content={tooltipContent} placement="top">
+      {svg}
+    </Tooltip>
   );
 }
 
@@ -403,7 +422,7 @@ export default function AssessmentDetailPage() {
                       <StatusBadge status={sub.status} />
                     </td>
                     <td>
-                      <ScoreRing pct={pct} />
+                      <ScoreRing pct={pct} roundsData={sub.rounds_data} />
                     </td>
                     <td style={{ fontSize: 14, color: "var(--text-secondary)" }}>
                       {sub.current_round}

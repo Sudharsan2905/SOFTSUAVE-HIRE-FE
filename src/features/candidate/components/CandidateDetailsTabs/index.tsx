@@ -29,6 +29,14 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconDownload,
+  IconHourglass,
+  IconListCheck,
+  IconBullseye,
+  IconCalendar,
+  IconCircleCheck,
+  IconArrowsRotate,
+  IconClock,
+  IconTriangleExclamation,
 } from "@/assets/icons";
 import type {
   MalpracticeType,
@@ -89,6 +97,42 @@ interface StatusSummaryProps {
   workspaceId: string;
   assessmentId: string;
   onRefresh: () => void;
+}
+
+function OverviewScoreRing({ pct }: Readonly<{ pct: number }>) {
+  const r = 16;
+  const C = 2 * Math.PI * r;
+  const filled = (pct / 100) * C;
+  return (
+    <svg width={54} height={54} viewBox="0 0 40 40">
+      <circle cx={20} cy={20} r={r} fill="none" stroke="#edeef2" strokeWidth={4} />
+      {pct > 0 && (
+        <circle
+          cx={20}
+          cy={20}
+          r={r}
+          fill="none"
+          stroke="var(--brand-orange, #ff6b2c)"
+          strokeWidth={4}
+          strokeLinecap="round"
+          strokeDasharray={`${filled} ${C - filled}`}
+          transform="rotate(-90 20 20)"
+        />
+      )}
+      <text
+        x={20}
+        y={20}
+        dy="0.36em"
+        textAnchor="middle"
+        fontSize={9}
+        fontWeight={700}
+        fill={pct > 0 ? "#1e2330" : "#9aa0ac"}
+        fontFamily="Inter, sans-serif"
+      >
+        {pct}%
+      </text>
+    </svg>
+  );
 }
 
 function StatusSummary({
@@ -183,53 +227,187 @@ function StatusSummary({
     (o) => o.value === reaccessCategory
   );
 
+  const rounds = data.rounds ?? [];
+  const totalQuestions = rounds.reduce((sum, r) => sum + r.question_answers.length, 0);
+  const totalDuration = (() => {
+    if (!data.started_at || !data.completed_at) return "—";
+    const mins = Math.round(
+      (new Date(data.completed_at).getTime() - new Date(data.started_at).getTime()) / 60000
+    );
+    return mins < 1 ? "< 1 min" : `${mins} min`;
+  })();
+
   return (
     <div className={styles.summary}>
       <article className={styles.statusCard}>
-        <h3 className={styles.statusCardTitle}>Over All</h3>
-        <dl className={styles.statGrid}>
-          <div className={styles.statItem}>
-            <dt className={styles.statLabel}>Status</dt>
-            <dd className={styles.statValue}>
-              <Badge variant={STATUS_COLORS[data.status]?.variant ?? "default"}>
-                {statusLabel}
-              </Badge>
-            </dd>
+        <h3 className={styles.statusCardTitle}>Assessment Overview</h3>
+
+        {/* ── Stats row ── */}
+        <div className={styles.overviewStats}>
+          <div className={styles.overviewStat}>
+            <span className={styles.overviewStatLabel}>Status</span>
+            <Badge variant={STATUS_COLORS[data.status]?.variant ?? "default"}>{statusLabel}</Badge>
           </div>
-          <div className={styles.statItem}>
-            <dt className={styles.statLabel}>Score</dt>
-            <dd className={styles.statValue}>{data.score}</dd>
+
+          <div className={styles.overviewStat}>
+            <span className={styles.overviewStatLabel}>Score</span>
+            <OverviewScoreRing pct={data.percentage} />
           </div>
-          <div className={styles.statItem}>
-            <dt className={styles.statLabel}>Percentage</dt>
-            <dd className={styles.statValue}>{data.percentage}%</dd>
+
+          <div className={styles.overviewStat}>
+            <span className={styles.overviewStatLabel}>Rounds</span>
+            <div className={styles.overviewIconValue}>
+              <span className={styles.overviewIcon} style={{ background: "#efeaff", color: "#7c5cff" }}>
+                <IconRounds size={16} />
+              </span>
+              <span className={styles.overviewCount}>{rounds.length}</span>
+            </div>
           </div>
-          <div className={styles.statItem}>
-            <dt className={styles.statLabel}>Rounds</dt>
-            <dd className={styles.statValue}>{String((data.rounds || []).length || 0)}</dd>
+
+          <div className={styles.overviewStat}>
+            <span className={styles.overviewStatLabel}>Questions</span>
+            <div className={styles.overviewIconValue}>
+              <span className={styles.overviewIcon} style={{ background: "#fff8e1", color: "#f59e0b" }}>
+                <IconListCheck size={16} />
+              </span>
+              <span className={styles.overviewCount}>{totalQuestions}</span>
+            </div>
           </div>
-          <div className={styles.statItem}>
-            <dt className={styles.statLabel}>Malpractice Count</dt>
-            <dd className={styles.statValue}>{data.malpractice_count}</dd>
+
+          <div className={styles.overviewStat}>
+            <span className={styles.overviewStatLabel}>Malpractice Count</span>
+            <div className={styles.overviewIconValue}>
+              <span className={styles.overviewIcon} style={{ background: "#fde6e6", color: "#ef4444" }}>
+                <IconTriangleExclamation size={16} />
+              </span>
+              <span className={styles.overviewCount}>{data.malpractice_count}</span>
+            </div>
           </div>
-          <div className={styles.statItem}>
-            <dt className={styles.statLabel}>Re-access Count</dt>
-            <dd className={styles.statValue}>{data.reaccess_count}</dd>
+
+          <div className={styles.overviewStat}>
+            <span className={styles.overviewStatLabel}>Re-access Count</span>
+            <div className={styles.overviewIconValue}>
+              <span className={styles.overviewIcon} style={{ background: "#e0f2fe", color: "#0ea5e9" }}>
+                <IconArrowsRotate size={16} />
+              </span>
+              <span className={styles.overviewCount}>{data.reaccess_count}</span>
+            </div>
           </div>
-          <div className={styles.statItem}>
-            <dt className={styles.statLabel}>Started At</dt>
-            <dd className={styles.statValue}>
-              {data.started_at ? formatDateTime(data.started_at) : "-"}
-            </dd>
+        </div>
+
+        {/* ── Divider ── */}
+        <div className={styles.overviewDivider} />
+
+        {/* ── Meta row ── */}
+        <div className={styles.overviewMeta}>
+          <div className={styles.overviewMetaItem}>
+            <span className={styles.overviewMetaIcon}><IconCalendar size={15} /></span>
+            <div>
+              <span className={styles.overviewMetaLabel}>Started At</span>
+              <span className={styles.overviewMetaValue}>
+                {data.started_at ? formatDateTime(data.started_at) : "—"}
+              </span>
+            </div>
           </div>
-          <div className={styles.statItem}>
-            <dt className={styles.statLabel}>Completed At</dt>
-            <dd className={styles.statValue}>
-              {data.completed_at ? formatDateTime(data.completed_at) : "-"}
-            </dd>
+          <div className={styles.overviewMetaItem}>
+            <span className={styles.overviewMetaIcon}><IconCircleCheck size={15} /></span>
+            <div>
+              <span className={styles.overviewMetaLabel}>Completed At</span>
+              <span className={styles.overviewMetaValue}>
+                {data.completed_at ? formatDateTime(data.completed_at) : "—"}
+              </span>
+            </div>
           </div>
-        </dl>
+          <div className={styles.overviewMetaItem}>
+            <span className={styles.overviewMetaIcon}><IconClock size={15} /></span>
+            <div>
+              <span className={styles.overviewMetaLabel}>Total Duration</span>
+              <span className={styles.overviewMetaValue}>{totalDuration}</span>
+            </div>
+          </div>
+        </div>
       </article>
+
+      {/* ── Per-round cards (> 1 round) ── */}
+      {rounds.length > 1 && (
+        <div className={styles.roundCardsGrid}>
+          {rounds.map((round) => {
+            const isCompleted = Boolean(round.completed_at);
+            const isStarted = Boolean(round.started_at);
+            const roundBadgeVariant = isCompleted ? "warning" : isStarted ? "info" : "default";
+            const roundBadgeLabel = isCompleted ? "Completed" : isStarted ? "In Progress" : "Not Started";
+            const roundBorderColor = isCompleted ? "#16b674" : isStarted ? "#7c5cff" : "#9aa0ac";
+            const scoreColor =
+              round.percentage === 0
+                ? "var(--text-tertiary)"
+                : round.percentage >= 75
+                  ? "#16b674"
+                  : round.percentage >= 50
+                    ? "#f59e0b"
+                    : "#e23b3b";
+            return (
+              <article
+                key={round.round_number}
+                className={styles.roundCard}
+                style={{ borderLeftColor: roundBorderColor }}
+              >
+                <div className={styles.roundCardHeader}>
+                  <span className={styles.roundCardName}>Round {round.round_number}</span>
+                  <Badge variant={roundBadgeVariant}>{roundBadgeLabel}</Badge>
+                  {isCompleted ? (
+                    <span style={{ color: "#22c55e", display: "inline-flex", marginLeft: "auto" }}>
+                      <IconCircleCheck size={18} />
+                    </span>
+                  ) : (
+                    <svg
+                      width={18}
+                      height={18}
+                      viewBox="0 0 18 18"
+                      fill="none"
+                      style={{ marginLeft: "auto", flexShrink: 0 }}
+                    >
+                      <circle cx={9} cy={9} r={7} stroke="#3b82f6" strokeWidth={2} strokeDasharray="3 3" />
+                    </svg>
+                  )}
+                </div>
+                <div className={styles.roundInfoRow}>
+                  <span className={styles.roundInfoIcon}><IconHourglass size={15} /></span>
+                  <span className={styles.roundInfoLabel}>Max Duration</span>
+                  <span className={styles.roundInfoValue}>
+                    {round.max_duration_minutes != null ? `${round.max_duration_minutes} min` : "—"}
+                  </span>
+                </div>
+                <div className={styles.roundInfoRow}>
+                  <span className={styles.roundInfoIcon}><IconListCheck size={15} /></span>
+                  <span className={styles.roundInfoLabel}>Questions</span>
+                  <span className={styles.roundInfoValue}>{round.question_answers.length}</span>
+                </div>
+                <div className={styles.roundInfoRow}>
+                  <span className={styles.roundInfoIcon}><IconBullseye size={15} /></span>
+                  <span className={styles.roundInfoLabel}>Score</span>
+                  <span className={styles.roundInfoValue} style={{ color: scoreColor }}>
+                    {round.percentage}%
+                  </span>
+                </div>
+                <div className={styles.roundInfoRow}>
+                  <span className={styles.roundInfoIcon}><IconCalendar size={15} /></span>
+                  <span className={styles.roundInfoLabel}>Started At</span>
+                  <span className={styles.roundInfoValue}>
+                    {round.started_at ? formatDateTime(round.started_at) : "—"}
+                  </span>
+                </div>
+                <div className={styles.roundInfoRow}>
+                  <span className={styles.roundInfoIcon}><IconCircleCheck size={15} /></span>
+                  <span className={styles.roundInfoLabel}>Completed At</span>
+                  <span className={styles.roundInfoValue}>
+                    {round.completed_at ? formatDateTime(round.completed_at) : "—"}
+                  </span>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
 
       <div className={styles.statusActions}>
         {(status === "completed" || status === "malpractice" || status === "terminated") && (

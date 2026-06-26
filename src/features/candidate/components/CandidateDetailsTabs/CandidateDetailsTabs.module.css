@@ -116,6 +116,7 @@
   background: var(--bg-elevated);
   border: 1.5px solid var(--border-default);
   border-radius: var(--radius-lg);
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px;
 }
 
 .statusCardTitle {
@@ -168,6 +169,192 @@
 .statusCompleted {
   background: #dcfce7;
   color: #15803d;
+}
+
+/* ── Overview stats (Assessment Overview card) ───────────────────────────── */
+.overviewStats {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  align-items: start;
+  margin-bottom: 16px;
+}
+
+.overviewStat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 0 16px;
+  border-right: 1.5px solid var(--border-default);
+  text-align: center;
+}
+
+.overviewStat:first-child {
+  padding-left: 0;
+}
+
+.overviewStat:last-child {
+  padding-right: 0;
+  border-right: none;
+}
+
+.overviewStatLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.overviewIconValue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.overviewIcon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+}
+
+.overviewCount {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.overviewDivider {
+  height: 1.5px;
+  background: var(--border-default);
+  margin: 0 0 16px;
+}
+
+.overviewMeta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+}
+
+.overviewMetaItem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 16px;
+  border-right: 1.5px solid var(--border-default);
+}
+
+.overviewMetaItem:last-child {
+  border-right: none;
+}
+
+.overviewMetaIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+
+.overviewMetaLabel {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  margin-bottom: 3px;
+}
+
+.overviewMetaValue {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .overviewStats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .overviewMeta {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+/* ── Per-round cards (shown when > 1 round) ──────────────────────────────── */
+.roundCardsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.roundCard {
+  padding: 16px;
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--border-default);
+  border-left-width: 3px;
+  border-radius: var(--radius-lg);
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px;
+}
+
+.roundCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1.5px solid var(--border-default);
+}
+
+.roundCardName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-right: auto;
+}
+
+.roundInfoRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border-subtle, var(--border-default));
+}
+
+.roundInfoRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.roundInfoIcon {
+  flex-shrink: 0;
+  display: inline-flex;
+  color: var(--text-tertiary);
+}
+
+.roundInfoLabel {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  min-width: 0;
+}
+
+.roundInfoValue {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: right;
+  white-space: nowrap;
 }
 
 /* Action bar after the Over All + rounds cards. */

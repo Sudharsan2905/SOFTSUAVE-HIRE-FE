@@ -6,7 +6,7 @@ import { clsx } from "@/utils/helpers";
 type Placement = "top" | "bottom" | "left" | "right";
 
 interface TooltipProps {
-  content: string;
+  content: React.ReactNode;
   children: React.ReactElement;
   placement?: Placement;
   disabled?: boolean;
@@ -110,7 +110,7 @@ export function Tooltip({
     timer.current = setTimeout(() => {
       if (!anchorRef.current) return;
       const rect = anchorRef.current.getBoundingClientRect();
-      const estimated = { width: content.length * 7 + 24, height: 32 };
+      const estimated = { width: typeof content === "string" ? content.length * 7 + 24 : 160, height: 32 };
       setPos(computePosition(rect, estimated, placement));
       setVisible(true);
     }, delayMs);
@@ -128,7 +128,7 @@ export function Tooltip({
     timer.current = setTimeout(() => {
       if (!anchorRef.current) return;
       const rect = anchorRef.current.getBoundingClientRect();
-      const estimated = { width: content.length * 7 + 24, height: 32 };
+      const estimated = { width: typeof content === "string" ? content.length * 7 + 24 : 160, height: 32 };
       setPos(computePosition(rect, estimated, placement));
       setVisible(true);
       touchHideTimer.current = setTimeout(() => setVisible(false), 1800);
