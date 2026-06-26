@@ -46,6 +46,8 @@ export const API_ENDPOINTS = {
       `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${id}/submissions`,
     SUBMISSIONS_EXPORT: (workspaceId: string, id: string) =>
       `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${id}/submissions/export`,
+    SUBMISSIONS_STATS: (workspaceId: string, id: string) =>
+      `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${id}/submissions/stats`,
     SUBMISSION_RESUME: (workspaceId: string, assessmentId: string, submissionId: string) =>
       `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${assessmentId}/submissions/${submissionId}/resume`,
     SUBMISSION_TERMINATE: (workspaceId: string, assessmentId: string, submissionId: string) =>

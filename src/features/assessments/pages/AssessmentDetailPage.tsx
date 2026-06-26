@@ -7,9 +7,20 @@ import { FilterBar } from "@/components/shared/FilterBar";
 import { Button } from "@/components/ui/Button";
 import { Pagination } from "@/components/ui/Pagination";
 import { Spinner } from "@/components/ui/Spinner";
-import { Badge, StatusBadge } from "@/components/ui/Badge";
+import { StatusBadge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
-import { IconDownload, IconChevronLeft, IconCircleInfo, IconShare } from "@/assets/icons";
+import {
+  IconDownload,
+  IconChevronLeft,
+  IconShare,
+  IconEye,
+  IconDotsVertical,
+  IconBullseye,
+  IconTriangleExclamation,
+  IconHourglass,
+  IconCircleCheck,
+  IconPeopleGroup,
+} from "@/assets/icons";
 import { Tooltip } from "@/components/ui/Tooltip";
 import type { DateRange } from "@/components/datetime/DateRangePicker";
 import { api } from "@/utils/api";
@@ -35,6 +46,14 @@ interface SubmissionWithCandidate extends Omit<Submission, "candidate"> {
   score_percentage?: number;
 }
 
+interface SubmissionStats {
+  total: number;
+  completed: number;
+  on_hold: number;
+  malpractice: number;
+  avg_percentage: number;
+}
+
 type ExportRound = { round_number: number; percentage: number };
 
 type ExportRow = {
@@ -45,6 +64,46 @@ type ExportRow = {
   rounds: ExportRound[];
   completed_at: string | null;
 };
+
+function ScoreRing({ pct }: Readonly<{ pct: number }>) {
+  const r = 15;
+  const C = 2 * Math.PI * r;
+  const filled = (pct / 100) * C;
+  let ringColor = "#e7e8ed";
+  if (pct >= 50) ringColor = "#7c5cff";
+  else if (pct > 0) ringColor = "#16b674";
+  const txtColor = pct > 0 ? "#1e2330" : "#9aa0ac";
+  return (
+    <svg width={46} height={46} viewBox="0 0 40 40">
+      <circle cx={20} cy={20} r={r} fill="none" stroke="#edeef2" strokeWidth={4} />
+      {pct > 0 && (
+        <circle
+          cx={20}
+          cy={20}
+          r={r}
+          fill="none"
+          stroke={ringColor}
+          strokeWidth={4}
+          strokeLinecap="round"
+          strokeDasharray={`${filled} ${C - filled}`}
+          transform="rotate(-90 20 20)"
+        />
+      )}
+      <text
+        x={20}
+        y={20}
+        dy="0.36em"
+        textAnchor="middle"
+        fontSize={10}
+        fontWeight={700}
+        fill={txtColor}
+        fontFamily="Inter, sans-serif"
+      >
+        {pct}%
+      </text>
+    </svg>
+  );
+}
 
 export default function AssessmentDetailPage() {
   const { workspaceId, id } = useParams<{ workspaceId: string; id: string }>();
@@ -62,18 +121,26 @@ export default function AssessmentDetailPage() {
   const [exporting, setExporting] = useState(false);
   const [exportType, setExportType] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
+  const [submissionStats, setSubmissionStats] = useState<SubmissionStats | null>(null);
   const { page, pageSize, goToPage, reset, changePageSize } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
 
-  // Fetch the full assessment once (needed by the schedule/share wizard and max-rounds display)
+  // Fetch full assessment (needed by share wizard and max-rounds display)
   useEffect(() => {
     if (!workspaceId || !id) return;
     api
       .get(API_ENDPOINTS.ASSESSMENTS.BY_ID(workspaceId, id))
       .then(({ data }) => setAssessment(data.data ?? null))
-      .catch(() => {
-        /* non-critical */
-      });
+      .catch(() => {});
+  }, [workspaceId, id]);
+
+  // Fetch aggregate stats from the dedicated BE endpoint
+  useEffect(() => {
+    if (!workspaceId || !id) return;
+    api
+      .get(API_ENDPOINTS.ASSESSMENTS.SUBMISSIONS_STATS(workspaceId, id))
+      .then(({ data }) => setSubmissionStats(data.data ?? null))
+      .catch(() => {});
   }, [workspaceId, id]);
 
   const fetchSubmissions = useCallback(async () => {
@@ -169,6 +236,9 @@ export default function AssessmentDetailPage() {
   };
 
   const maxRounds = assessment?.rounds?.length ?? null;
+  const totalCount = submissionStats?.total ?? meta?.total ?? 0;
+  const pctOf = (n: number) =>
+    totalCount > 0 ? `${((n / totalCount) * 100).toFixed(1)}% of total` : "0% of total";
 
   let content: React.ReactNode;
   if (isLoading) {
@@ -199,7 +269,7 @@ export default function AssessmentDetailPage() {
                 <th>Round</th>
                 <th>Malpractice</th>
                 <th>Started</th>
-                <th style={{ textAlign: "center" }}>Actions</th>
+                <th style={{ textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -207,13 +277,16 @@ export default function AssessmentDetailPage() {
                 const name = sub.candidate
                   ? getFullName(sub.candidate as { first_name: string; last_name?: string })
                   : "Unknown";
-                const pct = sub.percentage;
+                const pct = sub.percentage ?? 0;
                 const candidateId = sub.candidate?.id ?? "";
                 return (
                   <tr key={sub.id}>
                     <td>
                       <div className={styles.candidateCell}>
-                        <div className={styles.avatar} style={{ background: getAvatarColor(name) }}>
+                        <div
+                          className={styles.avatar}
+                          style={{ background: getAvatarColor(name) }}
+                        >
                           {getInitials(name)}
                         </div>
                         <div>
@@ -226,43 +299,43 @@ export default function AssessmentDetailPage() {
                       <StatusBadge status={sub.status} />
                     </td>
                     <td>
-                      {pct === undefined || pct === null ? (
-                        <span style={{ color: "var(--text-tertiary)", fontSize: 13 }}>—</span>
-                      ) : (
-                        <Badge variant="default">{pct.toFixed(1)}%</Badge>
-                      )}
+                      <ScoreRing pct={pct} />
                     </td>
-                    <td style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+                    <td style={{ fontSize: 14, color: "var(--text-secondary)" }}>
                       {sub.current_round}
                       {maxRounds === null ? "" : ` / ${maxRounds}`}
                     </td>
                     <td
                       style={{
-                        fontSize: 13,
+                        fontSize: 14,
+                        fontWeight: 600,
                         color:
-                          (sub.malpractice_count ?? 0) > 0
-                            ? "var(--color-error-600, #dc2626)"
-                            : "var(--text-tertiary)",
+                          (sub.malpractice_count ?? 0) > 0 ? "#e23b3b" : "var(--text-tertiary)",
                       }}
                     >
                       {sub.malpractice_count ?? 0} / 3
                     </td>
-                    <td style={{ fontSize: 13, color: "var(--text-tertiary)" }}>
+                    <td style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                       {formatDateTime(sub.started_at)}
                     </td>
                     <td>
-                      <div style={{ display: "flex", justifyContent: "center", gap: 6 }}>
-                        <Tooltip content="Candidate Details" placement="top">
+                      <div className={styles.actionBtnGroup}>
+                        <Tooltip content="View Details" placement="top">
                           <button
-                            className={`${styles.actionBtn} ${styles.viewDetails}`}
+                            className={styles.actionBtn}
                             onClick={() =>
-                              navigate(ROUTES.ADMIN.candidateDetail(workspaceId!, id!, candidateId))
+                              navigate(
+                                ROUTES.ADMIN.candidateDetail(workspaceId!, id!, candidateId)
+                              )
                             }
                             aria-label="View candidate details"
                           >
-                            <IconCircleInfo size={20} />
+                            <IconEye size={14} />
                           </button>
                         </Tooltip>
+                        <button className={styles.actionBtn} aria-label="More options">
+                          <IconDotsVertical size={14} />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -326,6 +399,72 @@ export default function AssessmentDetailPage() {
       >
         <IconChevronLeft size={14} /> Back to Assessments
       </button>
+
+      {/* Stats strip */}
+      <div className={styles.statsStrip}>
+        <div className={styles.statCard}>
+          <div className={styles.statIcon} style={{ background: "#efeaff", color: "#7c5cff" }}>
+            <IconPeopleGroup size={28} />
+          </div>
+          <div>
+            <p className={styles.statLabel}>Total Candidates</p>
+            <p className={styles.statValue}>{totalCount}</p>
+            <p className={styles.statSub}>100% of total</p>
+          </div>
+        </div>
+
+        <div className={styles.statCard}>
+          <div className={styles.statIcon} style={{ background: "#e4f7ee", color: "#16b674" }}>
+            <IconCircleCheck size={28} />
+          </div>
+          <div>
+            <p className={styles.statLabel}>Completed</p>
+            <p className={styles.statValue}>{submissionStats?.completed ?? "—"}</p>
+            <p className={styles.statSub}>
+              {submissionStats ? pctOf(submissionStats.completed) : ""}
+            </p>
+          </div>
+        </div>
+
+        <div className={styles.statCard}>
+          <div className={styles.statIcon} style={{ background: "#fff3dc", color: "#f5a524" }}>
+            <IconHourglass size={28} />
+          </div>
+          <div>
+            <p className={styles.statLabel}>On Hold</p>
+            <p className={styles.statValue}>{submissionStats?.on_hold ?? "—"}</p>
+            <p className={styles.statSub}>
+              {submissionStats ? pctOf(submissionStats.on_hold) : ""}
+            </p>
+          </div>
+        </div>
+
+        <div className={styles.statCard}>
+          <div className={styles.statIcon} style={{ background: "#fde6e6", color: "#ef4444" }}>
+            <IconTriangleExclamation size={28} />
+          </div>
+          <div>
+            <p className={styles.statLabel}>Malpractice</p>
+            <p className={styles.statValue}>{submissionStats?.malpractice ?? "—"}</p>
+            <p className={styles.statSub}>
+              {submissionStats ? pctOf(submissionStats.malpractice) : ""}
+            </p>
+          </div>
+        </div>
+
+        <div className={styles.statCard}>
+          <div className={styles.statIcon} style={{ background: "#efeaff", color: "#7c5cff" }}>
+            <IconBullseye size={28} />
+          </div>
+          <div>
+            <p className={styles.statLabel}>Avg. Percentage</p>
+            <p className={styles.statValue}>
+              {submissionStats ? `${submissionStats.avg_percentage.toFixed(1)}%` : "—"}
+            </p>
+            <p className={styles.statSub}>Across all</p>
+          </div>
+        </div>
+      </div>
 
       <FilterBar
         search={search}

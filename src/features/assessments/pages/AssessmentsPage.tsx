@@ -14,11 +14,12 @@ import {
   IconMail,
   IconWhatsApp,
   IconWorkspace,
-  IconUsers,
   IconRectangleList,
-  IconCheckCircle,
   IconShield,
   IconMonitor,
+  IconUsersGroup,
+  IconListCheck,
+  IconCircleCheck,
 } from "@/assets/icons";
 import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -415,7 +416,7 @@ export default function AssessmentsPage() {
                   className={styles.statCardIcon}
                   style={{ background: "rgba(108,99,255,0.09)", color: "var(--primary-600)" }}
                 >
-                  <IconRectangleList size={22} />
+                  <IconListCheck size={30} />
                 </div>
                 <span className={styles.statCardValue}>{animTotal}</span>
               </div>
@@ -431,7 +432,7 @@ export default function AssessmentsPage() {
                   className={styles.statCardIcon}
                   style={{ background: "rgba(22,199,132,0.1)", color: "#0b7a52" }}
                 >
-                  <IconCheckCircle size={22} />
+                  <IconCircleCheck size={30} />
                 </div>
                 <span className={styles.statCardValue}>{animMonitoring}</span>
               </div>
@@ -448,7 +449,7 @@ export default function AssessmentsPage() {
                   className={styles.statCardIcon}
                   style={{ background: "rgba(255,107,44,0.09)", color: "#cc4f15" }}
                 >
-                  <IconUsers size={22} />
+                  <IconUsersGroup size={30} />
                 </div>
                 <span className={styles.statCardValue}>{animSubmissions}</span>
               </div>
