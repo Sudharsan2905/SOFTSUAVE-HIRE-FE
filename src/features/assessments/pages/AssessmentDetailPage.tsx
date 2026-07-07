@@ -184,7 +184,7 @@ export default function AssessmentDetailPage() {
     api
       .get(API_ENDPOINTS.ASSESSMENTS.BY_ID(workspaceId, id))
       .then(({ data }) => setAssessment(data.data ?? null))
-      .catch(() => {});
+      .catch(() => undefined);
   }, [workspaceId, id]);
 
   // Fetch aggregate stats from the dedicated BE endpoint
@@ -193,7 +193,7 @@ export default function AssessmentDetailPage() {
     api
       .get(API_ENDPOINTS.ASSESSMENTS.SUBMISSIONS_STATS(workspaceId, id))
       .then(({ data }) => setSubmissionStats(data.data ?? null))
-      .catch(() => {});
+      .catch(() => undefined);
   }, [workspaceId, id]);
 
   // Close open menu on any outside click

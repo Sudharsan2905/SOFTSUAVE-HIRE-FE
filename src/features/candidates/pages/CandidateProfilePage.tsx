@@ -270,7 +270,7 @@ export default function CandidateProfilePage() {
                       <StatusBadge status={s.status} />
                     </td>
                     <td style={{ padding: "12px 16px", fontSize: 13, color: "var(--text-secondary)" }}>
-                      {s.percentage != null ? `${s.percentage}%` : "—"}
+                      {s.percentage !== null && s.percentage !== undefined ? `${s.percentage}%` : "—"}
                     </td>
                     <td style={{ padding: "12px 16px", fontSize: 13, color: "var(--text-secondary)" }}>
                       {s.started_at ? formatDateTime(s.started_at) : "—"}

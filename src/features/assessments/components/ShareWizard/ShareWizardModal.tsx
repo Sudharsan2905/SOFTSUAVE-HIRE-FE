@@ -251,10 +251,10 @@ function PermanentTab({
         if (a) {
           setRestrictEnabled(a.restrict_candidate_access ?? false);
           setRestrictionMode(a.restriction_mode ?? RestrictionMode.INCLUDE);
-          emailState.setEmails(a.restricted_emails ?? []);
+          emailState.loadEmails(a.restricted_emails ?? []);
         }
       })
-      .catch(() => {})
+      .catch(() => undefined)
       .finally(() => setRestrictionLoaded(true));
   }, [assessmentId, workspaceId]);
 

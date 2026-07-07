@@ -15,6 +15,7 @@ export interface UseRestrictedEmailsReturn {
   inputError: string;
   commitInput: () => void;
   removeEmail: (email: string) => void;
+  loadEmails: (emails: string[]) => void;
   reset: () => void;
 }
 
@@ -53,11 +54,15 @@ export function useRestrictedEmails(): UseRestrictedEmailsReturn {
     setEmails((prev) => prev.filter((e) => e !== email));
   }, []);
 
+  const loadEmails = useCallback((loaded: string[]) => {
+    setEmails(loaded);
+  }, []);
+
   const reset = useCallback(() => {
     setRawInputState("");
     setEmails([]);
     setInputError("");
   }, []);
 
-  return { rawInput, setRawInput, emails, inputError, commitInput, removeEmail, reset };
+  return { rawInput, setRawInput, emails, inputError, commitInput, removeEmail, loadEmails, reset };
 }
