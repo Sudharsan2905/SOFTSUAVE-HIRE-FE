@@ -10,6 +10,7 @@ import {
   IconAssessment,
   IconLiveInterview,
   IconUsers,
+  IconUserSetting,
   IconDotsVertical,
 } from "@/assets/icons";
 import { UserRole } from "@/types";
@@ -116,14 +117,23 @@ export function Sidebar() {
               </NavLink>
             </Tooltip>
           ))}
+          <Tooltip content="Candidates" placement="right" disabled={!collapsed}>
+            <NavLink
+              to={ROUTES.ADMIN.CANDIDATES}
+              className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ""}`}
+            >
+              <IconUsers size={20} />
+              {!collapsed && <span>Candidates</span>}
+            </NavLink>
+          </Tooltip>
           {isSuperAdmin && (
-            <Tooltip content="Users" placement="right" disabled={!collapsed}>
+            <Tooltip content="Administrators" placement="right" disabled={!collapsed}>
               <NavLink
                 to={ROUTES.ADMIN.USERS}
                 className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ""}`}
               >
-                <IconUsers size={20} />
-                {!collapsed && <span>Users</span>}
+                <IconUserSetting size={20} />
+                {!collapsed && <span>Administrators</span>}
               </NavLink>
             </Tooltip>
           )}

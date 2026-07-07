@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import styles from "./CandidateDetailsPage.module.css";
 import { getAvatarColor, getInitials } from "@/utils/helpers";
-import { IconMail, IconPhone, IconMapPin, IconGender, IconChevronLeft } from "@/assets/icons";
+import { IconMail, IconPhone, IconMapPin, IconGender, IconChevronLeft, IconDelete } from "@/assets/icons";
 import { CandidateDetailsTabs } from "@/features/candidate/components/CandidateDetailsTabs";
 import { Header } from "@/components/layout/Header";
+import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { Spinner } from "@/components/ui/Spinner";
 import type { CandidateSubmissionDetail } from "@/types";
@@ -24,6 +27,8 @@ export default function CandidateDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedVersion, setSelectedVersion] = useState<string>("current");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
 
   const fetchSubmission = useCallback(
     async (version: string) => {
@@ -53,6 +58,24 @@ export default function CandidateDetailsPage() {
 
   const handleVersionChange = (version: string) => {
     setSelectedVersion(version);
+  };
+
+  const handleDeleteSubmission = async () => {
+    if (!data) return;
+    setDeleteSubmitting(true);
+    try {
+      await api.delete(
+        API_ENDPOINTS.ASSESSMENTS.SUBMISSION_DELETE(workspaceId!, assessmentId!, data.submission_id)
+      );
+      toast.success("Submission deleted.");
+      setShowDeleteModal(false);
+      navigate(ROUTES.ADMIN.assessmentDetail(workspaceId!, assessmentId!));
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg ?? "Failed to delete submission");
+    } finally {
+      setDeleteSubmitting(false);
+    }
   };
 
   if (isLoading) {
@@ -85,15 +108,24 @@ export default function CandidateDetailsPage() {
         title="Candidate Details"
         subtitle="View and analyze candidate information and interview progress"
         actions={
-          <div className={styles.versionControl}>
-            <span className={styles.versionLabel}>Version</span>
-            <Select
-              options={versionOptions}
-              value={selectedVersion}
-              onChange={handleVersionChange}
-              fullWidth={false}
-              style={{ width: 190 }}
-            />
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div className={styles.versionControl}>
+              <span className={styles.versionLabel}>Version</span>
+              <Select
+                options={versionOptions}
+                value={selectedVersion}
+                onChange={handleVersionChange}
+                fullWidth={false}
+                style={{ width: 190 }}
+              />
+            </div>
+            <Button
+              variant="danger"
+              leftIcon={<IconDelete size={14} />}
+              onClick={() => setShowDeleteModal(true)}
+            >
+              Delete Submission
+            </Button>
           </div>
         }
       />
@@ -164,6 +196,26 @@ export default function CandidateDetailsPage() {
           />
         </div>
       </div>
+
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Delete Submission"
+        footer={
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+            <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleDeleteSubmission} isLoading={deleteSubmitting}>
+              Delete
+            </Button>
+          </div>
+        }
+      >
+        <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+          Are you sure you want to delete this submission? This action cannot be undone.
+        </p>
+      </Modal>
     </div>
   );
 }

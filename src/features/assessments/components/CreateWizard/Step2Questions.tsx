@@ -80,6 +80,14 @@ export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Reado
     onUpdateQuestions(selectedIds.filter((sid) => sid !== id));
   };
 
+  const handleSelectAll = () => {
+    onUpdateQuestions([...selectedIds, ...availableQuestions.map((q) => q.id)]);
+  };
+
+  const handleUnselectAll = () => {
+    onUpdateQuestions([]);
+  };
+
   let browserContent: React.ReactNode;
   if (isLoading) {
     browserContent = (
@@ -129,9 +137,20 @@ export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Reado
       <div className={styles.selectedPane}>
         <div className={styles.paneHeader}>
           <h3 className={styles.paneTitle}>Selected Questions</h3>
-          <span className={styles.paneCount}>
-            {selectedIds.length} / {round.question_count} required
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span className={styles.paneCount}>
+              {selectedIds.length} / {round.question_count} required
+            </span>
+            {availableQuestions.length > 0 && (
+              <button
+                type="button"
+                className={styles.paneAction}
+                onClick={handleSelectAll}
+              >
+                Select All
+              </button>
+            )}
+          </div>
         </div>
         {selectedQuestions.length === 0 ? (
           <div className={styles.dropHint}>
@@ -158,6 +177,15 @@ export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Reado
       <div className={styles.browserPane}>
         <div className={styles.paneHeader}>
           <h3 className={styles.paneTitle}>Knowledge Vault</h3>
+          {selectedIds.length > 0 && (
+            <button
+              type="button"
+              className={styles.paneAction}
+              onClick={handleUnselectAll}
+            >
+              Unselect All
+            </button>
+          )}
         </div>
         <div style={{ overflow: "scroll" }}>
           <div className={styles.filters}>

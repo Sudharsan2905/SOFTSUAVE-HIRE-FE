@@ -289,13 +289,41 @@ export default function QuestionsPage() {
   const handleFileSelect = async (file: File) => {
     setExcelFile(file);
     try {
-      const rows = await readXlsxFile(file);
-      const headers = (rows[0].data[0] ?? []).filter(Boolean).map(String);
+      let headers: string[];
+      if (file.name.toLowerCase().endsWith(".csv")) {
+        const text = await file.text();
+        const firstLine = text.split("\n")[0] ?? "";
+        headers = firstLine
+          .split(",")
+          .map((h) => h.trim().replace(/^"|"$/g, ""))
+          .filter(Boolean);
+      } else {
+        const rows = await readXlsxFile(file);
+        headers = (rows[0].data[0] ?? []).filter(Boolean).map(String);
+      }
       setExcelHeaders(headers);
-      const auto = autoMapColumns(headers);
-      setColumnMap(auto);
+      setColumnMap(autoMapColumns(headers));
     } catch {
       toast.error(QUESTION_BANK_ERRORS.EXCEL_HEADERS_FAILED);
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const { data } = await api.get(API_ENDPOINTS.CATEGORIES.IMPORT_TEMPLATE(categoryId!));
+      const b64 = data.data?.template as string;
+      const bytes = Uint8Array.from(atob(b64), (c) => c.codePointAt(0)!);
+      const blob = new Blob([bytes], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "import_template.xlsx";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Failed to download template");
     }
   };
 
@@ -756,7 +784,7 @@ export default function QuestionsPage() {
         </div>
       </Modal>
 
-      {/* Excel Import — Step 1: File Upload */}
+      {/* Import — Step 1: File Upload */}
       <Modal
         isOpen={showExcel}
         onClose={() => {
@@ -764,7 +792,7 @@ export default function QuestionsPage() {
           setExcelFile(null);
           setExcelHeaders([]);
         }}
-        title="Excel Import"
+        title="Import Questions"
         footer={
           <>
             <Button
@@ -792,7 +820,7 @@ export default function QuestionsPage() {
         <div className={styles.uploadArea}>
           <IconFileExcel size={40} color="var(--text-tertiary)" />
           <p style={{ fontSize: 14, fontWeight: 500 }}>
-            {excelFile ? excelFile.name : "Upload an Excel (.xlsx) file"}
+            {excelFile ? excelFile.name : "Upload an Excel or CSV file"}
           </p>
           <p
             style={{
@@ -803,10 +831,22 @@ export default function QuestionsPage() {
           >
             You'll map your columns to Question, Options, Answer, and Complexity in the next step.
           </p>
+          <button
+            type="button"
+            style={{
+              fontSize: 12,
+              color: "var(--primary-600)",
+              textDecoration: "underline",
+              cursor: "pointer",
+            }}
+            onClick={handleDownloadTemplate}
+          >
+            Download import template
+          </button>
           <input
             ref={fileRef}
             type="file"
-            accept=".xlsx,.xls"
+            accept=".xlsx,.xls,.csv"
             style={{ display: "none" }}
             onChange={(e) => {
               if (e.target.files?.[0]) handleFileSelect(e.target.files[0]);

@@ -34,6 +34,8 @@ export const ROUTES = {
     PROFILE_BY_ID: "/profile/:userId",
     NOTIFICATIONS: "/notifications",
     USERS: "/users",
+    CANDIDATES: "/candidates",
+    CANDIDATE_PROFILE: "/candidates/:candidateId",
     // Builders
     questionBankCategory: (categoryId: string) => `/question-bank/${categoryId}`,
     assessments: (workspaceId: string) => `/workspaces/${workspaceId}/assessments`,
@@ -42,5 +44,6 @@ export const ROUTES = {
     candidateDetail: (workspaceId: string, assessmentId: string, candidateId: string) =>
       `/workspaces/${workspaceId}/assessments/${assessmentId}/candidates/${candidateId}`,
     profileById: (userId: string) => `/profile/${userId}`,
+    candidateProfile: (candidateId: string) => `/candidates/${candidateId}`,
   },
 } as const;

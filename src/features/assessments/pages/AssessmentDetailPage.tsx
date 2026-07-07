@@ -23,6 +23,7 @@ import {
   IconRefresh,
   IconPlay,
   IconPower,
+  IconDelete,
 } from "@/assets/icons";
 import { Modal } from "@/components/ui/Modal";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -166,6 +167,9 @@ export default function AssessmentDetailPage() {
   const [submissionStats, setSubmissionStats] = useState<SubmissionStats | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteSubId, setDeleteSubId] = useState("");
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [showReaccessModal, setShowReaccessModal] = useState(false);
   const [reaccessSubId, setReaccessSubId] = useState("");
   const [reaccessCategory, setReaccessCategory] = useState("poor_network");
@@ -233,6 +237,29 @@ export default function AssessmentDetailPage() {
       toast.error(msg ?? "Failed to terminate");
     } finally {
       setSubLoading(submissionId, false);
+    }
+  };
+
+  const openDeleteModal = (submissionId: string) => {
+    setDeleteSubId(submissionId);
+    setShowDeleteModal(true);
+    setOpenMenuId(null);
+  };
+
+  const handleDeleteSubmission = async () => {
+    setDeleteSubmitting(true);
+    try {
+      await api.delete(
+        API_ENDPOINTS.ASSESSMENTS.SUBMISSION_DELETE(workspaceId!, id!, deleteSubId)
+      );
+      toast.success("Submission deleted.");
+      setShowDeleteModal(false);
+      fetchSubmissions();
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg ?? "Failed to delete submission");
+    } finally {
+      setDeleteSubmitting(false);
     }
   };
 
@@ -507,6 +534,15 @@ export default function AssessmentDetailPage() {
                                   <IconPower size={13} /> Terminate
                                 </button>
                               )}
+                              <button
+                                className={`${styles.menuItem} ${styles.menuItemDanger}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openDeleteModal(sub.id);
+                                }}
+                              >
+                                <IconDelete size={13} /> Delete
+                              </button>
                             </div>
                           )}
                         </div>
@@ -675,6 +711,26 @@ export default function AssessmentDetailPage() {
           }}
         />
       )}
+
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Delete Submission"
+        footer={
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+            <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleDeleteSubmission} isLoading={deleteSubmitting}>
+              Delete
+            </Button>
+          </div>
+        }
+      >
+        <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+          Are you sure you want to delete this submission? This action cannot be undone.
+        </p>
+      </Modal>
 
       <Modal
         isOpen={showReaccessModal}

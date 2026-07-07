@@ -10,6 +10,7 @@ import {
   IconCopy,
   IconCheck,
   IconDelete,
+  IconEdit,
   IconGlobe,
   IconShield,
   IconClock,
@@ -220,12 +221,63 @@ function NumberStepper({ label, id, value, min = 1, max, onChange }: Readonly<Nu
 
 // ─── Tab 1: Permanent Link ────────────────────────────────────────────────────
 
+interface PermanentTabProps {
+  shareLink: string;
+  assessmentName: string;
+  assessmentId: string;
+  workspaceId: string;
+}
+
 function PermanentTab({
   shareLink,
   assessmentName,
-}: Readonly<{ shareLink: string; assessmentName: string }>) {
+  assessmentId,
+  workspaceId,
+}: Readonly<PermanentTabProps>) {
   const [copied, setCopied] = useState(false);
   const fullUrl = `${globalThis.location.origin}/assessment/${shareLink}`;
+
+  const [restrictEnabled, setRestrictEnabled] = useState(false);
+  const [restrictionMode, setRestrictionMode] = useState<RestrictionMode>(RestrictionMode.INCLUDE);
+  const emailState = useRestrictedEmails();
+  const [savingRestriction, setSavingRestriction] = useState(false);
+  const [restrictionLoaded, setRestrictionLoaded] = useState(false);
+
+  useEffect(() => {
+    api
+      .get(API_ENDPOINTS.ASSESSMENTS.BY_ID(workspaceId, assessmentId))
+      .then(({ data }) => {
+        const a = data.data;
+        if (a) {
+          setRestrictEnabled(a.restrict_candidate_access ?? false);
+          setRestrictionMode(a.restriction_mode ?? RestrictionMode.INCLUDE);
+          emailState.setEmails(a.restricted_emails ?? []);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setRestrictionLoaded(true));
+  }, [assessmentId, workspaceId]);
+
+  const handleSaveRestriction = async () => {
+    if (restrictEnabled && emailState.emails.length === 0) {
+      toast.error("Add at least one email to the restriction list.");
+      return;
+    }
+    setSavingRestriction(true);
+    try {
+      await api.put(API_ENDPOINTS.ASSESSMENTS.PERMANENT_RESTRICTION(workspaceId, assessmentId), {
+        restrict_candidate_access: restrictEnabled,
+        restriction_mode: restrictEnabled ? restrictionMode : null,
+        restricted_emails: restrictEnabled ? emailState.emails : [],
+      });
+      toast.success("Restriction settings saved.");
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg ?? "Failed to save restriction");
+    } finally {
+      setSavingRestriction(false);
+    }
+  };
 
   const handleCopy = async () => {
     try {
@@ -332,6 +384,26 @@ function PermanentTab({
         <IconGlobe size={12} />
         <span>Anyone with this link can access the assessment</span>
       </p>
+
+      {/* Access restriction */}
+      {restrictionLoaded && (
+        <CandidateAccessRestriction
+          enabled={restrictEnabled}
+          onToggle={setRestrictEnabled}
+          mode={restrictionMode}
+          onModeChange={setRestrictionMode}
+          emailState={emailState}
+        />
+      )}
+
+      <div className={styles.generateRow}>
+        <Button
+          onClick={() => void handleSaveRestriction()}
+          isLoading={savingRestriction}
+        >
+          Save Restriction
+        </Button>
+      </div>
     </div>
   );
 }
@@ -340,13 +412,53 @@ function PermanentTab({
 
 interface LinkAccordionCardProps {
   link: ShareLink;
+  workspaceId: string;
+  assessmentId: string;
   revoking: string | null;
   onRevoke: (id: string) => void;
+  onUpdate: (updated: ShareLink) => void;
 }
 
-function LinkAccordionCard({ link, revoking, onRevoke }: Readonly<LinkAccordionCardProps>) {
+function LinkAccordionCard({
+  link,
+  workspaceId,
+  assessmentId,
+  revoking,
+  onRevoke,
+  onUpdate,
+}: Readonly<LinkAccordionCardProps>) {
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editLabel, setEditLabel] = useState(link.label ?? "");
+  const [editStart, setEditStart] = useState(link.start_time ?? "");
+  const [editEnd, setEditEnd] = useState(link.end_time ?? "");
+  const [saving, setSaving] = useState(false);
   const fullUrl = `${globalThis.location.origin}/assessment/${link.share_link}`;
+
+  const handleSave = async () => {
+    if (!editLabel.trim()) {
+      toast.error("Label is required.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload: Record<string, unknown> = { label: editLabel.trim() };
+      if (editStart) payload.start_time = new Date(editStart).toISOString();
+      if (editEnd) payload.end_time = new Date(editEnd).toISOString();
+      const { data } = await api.put(
+        API_ENDPOINTS.ASSESSMENTS.SHARE_BY_ID(workspaceId, assessmentId, link.id),
+        payload
+      );
+      onUpdate(data.data as ShareLink);
+      setEditing(false);
+      toast.success("Link updated.");
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg ?? "Failed to update link");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className={styles.customLinkCard}>
@@ -366,53 +478,98 @@ function LinkAccordionCard({ link, revoking, onRevoke }: Readonly<LinkAccordionC
 
       <div className={clsx(styles.customLinkBody, open && styles.customLinkBodyOpen)}>
         <div className={styles.customLinkBodyInner}>
-          {/* Date range */}
-          {(link.start_time ?? link.end_time) && (
-            <div className={styles.customLinkDateRow}>
-              {link.start_time && (
-                <span className={styles.customLinkDate}>
-                  <IconClock size={14} className={styles.customLinkClock} />
-                  {formatDate(link.start_time)}
-                </span>
+          {editing ? (
+            <>
+              <Input
+                label="Label"
+                id={`edit-label-${link.id}`}
+                value={editLabel}
+                onChange={(e) => setEditLabel(e.target.value)}
+              />
+              <div className={styles.dateGrid}>
+                <DateTimePicker
+                  id={`edit-start-${link.id}`}
+                  label="Opens On"
+                  value={editStart}
+                  onChange={setEditStart}
+                />
+                <DateTimePicker
+                  id={`edit-end-${link.id}`}
+                  label="Ends On"
+                  value={editEnd}
+                  min={editStart}
+                  onChange={setEditEnd}
+                />
+              </div>
+              <div className={styles.customLinkActionBtns}>
+                <Button size="sm" onClick={() => void handleSave()} isLoading={saving}>
+                  Save
+                </Button>
+                <Button size="sm" variant="secondary" onClick={() => setEditing(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Date range */}
+              {(link.start_time ?? link.end_time) && (
+                <div className={styles.customLinkDateRow}>
+                  {link.start_time && (
+                    <span className={styles.customLinkDate}>
+                      <IconClock size={14} className={styles.customLinkClock} />
+                      {formatDate(link.start_time)}
+                    </span>
+                  )}
+                  {link.start_time && link.end_time && (
+                    <IconArrowRight size={13} className={styles.customLinkArrow} />
+                  )}
+                  {link.end_time && (
+                    <span className={styles.customLinkDate}>
+                      <IconClock size={14} className={styles.customLinkClock} />
+                      {formatDate(link.end_time)}
+                    </span>
+                  )}
+                </div>
               )}
-              {link.start_time && link.end_time && (
-                <IconArrowRight size={13} className={styles.customLinkArrow} />
-              )}
-              {link.end_time && (
-                <span className={styles.customLinkDate}>
-                  <IconClock size={14} className={styles.customLinkClock} />
-                  {formatDate(link.end_time)}
-                </span>
-              )}
-            </div>
+
+              {/* URL */}
+              <input
+                className={styles.linkField}
+                id={`custom-link-${link.id}`}
+                readOnly
+                value={fullUrl}
+                aria-label={link.label ?? "Custom share link"}
+              />
+
+              {/* Footer */}
+              <div className={styles.customLinkActions}>
+                <span className={styles.customLinkCreated}>{formatDate(link.created_at)}</span>
+                <div className={styles.customLinkActionBtns}>
+                  <CopyButton text={fullUrl} />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    leftIcon={<IconEdit size={13} />}
+                    onClick={() => setEditing(true)}
+                    title="Edit this link"
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    leftIcon={<IconDelete size={13} />}
+                    onClick={() => onRevoke(link.id)}
+                    isLoading={revoking === link.id}
+                    title="Revoke this link"
+                  >
+                    Revoke
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
-
-          {/* URL */}
-          <input
-            className={styles.linkField}
-            id={`custom-link-${link.id}`}
-            readOnly
-            value={fullUrl}
-            aria-label={link.label ?? "Custom share link"}
-          />
-
-          {/* Footer */}
-          <div className={styles.customLinkActions}>
-            <span className={styles.customLinkCreated}>{formatDate(link.created_at)}</span>
-            <div className={styles.customLinkActionBtns}>
-              <CopyButton text={fullUrl} />
-              <Button
-                variant="danger"
-                size="sm"
-                leftIcon={<IconDelete size={13} />}
-                onClick={() => onRevoke(link.id)}
-                isLoading={revoking === link.id}
-                title="Revoke this link"
-              >
-                Revoke
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -552,6 +709,10 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
     } finally {
       setGenerating(false);
     }
+  };
+
+  const handleLinkUpdated = (updated: ShareLink) => {
+    setExistingLinks((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
   };
 
   const handleRevoke = async (shareId: string) => {
@@ -726,8 +887,11 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
               <LinkAccordionCard
                 key={link.id}
                 link={link}
+                workspaceId={workspaceId}
+                assessmentId={assessmentId}
                 revoking={revoking}
                 onRevoke={(id) => void handleRevoke(id)}
+                onUpdate={handleLinkUpdated}
               />
             ))}
           </div>
@@ -763,7 +927,12 @@ export function ShareWizardModal({ isOpen, onClose, assessment }: Readonly<Share
       {/* Tab panels */}
       <div role="tabpanel">
         {activeTab === "permanent" && (
-          <PermanentTab shareLink={assessment.share_link} assessmentName={assessment.name} />
+          <PermanentTab
+            shareLink={assessment.share_link}
+            assessmentName={assessment.name}
+            assessmentId={assessment.id}
+            workspaceId={assessment.workspace_id}
+          />
         )}
         {activeTab === "custom" && (
           <CustomLinkTab assessmentId={assessment.id} workspaceId={assessment.workspace_id} />

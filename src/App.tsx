@@ -36,6 +36,10 @@ const AssessmentDetailPage = lazy(
 const CandidateDetailsPage = lazy(() => import("@/features/candidate/pages/CandidateDetailsPage"));
 const LiveMonitoringPage = lazy(() => import("@/features/liveMonitoring/pages/LiveMonitoringPage"));
 const UsersPage = lazy(() => import("@/features/users/pages/UsersPage"));
+const CandidatesPage = lazy(() => import("@/features/candidates/pages/CandidatesPage"));
+const CandidateProfilePage = lazy(
+  () => import("@/features/candidates/pages/CandidateProfilePage")
+);
 const UserProfilePage = lazy(() => import("@/features/profile/pages/UserProfilePage"));
 const NotificationsPage = lazy(() => import("@/features/notifications/pages/NotificationsPage"));
 
@@ -100,6 +104,8 @@ export default function App() {
           <Route path={ROUTES.ADMIN.NOTIFICATIONS} element={<NotificationsPage />} />
           <Route path={ROUTES.ADMIN.ASSESSMENT_DETAIL} element={<AssessmentDetailPage />} />
           <Route path={ROUTES.ADMIN.CANDIDATE_DETAIL} element={<CandidateDetailsPage />} />
+          <Route path={ROUTES.ADMIN.CANDIDATES} element={<CandidatesPage />} />
+          <Route path={ROUTES.ADMIN.CANDIDATE_PROFILE} element={<CandidateProfilePage />} />
           <Route
             element={
               <SuperAdminRoute>

@@ -61,10 +61,20 @@ export const API_ENDPOINTS = {
       // roundNumber: number
     ) =>
       `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${assessmentId}/submissions/${submissionId}/pdf`,
+    SUBMISSION_DELETE: (workspaceId: string, assessmentId: string, submissionId: string) =>
+      `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${assessmentId}/submissions/${submissionId}`,
+    PERMANENT_RESTRICTION: (workspaceId: string, assessmentId: string) =>
+      `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${assessmentId}/permanent-restriction`,
     CANDIDATE_SUBMISSION: (workspaceId: string, assessmentId: string, candidateId: string) =>
       `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${assessmentId}/candidates/${candidateId}/submission`,
     SHARE_EXPIRABLE: (workspaceId: string) =>
       `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/share/expirable`,
+  },
+
+  CANDIDATES: {
+    ROOT: `${API_BASE_PATH}/users/candidates`,
+    BY_ID: (id: string) => `${API_BASE_PATH}/users/candidates/${id}`,
+    SUBMISSIONS: (id: string) => `${API_BASE_PATH}/users/candidates/${id}/submissions`,
   },
 
   QUESTIONS: {
@@ -79,6 +89,7 @@ export const API_ENDPOINTS = {
     BULK_CREATE: (id: string) => `${API_BASE_PATH}/questions/categories/${id}/bulk`,
     AI_GENERATE: (id: string) => `${API_BASE_PATH}/questions/categories/${id}/ai-generate`,
     EXCEL_IMPORT: (id: string) => `${API_BASE_PATH}/questions/categories/${id}/excel-import`,
+    IMPORT_TEMPLATE: (id: string) => `${API_BASE_PATH}/questions/categories/${id}/import-template`,
   },
 
   SUBMISSIONS: {
