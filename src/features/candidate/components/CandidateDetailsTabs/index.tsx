@@ -6,7 +6,9 @@ import { Select } from "@/components/ui/Select";
 import { RichText } from "@/components/ui/RichText";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
-import { clsx, formatDateTime } from "@/utils/helpers";
+import { Tooltip } from "@/components/ui/Tooltip";
+import { clsx, formatDateTime, parseApiDate } from "@/utils/helpers";
+import { getAssessmentAccessibility } from "@/utils/assessmentSession";
 import { api } from "@/utils/api";
 import { API_ENDPOINTS } from "@/constants/api";
 import { generateAndDownloadPDF } from "@/features/candidate/components/SubmissionReportPDF";
@@ -26,6 +28,7 @@ import {
   IconExternalLink,
   IconMonitor,
   IconMic,
+  IconVideoCamera,
   IconChevronLeft,
   IconChevronRight,
   IconDownload,
@@ -232,10 +235,37 @@ function StatusSummary({
   const totalDuration = (() => {
     if (!data.started_at || !data.completed_at) return "—";
     const mins = Math.round(
-      (new Date(data.completed_at).getTime() - new Date(data.started_at).getTime()) / 60000
+      (parseApiDate(data.completed_at).getTime() - parseApiDate(data.started_at).getTime()) / 60000
     );
     return mins < 1 ? "< 1 min" : `${mins} min`;
   })();
+
+  const isMonitoringAssessment = getAssessmentAccessibility() === "monitoring";
+  const monitoring = data.monitoring_details;
+  let screenshotTooltip = "Disabled";
+  if (monitoring?.screenshot_enabled) {
+    screenshotTooltip =
+      monitoring.screenshot_mode === "count"
+        ? `Count - ${monitoring.screenshot_count ?? "—"} screenshots`
+        : `Time Interval - every ${monitoring.screenshot_interval_seconds ?? "—"}s`;
+  }
+
+  const monitorItems: {
+    label: string;
+    on: boolean;
+    Icon: ComponentType<{ size?: number | string }>;
+    tooltip?: string;
+  }[] = [
+    { label: "Tab Monitoring", on: monitoring?.tab_monitoring ?? false, Icon: IconMonitor },
+    { label: "Audio Monitoring", on: monitoring?.audio_monitoring ?? false, Icon: IconMic },
+    { label: "Video Monitoring", on: monitoring?.video_monitoring ?? false, Icon: IconVideoCamera },
+    {
+      label: "Screenshot Monitoring",
+      on: monitoring?.screenshot_enabled ?? false,
+      Icon: IconScreenshot,
+      tooltip: screenshotTooltip,
+    },
+  ];
 
   return (
     <div className={styles.summary}>
@@ -327,6 +357,60 @@ function StatusSummary({
           </div>
         </div>
       </article>
+
+      {/* ── Monitoring overview (only for monitoring-mode assessments) ── */}
+      {isMonitoringAssessment && (
+        <article className={styles.statusCard}>
+          <h3 className={styles.statusCardTitle}>Monitoring Overview</h3>
+
+          <div className={styles.monitorStats}>
+            {monitorItems.map((item) => (
+              <Tooltip key={item.label} content={item.tooltip} placement="top">
+                <div className={styles.monitorStat}>
+                  <span
+                    className={styles.overviewIcon}
+                    style={{
+                      background: item.on ? "#e4f7ee" : "#e0f2fe",
+                      color: item.on ? "#16b674" : "#0ea5e9",
+                    }}
+                  >
+                    <item.Icon size={16} />
+                  </span>
+                  <span className={styles.monitorLabel}>
+                    {item.label} - {item.on ? "On" : "Off"}
+                  </span>
+                </div>
+              </Tooltip>
+            ))}
+          </div>
+
+          {monitoring?.start_time && monitoring?.end_time && (
+            <>
+              <div className={styles.overviewDivider} />
+              <div className={styles.monitorMeta}>
+                <div className={styles.overviewMetaItem}>
+                  <span className={styles.overviewMetaIcon}><IconCalendar size={15} /></span>
+                  <div>
+                    <span className={styles.overviewMetaLabel}>Start Time</span>
+                    <span className={styles.overviewMetaValue}>
+                      {formatDateTime(monitoring.start_time)}
+                    </span>
+                  </div>
+                </div>
+                <div className={styles.overviewMetaItem}>
+                  <span className={styles.overviewMetaIcon}><IconClock size={15} /></span>
+                  <div>
+                    <span className={styles.overviewMetaLabel}>End Time</span>
+                    <span className={styles.overviewMetaValue}>
+                      {formatDateTime(monitoring.end_time)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </article>
+      )}
 
       {/* ── Per-round cards (> 1 round) ── */}
       {rounds.length > 1 && (
@@ -859,7 +943,7 @@ function MalpracticeTab({ events }: Readonly<{ events: MalpracticeEvent[] }>) {
               const label = event.label ?? meta.label;
               const description = event.description ?? meta.description;
               const rowNo = start + i + 1;
-              const when = new Date(event.timestamp);
+              const when = parseApiDate(event.timestamp);
               const { face_image_url, screen_image_url, screen_video_url, audio_clip_url } = event;
               return (
                 <tr key={`${event.type}-${event.timestamp}-${rowNo}`}>
@@ -1057,7 +1141,7 @@ function ScreenshotsTab({
               setPreview({
                 kind: "image",
                 url: screenshot.url,
-                title: `Round ${screenshot.round} — ${new Date(
+                title: `Round ${screenshot.round} — ${parseApiDate(
                   screenshot.taken_at
                 ).toLocaleString()}`,
               })
@@ -1072,7 +1156,7 @@ function ScreenshotsTab({
           <figcaption className={styles.screenshotCaption}>
             <span className={styles.screenshotRound}>Round {screenshot.round}</span>
             <span className={styles.screenshotTime}>
-              {new Date(screenshot.taken_at).toLocaleString()}
+              {parseApiDate(screenshot.taken_at).toLocaleString()}
             </span>
           </figcaption>
         </figure>

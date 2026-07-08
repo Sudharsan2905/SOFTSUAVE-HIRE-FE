@@ -18,6 +18,30 @@ export function assessmentDoneKey(shareLink: string): string {
   return `talentia_done_${shareLink}`;
 }
 
+/** sessionStorage key used to remember the accessibility mode of the assessment
+ *  currently being viewed in the admin UI (set on the assessment details page,
+ *  read on the candidate details page to decide whether to show monitoring info). */
+const ASSESSMENT_ACCESSIBILITY_KEY = "assessment_accessibility";
+
+/** Persist the accessibility mode ("normal" | "monitoring") of the assessment
+ *  currently open in the admin UI. */
+export function saveAssessmentAccessibility(accessibility: string): void {
+  try {
+    sessionStorage.setItem(ASSESSMENT_ACCESSIBILITY_KEY, accessibility);
+  } catch {
+    /* sessionStorage unavailable — fail silently */
+  }
+}
+
+/** Retrieve the stored accessibility mode, or null if none was set. */
+export function getAssessmentAccessibility(): string | null {
+  try {
+    return sessionStorage.getItem(ASSESSMENT_ACCESSIBILITY_KEY);
+  } catch {
+    return null;
+  }
+}
+
 /** Persist the submission ID for the given share link. */
 export function saveSubmissionId(shareLink: string, submissionId: string): void {
   try {

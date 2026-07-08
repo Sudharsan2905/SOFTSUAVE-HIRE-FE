@@ -257,6 +257,18 @@ export interface RoundResult {
   max_duration_minutes?: number;
 }
 
+export interface MonitoringDetails {
+  tab_monitoring: boolean;
+  audio_monitoring: boolean;
+  video_monitoring: boolean;
+  screenshot_enabled: boolean;
+  screenshot_mode: "time_interval" | "count";
+  screenshot_interval_seconds: number | null;
+  screenshot_count: number | null;
+  start_time: string | null;
+  end_time: string | null;
+}
+
 export interface CandidateSubmissionDetail {
   candidate: {
     id: string;
@@ -282,4 +294,5 @@ export interface CandidateSubmissionDetail {
   rounds: RoundResult[];
   malpractice_events: MalpracticeEvent[];
   screenshots: Screenshot[];
+  monitoring_details?: MonitoringDetails;
 }

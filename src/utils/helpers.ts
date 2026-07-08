@@ -23,8 +23,18 @@ export function getInitials(name: string): string {
     .slice(0, 2);
 }
 
+// The API sends most timestamps as naive datetime strings with no timezone
+// designator (e.g. "2026-07-08T14:20:02.659") even though the underlying value
+// is UTC. `Date` parses a string like that as local time instead, which throws
+// off the forced Asia/Kolkata conversion below. Treat any string with no
+// explicit "Z"/offset suffix as UTC before parsing.
+export function parseApiDate(dateStr: string): Date {
+  const hasTimezone = /(?:[zZ]|[+-]\d{2}:?\d{2})$/.test(dateStr);
+  return new Date(hasTimezone ? dateStr : `${dateStr}Z`);
+}
+
 export function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
+  return parseApiDate(dateStr).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -32,7 +42,7 @@ export function formatDate(dateStr: string): string {
 }
 
 export function formatDateTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleString("en-US", {
+  return parseApiDate(dateStr).toLocaleString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",

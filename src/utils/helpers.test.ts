@@ -4,6 +4,8 @@ import {
   getAvatarColor,
   getInitials,
   formatDuration,
+  formatDateTime,
+  parseApiDate,
   clsx,
   generateShareUrl,
   copyToClipboard,
@@ -28,6 +30,41 @@ describe("getFullName", () => {
 
   it("omits empty last_name", () => {
     expect(getFullName({ first_name: "Bob", last_name: "" })).toBe("Bob");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// parseApiDate / formatDateTime
+// ---------------------------------------------------------------------------
+
+describe("parseApiDate", () => {
+  it("parses a 'Z'-suffixed string as UTC unchanged", () => {
+    expect(parseApiDate("2026-07-08T14:14:00.000Z").getTime()).toBe(
+      new Date("2026-07-08T14:14:00.000Z").getTime()
+    );
+  });
+
+  it("treats a naive datetime string (no timezone designator) as UTC", () => {
+    // The API sends most timestamps without a "Z"/offset even though the
+    // value is UTC — appending "Z" is what makes them line up with the ones
+    // that do include it (e.g. monitoring_details.start_time/end_time).
+    expect(parseApiDate("2026-07-08T14:20:02.659").getTime()).toBe(
+      new Date("2026-07-08T14:20:02.659Z").getTime()
+    );
+  });
+
+  it("leaves a string with an explicit numeric offset unchanged", () => {
+    expect(parseApiDate("2026-07-08T14:20:00+05:30").getTime()).toBe(
+      new Date("2026-07-08T14:20:00+05:30").getTime()
+    );
+  });
+});
+
+describe("formatDateTime", () => {
+  it("renders a naive timestamp and its 'Z'-suffixed equivalent identically", () => {
+    expect(formatDateTime("2026-07-08T14:14:00.000")).toBe(
+      formatDateTime("2026-07-08T14:14:00.000Z")
+    );
   });
 });
 

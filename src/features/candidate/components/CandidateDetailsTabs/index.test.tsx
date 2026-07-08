@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { CandidateDetailsTabs } from "./index";
 import { renderWithProviders } from "@/test/utils";
@@ -284,6 +284,153 @@ describe("CandidateDetailsTabs", () => {
       renderComponent(makeSubmissionDetail({ status: SubmissionStatus.COMPLETED }));
       expect(screen.queryByRole("button", { name: /resume/i })).not.toBeInTheDocument();
       expect(screen.queryByRole("button", { name: /terminate/i })).not.toBeInTheDocument();
+    });
+  });
+
+  // ── Monitoring overview ──────────────────────────────────────────────────
+
+  describe("Monitoring overview", () => {
+    afterEach(() => {
+      sessionStorage.removeItem("assessment_accessibility");
+    });
+
+    it("does not render when the assessment isn't monitoring mode", () => {
+      sessionStorage.setItem("assessment_accessibility", "normal");
+      renderComponent();
+      expect(screen.queryByText("Monitoring Overview")).not.toBeInTheDocument();
+    });
+
+    it("renders monitor items reflecting on/off state when in monitoring mode", () => {
+      sessionStorage.setItem("assessment_accessibility", "monitoring");
+      renderComponent(
+        makeSubmissionDetail({
+          monitoring_details: {
+            tab_monitoring: true,
+            audio_monitoring: false,
+            video_monitoring: true,
+            screenshot_enabled: false,
+            screenshot_mode: "time_interval",
+            screenshot_interval_seconds: 30,
+            screenshot_count: null,
+            start_time: null,
+            end_time: null,
+          },
+        })
+      );
+      expect(screen.getByText("Monitoring Overview")).toBeInTheDocument();
+      expect(screen.getByText("Tab Monitoring - On")).toBeInTheDocument();
+      expect(screen.getByText("Audio Monitoring - Off")).toBeInTheDocument();
+      expect(screen.getByText("Video Monitoring - On")).toBeInTheDocument();
+      expect(screen.getByText("Screenshot Monitoring - Off")).toBeInTheDocument();
+    });
+
+    it("shows a 'Disabled' tooltip on hover when screenshot monitoring is off", async () => {
+      sessionStorage.setItem("assessment_accessibility", "monitoring");
+      renderComponent(
+        makeSubmissionDetail({
+          monitoring_details: {
+            tab_monitoring: false,
+            audio_monitoring: false,
+            video_monitoring: false,
+            screenshot_enabled: false,
+            screenshot_mode: "time_interval",
+            screenshot_interval_seconds: 30,
+            screenshot_count: null,
+            start_time: null,
+            end_time: null,
+          },
+        })
+      );
+      fireEvent.mouseEnter(screen.getByText("Screenshot Monitoring - Off"));
+      expect(await screen.findByRole("tooltip")).toHaveTextContent("Disabled");
+    });
+
+    it("shows the interval on hover when screenshot monitoring is on (time_interval mode)", async () => {
+      sessionStorage.setItem("assessment_accessibility", "monitoring");
+      renderComponent(
+        makeSubmissionDetail({
+          monitoring_details: {
+            tab_monitoring: false,
+            audio_monitoring: false,
+            video_monitoring: false,
+            screenshot_enabled: true,
+            screenshot_mode: "time_interval",
+            screenshot_interval_seconds: 45,
+            screenshot_count: null,
+            start_time: null,
+            end_time: null,
+          },
+        })
+      );
+      fireEvent.mouseEnter(screen.getByText("Screenshot Monitoring - On"));
+      expect(await screen.findByRole("tooltip")).toHaveTextContent(
+        "Time Interval - every 45s"
+      );
+    });
+
+    it("shows the count on hover when screenshot monitoring is on (count mode)", async () => {
+      sessionStorage.setItem("assessment_accessibility", "monitoring");
+      renderComponent(
+        makeSubmissionDetail({
+          monitoring_details: {
+            tab_monitoring: false,
+            audio_monitoring: false,
+            video_monitoring: false,
+            screenshot_enabled: true,
+            screenshot_mode: "count",
+            screenshot_interval_seconds: null,
+            screenshot_count: 5,
+            start_time: null,
+            end_time: null,
+          },
+        })
+      );
+      fireEvent.mouseEnter(screen.getByText("Screenshot Monitoring - On"));
+      expect(await screen.findByRole("tooltip")).toHaveTextContent(
+        "Count - 5 screenshots"
+      );
+    });
+
+    it("hides the start/end time row when either value is missing", () => {
+      sessionStorage.setItem("assessment_accessibility", "monitoring");
+      renderComponent(
+        makeSubmissionDetail({
+          monitoring_details: {
+            tab_monitoring: false,
+            audio_monitoring: false,
+            video_monitoring: false,
+            screenshot_enabled: false,
+            screenshot_mode: "time_interval",
+            screenshot_interval_seconds: null,
+            screenshot_count: null,
+            start_time: "2024-06-01T09:00:00Z",
+            end_time: null,
+          },
+        })
+      );
+      expect(screen.queryByText("Start Time")).not.toBeInTheDocument();
+      expect(screen.queryByText("End Time")).not.toBeInTheDocument();
+    });
+
+    it("shows the start/end time row when both values are present", () => {
+      sessionStorage.setItem("assessment_accessibility", "monitoring");
+      renderComponent(
+        makeSubmissionDetail({
+          monitoring_details: {
+            tab_monitoring: false,
+            audio_monitoring: false,
+            video_monitoring: false,
+            screenshot_enabled: false,
+            screenshot_mode: "time_interval",
+            screenshot_interval_seconds: null,
+            screenshot_count: null,
+            start_time: "2024-06-01T09:00:00Z",
+            end_time: "2024-06-01T11:00:00Z",
+          },
+        })
+      );
+      expect(screen.getByText("Start Time")).toBeInTheDocument();
+      expect(screen.getByText("End Time")).toBeInTheDocument();
     });
   });
 

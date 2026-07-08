@@ -56,6 +56,7 @@ export type {
   QuestionAnswer,
   RoundResult,
   CandidateSubmissionDetail,
+  MonitoringDetails,
 } from "./domain.types";
 
 // UI types

@@ -39,6 +39,7 @@ import { ROUTES } from "@/constants/routes";
 import { ASSESSMENT_ERRORS } from "@/features/assessments/constants";
 import { ShareWizardModal } from "@/features/assessments/components/ShareWizard/ShareWizardModal";
 import { formatDateTime, getAvatarColor, getInitials, getFullName } from "@/utils/helpers";
+import { saveAssessmentAccessibility } from "@/utils/assessmentSession";
 import toast from "react-hot-toast";
 
 const SORT_OPTIONS = [
@@ -184,7 +185,13 @@ export default function AssessmentDetailPage() {
     if (!workspaceId || !id) return;
     api
       .get(API_ENDPOINTS.ASSESSMENTS.BY_ID(workspaceId, id))
-      .then(({ data }) => setAssessment(data.data ?? null))
+      .then(({ data }) => {
+        const fetchedAssessment = data.data ?? null;
+        setAssessment(fetchedAssessment);
+        if (fetchedAssessment?.accessibility) {
+          saveAssessmentAccessibility(fetchedAssessment.accessibility);
+        }
+      })
       .catch(() => undefined);
   }, [workspaceId, id]);
 
