@@ -1,8 +1,11 @@
+import { useNavigate, useParams } from "react-router-dom";
 import logoUrl from "@/assets/favicon.svg";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { toggleTheme } from "@/store/slices/uiSlice";
-import { IconSun, IconMoon } from "@/assets/icons";
+import { logout } from "@/store/slices/authSlice";
+import { IconSun, IconMoon, IconLogout } from "@/assets/icons";
 import { getAvatarColor, getInitials } from "@/utils/helpers";
+import { ROUTES } from "@/constants/routes";
 import styles from "./CandidateHeader.module.css";
 
 interface CandidateHeaderProps {
@@ -11,8 +14,17 @@ interface CandidateHeaderProps {
 
 export default function CandidateHeader({ candidateName }: Readonly<CandidateHeaderProps>) {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { shareLink } = useParams<{ shareLink: string }>();
   const theme = useAppSelector((state) => state.ui.theme);
   const isDark = theme === "dark";
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate(shareLink ? `${ROUTES.CANDIDATE.LOGIN}?share=${shareLink}` : ROUTES.CANDIDATE.LOGIN, {
+      replace: true,
+    });
+  };
 
   return (
     <header className={styles.header}>
@@ -47,6 +59,14 @@ export default function CandidateHeader({ candidateName }: Readonly<CandidateHea
             </div>
           </>
         )}
+        <button
+          className={styles.logoutButton}
+          onClick={handleLogout}
+          aria-label="Log out"
+          type="button"
+        >
+          <IconLogout size={18} />
+        </button>
       </div>
     </header>
   );

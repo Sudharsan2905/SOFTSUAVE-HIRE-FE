@@ -59,6 +59,7 @@ const h = vi.hoisted(() => {
       isCapturing: true,
       isInitialized: true,
       startScreenCapture: vi.fn(async () => true),
+      stopScreenCapture: vi.fn(),
       streamRef: { current: null },
     },
     fullscreen: {

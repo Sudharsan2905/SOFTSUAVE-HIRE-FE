@@ -487,10 +487,16 @@ export default function InterviewPage() {
     isCapturing: isScreenCapturing,
     isInitialized: isScreenCaptureInitialized,
     startScreenCapture,
+    stopScreenCapture,
     streamRef: screenStreamRef,
   } = useScreenCapture({ shouldInitialize: shouldInitScreenCapture });
 
   captureFrameRef.current = captureFrame;
+
+  // Stop screen sharing when navigating away from the interview page
+  useEffect(() => {
+    return () => stopScreenCapture();
+  }, [stopScreenCapture]);
 
   // ── Exam orchestrator (state machine) ───────────────────────────────────────
   const {
