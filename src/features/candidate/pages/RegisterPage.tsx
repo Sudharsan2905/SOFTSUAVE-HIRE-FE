@@ -261,7 +261,7 @@ export default function RegisterPage() {
       {/* Right side - Image only */}
       <div className={styles.featuresSection}>
         <img
-          src="/candidate/register.png"
+          src="/candidate/register.webp"
           alt="Candidate Register"
           className={styles.heroImage}
           onContextMenu={(e) => e.preventDefault()}

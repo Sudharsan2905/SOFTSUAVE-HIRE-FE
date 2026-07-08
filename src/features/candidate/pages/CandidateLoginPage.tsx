@@ -194,7 +194,7 @@ export default function CandidateLoginPage() {
       {/* Right side - Image only */}
       <div className={styles.featuresSection}>
         <img
-          src="/candidate/login.png"
+          src="/candidate/login.webp"
           alt="Candidate Login"
           className={styles.heroImage}
           onContextMenu={(e) => e.preventDefault()}
