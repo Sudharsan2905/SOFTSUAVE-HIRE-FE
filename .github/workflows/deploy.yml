@@ -29,6 +29,9 @@ jobs:
             echo "Installing packages..."
             npm install
 
+            echo "Fixing dist permissions..."
+            sudo rm -rf dist
+
             echo "Building application..."
             npm run build
 
