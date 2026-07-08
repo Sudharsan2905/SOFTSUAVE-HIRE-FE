@@ -1,7 +1,7 @@
 export const LOCAL_STORAGE_KEYS = {
-  ACCESS_TOKEN: "ssh_access",
-  REFRESH_TOKEN: "ssh_refresh",
-  USER: "ssh_user",
+  ACCESS_TOKEN: "talentia_access",
+  REFRESH_TOKEN: "talentia_refresh",
+  USER: "talentia_user",
   WORKSPACE: "hire_workspace",
   THEME: "hire_theme",
   SIDEBAR_COLLAPSED: "hire_sidebar_collapsed",

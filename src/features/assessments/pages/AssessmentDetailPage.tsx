@@ -24,6 +24,7 @@ import {
   IconPlay,
   IconPower,
   IconDelete,
+  IconAlertTriangle,
 } from "@/assets/icons";
 import { Modal } from "@/components/ui/Modal";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -716,6 +717,7 @@ export default function AssessmentDetailPage() {
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         title="Delete Submission"
+        icon={<IconAlertTriangle size={34} />}
         footer={
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
             <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>

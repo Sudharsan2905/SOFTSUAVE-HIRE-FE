@@ -22,6 +22,7 @@ import {
   IconFileExcel,
   IconChevronLeft,
   IconChevronRight,
+  IconAlertTriangle,
 } from "@/assets/icons";
 import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -945,6 +946,7 @@ export default function QuestionsPage() {
         isOpen={showDelete}
         onClose={() => setShowDelete(false)}
         title="Delete Question"
+        icon={<IconAlertTriangle size={34} />}
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowDelete(false)}>

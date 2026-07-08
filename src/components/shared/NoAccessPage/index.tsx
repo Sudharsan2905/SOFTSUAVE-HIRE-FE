@@ -35,8 +35,8 @@ export function NoAccessPage({
       <div className={styles.card}>
         {/* Brand header */}
         <div className={styles.brand}>
-          <img src={logoUrl} width="36" height="36" alt="SoftSuave Hire logo" />
-          <span className={styles.brandName}>SoftSuave Hire</span>
+          <img src={logoUrl} width="36" height="36" alt="Talentia logo" />
+          <span className={styles.brandName}>Talentia</span>
         </div>
 
         {/* Icon */}

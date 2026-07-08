@@ -91,8 +91,8 @@ export default function CompletedPage() {
         </Button>
 
         <div className={styles.logo}>
-          <img src={logoUrl} width={28} height={28} alt="SoftSuave Hire" />
-          <span className={styles.logoText}>SoftSuave Hire</span>
+          <img src={logoUrl} width={28} height={28} alt="Talentia" />
+          <span className={styles.logoText}>Talentia</span>
         </div>
       </div>
     </div>

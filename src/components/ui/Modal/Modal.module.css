@@ -77,6 +77,28 @@
   flex: 1;
 }
 
+.centered {
+  text-align: center;
+}
+
+.iconRow {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.iconBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--warning-50);
+  color: var(--warning-600);
+  flex-shrink: 0;
+}
+
 .footer {
   display: flex;
   justify-content: flex-end;

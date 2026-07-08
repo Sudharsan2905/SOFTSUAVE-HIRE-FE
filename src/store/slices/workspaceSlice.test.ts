@@ -7,7 +7,7 @@ import workspaceReducer, {
 } from "./workspaceSlice";
 import type { Workspace } from "@/types";
 
-const WORKSPACE_KEY = "ssh_workspace";
+const WORKSPACE_KEY = "talentia_workspace";
 
 function makeStore(preloadedState?: Partial<{ workspace: ReturnType<typeof workspaceReducer> }>) {
   return configureStore({

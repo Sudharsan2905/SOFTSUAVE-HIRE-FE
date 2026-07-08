@@ -8,8 +8,8 @@ vi.mock("@/assets/favicon.svg", () => ({ default: "/logo.svg" }));
 describe("CandidateHeader", () => {
   it("renders brand logo and name", () => {
     renderWithProviders(<CandidateHeader />);
-    expect(screen.getByAltText("SoftSuave Hire")).toBeInTheDocument();
-    expect(screen.getByText("SoftSuave Hire")).toBeInTheDocument();
+    expect(screen.getByAltText("Talentia")).toBeInTheDocument();
+    expect(screen.getByText("Talentia")).toBeInTheDocument();
   });
 
   it("renders theme toggle button", () => {

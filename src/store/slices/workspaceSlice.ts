@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Workspace } from "@/types";
 
-const WORKSPACE_KEY = "ssh_workspace";
+const WORKSPACE_KEY = "talentia_workspace";
 const AUTH_LOGOUT_ACTION = "auth/logout";
 
 interface WorkspaceState {

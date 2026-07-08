@@ -50,7 +50,7 @@ describe("Sidebar", () => {
         workspace: { activeWorkspace: workspace, workspaces: [workspace] },
       },
     });
-    expect(screen.getByAltText("SoftSuave Hire")).toBeInTheDocument();
+    expect(screen.getByAltText("Talentia")).toBeInTheDocument();
   });
 
   it("renders brand name text when expanded", () => {
@@ -60,7 +60,7 @@ describe("Sidebar", () => {
         workspace: { activeWorkspace: workspace, workspaces: [workspace] },
       },
     });
-    expect(screen.getByText("SoftSuave Hire")).toBeInTheDocument();
+    expect(screen.getByText("Talentia")).toBeInTheDocument();
   });
 
   it("renders Knowledge Vault navigation link", () => {
@@ -141,7 +141,7 @@ describe("Sidebar", () => {
       },
     });
     fireEvent.click(screen.getByLabelText("Collapse sidebar"));
-    expect(screen.queryByText("SoftSuave Hire")).not.toBeInTheDocument();
+    expect(screen.queryByText("Talentia")).not.toBeInTheDocument();
   });
 
   it("saves collapsed state to localStorage on toggle", () => {
@@ -152,22 +152,22 @@ describe("Sidebar", () => {
       },
     });
     fireEvent.click(screen.getByLabelText("Collapse sidebar"));
-    expect(localStorage.getItem("ssh_sidebar_collapsed")).toBe("true");
+    expect(localStorage.getItem("talentia_sidebar_collapsed")).toBe("true");
   });
 
   it("reads collapsed state from localStorage on mount", () => {
-    localStorage.setItem("ssh_sidebar_collapsed", "true");
+    localStorage.setItem("talentia_sidebar_collapsed", "true");
     renderWithProviders(<Sidebar />, {
       preloadedState: {
         auth: makeAuthState(),
         workspace: { activeWorkspace: workspace, workspaces: [workspace] },
       },
     });
-    expect(screen.queryByText("SoftSuave Hire")).not.toBeInTheDocument();
+    expect(screen.queryByText("Talentia")).not.toBeInTheDocument();
   });
 
   it("shows Expand sidebar button when collapsed", () => {
-    localStorage.setItem("ssh_sidebar_collapsed", "true");
+    localStorage.setItem("talentia_sidebar_collapsed", "true");
     renderWithProviders(<Sidebar />, {
       preloadedState: {
         auth: makeAuthState(),
@@ -178,7 +178,7 @@ describe("Sidebar", () => {
   });
 
   it("expands sidebar on expand button click", () => {
-    localStorage.setItem("ssh_sidebar_collapsed", "true");
+    localStorage.setItem("talentia_sidebar_collapsed", "true");
     renderWithProviders(<Sidebar />, {
       preloadedState: {
         auth: makeAuthState(),
@@ -186,7 +186,7 @@ describe("Sidebar", () => {
       },
     });
     fireEvent.click(screen.getByLabelText("Expand sidebar"));
-    expect(screen.getByText("SoftSuave Hire")).toBeInTheDocument();
+    expect(screen.getByText("Talentia")).toBeInTheDocument();
   });
 
   it("passes collapsed prop to WorkspaceSwitcher", () => {

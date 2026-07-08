@@ -16,6 +16,7 @@ import {
   IconStar,
   IconEdit,
   IconDelete,
+  IconAlertTriangle,
 } from "@/assets/icons";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -758,6 +759,7 @@ export function WorkspaceSwitcher({ collapsed }: Readonly<{ collapsed?: boolean 
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         title="Delete Workspace"
+        icon={<IconAlertTriangle size={34} />}
         showClose={false}
         footer={
           <>

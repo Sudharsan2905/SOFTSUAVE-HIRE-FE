@@ -38,6 +38,7 @@ export function formatDateTime(dateStr: string): string {
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Asia/Kolkata",
   });
 }
 

@@ -131,8 +131,8 @@ export default function AssessmentAccessPage() {
         <div className={styles.left}>
           <div className={styles.formWrap}>
             <div className={styles.brand}>
-              <img src={logoUrl} width="44" height="44" alt="SoftSuave Hire" />
-              <h1 className={styles.brandName}>SoftSuave Hire</h1>
+              <img src={logoUrl} width="44" height="44" alt="Talentia" />
+              <h1 className={styles.brandName}>Talentia</h1>
               <span className={styles.portalPill}>Assessment Portal</span>
             </div>
 

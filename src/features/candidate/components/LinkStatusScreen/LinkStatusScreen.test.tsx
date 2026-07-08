@@ -42,6 +42,6 @@ describe("LinkStatusScreen", () => {
 
   it("renders brand logo", () => {
     render(<LinkStatusScreen status="invalid" />);
-    expect(screen.getByAltText("SoftSuave Hire")).toBeInTheDocument();
+    expect(screen.getByAltText("Talentia")).toBeInTheDocument();
   });
 });

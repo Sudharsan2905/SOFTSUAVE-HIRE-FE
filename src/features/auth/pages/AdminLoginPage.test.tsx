@@ -69,14 +69,14 @@ describe("AdminLoginPage", () => {
   // ── Rendering ─────────────────────────────────────────────────────────────
 
   describe("Rendering", () => {
-    it("renders the SoftSuave Hire logo", () => {
+    it("renders the Talentia logo", () => {
       setup();
-      expect(screen.getByAltText("SoftSuave Hire")).toBeInTheDocument();
+      expect(screen.getByAltText("Talentia")).toBeInTheDocument();
     });
 
     it("renders the application name and portal label", () => {
       setup();
-      expect(screen.getByText("SoftSuave Hire")).toBeInTheDocument();
+      expect(screen.getByText("Talentia")).toBeInTheDocument();
       expect(screen.getByText("Administrator Portal")).toBeInTheDocument();
     });
 

@@ -18,8 +18,8 @@ export default function CandidateHeader({ candidateName }: Readonly<CandidateHea
     <header className={styles.header}>
       {/* Left — logo + brand name */}
       <div className={styles.left}>
-        <img src={logoUrl} width={31} height={31} alt="SoftSuave Hire" className={styles.logoImg} />
-        <span className={styles.companyName}>SoftSuave Hire</span>
+        <img src={logoUrl} width={31} height={31} alt="Talentia" className={styles.logoImg} />
+        <span className={styles.companyName}>Talentia</span>
       </div>
 
       {/* Right — avatar, candidate info, theme toggle */}

@@ -42,8 +42,8 @@ export default function AdminLoginPage() {
       <div className={styles.formSection}>
         <div className={styles.formWrapper}>
           <div className={styles.logo}>
-            <img src={logoUrl} width="48" height="48" alt="SoftSuave Hire" className={styles.logoIcon} />
-            <h1 className={styles.appName}>SoftSuave Hire</h1>
+            <img src={logoUrl} width="48" height="48" alt="Talentia" className={styles.logoIcon} />
+            <h1 className={styles.appName}>Talentia</h1>
             <span className={styles.tagline}>Administrator Portal</span>
           </div>
 
@@ -101,7 +101,7 @@ export default function AdminLoginPage() {
             </Button>
           </form>
 
-          <p className={styles.footer}>© SoftSuave Hire {new Date().getFullYear()}</p>
+          <p className={styles.footer}>© Talentia {new Date().getFullYear()}</p>
         </div>
       </div>
 

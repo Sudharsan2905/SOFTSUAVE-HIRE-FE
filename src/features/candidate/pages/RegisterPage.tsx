@@ -83,8 +83,8 @@ export default function RegisterPage() {
       <div className={styles.formSection}>
         <div className={styles.formWrapper}>
           <div className={styles.logo}>
-            <img src={logoUrl} width="48" height="48" alt="SoftSuave Hire" className={styles.logoIcon} />
-            <h1 className={styles.appName}>SoftSuave Hire</h1>
+            <img src={logoUrl} width="48" height="48" alt="Talentia" className={styles.logoIcon} />
+            <h1 className={styles.appName}>Talentia</h1>
             <span className={styles.tagline}>Create Account</span>
           </div>
 

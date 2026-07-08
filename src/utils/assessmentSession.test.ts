@@ -19,11 +19,11 @@ beforeEach(() => sessionStorage.clear());
 
 describe("key helpers", () => {
   it("assessmentSessionKey returns scoped key", () => {
-    expect(assessmentSessionKey(LINK)).toBe(`ssh_sub_${LINK}`);
+    expect(assessmentSessionKey(LINK)).toBe(`talentia_sub_${LINK}`);
   });
 
   it("assessmentDoneKey returns scoped key", () => {
-    expect(assessmentDoneKey(LINK)).toBe(`ssh_done_${LINK}`);
+    expect(assessmentDoneKey(LINK)).toBe(`talentia_done_${LINK}`);
   });
 });
 
@@ -99,7 +99,7 @@ describe("timer state", () => {
   });
 
   it("returns null for non-numeric stored value", () => {
-    sessionStorage.setItem(`ssh_timer_${LINK}`, "not-a-number");
+    sessionStorage.setItem(`talentia_timer_${LINK}`, "not-a-number");
     expect(getLocalTimerState(LINK)).toBeNull();
   });
 
@@ -120,12 +120,12 @@ describe("question index", () => {
   });
 
   it("returns 0 for non-numeric stored value", () => {
-    sessionStorage.setItem(`ssh_qidx_${LINK}`, "bad");
+    sessionStorage.setItem(`talentia_qidx_${LINK}`, "bad");
     expect(getLocalQuestionIdx(LINK)).toBe(0);
   });
 
   it("returns 0 for negative stored value", () => {
-    sessionStorage.setItem(`ssh_qidx_${LINK}`, "-1");
+    sessionStorage.setItem(`talentia_qidx_${LINK}`, "-1");
     expect(getLocalQuestionIdx(LINK)).toBe(0);
   });
 

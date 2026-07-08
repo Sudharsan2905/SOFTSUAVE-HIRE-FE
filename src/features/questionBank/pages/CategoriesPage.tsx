@@ -9,7 +9,7 @@ import { Input, Textarea } from "@/components/ui/Input";
 import { Pagination } from "@/components/ui/Pagination";
 import { Spinner } from "@/components/ui/Spinner";
 import { Badge } from "@/components/ui/Badge";
-import { IconPlus, IconEdit, IconDelete, IconQuestionBank } from "@/assets/icons";
+import { IconPlus, IconEdit, IconDelete, IconQuestionBank, IconAlertTriangle } from "@/assets/icons";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -343,6 +343,7 @@ export default function CategoriesPage() {
         isOpen={showDelete}
         onClose={() => setShowDelete(false)}
         title="Delete Category"
+        icon={<IconAlertTriangle size={34} />}
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowDelete(false)}>

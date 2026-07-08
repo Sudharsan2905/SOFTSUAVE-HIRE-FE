@@ -15,6 +15,7 @@ import {
   IconLogout,
   IconUsers,
   IconChevronDown,
+  IconAlertTriangle,
 } from "@/assets/icons";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { NotificationDropdown } from "@/components/notifications/NotificationDropdown";
@@ -76,7 +77,7 @@ export function AppHeader() {
             className={styles.mobileLogo}
             width={31}
             height={31}
-            alt="SoftSuave Hire"
+            alt="Talentia"
           />
           <h2 className={styles.greeting}>
             Welcome,{" "}
@@ -191,6 +192,7 @@ export function AppHeader() {
             onClose={() => setShowLogoutConfirm(false)}
             title="Log out"
             size="sm"
+            icon={<IconAlertTriangle size={34} />}
             showClose={false}
             footer={
               <>

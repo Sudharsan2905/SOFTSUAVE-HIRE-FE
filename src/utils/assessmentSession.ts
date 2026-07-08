@@ -10,12 +10,12 @@
 
 /** Returns the sessionStorage key that stores the active submission ID. */
 export function assessmentSessionKey(shareLink: string): string {
-  return `ssh_sub_${shareLink}`;
+  return `talentia_sub_${shareLink}`;
 }
 
 /** Returns the sessionStorage key that marks an assessment as completed. */
 export function assessmentDoneKey(shareLink: string): string {
-  return `ssh_done_${shareLink}`;
+  return `talentia_done_${shareLink}`;
 }
 
 /** Persist the submission ID for the given share link. */
@@ -73,11 +73,11 @@ export function clearAssessmentSession(shareLink: string): void {
 // before the heartbeat has persisted the latest value).
 
 function _timerKey(shareLink: string): string {
-  return `ssh_timer_${shareLink}`;
+  return `talentia_timer_${shareLink}`;
 }
 
 function _questionKey(shareLink: string): string {
-  return `ssh_qidx_${shareLink}`;
+  return `talentia_qidx_${shareLink}`;
 }
 
 /** Persist remaining seconds locally so a page refresh can restore the timer

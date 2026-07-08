@@ -3,7 +3,15 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Spinner } from "@/components/ui/Spinner";
 import { StatusBadge } from "@/components/ui/Badge";
-import { IconChevronLeft, IconMail, IconPhone, IconMapPin, IconGender } from "@/assets/icons";
+import {
+  IconChevronLeft,
+  IconMail,
+  IconPhone,
+  IconMapPin,
+  IconGender,
+  IconGraduationCap,
+  IconCalendar,
+} from "@/assets/icons";
 import { api } from "@/utils/api";
 import { API_ENDPOINTS } from "@/constants/api";
 import { ROUTES } from "@/constants/routes";
@@ -44,18 +52,24 @@ export default function CandidateProfilePage() {
   const fetchData = useCallback(async () => {
     if (!candidateId) return;
     setLoading(true);
-    try {
-      const [profileRes, historyRes] = await Promise.all([
-        api.get(API_ENDPOINTS.CANDIDATES.BY_ID(candidateId)),
-        api.get(API_ENDPOINTS.CANDIDATES.SUBMISSIONS(candidateId)),
-      ]);
-      setCandidate(profileRes.data.data);
-      setSubmissions(historyRes.data.data ?? []);
-    } catch {
+    const [profileRes, historyRes] = await Promise.allSettled([
+      api.get(API_ENDPOINTS.CANDIDATES.BY_ID(candidateId)),
+      api.get(API_ENDPOINTS.CANDIDATES.SUBMISSIONS(candidateId)),
+    ]);
+
+    if (profileRes.status === "fulfilled") {
+      setCandidate(profileRes.value.data.data);
+    } else {
       toast.error("Failed to load candidate profile");
-    } finally {
-      setLoading(false);
     }
+
+    if (historyRes.status === "fulfilled") {
+      setSubmissions(historyRes.value.data.data ?? []);
+    } else {
+      toast.error("Failed to load submission history");
+    }
+
+    setLoading(false);
   }, [candidateId]);
 
   useEffect(() => {
@@ -182,12 +196,12 @@ export default function CandidateProfilePage() {
               )}
               {candidate.institution && (
                 <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  🎓 {candidate.institution}
+                  <IconGraduationCap size={14} /> {candidate.institution}
                 </span>
               )}
               {candidate.dob && (
                 <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  📅 {candidate.dob}
+                  <IconCalendar size={14} /> {candidate.dob}
                 </span>
               )}
             </div>

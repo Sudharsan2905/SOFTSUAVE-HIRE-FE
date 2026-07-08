@@ -16,7 +16,7 @@ import {
 import { UserRole } from "@/types";
 import { ROUTES } from "@/constants/routes";
 
-const COLLAPSED_KEY = "ssh_sidebar_collapsed";
+const COLLAPSED_KEY = "talentia_sidebar_collapsed";
 const COLLAPSED_WIDTH = 65;
 const DEFAULT_WIDTH = 225;
 
@@ -68,9 +68,9 @@ export function Sidebar() {
       {/* Logo */}
       <div className={styles.logo}>
         <div className={styles.logoIcon}>
-          <img src={logoUrl} width="31" height="31" alt="SoftSuave Hire" />
+          <img src={logoUrl} width="31" height="31" alt="Talentia" />
         </div>
-        {!collapsed && <span className={styles.logoText}>SoftSuave Hire</span>}
+        {!collapsed && <span className={styles.logoText}>Talentia</span>}
         <Tooltip content={collapsed ? "Expand sidebar" : "Collapse sidebar"} placement="right">
           <button
             className={styles.collapseBtn}

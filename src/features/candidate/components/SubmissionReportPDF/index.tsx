@@ -284,7 +284,7 @@ const S = StyleSheet.create({
 
 // ── sub-components ────────────────────────────────────────────────────────────
 
-function SoftsuaveLogo({ size = 36 }: Readonly<{ size?: number }> = {}) {
+function TalentiaLogo({ size = 36 }: Readonly<{ size?: number }> = {}) {
   return (
     <Svg viewBox="0 0 16 16" width={size} height={size}>
       <Polygon
@@ -373,7 +373,7 @@ export function SubmissionReportDocument({
   const fullName = `${candidate.first_name} ${candidate.last_name}`.trim();
 
   return (
-    <Document title={`${fullName} — Interview Report`} author="Softsuave Hire">
+    <Document title={`${fullName} — Interview Report`} author="Talentia">
       <Page size="A4" style={S.page}>
         {/* Candidate card */}
         <View style={S.card}>
@@ -452,8 +452,8 @@ export function SubmissionReportDocument({
 
         {/* Footer */}
         <View style={S.footerContainer} fixed>
-          <SoftsuaveLogo size={12} />
-          <Text style={S.footer}>Softsuave Hire</Text>
+          <TalentiaLogo size={12} />
+          <Text style={S.footer}>Talentia</Text>
         </View>
       </Page>
     </Document>

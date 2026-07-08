@@ -1,6 +1,6 @@
 # SOFTSUAVE-HIRE-FE
 
-React + TypeScript frontend for the SoftSuave Hire interview platform.
+React + TypeScript frontend for the Talentia interview platform.
 
 ---
 
@@ -211,7 +211,7 @@ All routes are defined in `src/App.tsx`. Pages are **lazy-loaded** via `React.la
 ### Redux Slices
 
 #### `authSlice`
-Persists to `localStorage` — keys: `ssh_access`, `ssh_refresh`, `ssh_user`.
+Persists to `localStorage` — keys: `talentia_access`, `talentia_refresh`, `talentia_user`.
 
 ```ts
 adminLogin({ email, password })
@@ -222,7 +222,7 @@ updateUser()   // update profile in state + storage
 ```
 
 #### `workspaceSlice`
-Active workspace persists to `localStorage` key `ssh_workspace`.
+Active workspace persists to `localStorage` key `talentia_workspace`.
 
 ```ts
 setActiveWorkspace(workspace)
@@ -231,7 +231,7 @@ clearWorkspace()
 ```
 
 #### `uiSlice`
-Theme persists to `localStorage` key `ssh_theme`.
+Theme persists to `localStorage` key `talentia_theme`.
 
 ```ts
 toggleTheme(); // light ↔ dark
@@ -258,7 +258,7 @@ State shape: `{ notifications: Notification[], unreadCount: number }`
 
 The Axios instance in `src/utils/api.ts`:
 
-1. **Request interceptor** — Reads `ssh_access` from `localStorage`, sets `Authorization: Bearer <token>`.
+1. **Request interceptor** — Reads `talentia_access` from `localStorage`, sets `Authorization: Bearer <token>`.
 2. **Response interceptor** — On `401`, suspends the failed request, calls `POST /api/auth/refresh` once, then replays all queued requests with the new token. If refresh fails, dispatches `logout()`.
 
 ---

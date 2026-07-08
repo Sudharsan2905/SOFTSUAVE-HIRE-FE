@@ -4,7 +4,7 @@ import { logout, setTokens } from "@/store/slices/authSlice";
 import { CONFIG } from "@/constants/config";
 import { API_ENDPOINTS } from "@/constants/api";
 
-const API_TIMEOUT_MS = 15_000;
+const API_TIMEOUT_MS = 45_000;
 const BEARER_TOKEN_PREFIX = "Bearer";
 
 export function extractApiErrorMessage(err: unknown, fallback: string): string {

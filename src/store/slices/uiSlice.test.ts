@@ -56,10 +56,10 @@ describe("uiSlice — toggleTheme", () => {
     expect(store.getState().ui.theme).toBe("dark");
   });
 
-  it("persists the new theme to localStorage (key: ssh_theme)", () => {
+  it("persists the new theme to localStorage (key: talentia_theme)", () => {
     const store = LIGHT_STORE();
     store.dispatch(toggleTheme());
-    expect(localStorage.getItem("ssh_theme")).toBe("dark");
+    expect(localStorage.getItem("talentia_theme")).toBe("dark");
   });
 
   it("sets data-theme on document.documentElement", () => {
@@ -96,7 +96,7 @@ describe("uiSlice — setTheme", () => {
   it("persists the chosen theme to localStorage", () => {
     const store = LIGHT_STORE();
     store.dispatch(setTheme("dark"));
-    expect(localStorage.getItem("ssh_theme")).toBe("dark");
+    expect(localStorage.getItem("talentia_theme")).toBe("dark");
   });
 
   it("updates data-theme on document.documentElement", () => {

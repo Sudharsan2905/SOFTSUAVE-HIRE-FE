@@ -38,8 +38,8 @@ export function LinkStatusScreen({ status, message, startTime }: Readonly<LinkSt
     <div className={styles.page}>
       <div className={styles.card}>
         <div className={styles.brand}>
-          <img src={logoUrl} width={31} height={31} alt="SoftSuave Hire" />
-          <span className={styles.brandName}>SoftSuave Hire</span>
+          <img src={logoUrl} width={31} height={31} alt="Talentia" />
+          <span className={styles.brandName}>Talentia</span>
         </div>
 
         <div className={styles.iconWrap} aria-hidden="true">

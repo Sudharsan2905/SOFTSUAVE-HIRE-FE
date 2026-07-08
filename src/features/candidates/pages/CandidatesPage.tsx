@@ -10,7 +10,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { Badge } from "@/components/ui/Badge";
 import { Spinner } from "@/components/ui/Spinner";
 import { Tooltip } from "@/components/ui/Tooltip";
-import { IconPlus, IconEdit, IconDelete, IconEye, IconUsers } from "@/assets/icons";
+import { IconPlus, IconEdit, IconDelete, IconEye, IconUsers, IconAlertTriangle } from "@/assets/icons";
 import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
@@ -410,6 +410,7 @@ export default function CandidatesPage() {
         isOpen={showDelete}
         onClose={() => setShowDelete(false)}
         title="Deactivate Candidate"
+        icon={<IconAlertTriangle size={34} />}
         footer={
           <>
             <Button variant="secondary" onClick={() => setShowDelete(false)}>

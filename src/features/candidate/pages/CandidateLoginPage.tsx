@@ -103,10 +103,10 @@ export default function CandidateLoginPage() {
               src={logoUrl}
               width="48"
               height="48"
-              alt="SoftSuave Hire"
+              alt="Talentia"
               className={styles.logoIcon}
             />
-            <h1 className={styles.appName}>SoftSuave Hire</h1>
+            <h1 className={styles.appName}>Talentia</h1>
             <span className={styles.tagline}>Candidate Portal</span>
           </div>
 

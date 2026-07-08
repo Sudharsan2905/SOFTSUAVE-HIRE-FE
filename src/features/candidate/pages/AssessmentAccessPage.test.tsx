@@ -153,11 +153,11 @@ describe("AssessmentAccessPage", () => {
     );
   });
 
-  it("renders SoftSuave Hire brand name", async () => {
+  it("renders Talentia brand name", async () => {
     mockGet.mockResolvedValue({ data: { data: { can_allow: true } } });
     renderWithProviders(<AssessmentAccessPage />);
     await waitFor(() => screen.getByRole("button", { name: /start assessment/i }));
-    expect(screen.getByText("SoftSuave Hire")).toBeInTheDocument();
+    expect(screen.getByText("Talentia")).toBeInTheDocument();
   });
 
   it("redirects authenticated candidate to instructions page", async () => {

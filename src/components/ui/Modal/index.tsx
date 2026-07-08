@@ -15,6 +15,8 @@ interface ModalProps {
   className?: string;
   disableBackdropClose?: boolean;
   disableEscapeKey?: boolean;
+  /** Icon shown centered on its own row, above the body content — for confirmation dialogs. */
+  icon?: React.ReactNode;
 }
 
 export const Modal = React.memo(function Modal({
@@ -28,6 +30,7 @@ export const Modal = React.memo(function Modal({
   className,
   disableBackdropClose = false,
   disableEscapeKey = false,
+  icon,
 }: Readonly<ModalProps>) {
   // Always-current reference to onClose so effects never need it as a dep,
   // preventing re-registration on every parent render.
@@ -90,7 +93,14 @@ export const Modal = React.memo(function Modal({
             )}
           </div>
         )}
-        <div className={styles.body}>{children}</div>
+        <div className={clsx(styles.body, icon ? styles.centered : undefined)}>
+          {icon && (
+            <div className={styles.iconRow}>
+              <div className={styles.iconBadge}>{icon}</div>
+            </div>
+          )}
+          {children}
+        </div>
         {footer && <div className={styles.footer}>{footer}</div>}
       </dialog>
     </div>,

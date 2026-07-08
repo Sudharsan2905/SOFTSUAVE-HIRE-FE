@@ -3,7 +3,15 @@ import { useParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import styles from "./CandidateDetailsPage.module.css";
 import { getAvatarColor, getInitials } from "@/utils/helpers";
-import { IconMail, IconPhone, IconMapPin, IconGender, IconChevronLeft, IconDelete } from "@/assets/icons";
+import {
+  IconMail,
+  IconPhone,
+  IconMapPin,
+  IconGender,
+  IconChevronLeft,
+  IconDelete,
+  IconAlertTriangle,
+} from "@/assets/icons";
 import { CandidateDetailsTabs } from "@/features/candidate/components/CandidateDetailsTabs";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
@@ -201,6 +209,7 @@ export default function CandidateDetailsPage() {
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         title="Delete Submission"
+        icon={<IconAlertTriangle size={34} />}
         footer={
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
             <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
