@@ -145,15 +145,9 @@
 }
 
 /* ── Row action dropdown ── */
-.menuWrapper {
-  position: relative;
-}
-
 .menu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
-  z-index: 50;
+  position: fixed;
+  z-index: var(--z-dropdown);
   min-width: 140px;
   background: var(--bg-surface);
   border: 1px solid var(--border-default);

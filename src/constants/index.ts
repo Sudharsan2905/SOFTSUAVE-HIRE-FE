@@ -34,7 +34,6 @@ export type { LocalStorageKey, SessionStorageKey } from "./storage";
 export { REGEX, FIELD_LIMITS } from "./validation";
 export { CONFIG } from "./config";
 export {
-  VITE_APP_NAME,
   COMPLEXITY_OPTIONS,
   QUESTION_TYPE_OPTIONS,
   SORT_ORDER_OPTIONS,

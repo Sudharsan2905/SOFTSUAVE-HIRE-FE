@@ -454,6 +454,7 @@ export default function InstructionsPage() {
   const [cameraPreviewStream, setCameraPreviewStream] = useState<MediaStream | null>(null);
   const [showScreenInstructionModal, setShowScreenInstructionModal] = useState(false);
   const [networkStatus, setNetworkStatus] = useState<NetworkCheckStatus>("checking");
+  const startingRef = useRef(false);
 
   useEffect(() => {
     const load = async () => {
@@ -550,7 +551,10 @@ export default function InstructionsPage() {
   };
 
   const handleStart = async () => {
-    if (!assessment) return;
+    // Synchronous re-entrancy guard: `starting` state updates aren't applied
+    // to the DOM until the next render, so rapid double-clicks can otherwise
+    // fire this handler — and the ASSESSMENT_START API call — more than once.
+    if (startingRef.current || !assessment) return;
     if (isDevToolsCurrentlyOpen()) {
       toast.error("Please close Developer Tools before starting the assessment");
       return;
@@ -559,6 +563,7 @@ export default function InstructionsPage() {
       handleNotReadyError(networkStatus);
       return;
     }
+    startingRef.current = true;
     setStarting(true);
     try {
       const { data } = await api.post(API_ENDPOINTS.CANDIDATE.ASSESSMENT_START(shareLink!));
@@ -570,6 +575,7 @@ export default function InstructionsPage() {
     } catch (e: unknown) {
       handleStartCatchError(e, shareLink, markAssessmentDone, navigate);
     } finally {
+      startingRef.current = false;
       setStarting(false);
     }
   };

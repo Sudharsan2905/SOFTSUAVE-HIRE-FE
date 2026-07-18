@@ -1,5 +1,3 @@
-export const VITE_APP_NAME = "Talentia";
-
 export const COMPLEXITY_OPTIONS = [
   { value: "low", label: "Low" },
   { value: "medium", label: "Medium" },

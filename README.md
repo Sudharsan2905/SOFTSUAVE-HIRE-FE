@@ -169,14 +169,16 @@ npm run build
 
 ## Environment Variables
 
-Create a `.env` file in the project root:
+Copy `.env.example` to `.env` and fill it in:
 
 ```env
-VITE_API_BASE_URL=http://localhost:8000
+VITE_APP_NAME=Talentia
+VITE_PROXY_TARGET=http://localhost:8000
+VITE_LIVEKIT_SERVER=ws://localhost:7880
 VITE_GOOGLE_CLIENT_ID=your-google-client-id
 ```
 
-The Vite proxy in `vite.config.ts` forwards all `/api` requests to `http://localhost:8000` in development.
+`VITE_PROXY_TARGET` and `VITE_LIVEKIT_SERVER` are server-side only (used by the Vite dev proxy in `vite.config.ts`) and are never sent to the browser. All API, WebSocket, and LiveKit requests from the client go through this proxy using relative URLs — there is no client-side base URL to configure.
 
 ---
 

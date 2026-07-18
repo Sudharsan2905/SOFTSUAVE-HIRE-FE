@@ -330,16 +330,6 @@ describe("useLiveKitPublisher", () => {
     unmount();
     expect(room.disconnect).toHaveBeenCalled();
   });
-
-  it("connects to VITE_LIVEKIT_HOST when the env var is set", async () => {
-    vi.stubEnv("VITE_LIVEKIT_HOST", "wss://pub.example.com");
-    const { result } = renderHook(() => useLiveKitPublisher(baseOpts));
-    await act(async () => {
-      await result.current.startPublishing();
-    });
-    expect(roomInstances[0].connect).toHaveBeenCalledWith("wss://pub.example.com", "tok-123");
-    vi.unstubAllEnvs();
-  });
 });
 
 // ── useLiveKitViewer ─────────────────────────────────────────────────────────
@@ -563,23 +553,5 @@ describe("useLiveKitViewer", () => {
       room.emit(RoomEvent.TrackUnsubscribed, otherTrack);
     });
     expect(result.current.screenTrack).toBe(track);
-  });
-
-  it("uses VITE_LIVEKIT_HOST when set, falling back to the default otherwise", async () => {
-    vi.stubEnv("VITE_LIVEKIT_HOST", "wss://livekit.example.com");
-    mockPost.mockResolvedValue({ data: { data: { token: "admin-tok" } } });
-
-    renderHook(() => useLiveKitViewer({ workspaceId: "ws-env", targetSubmissionId: null }));
-
-    await act(async () => {
-      await Promise.resolve();
-      await Promise.resolve();
-    });
-
-    const room = roomInstances[roomInstances.length - 1];
-    expect(room.connect).toHaveBeenCalledWith("wss://livekit.example.com", "admin-tok", {
-      autoSubscribe: false,
-    });
-    vi.unstubAllEnvs();
   });
 });

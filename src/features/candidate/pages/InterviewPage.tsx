@@ -554,6 +554,7 @@ export default function InterviewPage() {
     if (interviewStartedRef.current) return;
     interviewStartedRef.current = true;
     setShowIntroModal(false);
+    navigator.clipboard?.writeText("").catch(() => undefined);
     void api
       .post(API_ENDPOINTS.CANDIDATE.SUBMISSION_START(submissionId!))
       .catch(() => undefined)

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import writeXlsxFile from "write-excel-file/browser";
 import { useParams, useNavigate } from "react-router-dom";
 import styles from "./AssessmentDetailPage.module.css";
@@ -168,6 +169,7 @@ export default function AssessmentDetailPage() {
   const [dateRange, setDateRange] = useState<DateRange>({ from: "", to: "" });
   const [submissionStats, setSubmissionStats] = useState<SubmissionStats | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteSubId, setDeleteSubId] = useState("");
@@ -396,6 +398,7 @@ export default function AssessmentDetailPage() {
     }
   };
 
+  const openMenuSub = openMenuId ? submissions.find((s) => s.id === openMenuId) : undefined;
   const maxRounds = assessment?.rounds?.length ?? null;
   const totalCount = submissionStats?.total ?? meta?.total ?? 0;
   const pctOf = (n: number) =>
@@ -489,71 +492,29 @@ export default function AssessmentDetailPage() {
                             <IconEye size={14} />
                           </button>
                         </Tooltip>
-                        <div className={styles.menuWrapper}>
-                          <button
-                            className={styles.actionBtn}
-                            aria-label="More options"
-                            aria-haspopup="true"
-                            aria-expanded={openMenuId === sub.id}
-                            disabled={actionLoading[sub.id]}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpenMenuId((prev) => (prev === sub.id ? null : sub.id));
-                            }}
-                          >
-                            {actionLoading[sub.id] ? (
-                              <Spinner size="sm" />
-                            ) : (
-                              <IconDotsVertical size={14} />
-                            )}
-                          </button>
-                          {openMenuId === sub.id && (
-                            <div className={styles.menu}>
-                              {["completed", "malpractice", "terminated"].includes(sub.status) && (
-                                <button
-                                  className={`${styles.menuItem} ${styles.menuItemPrimary}`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openReaccessModal(sub.id);
-                                  }}
-                                >
-                                  <IconRefresh size={13} /> Re-access
-                                </button>
-                              )}
-                              {sub.status === "on_hold" && (
-                                <button
-                                  className={`${styles.menuItem} ${styles.menuItemPrimary}`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleResume(sub.id);
-                                  }}
-                                >
-                                  <IconPlay size={13} /> Resume
-                                </button>
-                              )}
-                              {["in_progress", "pending"].includes(sub.status) && (
-                                <button
-                                  className={`${styles.menuItem} ${styles.menuItemDanger}`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleTerminate(sub.id);
-                                  }}
-                                >
-                                  <IconPower size={13} /> Terminate
-                                </button>
-                              )}
-                              <button
-                                className={`${styles.menuItem} ${styles.menuItemDanger}`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openDeleteModal(sub.id);
-                                }}
-                              >
-                                <IconDelete size={13} /> Delete
-                              </button>
-                            </div>
+                        <button
+                          className={styles.actionBtn}
+                          aria-label="More options"
+                          aria-haspopup="true"
+                          aria-expanded={openMenuId === sub.id}
+                          disabled={actionLoading[sub.id]}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (openMenuId === sub.id) {
+                              setOpenMenuId(null);
+                              return;
+                            }
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                            setOpenMenuId(sub.id);
+                          }}
+                        >
+                          {actionLoading[sub.id] ? (
+                            <Spinner size="sm" />
+                          ) : (
+                            <IconDotsVertical size={14} />
                           )}
-                        </div>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -706,6 +667,55 @@ export default function AssessmentDetailPage() {
       />
 
       {content}
+
+      {openMenuSub &&
+        createPortal(
+          <div className={styles.menu} style={{ top: menuPos.top, right: menuPos.right }}>
+            {["completed", "malpractice", "terminated"].includes(openMenuSub.status) && (
+              <button
+                className={`${styles.menuItem} ${styles.menuItemPrimary}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openReaccessModal(openMenuSub.id);
+                }}
+              >
+                <IconRefresh size={13} /> Re-access
+              </button>
+            )}
+            {openMenuSub.status === "on_hold" && (
+              <button
+                className={`${styles.menuItem} ${styles.menuItemPrimary}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleResume(openMenuSub.id);
+                }}
+              >
+                <IconPlay size={13} /> Resume
+              </button>
+            )}
+            {["in_progress", "pending"].includes(openMenuSub.status) && (
+              <button
+                className={`${styles.menuItem} ${styles.menuItemDanger}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleTerminate(openMenuSub.id);
+                }}
+              >
+                <IconPower size={13} /> Terminate
+              </button>
+            )}
+            <button
+              className={`${styles.menuItem} ${styles.menuItemDanger}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                openDeleteModal(openMenuSub.id);
+              }}
+            >
+              <IconDelete size={13} /> Delete
+            </button>
+          </div>,
+          document.body
+        )}
 
       {showSchedule && assessment && (
         <ShareWizardModal
