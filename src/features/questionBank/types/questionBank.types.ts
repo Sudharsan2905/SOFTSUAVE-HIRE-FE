@@ -2,12 +2,22 @@ import type { Complexity, QuestionType } from "@/constants/enums";
 
 // ─── Form types ───────────────────────────────────────────────────────────────
 
+export interface QuestionFormOption {
+  id: string;
+  text: string;
+  is_correct: boolean;
+  image_key?: string | null;
+  image_url?: string | null;
+}
+
 export interface QuestionForm {
   _key: string;
   question_text: string;
   question_type: QuestionType;
   complexity: Complexity;
-  options: { id: string; text: string; is_correct: boolean }[];
+  image_key?: string | null;
+  image_url?: string | null;
+  options: QuestionFormOption[];
   correct_answer: string;
 }
 

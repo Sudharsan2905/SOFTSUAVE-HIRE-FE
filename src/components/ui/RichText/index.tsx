@@ -1,5 +1,7 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
@@ -46,7 +48,9 @@ function CodeBlock(props: Readonly<React.ComponentPropsWithoutRef<"code">>) {
 export function RichText({ children, className }: Readonly<RichTextProps>) {
   return (
     <div className={className} style={{ lineHeight: 1.6 }}>
-      <ReactMarkdown components={{ code: CodeBlock }}>{children}</ReactMarkdown>
+      <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]} components={{ code: CodeBlock }}>
+        {children}
+      </ReactMarkdown>
     </div>
   );
 }

@@ -458,7 +458,9 @@ function StatusSummary({
                   <span className={styles.roundInfoIcon}><IconHourglass size={15} /></span>
                   <span className={styles.roundInfoLabel}>Max Duration</span>
                   <span className={styles.roundInfoValue}>
-                    {round.max_duration_minutes != null ? `${round.max_duration_minutes} min` : "—"}
+                    {round.max_duration_minutes !== null && round.max_duration_minutes !== undefined
+                      ? `${round.max_duration_minutes} min`
+                      : "—"}
                   </span>
                 </div>
                 <div className={styles.roundInfoRow}>
@@ -617,6 +619,11 @@ function QuestionReview({
 }: Readonly<{ index: number; qa: QuestionAnswer; isValidated: boolean }>) {
   const isMcq = qa.question_type === "mcq_single" || qa.question_type === "mcq_multi";
   const candidateAnswers = toCandidateAnswerArray(qa.candidate_answer);
+  // candidate_answer stores option ids (image-only options have no text), so resolve back to a label.
+  const answerLabels = candidateAnswers.map((id) => {
+    const opt = qa.options.find((o) => o.id === id);
+    return opt?.text || "Image option";
+  });
   let answerClassName: string | undefined;
   if (qa.is_correct === true) answerClassName = styles.answerCorrect;
   else if (qa.is_correct === false) answerClassName = styles.answerWrong;
@@ -642,7 +649,8 @@ function QuestionReview({
         )}
       </div>
 
-      <RichText className={styles.questionText}>{qa.question_text}</RichText>
+      {qa.question_text && <RichText className={styles.questionText}>{qa.question_text}</RichText>}
+      {qa.image_url && <img src={qa.image_url} alt="" className={styles.questionImage} />}
 
       {isMcq && qa.options.length > 0 && (
         <div className={styles.optionList}>
@@ -668,7 +676,8 @@ function QuestionReview({
                     )}
                   />
                 )}
-                <span className={styles.optionText}>{opt.text}</span>
+                {opt.image_url && <img src={opt.image_url} alt="" className={styles.optionImage} />}
+                {opt.text && <span className={styles.optionText}>{opt.text}</span>}
               </div>
             );
           })}
@@ -679,7 +688,7 @@ function QuestionReview({
         <p className={styles.answerLine}>
           <span className={styles.answerLineLabel}>Candidate Answer: </span>
           <span className={answerClassName}>
-            {candidateAnswers.length > 0 ? candidateAnswers.join(", ") : "—"}
+            {answerLabels.length > 0 ? answerLabels.join(", ") : "—"}
           </span>
         </p>
       ) : (
