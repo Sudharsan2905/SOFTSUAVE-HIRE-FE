@@ -1,6 +1,6 @@
 import "@uiw/react-md-editor/markdown-editor.css";
 import "@uiw/react-markdown-preview/markdown.css";
-import MDEditor from "@uiw/react-md-editor";
+import MDEditor, { commands } from "@uiw/react-md-editor";
 import styles from "./MarkdownEditor.module.css";
 
 interface MarkdownEditorProps {
@@ -11,6 +11,8 @@ interface MarkdownEditorProps {
   rows?: number;
   error?: string;
   hint?: string;
+  /** When provided, the toolbar's image button calls this instead of inserting placeholder text. */
+  onImageButtonClick?: () => void;
 }
 
 export function MarkdownEditor({
@@ -21,7 +23,14 @@ export function MarkdownEditor({
   rows = 5,
   error,
   hint,
+  onImageButtonClick,
 }: Readonly<MarkdownEditorProps>) {
+  const toolbarCommands = onImageButtonClick
+    ? commands
+        .getCommands()
+        .map((c) => (c.keyCommand === "image" ? { ...c, execute: onImageButtonClick } : c))
+    : undefined;
+
   return (
     <div className={styles.wrapper}>
       {label && <span className={styles.label}>{label}</span>}
@@ -35,6 +44,7 @@ export function MarkdownEditor({
           height={rows * 24 + 80}
           textareaProps={{ placeholder }}
           visibleDragbar={false}
+          commands={toolbarCommands}
         />
       </div>
       {error && (

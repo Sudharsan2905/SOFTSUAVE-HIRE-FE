@@ -252,13 +252,20 @@ const ROUND_DATA = {
       id: "q1",
       text: "What is 2+2?",
       type: "mcq_single",
-      options: [{ text: "3" }, { text: "4" }],
+      options: [
+        { id: "q1-a", text: "3" },
+        { id: "q1-b", text: "4" },
+      ],
     },
     {
       id: "q2",
       text: "Pick all primes",
       type: "mcq_multiple",
-      options: [{ text: "2" }, { text: "3" }, { text: "4" }],
+      options: [
+        { id: "q2-a", text: "2" },
+        { id: "q2-b", text: "3" },
+        { id: "q2-c", text: "4" },
+      ],
     },
     {
       id: "q3",
@@ -450,7 +457,7 @@ describe("InterviewPage - answering", () => {
 
     const radios = screen.getAllByRole("radio");
     await user.click(radios[1]); // "4"
-    expect(h.answerSync.setAnswer).toHaveBeenCalledWith("q1", "4");
+    expect(h.answerSync.setAnswer).toHaveBeenCalledWith("q1", "q1-b");
     expect((radios[1] as HTMLInputElement).checked).toBe(true);
   });
 
@@ -464,12 +471,12 @@ describe("InterviewPage - answering", () => {
 
     const checks = screen.getAllByRole("checkbox");
     await user.click(checks[0]);
-    expect(h.answerSync.setAnswer).toHaveBeenCalledWith("q2", ["2"]);
+    expect(h.answerSync.setAnswer).toHaveBeenCalledWith("q2", ["q2-a"]);
     await user.click(checks[1]);
-    expect(h.answerSync.setAnswer).toHaveBeenLastCalledWith("q2", ["2", "3"]);
+    expect(h.answerSync.setAnswer).toHaveBeenLastCalledWith("q2", ["q2-a", "q2-b"]);
     // deselect
     await user.click(checks[0]);
-    expect(h.answerSync.setAnswer).toHaveBeenLastCalledWith("q2", ["3"]);
+    expect(h.answerSync.setAnswer).toHaveBeenLastCalledWith("q2", ["q2-b"]);
   });
 
   it("types into essay answer", async () => {

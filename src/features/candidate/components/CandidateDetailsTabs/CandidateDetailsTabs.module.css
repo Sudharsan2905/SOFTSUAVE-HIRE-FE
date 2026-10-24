@@ -667,6 +667,16 @@
   color: var(--text-primary);
 }
 
+.questionImage {
+  display: block;
+  max-width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  margin-bottom: 10px;
+}
+
 /* ── MCQ options ──────────────────────────────────────────────────────────── */
 .optionList {
   display: flex;
@@ -720,6 +730,14 @@
   flex: 1;
   min-width: 0;
   word-break: break-word;
+}
+
+.optionImage {
+  max-width: 120px;
+  max-height: 80px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
 }
 
 /* ── Candidate answer (MCQ footer) ───────────────────────────────────────── */

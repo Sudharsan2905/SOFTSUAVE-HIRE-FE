@@ -15,6 +15,10 @@ import { RichText } from "@/components/ui/RichText";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { MarkdownEditor } from "@/components/ui/MarkdownEditor";
 import {
+  QuestionImageUpload,
+  QuestionImageUploadHandle,
+} from "@/features/questionBank/components/QuestionImageUpload";
+import {
   IconPlus,
   IconEdit,
   IconDelete,
@@ -42,6 +46,7 @@ import { API_ENDPOINTS } from "@/constants/api";
 import { ROUTES } from "@/constants/routes";
 import { QUESTION_BANK_SUCCESS, QUESTION_BANK_ERRORS } from "@/features/questionBank/constants";
 import type { QuestionForm } from "@/features/questionBank/types";
+import { stripHtml } from "@/utils/helpers";
 
 const SORT_OPTIONS = [
   { value: "created_at", label: "Created Date" },
@@ -57,10 +62,14 @@ const newBlankForm = (): QuestionForm => ({
   question_text: "",
   question_type: "mcq_single",
   complexity: "medium",
+  image_key: null,
+  image_url: null,
   options: Array.from({ length: 4 }, () => ({
     id: uid(),
     text: "",
     is_correct: false,
+    image_key: null,
+    image_url: null,
   })),
   correct_answer: "",
 });
@@ -71,7 +80,7 @@ function patchOptionInForm(
   formIdx: number,
   i: number,
   optIdx: number,
-  patch: Partial<{ text: string; is_correct: boolean }>
+  patch: Partial<QuestionForm["options"][number]>
 ): QuestionForm {
   if (i !== formIdx) return f;
   return {
@@ -117,6 +126,7 @@ export default function QuestionsPage() {
   const [showExcel, setShowExcel] = useState(false);
   const [showColumnMap, setShowColumnMap] = useState(false);
   const [selected, setSelected] = useState<Question | null>(null);
+  const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [excelFile, setExcelFile] = useState<File | null>(null);
   const [excelHeaders, setExcelHeaders] = useState<string[]>([]);
@@ -127,6 +137,7 @@ export default function QuestionsPage() {
     complexity: "",
   });
   const fileRef = useRef<HTMLInputElement>(null);
+  const questionImageRefs = useRef<Map<string, QuestionImageUploadHandle>>(new Map());
   const { page, pageSize, goToPage, reset, changePageSize } = usePagination();
   const debouncedSearch = useDebounce(search, 300);
 
@@ -200,10 +211,11 @@ export default function QuestionsPage() {
   };
 
   const getAccordionTitle = (f: QuestionForm, idx: number): string => {
-    const text = f.question_text.trim();
-    if (!text) return `Question ${idx + 1}`;
+    const number = selected ? (selectedNumber ?? idx + 1) : idx + 1;
+    const text = stripHtml(f.question_text).trim();
+    if (!text) return `Question ${number}`;
     const truncated = text.length > 55 ? `${text.slice(0, 55)}…` : text;
-    return `${idx + 1}. ${truncated}`;
+    return `${number}. ${truncated}`;
   };
 
   const updateForm = (idx: number, patch: Partial<QuestionForm>) => {
@@ -214,10 +226,22 @@ export default function QuestionsPage() {
   const updateOption = (
     formIdx: number,
     optIdx: number,
-    patch: Partial<{ text: string; is_correct: boolean }>
+    patch: Partial<QuestionForm["options"][number]>
   ) => {
     setForms((prev) => prev.map((f, i) => patchOptionInForm(f, formIdx, i, optIdx, patch)));
   };
+
+  const buildOptionsPayload = (f: QuestionForm) =>
+    f.question_type === "essay"
+      ? []
+      : f.options
+          .filter((o) => o.text || o.image_key)
+          .map((o) => ({
+            id: o.id,
+            text: o.text,
+            is_correct: o.is_correct,
+            image_key: o.image_key || null,
+          }));
 
   const handleSaveQuestions = async () => {
     setSaving(true);
@@ -228,7 +252,10 @@ export default function QuestionsPage() {
           question_text: f.question_text,
           question_type: f.question_type,
           complexity: f.complexity,
-          options: f.question_type === "essay" ? [] : f.options.filter((o) => o.text),
+          // Empty string (not null) explicitly clears an existing image — see
+          // update_question's None-skipping merge in question_service.py.
+          image_key: f.image_key || "",
+          options: buildOptionsPayload(f),
           correct_answer: f.question_type === "essay" ? f.correct_answer : undefined,
         };
         await api.put(API_ENDPOINTS.QUESTIONS.BY_ID(selected.id), payload);
@@ -238,7 +265,8 @@ export default function QuestionsPage() {
           question_text: f.question_text,
           question_type: f.question_type,
           complexity: f.complexity,
-          options: f.question_type === "essay" ? [] : f.options.filter((o) => o.text),
+          image_key: f.image_key || null,
+          options: buildOptionsPayload(f),
           correct_answer: f.question_type === "essay" ? f.correct_answer : undefined,
         }));
         const { data } = await api.post(API_ENDPOINTS.CATEGORIES.BULK_CREATE(categoryId!), {
@@ -355,20 +383,32 @@ export default function QuestionsPage() {
 
   const openEdit = (q: Question) => {
     const key = uid();
+    const indexInPage = questions.findIndex((x) => x.id === q.id);
     setSelected(q);
+    setSelectedNumber(indexInPage >= 0 ? (page - 1) * pageSize + indexInPage + 1 : null);
     setForms([
       {
         _key: key,
         question_text: q.question_text,
         question_type: q.question_type,
         complexity: q.complexity,
+        image_key: q.image_key ?? null,
+        image_url: q.image_url ?? null,
         options:
           q.options.length > 0
-            ? q.options
+            ? q.options.map((o) => ({
+                id: o.id,
+                text: o.text,
+                is_correct: o.is_correct,
+                image_key: o.image_key ?? null,
+                image_url: o.image_url ?? null,
+              }))
             : Array.from({ length: 4 }, () => ({
                 id: uid(),
                 text: "",
                 is_correct: false,
+                image_key: null,
+                image_url: null,
               })),
         correct_answer: q.correct_answer ?? "",
       },
@@ -403,7 +443,7 @@ export default function QuestionsPage() {
     updateForm(formIdx, { options });
   };
 
-  const canSave = forms.every((f) => f.question_text.trim());
+  const canSave = forms.every((f) => f.question_text.trim() || f.image_key);
 
   // S3358: extract nested ternary for the main content area
   const mainContent = (() => {
@@ -467,9 +507,12 @@ export default function QuestionsPage() {
                   </Tooltip>
                 </div>
               </div>
-              <div className={styles.questionText}>
-                <RichText>{q.question_text}</RichText>
-              </div>
+              {q.question_text && (
+                <div className={styles.questionText}>
+                  <RichText>{q.question_text}</RichText>
+                </div>
+              )}
+              {q.image_url && <img src={q.image_url} alt="" className={styles.cardImage} />}
               {q.options.length > 0 && (
                 <div className={styles.options}>
                   {q.options.map((o) => (
@@ -478,7 +521,10 @@ export default function QuestionsPage() {
                       className={`${styles.option} ${o.is_correct ? styles.correctOption : ""}`}
                     >
                       {o.is_correct && <span className={styles.correctDot} />}
-                      <span>{o.text}</span>
+                      {o.image_url && (
+                        <img src={o.image_url} alt="" className={styles.optionImage} />
+                      )}
+                      {o.text && <span>{o.text}</span>}
                     </div>
                   ))}
                 </div>
@@ -647,7 +693,21 @@ export default function QuestionsPage() {
                       value={f.question_text}
                       onChange={(value) => updateForm(idx, { question_text: value })}
                       rows={5}
-                      hint="Markdown supported — wrap code in ``` code fences ```"
+                      hint="Markdown supported — wrap code in ``` code fences ```. Use the image button to attach an image."
+                      onImageButtonClick={() => questionImageRefs.current.get(f._key)?.open()}
+                    />
+                    <QuestionImageUpload
+                      ref={(el) => {
+                        if (el) questionImageRefs.current.set(f._key, el);
+                        else questionImageRefs.current.delete(f._key);
+                      }}
+                      categoryId={categoryId!}
+                      imageUrl={f.image_url}
+                      hideTrigger
+                      onUploaded={(img) =>
+                        updateForm(idx, { image_key: img.image_key, image_url: img.image_url })
+                      }
+                      onRemove={() => updateForm(idx, { image_key: null, image_url: null })}
                     />
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                       <Select
@@ -702,8 +762,29 @@ export default function QuestionsPage() {
                               <Input
                                 placeholder={`Option ${optIdx + 1}`}
                                 value={opt.text}
+                                disabled={!!opt.image_key}
+                                title={
+                                  opt.image_key
+                                    ? "Remove the option's image first to type text"
+                                    : undefined
+                                }
                                 onChange={(e) =>
                                   updateOption(idx, optIdx, { text: e.target.value })
+                                }
+                              />
+                              <QuestionImageUpload
+                                categoryId={categoryId!}
+                                size="sm"
+                                imageUrl={opt.image_url}
+                                disabled={!!opt.text}
+                                onUploaded={(img) =>
+                                  updateOption(idx, optIdx, {
+                                    image_key: img.image_key,
+                                    image_url: img.image_url,
+                                  })
+                                }
+                                onRemove={() =>
+                                  updateOption(idx, optIdx, { image_key: null, image_url: null })
                                 }
                               />
                             </div>

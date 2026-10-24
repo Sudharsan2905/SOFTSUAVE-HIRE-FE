@@ -191,17 +191,18 @@ function renderMcqSingle(
   return (
     <div className={sm.options}>
       {q.options?.map((opt) => {
-        const selected = answers[q.id] === opt.text;
+        const selected = answers[q.id] === opt.id;
         return (
-          <label key={opt.text} className={`${sm.option} ${selected ? sm.optionSelected : ""}`}>
+          <label key={opt.id} className={`${sm.option} ${selected ? sm.optionSelected : ""}`}>
             <input
               type="radio"
               className={sm.optionInput}
               name={q.id}
               checked={selected}
-              onChange={() => setAnswer(q.id, opt.text)}
+              onChange={() => setAnswer(q.id, opt.id)}
             />
-            <span className={sm.optionText}>{opt.text}</span>
+            {opt.image_url && <img src={opt.image_url} alt="" className={sm.optionImage} />}
+            {opt.text && <span className={sm.optionText}>{opt.text}</span>}
           </label>
         );
       })}
@@ -218,9 +219,9 @@ function renderMcqMultiple(
   return (
     <div className={sm.options}>
       {q.options?.map((opt) => {
-        const selected = ((answers[q.id] as string[]) || []).includes(opt.text);
+        const selected = ((answers[q.id] as string[]) || []).includes(opt.id);
         return (
-          <label key={opt.text} className={`${sm.option} ${selected ? sm.optionSelected : ""}`}>
+          <label key={opt.id} className={`${sm.option} ${selected ? sm.optionSelected : ""}`}>
             <input
               type="checkbox"
               className={sm.optionInput}
@@ -228,12 +229,13 @@ function renderMcqMultiple(
               onChange={() => {
                 const current = (answers[q.id] as string[]) || [];
                 const updated = selected
-                  ? current.filter((v) => v !== opt.text)
-                  : [...current, opt.text];
+                  ? current.filter((v) => v !== opt.id)
+                  : [...current, opt.id];
                 setAnswer(q.id, updated);
               }}
             />
-            <span className={sm.optionText}>{opt.text}</span>
+            {opt.image_url && <img src={opt.image_url} alt="" className={sm.optionImage} />}
+            {opt.text && <span className={sm.optionText}>{opt.text}</span>}
           </label>
         );
       })}
@@ -1210,7 +1212,12 @@ export default function InterviewPage() {
 
           <div className={styles.questionCard}>
             <div className={styles.questionBody}>
-              <RichText className={styles.questionText}>{currentQuestion.text}</RichText>
+              {currentQuestion.text && (
+                <RichText className={styles.questionText}>{currentQuestion.text}</RichText>
+              )}
+              {currentQuestion.image_url && (
+                <img src={currentQuestion.image_url} alt="" className={styles.questionImage} />
+              )}
 
               {renderQuestionInput(currentQuestion, answers, setAnswer, styles)}
             </div>

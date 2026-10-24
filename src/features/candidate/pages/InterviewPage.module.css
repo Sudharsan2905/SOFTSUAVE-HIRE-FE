@@ -389,6 +389,23 @@
   line-height: 1.5;
 }
 
+.optionImage {
+  max-width: 220px;
+  max-height: 140px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.questionImage {
+  display: block;
+  max-width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+}
+
 /* ── Essay ───────────────────────────────────────────────────────────────── */
 
 .essayWrapper {

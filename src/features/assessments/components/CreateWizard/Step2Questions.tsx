@@ -88,6 +88,8 @@ export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Reado
     onUpdateQuestions([]);
   };
 
+  const questionPreviewText = (q: Question) => q.question_text || "(Image question)";
+
   let browserContent: React.ReactNode;
   if (isLoading) {
     browserContent = (
@@ -113,11 +115,12 @@ export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Reado
           >
             <div className={styles.questionItemLeft}>
               <IconDrag size={16} color="var(--text-tertiary)" />
+              {q.image_url && <img src={q.image_url} alt="" className={styles.qThumb} />}
               <div>
                 <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
                   <ComplexityBadge complexity={q.complexity} />
                 </div>
-                <p className={styles.qText}>{q.question_text}</p>
+                <p className={styles.qText}>{questionPreviewText(q)}</p>
               </div>
             </div>
             <Tooltip content="Add to round">
@@ -161,8 +164,11 @@ export function Step2Questions({ draft, currentRound, onUpdateQuestions }: Reado
             {selectedQuestions.map((q) => (
               <div key={q.id} className={styles.selectedItem}>
                 <div className={styles.selectedInfo}>
-                  <ComplexityBadge complexity={q.complexity} />
-                  <p className={styles.qText}>{q.question_text}</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <ComplexityBadge complexity={q.complexity} />
+                    {q.image_url && <img src={q.image_url} alt="" className={styles.qThumb} />}
+                  </div>
+                  <p className={styles.qText}>{questionPreviewText(q)}</p>
                 </div>
                 <button className={styles.removeBtn} onClick={() => removeSelected(q.id)}>
                   <IconDelete size={13} />
