@@ -1,6 +1,53 @@
-import { Document, Page, View, Text, StyleSheet, Svg, Polygon, pdf } from "@react-pdf/renderer";
+import {
+  Document,
+  Page,
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Svg,
+  Polygon,
+  pdf,
+} from "@react-pdf/renderer";
 import type { CandidateSubmissionDetail, QuestionAnswer, RoundResult } from "@/types";
 import { downloadBlob } from "@/utils/helpers";
+
+// react-pdf fetching the URL itself fails under CORS, so pre-fetch as a data URI instead.
+async function toDataUri(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(typeof reader.result === "string" ? reader.result : null);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function resolveRoundImages(rounds: RoundResult[]): Promise<RoundResult[]> {
+  return Promise.all(
+    rounds.map(async (round) => ({
+      ...round,
+      question_answers: await Promise.all(
+        round.question_answers.map(async (qa) => ({
+          ...qa,
+          image_url: qa.image_url ? await toDataUri(qa.image_url) : qa.image_url,
+          options: await Promise.all(
+            qa.options.map(async (opt) => ({
+              ...opt,
+              image_url: opt.image_url ? await toDataUri(opt.image_url) : opt.image_url,
+            }))
+          ),
+        }))
+      ),
+    }))
+  );
+}
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -44,7 +91,8 @@ function getCandidateAnswerText(qa: QuestionAnswer): string {
   if (ca.length === 0) return "No Answer";
   if (qa.question_type === "essay") return ca.join("\n");
   const optMap = Object.fromEntries(qa.options.map((o) => [o.id, o.text]));
-  const texts = ca.map((id) => optMap[id] ?? id).filter(Boolean);
+  // Option text can be empty for an image-only option — fall back to a label.
+  const texts = ca.map((id) => optMap[id] || "Image option");
   return texts.join(", ") || "No Answer";
 }
 
@@ -207,6 +255,22 @@ const S = StyleSheet.create({
     lineHeight: 1.5,
     color: "#111827",
   },
+  questionImage: {
+    maxWidth: 220,
+    maxHeight: 160,
+    marginBottom: 10,
+    objectFit: "contain",
+  },
+  optionImage: {
+    width: 36,
+    height: 28,
+    marginRight: 6,
+    objectFit: "cover",
+  },
+  optionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
 
   // Options
   optionDefault: {
@@ -317,33 +381,42 @@ function QuestionView({ index, qa }: Readonly<{ index: number; qa: QuestionAnswe
         <Text style={statusStyle}>{status}</Text>
       </View>
 
-      <Text style={S.questionText}>{qa.question_text}</Text>
+      <Text style={S.questionText}>
+        {qa.question_text || (qa.image_url ? "" : "(Image question)")}
+      </Text>
+      {qa.image_url && <Image src={qa.image_url} style={S.questionImage} />}
 
       {isMcq &&
         qa.options.map((opt) => {
           const isChosen = candidateAnswers.includes(opt.id);
           const isCorrect = opt.is_correct === true;
           const isWrongSelected = isChosen && !isCorrect;
+          const optionLabel = opt.text || (opt.image_url ? "" : "Image option");
+          const optionContent = (
+            <View style={S.optionRow}>
+              {isCorrect && <Text>{"✓ "}</Text>}
+              {opt.image_url && <Image src={opt.image_url} style={S.optionImage} />}
+              <Text>{optionLabel}</Text>
+            </View>
+          );
 
           if (isCorrect) {
             return (
               <View key={opt.id} style={S.optionCorrect}>
-                <Text>
-                  {"✓"} {opt.text}
-                </Text>
+                {optionContent}
               </View>
             );
           }
           if (isWrongSelected) {
             return (
               <View key={opt.id} style={S.optionWrongSelected}>
-                <Text>{opt.text}</Text>
+                {optionContent}
               </View>
             );
           }
           return (
             <View key={opt.id} style={S.optionDefault}>
-              <Text>{opt.text}</Text>
+              {optionContent}
             </View>
           );
         })}
@@ -471,6 +544,7 @@ export async function generateAndDownloadPDF(
   const slug =
     `${candidate.first_name} ${candidate.last_name}-${roundName}`.trim().toLowerCase() ||
     `candidate-${roundName}`;
-  const blob = await pdf(<SubmissionReportDocument data={data} rounds={rounds} />).toBlob();
+  const resolvedRounds = await resolveRoundImages(rounds);
+  const blob = await pdf(<SubmissionReportDocument data={data} rounds={resolvedRounds} />).toBlob();
   downloadBlob(blob, `${slug}-report.pdf`);
 }

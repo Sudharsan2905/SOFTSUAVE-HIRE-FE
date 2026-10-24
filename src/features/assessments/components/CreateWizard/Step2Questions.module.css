@@ -120,6 +120,14 @@
   overflow: hidden;
 }
 
+.qThumb {
+  width: 28px;
+  height: 22px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
 .addBtn {
   display: flex;
   align-items: center;

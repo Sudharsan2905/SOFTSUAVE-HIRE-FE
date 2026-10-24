@@ -86,6 +86,11 @@ export function percentageBadgeColor(pct: number): "success" | "warning" | "erro
   return "error";
 }
 
+export function stripHtml(html: string): string {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  return doc.body.textContent ?? "";
+}
+
 export function debounce<T extends (...args: unknown[]) => void>(fn: T, delay: number): T {
   let timer: ReturnType<typeof setTimeout>;
   return ((...args: unknown[]) => {

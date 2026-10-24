@@ -90,6 +90,7 @@ export const API_ENDPOINTS = {
     AI_GENERATE: (id: string) => `${API_BASE_PATH}/questions/categories/${id}/ai-generate`,
     EXCEL_IMPORT: (id: string) => `${API_BASE_PATH}/questions/categories/${id}/excel-import`,
     IMPORT_TEMPLATE: (id: string) => `${API_BASE_PATH}/questions/categories/${id}/import-template`,
+    UPLOAD_IMAGE: (id: string) => `${API_BASE_PATH}/questions/categories/${id}/images`,
   },
 
   SUBMISSIONS: {

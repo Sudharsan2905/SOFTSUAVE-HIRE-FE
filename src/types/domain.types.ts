@@ -26,6 +26,8 @@ export interface QuestionOption {
   id: string;
   text: string;
   is_correct: boolean;
+  image_key?: string | null;
+  image_url?: string | null;
 }
 
 export interface Question {
@@ -34,6 +36,8 @@ export interface Question {
   question_text: string;
   question_type: QuestionType;
   complexity: Complexity;
+  image_key?: string | null;
+  image_url?: string | null;
   options: QuestionOption[];
   correct_answer?: string;
   created_by: string;
@@ -93,13 +97,16 @@ export interface ShareLink {
 // ─── Candidate Interview ──────────────────────────────────────────────────────
 
 export interface CandidateQuestionOption {
+  id: string;
   text: string;
+  image_url?: string | null;
 }
 
 export interface CandidateQuestion {
   id: string;
   text: string;
   type: "mcq_single" | "mcq_multiple" | "essay";
+  image_url?: string | null;
   options?: CandidateQuestionOption[];
 }
 
@@ -241,7 +248,8 @@ export interface QuestionAnswer {
   question_text: string;
   question_type: QuestionType;
   complexity?: Complexity;
-  options: { id: string; text: string; is_correct: boolean | null }[];
+  image_url?: string | null;
+  options: { id: string; text: string; is_correct: boolean | null; image_url?: string | null }[];
   candidate_answer: string | string[];
   is_correct: boolean | null;
 }
