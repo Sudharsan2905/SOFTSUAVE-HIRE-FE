@@ -9,6 +9,7 @@ import {
   IconQuestionBank,
   IconAssessment,
   IconLiveInterview,
+  IconSparkles,
   IconUsers,
   IconUserSetting,
   IconDotsVertical,
@@ -31,6 +32,11 @@ const adminNav: NavItem[] = [
     to: ROUTES.ADMIN.QUESTION_BANK,
     label: "Knowledge Vault",
     icon: <IconQuestionBank size={21} />,
+  },
+  {
+    to: ROUTES.ADMIN.PIPELINES,
+    label: "AI Hiring Pipeline",
+    icon: <IconSparkles size={20} />,
   },
   {
     to: ROUTES.ADMIN.LIVE_INTERVIEWS,

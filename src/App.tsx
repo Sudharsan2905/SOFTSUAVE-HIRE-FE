@@ -35,11 +35,12 @@ const AssessmentDetailPage = lazy(
 );
 const CandidateDetailsPage = lazy(() => import("@/features/candidate/pages/CandidateDetailsPage"));
 const LiveMonitoringPage = lazy(() => import("@/features/liveMonitoring/pages/LiveMonitoringPage"));
+const PipelineListPage = lazy(() => import("@/features/jdPipeline/pages/PipelineListPage"));
+const PipelineNewPage = lazy(() => import("@/features/jdPipeline/pages/PipelineNewPage"));
+const PipelineDetailPage = lazy(() => import("@/features/jdPipeline/pages/PipelineDetailPage"));
 const UsersPage = lazy(() => import("@/features/users/pages/UsersPage"));
 const CandidatesPage = lazy(() => import("@/features/candidates/pages/CandidatesPage"));
-const CandidateProfilePage = lazy(
-  () => import("@/features/candidates/pages/CandidateProfilePage")
-);
+const CandidateProfilePage = lazy(() => import("@/features/candidates/pages/CandidateProfilePage"));
 const UserProfilePage = lazy(() => import("@/features/profile/pages/UserProfilePage"));
 const NotificationsPage = lazy(() => import("@/features/notifications/pages/NotificationsPage"));
 
@@ -100,6 +101,9 @@ export default function App() {
           <Route path={ROUTES.ADMIN.QUESTION_BANK_CATEGORY} element={<QuestionsPage />} />
           <Route path={ROUTES.ADMIN.ASSESSMENTS} element={<AssessmentsPage />} />
           <Route path={ROUTES.ADMIN.LIVE_INTERVIEWS} element={<LiveMonitoringPage />} />
+          <Route path={ROUTES.ADMIN.PIPELINES} element={<PipelineListPage />} />
+          <Route path={ROUTES.ADMIN.PIPELINE_NEW} element={<PipelineNewPage />} />
+          <Route path={ROUTES.ADMIN.PIPELINE_DETAIL} element={<PipelineDetailPage />} />
           <Route path={ROUTES.ADMIN.PROFILE} element={<UserProfilePage />} />
           <Route path={ROUTES.ADMIN.NOTIFICATIONS} element={<NotificationsPage />} />
           <Route path={ROUTES.ADMIN.ASSESSMENT_DETAIL} element={<AssessmentDetailPage />} />

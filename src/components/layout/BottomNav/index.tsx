@@ -1,7 +1,13 @@
 import React, { useState, useCallback } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAppSelector } from "@/store";
-import { IconQuestionBank, IconAssessment, IconLiveInterview, IconUsers } from "@/assets/icons";
+import {
+  IconQuestionBank,
+  IconAssessment,
+  IconLiveInterview,
+  IconUsers,
+  IconSparkles,
+} from "@/assets/icons";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { WorkspaceSwitcher } from "@/components/layout/WorkspaceSwitcher";
 import { UserRole } from "@/types";
@@ -39,6 +45,12 @@ export function BottomNav() {
       icon: <IconAssessment size={22} />,
       to: assessmentsTo ?? "#",
       disabled: !assessmentsTo,
+    },
+    {
+      key: "pipelines",
+      label: "AI Hiring Pipeline",
+      icon: <IconSparkles size={22} />,
+      to: ROUTES.ADMIN.PIPELINES,
     },
     {
       key: "live",

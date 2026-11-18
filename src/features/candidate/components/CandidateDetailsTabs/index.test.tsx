@@ -363,9 +363,7 @@ describe("CandidateDetailsTabs", () => {
         })
       );
       fireEvent.mouseEnter(screen.getByText("Screenshot Monitoring - On"));
-      expect(await screen.findByRole("tooltip")).toHaveTextContent(
-        "Time Interval - every 45s"
-      );
+      expect(await screen.findByRole("tooltip")).toHaveTextContent("Time Interval - every 45s");
     });
 
     it("shows the count on hover when screenshot monitoring is on (count mode)", async () => {
@@ -386,9 +384,7 @@ describe("CandidateDetailsTabs", () => {
         })
       );
       fireEvent.mouseEnter(screen.getByText("Screenshot Monitoring - On"));
-      expect(await screen.findByRole("tooltip")).toHaveTextContent(
-        "Count - 5 screenshots"
-      );
+      expect(await screen.findByRole("tooltip")).toHaveTextContent("Count - 5 screenshots");
     });
 
     it("hides the start/end time row when either value is missing", () => {
@@ -683,6 +679,29 @@ describe("CandidateDetailsTabs", () => {
       renderComponent(data);
       goToRoundsTab();
       expect(screen.getByText("My essay answer")).toBeInTheDocument();
+    });
+
+    it("shows model answer and AI feedback for essay questions", () => {
+      const data = makeSubmissionDetail({
+        rounds: [
+          makeRoundResult({
+            question_answers: [
+              makeQuestionAnswer({
+                question_type: QuestionType.ESSAY,
+                options: [],
+                candidate_answer: "My essay answer",
+                is_correct: null,
+                model_answer: "The reference answer",
+                ai_feedback: "Covers the key points",
+              }),
+            ],
+          }),
+        ],
+      });
+      renderComponent(data);
+      goToRoundsTab();
+      expect(screen.getByText("The reference answer")).toBeInTheDocument();
+      expect(screen.getByText("Covers the key points")).toBeInTheDocument();
     });
   });
 

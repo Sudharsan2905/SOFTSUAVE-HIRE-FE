@@ -30,6 +30,9 @@ export const ROUTES = {
     ASSESSMENT_DETAIL: "/workspaces/:workspaceId/assessments/:id",
     CANDIDATE_DETAIL: "/workspaces/:workspaceId/assessments/:assessmentId/candidates/:candidateId",
     LIVE_INTERVIEWS: "/live-interviews",
+    PIPELINES: "/ai-pipelines",
+    PIPELINE_NEW: "/ai-pipelines/new",
+    PIPELINE_DETAIL: "/ai-pipelines/:pipelineId",
     PROFILE: "/profile",
     PROFILE_BY_ID: "/profile/:userId",
     NOTIFICATIONS: "/notifications",
@@ -43,6 +46,7 @@ export const ROUTES = {
       `/workspaces/${workspaceId}/assessments/${id}`,
     candidateDetail: (workspaceId: string, assessmentId: string, candidateId: string) =>
       `/workspaces/${workspaceId}/assessments/${assessmentId}/candidates/${candidateId}`,
+    pipelineDetail: (pipelineId: string) => `/ai-pipelines/${pipelineId}`,
     profileById: (userId: string) => `/profile/${userId}`,
     candidateProfile: (candidateId: string) => `/candidates/${candidateId}`,
   },

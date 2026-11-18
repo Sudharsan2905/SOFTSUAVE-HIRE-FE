@@ -12,6 +12,7 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\"",
     "type-check": "tsc --noEmit",
     "prepare": "husky",
+    "postinstall": "node scripts/copy-mediapipe.mjs",
     "test": "vitest",
     "test:run": "vitest run",
     "test:ui": "vitest --ui",

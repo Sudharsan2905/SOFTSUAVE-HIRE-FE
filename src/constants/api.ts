@@ -30,8 +30,7 @@ export const API_ENDPOINTS = {
     ROOT: (workspaceId: string) => `${API_BASE_PATH}/workspaces/${workspaceId}/assessments`,
     BY_ID: (workspaceId: string, id: string) =>
       `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${id}`,
-    STATS: (workspaceId: string) =>
-      `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/stats`,
+    STATS: (workspaceId: string) => `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/stats`,
     SHARE_LINKS: (workspaceId: string, id: string) =>
       `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${id}/share-links`,
     SHARE_LINK_BY_ID: (workspaceId: string, assessmentId: string, linkId: string) =>
@@ -133,8 +132,19 @@ export const API_ENDPOINTS = {
       `${API_BASE_PATH}/candidate/submission/${id}/malpractice/${eventIndex}/media`,
     SUBMISSION_LIVEKIT_TOKEN: (id: string) =>
       `${API_BASE_PATH}/candidate/submission/${id}/livekit-token`,
-    SUBMISSION_START: (id: string) =>
-      `${API_BASE_PATH}/candidate/submission/${id}/start`,
+    SUBMISSION_START: (id: string) => `${API_BASE_PATH}/candidate/submission/${id}/start`,
+  },
+
+  JD_PIPELINE: {
+    ROOT: `${API_BASE_PATH}/pipelines`,
+    BY_ID: (id: string) => `${API_BASE_PATH}/pipelines/${id}`,
+    QUESTIONS: (id: string) => `${API_BASE_PATH}/pipelines/${id}/questions`,
+    RESEND_INVITES: (id: string) => `${API_BASE_PATH}/pipelines/${id}/invites/resend`,
+    RESEND_INVITE: (id: string, candidateId: string) =>
+      `${API_BASE_PATH}/pipelines/${id}/candidates/${candidateId}/invite/resend`,
+    RETRY: (id: string) => `${API_BASE_PATH}/pipelines/${id}/retry`,
+    RESEND_REPORT: (id: string, candidateId: string) =>
+      `${API_BASE_PATH}/pipelines/${id}/candidates/${candidateId}/report/resend`,
   },
 
   LIVE_MONITORING: {

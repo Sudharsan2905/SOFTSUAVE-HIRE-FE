@@ -252,6 +252,10 @@ export interface QuestionAnswer {
   options: { id: string; text: string; is_correct: boolean | null; image_url?: string | null }[];
   candidate_answer: string | string[];
   is_correct: boolean | null;
+  /** Essay questions: reference answer (AI pipeline exams). */
+  model_answer?: string | null;
+  /** Essay questions: AI evaluation feedback. */
+  ai_feedback?: string | null;
 }
 
 export interface RoundResult {
