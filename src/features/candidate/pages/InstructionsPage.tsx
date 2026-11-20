@@ -32,6 +32,10 @@ import { markAssessmentDone, saveSubmissionId } from "@/utils/assessmentSession"
 import { useInterviewSession } from "@/features/candidate/context/InterviewSessionContext";
 import { storeMonitoringStreams } from "@/features/candidate/services/screenCaptureStore";
 import toast from "react-hot-toast";
+import {
+  detectMultipleMonitors,
+  useMultiMonitorMonitoring,
+} from "@/features/candidate/hooks/useMultiMonitorMonitoring";
 
 type NetworkCheckStatus = "checking" | "connected" | "unstable" | "disconnected";
 
@@ -381,6 +385,7 @@ function LaunchCard({
   isMonitoring,
   allPermissionsGranted,
   starting,
+  multiMonitor,
   onStart,
 }: Readonly<{
   firstName: string;
@@ -388,45 +393,77 @@ function LaunchCard({
   isMonitoring: boolean;
   allPermissionsGranted: boolean;
   starting: boolean;
+  multiMonitor: boolean;
   onStart: () => void;
 }>) {
-  const buttonLabel =
-    isMonitoring && !allPermissionsGranted
-      ? "Grant Required Access to Continue"
-      : "Start Assessment";
+  let buttonLabel = "Start Assessment";
+  if (multiMonitor) buttonLabel = "Single Monitor Required";
+  else if (isMonitoring && !allPermissionsGranted)
+    buttonLabel = "Grant Required Access to Continue";
 
   return (
-    <div className={styles.launchCard}>
-      <div className={styles.launchLeft}>
-        <span className={styles.launchIconBox}>
-          <IconSparkles size={26} color="#2563eb" />
-        </span>
-        <div>
-          <p className={styles.launchTitle}>All the Best, {firstName}!</p>
-          <p className={styles.launchDesc}>
-            Take a deep breath, stay confident, and do your best. We believe in you.
+    <>
+      {multiMonitor && (
+        <div
+          role="alert"
+          style={{
+            display: "flex",
+            gap: 12,
+            alignItems: "flex-start",
+            padding: "14px 16px",
+            marginBottom: 12,
+            borderRadius: 12,
+            border: "1px solid rgba(239, 68, 68, 0.45)",
+            background: "rgba(239, 68, 68, 0.12)",
+          }}
+        >
+          <span aria-hidden="true" style={{ fontSize: 20, lineHeight: 1.2 }}>
+            🖥️
+          </span>
+          <div>
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#ef4444" }}>
+              Multiple monitors detected
+            </p>
+            <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--text-secondary)" }}>
+              Only one screen is allowed during the assessment. Disconnect or disable all extra
+              displays (Win + P → &quot;PC screen only&quot;) and this page will unlock
+              automatically.
+            </p>
+          </div>
+        </div>
+      )}
+      <div className={styles.launchCard}>
+        <div className={styles.launchLeft}>
+          <span className={styles.launchIconBox}>
+            <IconSparkles size={26} color="#2563eb" />
+          </span>
+          <div>
+            <p className={styles.launchTitle}>All the Best, {firstName}!</p>
+            <p className={styles.launchDesc}>
+              Take a deep breath, stay confident, and do your best. We believe in you.
+            </p>
+          </div>
+        </div>
+
+        <div className={styles.launchDivider} />
+
+        <div className={styles.launchRight}>
+          <Button
+            size="lg"
+            variant={isReady && !multiMonitor ? "primary" : "danger"}
+            onClick={onStart}
+            isLoading={starting}
+            disabled={!isReady || multiMonitor}
+          >
+            {buttonLabel}
+          </Button>
+          <p className={styles.launchNote}>
+            <IconLock size={14} />
+            You will be redirected to the assessment
           </p>
         </div>
       </div>
-
-      <div className={styles.launchDivider} />
-
-      <div className={styles.launchRight}>
-        <Button
-          size="lg"
-          variant={isReady ? "primary" : "danger"}
-          onClick={onStart}
-          isLoading={starting}
-          disabled={!isReady}
-        >
-          {buttonLabel}
-        </Button>
-        <p className={styles.launchNote}>
-          <IconLock size={14} />
-          You will be redirected to the assessment
-        </p>
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -455,6 +492,14 @@ export default function InstructionsPage() {
   const [showScreenInstructionModal, setShowScreenInstructionModal] = useState(false);
   const [networkStatus, setNetworkStatus] = useState<NetworkCheckStatus>("checking");
   const startingRef = useRef(false);
+  const [multiMonitor, setMultiMonitor] = useState(false);
+
+  // Live check: Start stays disabled while more than one display is connected.
+  useMultiMonitorMonitoring({
+    enabled: true,
+    onViolation: () => undefined, // no exam yet — only block, don't record
+    onBlockChange: setMultiMonitor,
+  });
 
   useEffect(() => {
     const load = async () => {
@@ -525,6 +570,10 @@ export default function InstructionsPage() {
   };
 
   const requestScreenAccess = async () => {
+    if (multiMonitor || (await detectMultipleMonitors())) {
+      toast.error("Multiple monitors detected. Disconnect extra displays to continue");
+      return;
+    }
     setCheckingScreen(true);
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -557,6 +606,10 @@ export default function InstructionsPage() {
     if (startingRef.current || !assessment) return;
     if (isDevToolsCurrentlyOpen()) {
       toast.error("Please close Developer Tools before starting the assessment");
+      return;
+    }
+    if (await detectMultipleMonitors()) {
+      toast.error("Multiple monitors detected. Disconnect extra displays to start the assessment");
       return;
     }
     if (!isAssessmentReady(assessment, networkStatus, videoGranted, audioGranted, screenGranted)) {
@@ -732,6 +785,7 @@ export default function InstructionsPage() {
             isMonitoring={isMonitoring}
             allPermissionsGranted={allPermissionsGranted}
             starting={starting}
+            multiMonitor={multiMonitor}
             onStart={handleStart}
           />
         </div>

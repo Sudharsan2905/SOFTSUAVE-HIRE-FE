@@ -18,6 +18,7 @@ import { useTabMonitoring } from "@/features/candidate/hooks/useTabMonitoring";
 import { useAudioMonitoring } from "@/features/candidate/hooks/useAudioMonitoring";
 import { useVideoMonitoring } from "@/features/candidate/hooks/useVideoMonitoring";
 import { useScreenMonitoring } from "@/features/candidate/hooks/useScreenMonitoring";
+import { useMultiMonitorMonitoring } from "@/features/candidate/hooks/useMultiMonitorMonitoring";
 import { useDevtoolsMonitoring } from "@/features/candidate/hooks/useDevtoolsMonitoring";
 import {
   useMalpracticeCoordinator,
@@ -362,6 +363,7 @@ export default function InterviewPage() {
   // These modals only appear AFTER the exam is ACTIVE
   const [fullscreenBlocked, setFullscreenBlocked] = useState(false);
   const [screenShareBlocked, setScreenShareBlocked] = useState(false);
+  const [multiMonitorBlocked, setMultiMonitorBlocked] = useState(false);
   // Mandatory entry popup shown once per round before the timer starts
   const [showIntroModal, setShowIntroModal] = useState(false);
 
@@ -870,6 +872,19 @@ export default function InterviewPage() {
   useDevtoolsMonitoring({
     enabled: monitoringConfig.tab_monitoring ?? false,
     examActiveRef,
+    onViolation: useCallback(
+      (type, description) => {
+        void flagViolationSafe({ type, description });
+      },
+      [flagViolationSafe]
+    ),
+  });
+
+  // ── Multiple monitor detection ──────────────────────────────────────────────
+  useMultiMonitorMonitoring({
+    enabled: true, // always restricted, independent of the monitoring toggles
+    examActiveRef,
+    onBlockChange: setMultiMonitorBlocked,
     onViolation: useCallback(
       (type, description) => {
         void flagViolationSafe({ type, description });
@@ -1440,6 +1455,22 @@ export default function InterviewPage() {
         <p style={{ fontSize: 14, color: "var(--text-secondary)", textAlign: "center" }}>
           Screen sharing has stopped or is unavailable. This assessment requires continuous screen
           monitoring. Click the button below and share your entire screen to resume.
+        </p>
+      </Modal>
+
+      {/* Multiple monitors — blocks the exam until the extra display is disconnected */}
+      <Modal
+        isOpen={multiMonitorBlocked}
+        onClose={() => undefined}
+        title="Multiple Monitors Not Allowed"
+        size="sm"
+        showClose={false}
+        disableBackdropClose
+        disableEscapeKey
+      >
+        <p style={{ fontSize: 14, color: "var(--text-secondary)", textAlign: "center" }}>
+          A second monitor was detected. Disconnect or disable every extra display and use a single
+          screen. The interview stays blocked until then, and this has been recorded as a violation.
         </p>
       </Modal>
 

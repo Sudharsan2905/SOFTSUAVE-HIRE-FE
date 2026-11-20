@@ -77,7 +77,7 @@ describe("AdminLoginPage", () => {
     it("renders the application name and portal label", () => {
       setup();
       expect(screen.getByText("Talentia")).toBeInTheDocument();
-      expect(screen.getByText("Administrator Portal")).toBeInTheDocument();
+      expect(screen.getByText("Interview Platform (Internal)")).toBeInTheDocument();
     });
 
     it("renders the email input field", () => {
@@ -102,8 +102,8 @@ describe("AdminLoginPage", () => {
 
     it("renders the welcome hero section", () => {
       setup();
-      expect(screen.getByText("Welcome Back!")).toBeInTheDocument();
-      expect(screen.getByText("Please sign in to your account")).toBeInTheDocument();
+      expect(screen.getByText("Interview Management for Hiring Teams")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Sign In" })).toBeInTheDocument();
     });
 
     it("does not show validation errors on initial render", () => {
