@@ -121,7 +121,7 @@ export function DateTimePicker({
     setMinute(parsed.getMinutes());
     setAmpm(parsed.getHours() >= 12 ? "PM" : "AM");
     setViewDate(startOfMonth(parsed));
-  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [value]);
 
   // ── Popup positioning ───────────────────────────────────────────────────────
 

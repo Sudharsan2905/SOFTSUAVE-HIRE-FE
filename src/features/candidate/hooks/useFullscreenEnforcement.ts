@@ -58,7 +58,7 @@ export function useFullscreenEnforcement({
   useEffect(() => {
     return () => {
       if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
+        document.exitFullscreen().catch(() => undefined);
       }
     };
   }, []);

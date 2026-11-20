@@ -85,7 +85,7 @@ function useCountUp(target: number): number {
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
-  }, [target]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [target]);
 
   return value;
 }
@@ -303,7 +303,7 @@ export default function AssessmentsPage() {
   }, [fetchAssessments]);
   useEffect(() => {
     reset();
-  }, [debouncedSearch, sortBy, sortOrder, accessibilityFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [debouncedSearch, sortBy, sortOrder, accessibilityFilter]);
 
   // ── Action handlers ──────────────────────────────────────────────────────────
 
@@ -398,7 +398,10 @@ export default function AssessmentsPage() {
                 setWizardPrefill(null);
                 setShowWizard(true);
               }}
-              style={{ background: "linear-gradient(135deg, rgb(255, 107, 44) 0%, rgb(255, 138, 74) 100%)", border: "none" }}
+              style={{
+                background: "linear-gradient(135deg, rgb(255, 107, 44) 0%, rgb(255, 138, 74) 100%)",
+                border: "none",
+              }}
             >
               Create Assessment
             </Button>
