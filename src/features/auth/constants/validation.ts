@@ -21,7 +21,7 @@ export const candidateRegisterSchema = z
       ),
     last_name: z.string().optional(),
     email: z.string().email("Invalid email"),
-    phone: z.string().min(FIELD_LIMITS.PHONE_MIN, "Enter a valid phone number"),
+    phone: z.string().regex(/^\d{10}$/, "Phone number must be exactly 10 digits"),
     gender: z.enum(["male", "female", "other"], { required_error: "Select a gender" }),
     dob: z.string().optional(),
     college_name: z.string().optional(),

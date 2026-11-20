@@ -287,7 +287,10 @@ function StatusSummary({
           <div className={styles.overviewStat}>
             <span className={styles.overviewStatLabel}>Rounds</span>
             <div className={styles.overviewIconValue}>
-              <span className={styles.overviewIcon} style={{ background: "#efeaff", color: "#7c5cff" }}>
+              <span
+                className={styles.overviewIcon}
+                style={{ background: "#efeaff", color: "#7c5cff" }}
+              >
                 <IconRounds size={16} />
               </span>
               <span className={styles.overviewCount}>{rounds.length}</span>
@@ -297,7 +300,10 @@ function StatusSummary({
           <div className={styles.overviewStat}>
             <span className={styles.overviewStatLabel}>Questions</span>
             <div className={styles.overviewIconValue}>
-              <span className={styles.overviewIcon} style={{ background: "#fff8e1", color: "#f59e0b" }}>
+              <span
+                className={styles.overviewIcon}
+                style={{ background: "#fff8e1", color: "#f59e0b" }}
+              >
                 <IconListCheck size={16} />
               </span>
               <span className={styles.overviewCount}>{totalQuestions}</span>
@@ -307,7 +313,10 @@ function StatusSummary({
           <div className={styles.overviewStat}>
             <span className={styles.overviewStatLabel}>Malpractice Count</span>
             <div className={styles.overviewIconValue}>
-              <span className={styles.overviewIcon} style={{ background: "#fde6e6", color: "#ef4444" }}>
+              <span
+                className={styles.overviewIcon}
+                style={{ background: "#fde6e6", color: "#ef4444" }}
+              >
                 <IconTriangleExclamation size={16} />
               </span>
               <span className={styles.overviewCount}>{data.malpractice_count}</span>
@@ -317,7 +326,10 @@ function StatusSummary({
           <div className={styles.overviewStat}>
             <span className={styles.overviewStatLabel}>Re-access Count</span>
             <div className={styles.overviewIconValue}>
-              <span className={styles.overviewIcon} style={{ background: "#e0f2fe", color: "#0ea5e9" }}>
+              <span
+                className={styles.overviewIcon}
+                style={{ background: "#e0f2fe", color: "#0ea5e9" }}
+              >
                 <IconArrowsRotate size={16} />
               </span>
               <span className={styles.overviewCount}>{data.reaccess_count}</span>
@@ -331,7 +343,9 @@ function StatusSummary({
         {/* ── Meta row ── */}
         <div className={styles.overviewMeta}>
           <div className={styles.overviewMetaItem}>
-            <span className={styles.overviewMetaIcon}><IconCalendar size={15} /></span>
+            <span className={styles.overviewMetaIcon}>
+              <IconCalendar size={15} />
+            </span>
             <div>
               <span className={styles.overviewMetaLabel}>Started At</span>
               <span className={styles.overviewMetaValue}>
@@ -340,7 +354,9 @@ function StatusSummary({
             </div>
           </div>
           <div className={styles.overviewMetaItem}>
-            <span className={styles.overviewMetaIcon}><IconCircleCheck size={15} /></span>
+            <span className={styles.overviewMetaIcon}>
+              <IconCircleCheck size={15} />
+            </span>
             <div>
               <span className={styles.overviewMetaLabel}>Completed At</span>
               <span className={styles.overviewMetaValue}>
@@ -349,7 +365,9 @@ function StatusSummary({
             </div>
           </div>
           <div className={styles.overviewMetaItem}>
-            <span className={styles.overviewMetaIcon}><IconClock size={15} /></span>
+            <span className={styles.overviewMetaIcon}>
+              <IconClock size={15} />
+            </span>
             <div>
               <span className={styles.overviewMetaLabel}>Total Duration</span>
               <span className={styles.overviewMetaValue}>{totalDuration}</span>
@@ -389,7 +407,9 @@ function StatusSummary({
               <div className={styles.overviewDivider} />
               <div className={styles.monitorMeta}>
                 <div className={styles.overviewMetaItem}>
-                  <span className={styles.overviewMetaIcon}><IconCalendar size={15} /></span>
+                  <span className={styles.overviewMetaIcon}>
+                    <IconCalendar size={15} />
+                  </span>
                   <div>
                     <span className={styles.overviewMetaLabel}>Start Time</span>
                     <span className={styles.overviewMetaValue}>
@@ -398,7 +418,9 @@ function StatusSummary({
                   </div>
                 </div>
                 <div className={styles.overviewMetaItem}>
-                  <span className={styles.overviewMetaIcon}><IconClock size={15} /></span>
+                  <span className={styles.overviewMetaIcon}>
+                    <IconClock size={15} />
+                  </span>
                   <div>
                     <span className={styles.overviewMetaLabel}>End Time</span>
                     <span className={styles.overviewMetaValue}>
@@ -419,7 +441,11 @@ function StatusSummary({
             const isCompleted = Boolean(round.completed_at);
             const isStarted = Boolean(round.started_at);
             const roundBadgeVariant = isCompleted ? "warning" : isStarted ? "info" : "default";
-            const roundBadgeLabel = isCompleted ? "Completed" : isStarted ? "In Progress" : "Not Started";
+            const roundBadgeLabel = isCompleted
+              ? "Completed"
+              : isStarted
+                ? "In Progress"
+                : "Not Started";
             const roundBorderColor = isCompleted ? "#16b674" : isStarted ? "#7c5cff" : "#9aa0ac";
             const scoreColor =
               round.percentage === 0
@@ -450,12 +476,21 @@ function StatusSummary({
                       fill="none"
                       style={{ marginLeft: "auto", flexShrink: 0 }}
                     >
-                      <circle cx={9} cy={9} r={7} stroke="#3b82f6" strokeWidth={2} strokeDasharray="3 3" />
+                      <circle
+                        cx={9}
+                        cy={9}
+                        r={7}
+                        stroke="#3b82f6"
+                        strokeWidth={2}
+                        strokeDasharray="3 3"
+                      />
                     </svg>
                   )}
                 </div>
                 <div className={styles.roundInfoRow}>
-                  <span className={styles.roundInfoIcon}><IconHourglass size={15} /></span>
+                  <span className={styles.roundInfoIcon}>
+                    <IconHourglass size={15} />
+                  </span>
                   <span className={styles.roundInfoLabel}>Max Duration</span>
                   <span className={styles.roundInfoValue}>
                     {round.max_duration_minutes !== null && round.max_duration_minutes !== undefined
@@ -464,26 +499,34 @@ function StatusSummary({
                   </span>
                 </div>
                 <div className={styles.roundInfoRow}>
-                  <span className={styles.roundInfoIcon}><IconListCheck size={15} /></span>
+                  <span className={styles.roundInfoIcon}>
+                    <IconListCheck size={15} />
+                  </span>
                   <span className={styles.roundInfoLabel}>Questions</span>
                   <span className={styles.roundInfoValue}>{round.question_answers.length}</span>
                 </div>
                 <div className={styles.roundInfoRow}>
-                  <span className={styles.roundInfoIcon}><IconBullseye size={15} /></span>
+                  <span className={styles.roundInfoIcon}>
+                    <IconBullseye size={15} />
+                  </span>
                   <span className={styles.roundInfoLabel}>Score</span>
                   <span className={styles.roundInfoValue} style={{ color: scoreColor }}>
                     {round.percentage}%
                   </span>
                 </div>
                 <div className={styles.roundInfoRow}>
-                  <span className={styles.roundInfoIcon}><IconCalendar size={15} /></span>
+                  <span className={styles.roundInfoIcon}>
+                    <IconCalendar size={15} />
+                  </span>
                   <span className={styles.roundInfoLabel}>Started At</span>
                   <span className={styles.roundInfoValue}>
                     {round.started_at ? formatDateTime(round.started_at) : "—"}
                   </span>
                 </div>
                 <div className={styles.roundInfoRow}>
-                  <span className={styles.roundInfoIcon}><IconCircleCheck size={15} /></span>
+                  <span className={styles.roundInfoIcon}>
+                    <IconCircleCheck size={15} />
+                  </span>
                   <span className={styles.roundInfoLabel}>Completed At</span>
                   <span className={styles.roundInfoValue}>
                     {round.completed_at ? formatDateTime(round.completed_at) : "—"}
@@ -899,6 +942,11 @@ const MALPRACTICE_META: Record<MalpracticeType, MalpracticeMeta> = {
   notification_received: {
     label: "Notification",
     description: "OS notification interaction detected during the interview",
+    Icon: IconMalpractice,
+  },
+  multiple_monitors: {
+    label: "Multiple Monitors",
+    description: "More than one display was connected during the interview",
     Icon: IconMalpractice,
   },
 };

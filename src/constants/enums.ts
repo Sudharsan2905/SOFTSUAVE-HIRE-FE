@@ -32,6 +32,7 @@ export const MalpracticeType = {
   AUDIO_VIOLATION: "audio_violation",
   SPEAKING: "speaking",
   NOTIFICATION_RECEIVED: "notification_received",
+  MULTIPLE_MONITORS: "multiple_monitors",
 } as const;
 export type MalpracticeType = (typeof MalpracticeType)[keyof typeof MalpracticeType];
 

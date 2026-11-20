@@ -25,16 +25,14 @@ const VIOLATION_MESSAGES: Record<MalpracticeType, string> = {
   audio_violation: "Audio violation detected",
   speaking: "Speaking detected",
   notification_received: "OS notification interaction detected",
+  multiple_monitors: "Multiple monitors detected",
 };
 
-const TWO_STRIKE_TYPES = new Set<MalpracticeType>([
-  "face_absence",
-  "multiple_faces",
-  "eye_direction",
-  "audio_violation",
-  "speaking",
-  "background_noise",
-]);
+// Types that get one free, uncounted UI warning before the first recorded violation.
+// Empty = every detected audio/video violation counts immediately, so the candidate
+// is terminated on the 3rd violation (MAX_MALPRACTICE_COUNT = 3 on the backend).
+// Re-add types here to restore the "free first warning" behaviour.
+const TWO_STRIKE_TYPES = new Set<MalpracticeType>([]);
 
 export interface ViolationPayload {
   type: MalpracticeType;
