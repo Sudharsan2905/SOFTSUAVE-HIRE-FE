@@ -68,6 +68,8 @@ export function useRoundTimer({
 
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
+        // Not initialised yet (no real duration set) — never expire on 0.
+        if (prev <= 0) return prev;
         const next = prev - 1;
         timeLeftRef.current = next;
         if (next <= 0) {

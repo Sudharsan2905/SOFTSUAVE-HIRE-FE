@@ -343,6 +343,14 @@ const MIN_ESSAY_CHARS = 150;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+const DEFAULT_ROUND_MINUTES = 30;
+
+/** A saved remaining time of null/0/negative is treated as "not started" -> full duration (default 30 min). */
+function sanitizeRemaining(remaining: number | null | undefined, maxMinutes?: number | null): number {
+  if (typeof remaining === "number" && remaining > 0) return remaining;
+  return (maxMinutes || DEFAULT_ROUND_MINUTES) * 60;
+}
+
 export default function InterviewPage() {
   const { shareLink, submissionId } = useParams<{ shareLink: string; submissionId: string }>();
   const navigate = useNavigate();
@@ -456,14 +464,14 @@ export default function InterviewPage() {
   useEffect(() => {
     registerCallbacks({
       onSessionState: (remainingSeconds, questionIdx) => {
-        if (remainingSeconds !== null) setTimeLeft(remainingSeconds);
+        if (remainingSeconds !== null) setTimeLeft(sanitizeRemaining(remainingSeconds, roundDataRef.current?.max_duration_minutes));
         if (questionIdx !== undefined) {
           setCurrentIdx(questionIdx);
           currentIdxRef.current = questionIdx;
         }
       },
       onResumeApproved: (remainingSeconds, questionIdx) => {
-        if (remainingSeconds !== null) setTimeLeft(remainingSeconds);
+        if (remainingSeconds !== null) setTimeLeft(sanitizeRemaining(remainingSeconds, roundDataRef.current?.max_duration_minutes));
         if (questionIdx !== undefined) {
           setCurrentIdx(questionIdx);
           currentIdxRef.current = questionIdx;
@@ -628,7 +636,7 @@ export default function InterviewPage() {
         await Promise.all([fetchRound(), fetchAssessment()]);
       if (rd) {
         setRoundData(rd);
-        setTimeLeft(remainingSeconds ?? (rd.max_duration_minutes || 30) * 60);
+        setTimeLeft(sanitizeRemaining(remainingSeconds, rd.max_duration_minutes));
         setMonitoringConfig(cfg);
         if (questionIdx > 0 && questionIdx < rd.questions.length) {
           setCurrentIdx(questionIdx);
