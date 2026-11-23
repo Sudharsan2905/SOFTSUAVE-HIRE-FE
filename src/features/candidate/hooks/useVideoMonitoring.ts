@@ -18,6 +18,10 @@ interface UseVideoMonitoringOptions {
   enabled: boolean;
   videoRef: React.RefObject<HTMLVideoElement | null>;
   onViolation: (type: MalpracticeType, description: string) => void;
+  /** The detector (wasm/model) could not be loaded: monitoring is NOT running. */
+  onInitError?: (message: string) => void;
+  /** Increment to retry loading the detector. */
+  attempt?: number;
 }
 
 interface VideoMonitoringState {
@@ -40,7 +44,7 @@ interface MediaPipeModule {
 
 interface DetectionContext {
   videoRef: React.RefObject<HTMLVideoElement | null>;
-  rafRef: React.MutableRefObject<number>;
+  timerRef: React.MutableRefObject<ReturnType<typeof setInterval> | null>;
   runningRef: { current: boolean };
   lastDetectionTime: React.MutableRefObject<number>;
   detectorRef: React.MutableRefObject<FaceDetectorInstance | null>;
@@ -160,35 +164,35 @@ function processDetectionFrame(ctx: DetectionContext, now: number): void {
   }
 }
 
-function runDetectionStep(ctx: DetectionContext): void {
-  if (!ctx.runningRef.current) return;
-  const now = performance.now();
-  if (now - ctx.lastDetectionTime.current >= DETECTION_INTERVAL_MS) {
-    processDetectionFrame(ctx, now);
-  }
-  ctx.rafRef.current = requestAnimationFrame(() => runDetectionStep(ctx));
-}
-
+// setInterval (not a 60 fps requestAnimationFrame loop): detection only needs ~1.4 Hz, and rAF
+// is paused in background tabs — exactly when a candidate would cheat.
 function runDetectionLoop(ctx: DetectionContext): void {
-  ctx.rafRef.current = requestAnimationFrame(() => runDetectionStep(ctx));
+  ctx.timerRef.current = setInterval(() => {
+    if (!ctx.runningRef.current) return;
+    processDetectionFrame(ctx, performance.now());
+  }, DETECTION_INTERVAL_MS);
 }
 
 export function useVideoMonitoring({
   enabled,
   videoRef,
   onViolation,
+  onInitError,
+  attempt = 0,
 }: UseVideoMonitoringOptions): VideoMonitoringState {
   const stateRef = useRef<VideoMonitoringState>({ faceCount: 0, isFacingCamera: true });
   const detectorRef = useRef<FaceDetectorInstance | null>(null);
-  const rafRef = useRef<number>(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const faceAbsenceStart = useRef<number | null>(null);
   const lookAwayStart = useRef<number | null>(null);
   const lastViolationTime = useRef<Partial<Record<MalpracticeType, number>>>({});
   const lastDetectionTime = useRef<number>(0);
   const onViolationRef = useRef(onViolation);
+  const onInitErrorRef = useRef(onInitError);
 
   useEffect(() => {
     onViolationRef.current = onViolation;
+    onInitErrorRef.current = onInitError;
   });
 
   const canFlag = useCallback((type: MalpracticeType): boolean => {
@@ -207,7 +211,7 @@ export function useVideoMonitoring({
     const runningRef = { current: true };
     const ctx: DetectionContext = {
       videoRef,
-      rafRef,
+      timerRef,
       runningRef,
       lastDetectionTime,
       detectorRef,
@@ -237,6 +241,12 @@ export function useVideoMonitoring({
         }
       } catch (err) {
         console.error("Video monitoring could not start (face detector failed to load):", err);
+        // Never run silently unmonitored: surface a blocking error with a retry.
+        if (runningRef.current) {
+          onInitErrorRef.current?.(
+            "The monitoring component failed to load. Check your internet connection and retry."
+          );
+        }
         return;
       }
       if (!runningRef.current) return;
@@ -247,10 +257,12 @@ export function useVideoMonitoring({
 
     return () => {
       runningRef.current = false;
-      cancelAnimationFrame(rafRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = null;
       detectorRef.current?.close?.();
+      detectorRef.current = null;
     };
-  }, [enabled, videoRef, canFlag]);
+  }, [enabled, videoRef, canFlag, attempt]);
 
   return stateRef.current;
 }

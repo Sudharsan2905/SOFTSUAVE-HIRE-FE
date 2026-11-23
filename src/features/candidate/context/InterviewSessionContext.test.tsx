@@ -164,16 +164,21 @@ describe("InterviewSessionProvider / useInterviewSession", () => {
     expect(onAdminWarning).toHaveBeenCalledWith("Test warning");
   });
 
-  it("registerCallbacks stores the getRemainingSeconds getter", () => {
+  it("registerCallbacks forwards server time sync and time-expired events", () => {
     const { result } = renderSessionHook();
 
-    const getRemainingSeconds = vi.fn().mockReturnValue(42);
+    const onTimeSync = vi.fn();
+    const onTimeExpired = vi.fn();
     act(() => {
-      result.current.registerCallbacks({ getRemainingSeconds });
+      result.current.registerCallbacks({ onTimeSync, onTimeExpired });
+    });
+    act(() => {
+      (capturedNetworkOptions.onTimeSync as (s: number) => void)?.(42);
+      (capturedNetworkOptions.onTimeExpired as () => void)?.();
     });
 
-    const value = (capturedNetworkOptions.getRemainingSeconds as () => number)?.();
-    expect(value).toBe(42);
+    expect(onTimeSync).toHaveBeenCalledWith(42);
+    expect(onTimeExpired).toHaveBeenCalledTimes(1);
   });
 
   it("registerCallbacks stores the getCurrentQuestionIdx getter", () => {
@@ -214,12 +219,6 @@ describe("InterviewSessionProvider / useInterviewSession", () => {
   });
 
   // ── Default getter fallbacks ───────────────────────────────────────────────
-
-  it("default getRemainingSeconds returns 0 when not registered", () => {
-    renderSessionHook();
-    const value = (capturedNetworkOptions.getRemainingSeconds as () => number)?.();
-    expect(value).toBe(0);
-  });
 
   it("default getCurrentQuestionIdx returns 0 when not registered", () => {
     renderSessionHook();

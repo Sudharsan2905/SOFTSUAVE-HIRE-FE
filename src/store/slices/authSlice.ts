@@ -1,3 +1,4 @@
+import { purgeLegacyLocalStorage } from "@/constants/storage";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { User } from "@/types";
 import { api, extractApiErrorMessage } from "@/utils/api";
@@ -14,12 +15,13 @@ interface AuthState {
 }
 
 const loadFromStorage = (): Partial<AuthState> => {
+  purgeLegacyLocalStorage();
   try {
     return {
-      accessToken: localStorage.getItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN),
-      refreshToken: localStorage.getItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN),
-      user: JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.USER) ?? "null"),
-      isAuthenticated: !!localStorage.getItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN),
+      accessToken: sessionStorage.getItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN),
+      refreshToken: sessionStorage.getItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN),
+      user: JSON.parse(sessionStorage.getItem(LOCAL_STORAGE_KEYS.USER) ?? "null"),
+      isAuthenticated: !!sessionStorage.getItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN),
     };
   } catch {
     return {};
@@ -40,7 +42,10 @@ export const adminLogin = createAsyncThunk(
 
 export const candidateLogin = createAsyncThunk(
   "auth/candidateLogin",
-  async (payload: { email: string; password: string; share_link?: string }, { rejectWithValue }) => {
+  async (
+    payload: { email: string; password: string; share_link?: string },
+    { rejectWithValue }
+  ) => {
     try {
       const { data } = await api.post(API_ENDPOINTS.AUTH.CANDIDATE_LOGIN, payload);
       return data.data;
@@ -82,9 +87,9 @@ function persistAuthData(state: AuthState, payload: AuthPayload) {
   state.refreshToken = payload.refresh_token;
   state.user = payload.user;
   state.isAuthenticated = true;
-  localStorage.setItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN, payload.access_token);
-  localStorage.setItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN, payload.refresh_token);
-  localStorage.setItem(LOCAL_STORAGE_KEYS.USER, JSON.stringify(payload.user));
+  sessionStorage.setItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN, payload.access_token);
+  sessionStorage.setItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN, payload.refresh_token);
+  sessionStorage.setItem(LOCAL_STORAGE_KEYS.USER, JSON.stringify(payload.user));
 }
 
 const initialState: AuthState = {
@@ -110,17 +115,22 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.refreshToken = null;
       state.isAuthenticated = false;
-      localStorage.removeItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN);
-      localStorage.removeItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN);
-      localStorage.removeItem(LOCAL_STORAGE_KEYS.USER);
+      sessionStorage.removeItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN);
+      sessionStorage.removeItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN);
+      sessionStorage.removeItem(LOCAL_STORAGE_KEYS.USER);
     },
-    setTokens(state, action: PayloadAction<{ accessToken: string }>) {
+    setTokens(state, action: PayloadAction<{ accessToken: string; refreshToken?: string }>) {
       state.accessToken = action.payload.accessToken;
-      localStorage.setItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN, action.payload.accessToken);
+      sessionStorage.setItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN, action.payload.accessToken);
+      // Refresh tokens are single-use (rotated on every refresh): always keep the new one.
+      if (action.payload.refreshToken) {
+        state.refreshToken = action.payload.refreshToken;
+        sessionStorage.setItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN, action.payload.refreshToken);
+      }
     },
     updateUser(state, action: PayloadAction<User>) {
       state.user = action.payload;
-      localStorage.setItem(LOCAL_STORAGE_KEYS.USER, JSON.stringify(action.payload));
+      sessionStorage.setItem(LOCAL_STORAGE_KEYS.USER, JSON.stringify(action.payload));
     },
     setAuthData(state, action: PayloadAction<AuthPayload>) {
       persistAuthData(state, action.payload);

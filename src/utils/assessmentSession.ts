@@ -92,7 +92,7 @@ export function clearAssessmentSession(shareLink: string): void {
 
 // ─── Timer & question-position persistence (network-loss fallback) ────────────
 // These are written frequently during an active session so we use sessionStorage
-// (tab-scoped) rather than localStorage.  The server is the authoritative source;
+// (tab-scoped) rather than sessionStorage.  The server is the authoritative source;
 // these are only read if the server value is unavailable (e.g. first reconnect
 // before the heartbeat has persisted the latest value).
 

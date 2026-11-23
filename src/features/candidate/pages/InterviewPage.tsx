@@ -37,6 +37,8 @@ import { markAssessmentDone } from "@/utils/assessmentSession";
 import { takeCameraStream } from "@/features/candidate/services/screenCaptureStore";
 import { useExamOrchestrator, ExamPhase } from "@/features/candidate/hooks/useExamOrchestrator";
 import toast from "react-hot-toast";
+import { classifyForbidden } from "@/utils/forbidden";
+import { findVirtualCamera, VIRTUAL_CAMERA_MESSAGE, watchTrackHealth } from "@/utils/mediaDevices";
 
 // ─── Local types ──────────────────────────────────────────────────────────────
 
@@ -56,6 +58,8 @@ interface RoundApiResponse {
   screenshot_count?: number;
   remaining_seconds?: number | null;
   current_question_idx?: number;
+  /** Answers already saved server-side for this round (restored after a reload). */
+  answers?: Record<string, string | string[]>;
   session_status?: string;
 }
 
@@ -343,13 +347,13 @@ const MIN_ESSAY_CHARS = 150;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const DEFAULT_ROUND_MINUTES = 30;
+/** Result of a submit attempt: the round advanced, the whole assessment is done, or it failed. */
+type FinishOutcome = "completed" | "advanced" | "failed";
 
-/** A saved remaining time of null/0/negative is treated as "not started" -> full duration (default 30 min). */
-function sanitizeRemaining(remaining: number | null | undefined, maxMinutes?: number | null): number {
-  if (typeof remaining === "number" && remaining > 0) return remaining;
-  return (maxMinutes || DEFAULT_ROUND_MINUTES) * 60;
-}
+/** Resync the local countdown only when it drifts further than this from the server clock. */
+const TIME_DRIFT_TOLERANCE_SECONDS = 3;
+const MIN_SCREENSHOT_INTERVAL_MS = 10_000;
+const FINISH_RETRY_DELAYS_MS = [1_000, 2_000, 4_000, 8_000, 15_000];
 
 export default function InterviewPage() {
   const { shareLink, submissionId } = useParams<{ shareLink: string; submissionId: string }>();
@@ -365,8 +369,12 @@ export default function InterviewPage() {
   const [answers, setAnswers] = useState<AnswerMap>({});
   const [visitedQuestions, setVisitedQuestions] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
+  // Retry counters for media acquisition + the blocking "monitoring failed to load" state.
+  const [cameraAttempt, setCameraAttempt] = useState(0);
+  const [audioAttempt, setAudioAttempt] = useState(0);
+  const [videoMonitorAttempt, setVideoMonitorAttempt] = useState(0);
+  const [monitoringLoadError, setMonitoringLoadError] = useState<string | null>(null);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
-  const [showTimeExpired, setShowTimeExpired] = useState(false);
   const [adminWarningMessage, setAdminWarningMessage] = useState<string | null>(null);
   // These modals only appear AFTER the exam is ACTIVE
   const [fullscreenBlocked, setFullscreenBlocked] = useState(false);
@@ -399,10 +407,13 @@ export default function InterviewPage() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const captureFrameRef = useRef<(() => Promise<Blob | null>) | null>(null);
   const screenshotIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const screenshotInFlightRef = useRef(false);
   const submittingRef = useRef(false);
-  const finishRoundRef = useRef<(autoSubmit?: boolean) => Promise<void>>(async () => {
-    return;
-  });
+  const finishRoundRef = useRef<(autoSubmit?: boolean) => Promise<FinishOutcome>>(
+    async () => "failed"
+  );
+  // Round the candidate is on, sent with finish-round so a double submit is a no-op.
+  const roundNumberRef = useRef<number | null>(null);
   const currentIdxRef = useRef(0);
   const roundDataRef = useRef<InterviewRoundData | null>(null);
   const violationCooldownRef = useRef<Partial<Record<string, number>>>({});
@@ -437,9 +448,25 @@ export default function InterviewPage() {
 
   // ── Timer ───────────────────────────────────────────────────────────────────
   const handleTimerExpiry = useCallback(() => {
-    if (!submittingRef.current) {
-      void finishRoundRef.current(true).then(() => setShowTimeExpired(true));
-    }
+    if (submittingRef.current) return;
+    void (async () => {
+      // Auto-submit must not silently fail: retry with backoff until the server accepts it.
+      let outcome = await finishRoundRef.current(true);
+      for (const delay of FINISH_RETRY_DELAYS_MS) {
+        if (outcome !== "failed") break;
+        await new Promise((r) => setTimeout(r, delay));
+        outcome = await finishRoundRef.current(true);
+      }
+      if (outcome === "advanced") {
+        toast("Time is up for this round. Your answers were submitted — the next round is ready.", {
+          icon: "⏱️",
+          duration: 8000,
+        });
+      }
+      if (outcome === "failed") {
+        toast.error("We could not submit your answers automatically. Please click Submit.");
+      }
+    })();
   }, []);
 
   const { setTimeLeft, timeLeftRef, isLowTime, formattedTime } = useRoundTimer({
@@ -456,6 +483,10 @@ export default function InterviewPage() {
   // ── WebSocket session — must be before orchestrator (provides networkStatus) ─
   const { networkStatus, sessionSubmissionId, startSession, registerCallbacks } =
     useInterviewSession();
+  const networkStatusRef = useRef(networkStatus);
+  useEffect(() => {
+    networkStatusRef.current = networkStatus;
+  }, [networkStatus]);
 
   useEffect(() => {
     if (submissionId && sessionSubmissionId !== submissionId) startSession(submissionId);
@@ -464,14 +495,14 @@ export default function InterviewPage() {
   useEffect(() => {
     registerCallbacks({
       onSessionState: (remainingSeconds, questionIdx) => {
-        if (remainingSeconds !== null) setTimeLeft(sanitizeRemaining(remainingSeconds, roundDataRef.current?.max_duration_minutes));
+        if (typeof remainingSeconds === "number") setTimeLeft(remainingSeconds);
         if (questionIdx !== undefined) {
           setCurrentIdx(questionIdx);
           currentIdxRef.current = questionIdx;
         }
       },
       onResumeApproved: (remainingSeconds, questionIdx) => {
-        if (remainingSeconds !== null) setTimeLeft(sanitizeRemaining(remainingSeconds, roundDataRef.current?.max_duration_minutes));
+        if (typeof remainingSeconds === "number") setTimeLeft(remainingSeconds);
         if (questionIdx !== undefined) {
           setCurrentIdx(questionIdx);
           currentIdxRef.current = questionIdx;
@@ -483,7 +514,17 @@ export default function InterviewPage() {
         setTimeout(() => navigate(ROUTES.ASSESSMENT.entry(shareLink ?? "")), 2000);
       },
       onAdminWarning: (message: string) => setAdminWarningMessage(message),
-      getRemainingSeconds: () => timeLeftRef.current,
+      // Server clock is authoritative: resync only when the local countdown has drifted.
+      onTimeSync: (serverRemaining: number) => {
+        if (Math.abs(serverRemaining - timeLeftRef.current) > TIME_DRIFT_TOLERANCE_SECONDS) {
+          setTimeLeft(serverRemaining);
+        }
+      },
+      // The server already submitted this session; this call is an idempotent confirm
+      // that routes the candidate to the right page.
+      onTimeExpired: () => {
+        void finishRoundRef.current(true);
+      },
       getCurrentQuestionIdx: () => currentIdxRef.current,
     });
   }, [registerCallbacks, navigate, shareLink]);
@@ -516,6 +557,7 @@ export default function InterviewPage() {
     phaseLabel,
     phaseError,
     examActiveRef,
+    examArmedRef,
     isPermissionFlowActiveRef,
     shouldAcquireCamera,
     shouldAcquireAudio,
@@ -541,14 +583,11 @@ export default function InterviewPage() {
     }
   }, [shouldAcquireScreen, shouldInitScreenCapture]);
 
-  // Timer only runs after the backend has been notified of exam start and
-  // the network is connected. Both conditions must hold.
+  // Timer only runs after the backend has been notified of exam start.
   useEffect(() => {
-    const isOffline =
-      networkStatus === "offline" ||
-      networkStatus === "reconnecting" ||
-      networkStatus === "on_hold";
-    setTimerActive(interviewStarted && !isOffline);
+    // The deadline is owned by the server, whose clock keeps running while the candidate is
+    // merely offline. Only an admin hold (server-frozen clock) pauses the countdown.
+    setTimerActive(interviewStarted && networkStatus !== "on_hold");
   }, [networkStatus, interviewStarted]);
 
   // When the orchestrator reaches ACTIVE with fresh round data, show the mandatory
@@ -569,9 +608,15 @@ export default function InterviewPage() {
     navigator.clipboard?.writeText("").catch(() => undefined);
     void api
       .post(API_ENDPOINTS.CANDIDATE.SUBMISSION_START(submissionId!))
+      .then(({ data }) => {
+        // The server starts the round clock now; sync the countdown to it.
+        const remaining = (data?.data as { remaining_seconds?: number } | undefined)
+          ?.remaining_seconds;
+        if (typeof remaining === "number") setTimeLeft(remaining);
+      })
       .catch(() => undefined)
       .finally(() => setInterviewStarted(true));
-  }, [submissionId]);
+  }, [submissionId, setTimeLeft]);
 
   // ── Data fetching ───────────────────────────────────────────────────────────
   const fetchRound = useCallback(async () => {
@@ -590,6 +635,7 @@ export default function InterviewPage() {
       monitoring,
       remainingSeconds: rd.remaining_seconds ?? null,
       questionIdx: rd.current_question_idx ?? 0,
+      savedAnswers: rd.answers ?? {},
     };
   }, [submissionId]);
 
@@ -607,15 +653,23 @@ export default function InterviewPage() {
       const status = isAxiosErr
         ? (e as { response?: { status?: number } }).response?.status
         : undefined;
-      const msg = extractApiErrorMessage(e, "");
+      const msg =
+        extractApiErrorMessage(e, "") ||
+        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "";
 
       if (status === 403) {
-        if (shareLink) markAssessmentDone(shareLink);
-        const isRevoked = msg.toLowerCase().includes("revoked");
-        navigate(
-          isRevoked ? ROUTES.ASSESSMENT.entry(shareLink!) : ROUTES.ASSESSMENT.completed(shareLink!),
-          { replace: true }
-        );
+        const kind = classifyForbidden(msg);
+        if (kind === "finished") {
+          if (shareLink) markAssessmentDone(shareLink);
+          navigate(ROUTES.ASSESSMENT.completed(shareLink!), { replace: true });
+        } else if (kind === "revoked") {
+          navigate(ROUTES.ASSESSMENT.entry(shareLink!), { replace: true });
+        } else {
+          // Not proof the attempt is over (deactivated account, wrong role, ...): never lock
+          // the candidate out for the tab session — show the reason and let them retry.
+          setLoadError(msg || "You do not have access to this assessment right now.");
+        }
       } else if (!status || status >= 500) {
         // Server error or no response (network failure / timeout)
         console.error("Round API failed:", e);
@@ -632,11 +686,22 @@ export default function InterviewPage() {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [{ round: rd, monitoring: cfg, remainingSeconds, questionIdx }, assessment] =
-        await Promise.all([fetchRound(), fetchAssessment()]);
+      const [
+        { round: rd, monitoring: cfg, remainingSeconds, questionIdx, savedAnswers },
+        assessment,
+      ] = await Promise.all([fetchRound(), fetchAssessment()]);
       if (rd) {
         setRoundData(rd);
-        setTimeLeft(sanitizeRemaining(remainingSeconds, rd.max_duration_minutes));
+        roundNumberRef.current = rd.round_number ?? null;
+        setAnswers(savedAnswers);
+        // The server always supplies the remaining time; the client has no default.
+        if (typeof remainingSeconds === "number") {
+          setTimeLeft(remainingSeconds);
+        } else {
+          setLoadError(
+            "We could not synchronise your assessment timer with the server. Please refresh the page."
+          );
+        }
         setMonitoringConfig(cfg);
         if (questionIdx > 0 && questionIdx < rd.questions.length) {
           setCurrentIdx(questionIdx);
@@ -688,43 +753,53 @@ export default function InterviewPage() {
 
   // ── Finish round ────────────────────────────────────────────────────────────
   const handleFinishRound = useCallback(
-    async (_autoSubmit = false): Promise<void> => {
-      if (submittingRef.current) return;
+    async (_autoSubmit = false): Promise<FinishOutcome> => {
+      if (submittingRef.current) return "failed";
       setSubmitting(true);
       submittingRef.current = true;
       setShowSubmitConfirm(false);
-      flushPending();
       try {
+        // Never submit while answers are still unsynced: push them and wait.
+        const allSynced = await flushPending();
+        if (!allSynced) {
+          toast.error("Some answers could not be saved yet. Retrying…");
+          setSubmitting(false);
+          submittingRef.current = false;
+          return "failed";
+        }
         const { data } = await api.post(
-          API_ENDPOINTS.CANDIDATE.SUBMISSION_FINISH_ROUND(submissionId!)
+          API_ENDPOINTS.CANDIDATE.SUBMISSION_FINISH_ROUND(submissionId!),
+          { round_number: roundNumberRef.current }
         );
         if (data.data?.completed) {
           if (shareLink) markAssessmentDone(shareLink);
           navigate(ROUTES.ASSESSMENT.completed(shareLink!), { replace: true });
-        } else {
-          // Round transition — reset media readiness so orchestrator re-validates
-          setRoundData(null);
-          setCurrentIdx(0);
-          currentIdxRef.current = 0;
-          setAnswers({});
-          setVisitedQuestions(new Set());
-          setIsCameraReady(false);
-          setIsAudioReady(false);
-          setShouldInitScreenCapture(false);
-          setInterviewStarted(false);
-          interviewStartedRef.current = false;
-          setShowIntroModal(false);
-          setSubmitting(false);
-          submittingRef.current = false;
-          await loadData();
+          return "completed";
         }
+        // Round transition — reset media readiness so orchestrator re-validates
+        setRoundData(null);
+        setCurrentIdx(0);
+        currentIdxRef.current = 0;
+        setAnswers({});
+        setVisitedQuestions(new Set());
+        setIsCameraReady(false);
+        setIsAudioReady(false);
+        setShouldInitScreenCapture(false);
+        setInterviewStarted(false);
+        interviewStartedRef.current = false;
+        setShowIntroModal(false);
+        setSubmitting(false);
+        submittingRef.current = false;
+        await loadData();
+        return "advanced";
       } catch {
         toast.error("Failed to submit round");
         setSubmitting(false);
         submittingRef.current = false;
+        return "failed";
       }
     },
-    [submissionId, shareLink, navigate, loadData]
+    [submissionId, shareLink, navigate, loadData, flushPending]
   );
 
   useEffect(() => {
@@ -745,18 +820,27 @@ export default function InterviewPage() {
   });
 
   // ── Safe violation wrapper ──────────────────────────────────────────────────
-  // All malpractice calls pass through here. Violations are silently dropped
-  // unless examActiveRef is true (exam ACTIVE + network connected).
+  // All malpractice calls pass through here. Violations are dropped only when the exam is
+  // not ACTIVE; while the network is down they are still detected and the coordinator
+  // buffers + replays them. The debounce window starts only once a violation was accepted
+  // (delivered or queued), and an in-flight guard stops duplicates meanwhile.
+  const violationInFlightRef = useRef<Partial<Record<string, boolean>>>({});
   const flagViolationSafe = useCallback(
     async (event: ViolationPayload): Promise<void> => {
-      if (!examActiveRef.current) return;
+      if (!examArmedRef.current) return;
+      if (violationInFlightRef.current[event.type]) return;
       const now = performance.now();
       const last = violationCooldownRef.current[event.type] ?? 0;
       if (now - last < VIOLATION_DEBOUNCE_MS) return;
-      violationCooldownRef.current[event.type] = now;
-      return flagViolation(event);
+      violationInFlightRef.current[event.type] = true;
+      try {
+        const accepted = await flagViolation(event);
+        if (accepted) violationCooldownRef.current[event.type] = performance.now();
+      } finally {
+        violationInFlightRef.current[event.type] = false;
+      }
     },
-    [flagViolation, examActiveRef]
+    [flagViolation, examArmedRef]
   );
 
   // ── Fullscreen enforcement ──────────────────────────────────────────────────
@@ -766,22 +850,28 @@ export default function InterviewPage() {
     enabled: shouldEnforceFullscreen,
     onBlockRequired: useCallback(() => {
       // During active exam: show blocking modal. During setup: ExamSetupScreen handles it.
-      if (examActiveRef.current) setFullscreenBlocked(true);
-    }, [examActiveRef]),
+      if (examArmedRef.current) setFullscreenBlocked(true);
+    }, [examArmedRef]),
     onExit: useCallback(
       (description: string) => {
-        if (examActiveRef.current) {
+        if (examArmedRef.current) {
           setFullscreenBlocked(true);
           void flagViolationSafe({ type: "fullscreen_exit", description });
         }
       },
-      [examActiveRef, flagViolationSafe]
+      [examArmedRef, flagViolationSafe]
     ),
   });
 
   useEffect(() => {
     if (isFullscreen && fullscreenBlocked) setFullscreenBlocked(false);
   }, [isFullscreen, fullscreenBlocked]);
+
+  // Stable handle so long-lived track listeners always call the latest callback.
+  const flagViolationSafeRef = useRef<((e: ViolationPayload) => Promise<void>) | null>(null);
+  useEffect(() => {
+    flagViolationSafeRef.current = flagViolationSafe;
+  }, [flagViolationSafe]);
 
   // ── Camera stream ───────────────────────────────────────────────────────────
   // Gated on shouldAcquireCamera — no camera dialog until orchestrator signals.
@@ -802,20 +892,43 @@ export default function InterviewPage() {
         if (!stored) stream.getTracks().forEach((t) => t.stop());
         return;
       }
+      if (findVirtualCamera(stream)) {
+        stream.getTracks().forEach((t) => t.stop());
+        setPhaseError(VIRTUAL_CAMERA_MESSAGE);
+        return;
+      }
       cameraStreamRef.current = stream;
       if (videoRef.current) videoRef.current.srcObject = stream;
+      // A camera that stops or freezes mid-exam must be reported, not look like a present face.
+      const camTrack = stream.getVideoTracks()[0];
+      if (camTrack) {
+        stopWatchingCamera = watchTrackHealth(camTrack, {
+          onEnded: () =>
+            void flagViolationSafeRef.current?.({
+              type: "face_absence",
+              description: "Camera was stopped or disconnected",
+            }),
+          onMute: () =>
+            void flagViolationSafeRef.current?.({
+              type: "face_absence",
+              description: "Camera feed stopped (muted by the browser or device)",
+            }),
+        });
+      }
       setIsCameraReady(true);
     };
 
+    let stopWatchingCamera: (() => void) | null = null;
     void setup();
 
     return () => {
       cancelled = true;
+      stopWatchingCamera?.();
       cameraStreamRef.current?.getTracks().forEach((t) => t.stop());
       cameraStreamRef.current = null;
       setIsCameraReady(false);
     };
-  }, [monitoringConfig.video_monitoring, shouldAcquireCamera, setPhaseError]);
+  }, [monitoringConfig.video_monitoring, shouldAcquireCamera, setPhaseError, cameraAttempt]);
 
   // Rebind camera stream after round transitions or when the exam goes ACTIVE.
   // The <video> element only exists in the DOM once the active exam UI mounts
@@ -839,6 +952,8 @@ export default function InterviewPage() {
     enabled: monitoringConfig.audio_monitoring ?? false,
     shouldInitialize: shouldAcquireAudio,
     analyserRef,
+    attempt: audioAttempt,
+    onError: setPhaseError,
     onStreamReady: useCallback((stream: MediaStream) => {
       audioStreamRef.current = stream;
       setIsAudioReady(true);
@@ -856,6 +971,8 @@ export default function InterviewPage() {
   useVideoMonitoring({
     enabled: monitoringConfig.video_monitoring ?? false,
     videoRef,
+    attempt: videoMonitorAttempt,
+    onInitError: setMonitoringLoadError,
     onViolation: useCallback(
       (type, description) => {
         void flagViolationSafe({ type, description });
@@ -879,7 +996,7 @@ export default function InterviewPage() {
   // Only active once exam is ACTIVE (examActiveRef gates it internally too).
   useDevtoolsMonitoring({
     enabled: monitoringConfig.tab_monitoring ?? false,
-    examActiveRef,
+    examActiveRef: examArmedRef,
     onViolation: useCallback(
       (type, description) => {
         void flagViolationSafe({ type, description });
@@ -891,7 +1008,7 @@ export default function InterviewPage() {
   // ── Multiple monitor detection ──────────────────────────────────────────────
   useMultiMonitorMonitoring({
     enabled: true, // always restricted, independent of the monitoring toggles
-    examActiveRef,
+    examActiveRef: examArmedRef,
     onBlockChange: setMultiMonitorBlocked,
     onViolation: useCallback(
       (type, description) => {
@@ -906,7 +1023,7 @@ export default function InterviewPage() {
   // onFocusViolation: blur while tab is still visible — OS notification / DND bypass.
   useTabMonitoring({
     enabled: monitoringConfig.tab_monitoring ?? false,
-    examActiveRef,
+    examActiveRef: examArmedRef,
     isPermissionFlowActiveRef,
     onTabSwitch: useCallback(
       (description: string) => {
@@ -982,22 +1099,33 @@ export default function InterviewPage() {
     }
   }, []);
 
+  // Bumping these counters re-runs the acquisition effects (they are in the effect deps).
   const handleSetupRetryCamera = useCallback(async () => {
     setIsCameraReady(false);
     setPhaseError(null);
+    setCameraAttempt((n) => n + 1);
   }, [setPhaseError]);
 
   const handleSetupRetryAudio = useCallback(async () => {
     setIsAudioReady(false);
     setPhaseError(null);
+    setAudioAttempt((n) => n + 1);
   }, [setPhaseError]);
 
   // ── Periodic screenshot ─────────────────────────────────────────────────────
   useEffect(() => {
     if (!monitoringConfig.screenshot_enabled || !submissionId) return;
     if (!isScreenCapturing) return;
-    const intervalMs = (monitoringConfig.screenshot_interval_seconds ?? 30) * 1_000;
+    // Client-side floor so a tiny server value can't flood the API; at most one upload in
+    // flight; nothing is sent while offline (the next tick simply retries).
+    const intervalMs = Math.max(
+      MIN_SCREENSHOT_INTERVAL_MS,
+      (monitoringConfig.screenshot_interval_seconds ?? 30) * 1_000
+    );
     screenshotIntervalRef.current = setInterval(() => {
+      if (screenshotInFlightRef.current) return;
+      if (!navigator.onLine || networkStatusRef.current !== "connected") return;
+      screenshotInFlightRef.current = true;
       void (async () => {
         try {
           const blob = await captureFrame();
@@ -1009,6 +1137,8 @@ export default function InterviewPage() {
           });
         } catch {
           /* silent */
+        } finally {
+          screenshotInFlightRef.current = false;
         }
       })();
     }, intervalMs);
@@ -1031,19 +1161,41 @@ export default function InterviewPage() {
     const BLOCKED_CTRL = new Set(["p", "x"]);
     const ALLOWED_IN_TEXTAREA = new Set(["a", "c", "v"]);
 
+    // Every blocked attempt is also recorded as a malpractice event (debounced and
+    // buffered by flagViolationSafe), not just toasted.
+    const record = (
+      type: "copy_paste" | "keyboard_shortcut" | "devtools_open",
+      description: string
+    ) => void flagViolationSafeRef.current?.({ type, description });
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "F12") {
+      const key = e.key.toLowerCase();
+      const mod = e.ctrlKey || e.metaKey;
+      // F12, Ctrl/Cmd+Shift+I/J/C, Cmd+Alt+I/J/C (macOS) and Ctrl/Cmd+U (view source)
+      const isDevtoolsShortcut =
+        e.key === "F12" ||
+        (mod && e.shiftKey && ["i", "j", "c"].includes(key)) ||
+        (e.metaKey && e.altKey && ["i", "j", "c"].includes(key)) ||
+        (mod && key === "u");
+      if (isDevtoolsShortcut) {
         e.preventDefault();
         toast.error("Developer Tools are not allowed during the assessment");
+        record("devtools_open", `Developer tools shortcut attempted (${e.key})`);
         return;
       }
-      if ((e.ctrlKey || e.metaKey) && BLOCKED_CTRL.has(e.key.toLowerCase())) {
+      if (mod && BLOCKED_CTRL.has(key)) {
         e.preventDefault();
         toast.error("This action is not allowed during the assessment");
+        record(
+          key === "x" ? "copy_paste" : "keyboard_shortcut",
+          `Blocked shortcut attempted (${e.ctrlKey ? "Ctrl" : "Cmd"}+${key.toUpperCase()})`
+        );
       }
-      if ((e.ctrlKey || e.metaKey) && ALLOWED_IN_TEXTAREA.has(e.key.toLowerCase())) {
+      if (mod && ALLOWED_IN_TEXTAREA.has(key)) {
         e.preventDefault();
         toast.error("Copy/paste is not allowed during the assessment");
+        if (key !== "a")
+          record("copy_paste", `Copy/paste shortcut attempted (${key.toUpperCase()})`);
       }
     };
 
@@ -1051,6 +1203,15 @@ export default function InterviewPage() {
       e.preventDefault();
       const action = getClipboardAction(e.type);
       toast.error(`${action} action is not allowed on this page`);
+      record("copy_paste", `${action} attempted`);
+    };
+
+    // Dragging text/files into the answer box is a paste in disguise.
+    const handleDragOver = (e: DragEvent) => e.preventDefault();
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault();
+      toast.error("Drag and drop is not allowed during the assessment");
+      record("copy_paste", "Drag-and-drop into the page attempted");
     };
 
     const handleContextMenu = (e: MouseEvent) => {
@@ -1063,8 +1224,12 @@ export default function InterviewPage() {
     document.addEventListener("paste", handleClipboard);
     document.addEventListener("cut", handleClipboard);
     document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("dragover", handleDragOver);
+    document.addEventListener("drop", handleDrop);
 
     return () => {
+      document.removeEventListener("dragover", handleDragOver);
+      document.removeEventListener("drop", handleDrop);
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("copy", handleClipboard);
       document.removeEventListener("paste", handleClipboard);
@@ -1410,6 +1575,26 @@ export default function InterviewPage() {
       <MalpracticeWarningModal />
 
       <Modal
+        isOpen={!!monitoringLoadError}
+        onClose={() => undefined}
+        title="Monitoring unavailable"
+        size="sm"
+        disableBackdropClose
+        footer={
+          <Button
+            onClick={() => {
+              setMonitoringLoadError(null);
+              setVideoMonitorAttempt((n) => n + 1);
+            }}
+          >
+            Retry
+          </Button>
+        }
+      >
+        <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>{monitoringLoadError}</p>
+      </Modal>
+
+      <Modal
         isOpen={adminWarningMessage !== null}
         onClose={() => setAdminWarningMessage(null)}
         title="Message from Administrator"
@@ -1418,31 +1603,6 @@ export default function InterviewPage() {
         footer={<Button onClick={() => setAdminWarningMessage(null)}>Acknowledge</Button>}
       >
         <p style={{ fontSize: 14, color: "var(--text-secondary)" }}>{adminWarningMessage}</p>
-      </Modal>
-
-      <Modal
-        isOpen={showTimeExpired}
-        onClose={() => {
-          setShowTimeExpired(false);
-          navigate(ROUTES.ASSESSMENT.completed(shareLink ?? ""));
-        }}
-        title="Time's Up"
-        size="sm"
-        disableBackdropClose
-        footer={
-          <Button
-            onClick={() => {
-              setShowTimeExpired(false);
-              navigate(ROUTES.ASSESSMENT.completed(shareLink ?? ""));
-            }}
-          >
-            Continue
-          </Button>
-        }
-      >
-        <p style={{ fontSize: 14, color: "var(--text-secondary)", textAlign: "center" }}>
-          Your time for this round has expired. Your answers have been automatically submitted.
-        </p>
       </Modal>
 
       {/* Screen share recovery — shown only during active exam */}

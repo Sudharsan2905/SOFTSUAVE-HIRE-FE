@@ -5,21 +5,30 @@
  * network connectivity during an assessment.
  *
  * WebSocket protocol:
- *   Client → Server: { type: "ping", remaining_seconds, current_question_idx }
- *   Server → Client: { type: "pong" | "connected" | "on_hold" | "resume_approved" | "terminated" | "error", ... }
+ *   Client → Server: { type: "ping", current_question_idx }   (the server owns the clock)
+ *   Server → Client: { type: "pong" | "connected" | "on_hold" | "resume_approved" | "terminated" | "time_expired" | "error", ... }
  *
- * Reconnect strategy: exponential back-off capped at 10 s, up to MAX_RETRIES attempts.
+ * Reconnect strategy: exponential back-off with full jitter (so 1000 candidates never
+ * reconnect in lock-step), capped at 30 s, retried indefinitely until the session ends.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type React from "react";
 
 import { WS_HEARTBEAT_INTERVAL_MS } from "@/constants/app";
 import type { WsMessage } from "@/types";
 import { CONFIG } from "@/constants";
 
-const MAX_RETRIES = 10;
 const BASE_BACKOFF_MS = 1_000;
-const MAX_BACKOFF_MS = 10_000;
+const MAX_BACKOFF_MS = 30_000;
+
+/** Full-jitter exponential back-off. */
+function backoffDelay(attempt: number): number {
+  const ceiling = Math.min(BASE_BACKOFF_MS * 2 ** attempt, MAX_BACKOFF_MS);
+  return Math.round(ceiling / 2 + Math.random() * (ceiling / 2));
+}
+
+type StatusSetter = React.Dispatch<React.SetStateAction<NetworkStatus>>;
 
 interface WsMessageCallbacks {
   onSessionState?: (remaining: number | null, qIdx: number) => void;
@@ -27,11 +36,13 @@ interface WsMessageCallbacks {
   onResumeApproved?: (remaining: number | null, qIdx: number) => void;
   onTerminated?: () => void;
   onAdminWarning?: (message: string) => void;
+  onTimeSync?: (remaining: number) => void;
+  onTimeExpired?: () => void;
 }
 
 function handleConnectedMessage(
   msg: WsMessage,
-  setNetworkStatus: (s: NetworkStatus) => void,
+  setNetworkStatus: StatusSetter,
   cbs: WsMessageCallbacks
 ): void {
   console.warn(
@@ -47,7 +58,7 @@ function handleConnectedMessage(
 
 function handleResumeApprovedMessage(
   msg: WsMessage,
-  setNetworkStatus: (s: NetworkStatus) => void,
+  setNetworkStatus: StatusSetter,
   cbs: WsMessageCallbacks
 ): void {
   console.warn(
@@ -59,8 +70,7 @@ function handleResumeApprovedMessage(
 
 function processWsMessage(
   msg: WsMessage,
-  networkStatus: NetworkStatus,
-  setNetworkStatus: (s: NetworkStatus) => void,
+  setNetworkStatus: StatusSetter,
   cbs: WsMessageCallbacks
 ): void {
   switch (msg.type) {
@@ -68,7 +78,13 @@ function processWsMessage(
       handleConnectedMessage(msg, setNetworkStatus, cbs);
       break;
     case "pong":
-      if (networkStatus === "reconnecting") setNetworkStatus("connected");
+      // Functional update: this runs from a socket handler whose closure can be stale.
+      setNetworkStatus((prev) => (prev === "reconnecting" ? "connected" : prev));
+      if (typeof msg.remaining_seconds === "number") cbs.onTimeSync?.(msg.remaining_seconds);
+      break;
+    case "time_expired":
+      console.warn("[WS] Session auto-submitted by the server (time expired)");
+      cbs.onTimeExpired?.();
       break;
     case "on_hold":
       console.warn("[WS] Session placed on hold by server");
@@ -105,8 +121,10 @@ interface UseNetworkMonitoringOptions {
   onTerminated?: () => void;
   /** Called when an admin sends a warning message to the candidate */
   onAdminWarning?: (message: string) => void;
-  /** Live getter for current remaining seconds (called each heartbeat) */
-  getRemainingSeconds?: () => number;
+  /** Server-computed remaining seconds, delivered with every heartbeat reply */
+  onTimeSync?: (remainingSeconds: number) => void;
+  /** Called when the server auto-submitted the session */
+  onTimeExpired?: () => void;
   /** Live getter for current question index (called each heartbeat) */
   getCurrentQuestionIdx?: () => number;
 }
@@ -124,7 +142,8 @@ export function useNetworkMonitoring({
   onResumeApproved,
   onTerminated,
   onAdminWarning,
-  getRemainingSeconds,
+  onTimeSync,
+  onTimeExpired,
   getCurrentQuestionIdx,
 }: UseNetworkMonitoringOptions): UseNetworkMonitoringResult {
   const [networkStatus, setNetworkStatus] = useState<NetworkStatus>(
@@ -137,6 +156,8 @@ export function useNetworkMonitoring({
   const retryCountRef = useRef(0);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const unmountedRef = useRef(false);
+  // Set once the server ends the session — never reconnect after that.
+  const endedRef = useRef(false);
 
   // Stable callback refs so the WebSocket handlers don't need to be recreated
   const onSessionStateRef = useRef(onSessionState);
@@ -144,7 +165,8 @@ export function useNetworkMonitoring({
   const onResumeApprovedRef = useRef(onResumeApproved);
   const onTerminatedRef = useRef(onTerminated);
   const onAdminWarningRef = useRef(onAdminWarning);
-  const getRemainingSecondsRef = useRef(getRemainingSeconds);
+  const onTimeSyncRef = useRef(onTimeSync);
+  const onTimeExpiredRef = useRef(onTimeExpired);
   const getCurrentQuestionIdxRef = useRef(getCurrentQuestionIdx);
 
   useEffect(() => {
@@ -163,8 +185,11 @@ export function useNetworkMonitoring({
     onAdminWarningRef.current = onAdminWarning;
   }, [onAdminWarning]);
   useEffect(() => {
-    getRemainingSecondsRef.current = getRemainingSeconds;
-  }, [getRemainingSeconds]);
+    onTimeSyncRef.current = onTimeSync;
+  }, [onTimeSync]);
+  useEffect(() => {
+    onTimeExpiredRef.current = onTimeExpired;
+  }, [onTimeExpired]);
   useEffect(() => {
     getCurrentQuestionIdxRef.current = getCurrentQuestionIdx;
   }, [getCurrentQuestionIdx]);
@@ -181,42 +206,49 @@ export function useNetworkMonitoring({
       stopHeartbeat();
       heartbeatRef.current = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) {
-          const remaining = getRemainingSecondsRef.current?.() ?? null;
           const qIdx = getCurrentQuestionIdxRef.current?.() ?? 0;
-          ws.send(
-            JSON.stringify({
-              type: "ping",
-              remaining_seconds: remaining,
-              current_question_idx: qIdx,
-            })
-          );
+          ws.send(JSON.stringify({ type: "ping", current_question_idx: qIdx }));
         }
       }, WS_HEARTBEAT_INTERVAL_MS);
     },
     [stopHeartbeat]
   );
 
-  const handleMessage = useCallback(
-    (event: MessageEvent) => {
-      let msg: WsMessage;
-      try {
-        msg = JSON.parse(event.data as string) as WsMessage;
-      } catch {
-        return;
-      }
-      processWsMessage(msg, networkStatus, setNetworkStatus, {
-        onSessionState: onSessionStateRef.current,
-        onSessionOnHold: onSessionOnHoldRef.current,
-        onResumeApproved: onResumeApprovedRef.current,
-        onTerminated: onTerminatedRef.current,
-        onAdminWarning: onAdminWarningRef.current,
-      });
-    },
-    [networkStatus]
-  );
+  const handleMessage = useCallback((event: MessageEvent) => {
+    let msg: WsMessage;
+    try {
+      msg = JSON.parse(event.data as string) as WsMessage;
+    } catch {
+      return;
+    }
+    processWsMessage(msg, setNetworkStatus, {
+      onSessionState: onSessionStateRef.current,
+      onSessionOnHold: onSessionOnHoldRef.current,
+      onResumeApproved: onResumeApprovedRef.current,
+      onTerminated: () => {
+        endedRef.current = true;
+        onTerminatedRef.current?.();
+      },
+      onAdminWarning: onAdminWarningRef.current,
+      onTimeSync: onTimeSyncRef.current,
+      onTimeExpired: () => {
+        endedRef.current = true;
+        onTimeExpiredRef.current?.();
+      },
+    });
+  }, []);
 
   const connect = useCallback(() => {
-    if (!submissionId || !accessToken || unmountedRef.current) return;
+    if (!submissionId || !accessToken || unmountedRef.current || endedRef.current) return;
+
+    // Never keep two sockets: drop any previous one without triggering its reconnect path.
+    const previous = wsRef.current;
+    if (previous) {
+      previous.onclose = null;
+      previous.onerror = null;
+      previous.onmessage = null;
+      if (previous.readyState !== WebSocket.CLOSED) previous.close();
+    }
 
     const url = `${CONFIG.WS_URL}/api/ws/interview/${submissionId}?token=${accessToken}`;
 
@@ -231,7 +263,8 @@ export function useNetworkMonitoring({
       }
       console.warn(`[WS] Connected: submission=${submissionId}`);
       retryCountRef.current = 0;
-      setNetworkStatus("connected");
+      // Do NOT mark "connected" here: only a server message may leave on_hold /
+      // reconnecting, so a held session can never be un-held by simply reconnecting.
       setIsOnline(true);
       startHeartbeat(ws);
     };
@@ -239,6 +272,7 @@ export function useNetworkMonitoring({
     ws.onmessage = handleMessage;
 
     ws.onclose = (event) => {
+      if (wsRef.current !== ws) return; // a newer socket replaced this one
       const reasonPart = event.reason ? ` reason="${event.reason}"` : "";
       console.warn(`[WS] Closed: submission=${submissionId} code=${event.code}${reasonPart}`);
       stopHeartbeat();
@@ -249,6 +283,11 @@ export function useNetworkMonitoring({
         if (prev === "on_hold") return "on_hold";
         return "reconnecting";
       });
+      // 4003 = session ended on the server; 4001/4004 = auth / unknown submission.
+      if (event.code === 4003 || event.code === 4001 || event.code === 4004) {
+        endedRef.current = true;
+        return;
+      }
       scheduleReconnect();
     };
 
@@ -260,19 +299,12 @@ export function useNetworkMonitoring({
 
   const scheduleReconnect = useCallback(() => {
     if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
-    if (retryCountRef.current >= MAX_RETRIES || unmountedRef.current) {
-      if (retryCountRef.current >= MAX_RETRIES) {
-        console.error(
-          `[WS] Max retries (${MAX_RETRIES}) reached, giving up. submission=${submissionId ?? ""}`
-        );
-      }
-      return;
-    }
+    if (unmountedRef.current || endedRef.current) return;
 
-    const delay = Math.min(BASE_BACKOFF_MS * 2 ** retryCountRef.current, MAX_BACKOFF_MS);
+    const delay = backoffDelay(retryCountRef.current);
     retryCountRef.current += 1;
     console.warn(
-      `[WS] Reconnect attempt ${retryCountRef.current}/${MAX_RETRIES} in ${delay}ms. submission=${submissionId ?? ""}`
+      `[WS] Reconnect attempt ${retryCountRef.current} in ${delay}ms. submission=${submissionId ?? ""}`
     );
     retryTimerRef.current = setTimeout(() => {
       if (!unmountedRef.current) connect();
@@ -283,8 +315,9 @@ export function useNetworkMonitoring({
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      if (networkStatus !== "on_hold") {
+      if (networkStatus !== "on_hold" && !endedRef.current) {
         setNetworkStatus("reconnecting");
+        if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
         connect();
       }
     };
@@ -305,6 +338,7 @@ export function useNetworkMonitoring({
   useEffect(() => {
     if (!submissionId || !accessToken) return;
     unmountedRef.current = false;
+    endedRef.current = false;
     connect();
     return () => {
       unmountedRef.current = true;

@@ -127,13 +127,25 @@ const mockPost = vi.mocked((api as unknown as { post: (...args: unknown[]) => un
 
 // ── Mock stream/track helpers ────────────────────────────────────────────────
 function makeMockTrack() {
+  const track = {
+    readyState: "live",
+    stop: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    clone: vi.fn(),
+  };
+  track.clone.mockImplementation(() => ({ ...makeMockTrackBase(), isClone: true }));
+  return track as unknown as MediaStreamTrack & {
+    addEventListener: ReturnType<typeof vi.fn>;
+    clone: ReturnType<typeof vi.fn>;
+  };
+}
+function makeMockTrackBase() {
   return {
     readyState: "live",
     stop: vi.fn(),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
-  } as unknown as MediaStreamTrack & {
-    addEventListener: ReturnType<typeof vi.fn>;
   };
 }
 
@@ -329,6 +341,88 @@ describe("useLiveKitPublisher", () => {
     const room = roomInstances[0];
     unmount();
     expect(room.disconnect).toHaveBeenCalled();
+  });
+});
+
+describe("useLiveKitPublisher resilience", () => {
+  const baseOpts = { submissionId: "sub-1", enabled: true };
+
+  it("publishes CLONES and never stops the shared raw tracks", async () => {
+    const cameraStreamRef = makeStreamRef({ video: true });
+    const raw = cameraStreamRef.current!.getVideoTracks()[0] as unknown as {
+      stop: ReturnType<typeof vi.fn>;
+      clone: ReturnType<typeof vi.fn>;
+    };
+    const { result } = renderHook(() => useLiveKitPublisher({ ...baseOpts, cameraStreamRef }));
+    await act(async () => {
+      await result.current.startPublishing();
+    });
+    expect(raw.clone).toHaveBeenCalledTimes(1);
+    act(() => {
+      result.current.stopPublishing();
+    });
+    expect(raw.stop).not.toHaveBeenCalled(); // MediaPipe/recorder keep their track
+  });
+
+  it("re-publishes with backoff after the room disconnects", async () => {
+    vi.useFakeTimers();
+    try {
+      const { result } = renderHook(() => useLiveKitPublisher(baseOpts));
+      await act(async () => {
+        await result.current.startPublishing();
+      });
+      expect(result.current.isPublishing).toBe(true);
+      act(() => {
+        roomInstances[0].emit(RoomEvent.Disconnected);
+      });
+      expect(result.current.isPublishing).toBe(false);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2_000);
+      });
+      expect(roomInstances.length).toBeGreaterThanOrEqual(2);
+      expect(result.current.isPublishing).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("retries a failed token fetch instead of giving up", async () => {
+    vi.useFakeTimers();
+    try {
+      mockPost.mockRejectedValueOnce(new Error("503"));
+      const { result } = renderHook(() => useLiveKitPublisher(baseOpts));
+      await act(async () => {
+        await result.current.startPublishing();
+      });
+      expect(result.current.isPublishing).toBe(false);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2_000);
+      });
+      expect(mockPost).toHaveBeenCalledTimes(2);
+      expect(result.current.isPublishing).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not retry after stopPublishing", async () => {
+    vi.useFakeTimers();
+    try {
+      mockPost.mockRejectedValue(new Error("down"));
+      const { result } = renderHook(() => useLiveKitPublisher(baseOpts));
+      await act(async () => {
+        await result.current.startPublishing();
+      });
+      act(() => {
+        result.current.stopPublishing();
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60_000);
+      });
+      expect(mockPost).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

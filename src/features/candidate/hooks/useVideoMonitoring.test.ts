@@ -22,16 +22,17 @@ vi.mock("@mediapipe/tasks-vision", () => ({
 
 import { useVideoMonitoring } from "./useVideoMonitoring";
 
-// ── rAF / performance.now control ────────────────────────────────────────────
-let rafCallbacks: FrameRequestCallback[] = [];
+// ── interval / performance.now control ────────────────────────────────────────
+// The detection loop is a 700 ms setInterval; the spy captures its callback so tests can
+// "tick" it deterministically (flushRaf kept as the helper name for the existing cases).
+let rafCallbacks: Array<() => void> = [];
 let rafId = 0;
 let nowValue = 0;
+let clearedIntervals: number[] = [];
 
 function flushRaf(times = 1) {
   for (let i = 0; i < times; i++) {
-    const cbs = rafCallbacks;
-    rafCallbacks = [];
-    for (const cb of cbs) cb(nowValue);
+    for (const cb of [...rafCallbacks]) cb();
   }
 }
 
@@ -52,6 +53,7 @@ function makeVideoRef(readyState = 4): MutableRefObject<HTMLVideoElement | null>
 
 beforeEach(() => {
   rafCallbacks = [];
+  clearedIntervals = [];
   rafId = 0;
   nowValue = 0;
   detectResult = { detections: [] };
@@ -68,12 +70,22 @@ beforeEach(() => {
   forVisionTasks.mockClear();
   forVisionTasks.mockResolvedValue({});
 
-  vi.spyOn(globalThis, "requestAnimationFrame").mockImplementation((cb: FrameRequestCallback) => {
-    rafCallbacks.push(cb);
-    return ++rafId;
-  });
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  vi.spyOn(globalThis, "cancelAnimationFrame").mockImplementation(() => {});
+  const realSetInterval = globalThis.setInterval;
+  vi.spyOn(globalThis, "setInterval").mockImplementation(((
+    cb: () => void,
+    ms?: number,
+    ...rest: unknown[]
+  ) => {
+    if (ms === 700) {
+      rafCallbacks.push(cb);
+      return ++rafId as unknown as ReturnType<typeof setInterval>;
+    }
+    return realSetInterval(cb, ms, ...(rest as []));
+  }) as typeof setInterval);
+  vi.spyOn(globalThis, "clearInterval").mockImplementation(((id: number) => {
+    clearedIntervals.push(id);
+    rafCallbacks = [];
+  }) as typeof clearInterval);
   vi.spyOn(performance, "now").mockImplementation(() => nowValue);
 });
 
@@ -295,11 +307,53 @@ describe("useVideoMonitoring", () => {
       await flushInit();
     });
 
-    const cancelSpy = vi.spyOn(globalThis, "cancelAnimationFrame");
     unmount();
 
-    expect(cancelSpy).toHaveBeenCalled();
+    expect(clearedIntervals.length).toBeGreaterThan(0);
     expect(closeSpy).toHaveBeenCalled();
+  });
+
+  it("reports a blocking init error (instead of silently running unmonitored) when the detector cannot load", async () => {
+    createFromOptions.mockRejectedValue(new Error("cdn blocked"));
+    const onInitError = vi.fn();
+    renderHook(() =>
+      useVideoMonitoring({
+        enabled: true,
+        videoRef: makeVideoRef(),
+        onViolation: vi.fn(),
+        onInitError,
+      })
+    );
+    await act(async () => {
+      await flushInit();
+    });
+    expect(onInitError).toHaveBeenCalledWith(expect.stringMatching(/failed to load/i));
+    expect(rafCallbacks).toHaveLength(0);
+  });
+
+  it("retries loading the detector when the attempt counter changes", async () => {
+    createFromOptions.mockRejectedValueOnce(new Error("x")).mockRejectedValueOnce(new Error("x"));
+    const onInitError = vi.fn();
+    const { rerender } = renderHook(
+      ({ attempt }) =>
+        useVideoMonitoring({
+          enabled: true,
+          videoRef: makeVideoRef(),
+          onViolation: vi.fn(),
+          onInitError,
+          attempt,
+        }),
+      { initialProps: { attempt: 0 } }
+    );
+    await act(async () => {
+      await flushInit();
+    });
+    expect(onInitError).toHaveBeenCalledTimes(1);
+    rerender({ attempt: 1 });
+    await act(async () => {
+      await flushInit();
+    });
+    expect(rafCallbacks.length).toBeGreaterThan(0); // second attempt succeeded
   });
 
   it("does not detect after unmount (running flag cleared)", async () => {

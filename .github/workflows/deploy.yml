@@ -27,7 +27,7 @@ jobs:
             git pull origin main
 
             echo "Installing packages..."
-            npm install
+            npm ci
 
             echo "Fixing dist permissions..."
             sudo rm -rf dist

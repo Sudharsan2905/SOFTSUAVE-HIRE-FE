@@ -41,7 +41,7 @@ Object.defineProperty(URL, "revokeObjectURL", {
 
 // Reset storage and mocks after every test to prevent state leakage
 afterEach(() => {
-  localStorage.clear();
+  sessionStorage.clear();
   sessionStorage.clear();
   vi.clearAllMocks();
 });

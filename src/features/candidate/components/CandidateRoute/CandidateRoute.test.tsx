@@ -267,17 +267,45 @@ describe("CandidateRoute", () => {
     });
   });
 
-  // ── 5. Error handling — fail open ─────────────────────────────────────────
+  // ── 5. Error handling — fail closed ─────────────────────────────────────────
 
   describe("error handling", () => {
-    it("renders children (fail-open) when the submission status API call throws", async () => {
-      mockGet.mockRejectedValueOnce(new Error("Network Error"));
+    it("fails CLOSED when the status call keeps failing: no children, a Retry screen instead", async () => {
+      mockGet.mockRejectedValue(new Error("Network Error"));
 
       renderCandidateRoute(makeAuthState({ isAuthenticated: true, user: makeCandidateUser() }));
 
-      await waitFor(() => {
-        expect(screen.getByText("Instructions Page")).toBeInTheDocument();
+      expect(await screen.findByRole("alert", {}, { timeout: 4000 })).toHaveTextContent(
+        /couldn't verify your session/i
+      );
+      expect(screen.queryByText("Instructions Page")).not.toBeInTheDocument();
+      expect(mockGet).toHaveBeenCalledTimes(2); // original attempt + one retry
+    });
+
+    it("recovers when the transient error clears on the automatic retry", async () => {
+      mockGet
+        .mockRejectedValueOnce(new Error("Network Error"))
+        .mockResolvedValueOnce({ data: { data: { status: SubmissionStatus.IN_PROGRESS } } });
+
+      renderCandidateRoute(makeAuthState({ isAuthenticated: true, user: makeCandidateUser() }));
+
+      await waitFor(() => expect(screen.getByText("Instructions Page")).toBeInTheDocument(), {
+        timeout: 4000,
       });
+    });
+
+    it("Retry button re-checks and then blocks a terminated session", async () => {
+      mockGet
+        .mockRejectedValueOnce(new Error("down"))
+        .mockRejectedValueOnce(new Error("down"))
+        .mockResolvedValue({ data: { data: { status: SubmissionStatus.TERMINATED } } });
+
+      renderCandidateRoute(makeAuthState({ isAuthenticated: true, user: makeCandidateUser() }));
+
+      const retry = await screen.findByRole("button", { name: /retry/i }, { timeout: 4000 });
+      retry.click();
+      expect(await screen.findByText("Interview Session Terminated")).toBeInTheDocument();
+      expect(screen.queryByText("Instructions Page")).not.toBeInTheDocument();
     });
 
     it("renders children when the API returns an unexpected shape", async () => {

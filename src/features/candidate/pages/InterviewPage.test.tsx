@@ -26,6 +26,7 @@ const h = vi.hoisted(() => {
       phaseLabel: "Exam Active",
       phaseError: null as string | null,
       examActiveRef: { current: true },
+      examArmedRef: { current: true },
       isPermissionFlowActiveRef: { current: false },
       shouldAcquireCamera: true,
       shouldAcquireAudio: true,
@@ -333,6 +334,7 @@ beforeEach(() => {
   h.orchestrator.phase = PHASES.ACTIVE;
   h.orchestrator.phaseError = null;
   h.orchestrator.examActiveRef.current = true;
+  h.orchestrator.examArmedRef.current = true;
   h.session.networkStatus = "connected";
   h.timer.isLowTime = false;
   h.screenCapture.isCapturing = true;
@@ -616,13 +618,27 @@ describe("InterviewPage - admin callbacks", () => {
 
 describe("InterviewPage - load error", () => {
   it("navigates to completed on 403", async () => {
-    mockGet.mockRejectedValue({ response: { status: 403 } });
+    mockGet.mockRejectedValue({
+      response: { status: 403, data: { message: "This assessment has already been completed." } },
+    });
     renderPage();
     await waitFor(() =>
       expect(mockNavigate).toHaveBeenCalledWith(
         expect.stringContaining("/completed"),
         expect.anything()
       )
+    );
+  });
+
+  it("does NOT mark the assessment done or redirect for an unrelated 403", async () => {
+    mockGet.mockRejectedValue({
+      response: { status: 403, data: { message: "Your account has been deactivated." } },
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/deactivated/i)).toBeInTheDocument());
+    expect(mockNavigate).not.toHaveBeenCalledWith(
+      expect.stringContaining("/completed"),
+      expect.anything()
     );
   });
 });

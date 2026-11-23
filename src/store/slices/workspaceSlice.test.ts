@@ -39,11 +39,11 @@ const ws2: Workspace = {
 
 describe("workspaceSlice — reducers", () => {
   beforeEach(() => {
-    localStorage.clear();
+    sessionStorage.clear();
   });
 
   describe("initial state", () => {
-    it("starts with no active workspace and empty list when localStorage is empty", () => {
+    it("starts with no active workspace and empty list when sessionStorage is empty", () => {
       const store = makeStore();
       const state = store.getState().workspace;
       expect(state.activeWorkspace).toBeNull();
@@ -51,11 +51,11 @@ describe("workspaceSlice — reducers", () => {
     });
 
     // Note: loadFromStorage() runs once at module import (not per store creation),
-    // so restoring activeWorkspace from localStorage on init cannot be exercised
+    // so restoring activeWorkspace from sessionStorage on init cannot be exercised
     // after import. Persistence is covered by the setActiveWorkspace + clearWorkspace tests.
 
-    it("returns null when localStorage value is invalid JSON", () => {
-      localStorage.setItem(WORKSPACE_KEY, "not-valid-json");
+    it("returns null when sessionStorage value is invalid JSON", () => {
+      sessionStorage.setItem(WORKSPACE_KEY, "not-valid-json");
       const store = makeStore();
       expect(store.getState().workspace.activeWorkspace).toBeNull();
     });
@@ -68,10 +68,10 @@ describe("workspaceSlice — reducers", () => {
       expect(store.getState().workspace.activeWorkspace).toEqual(ws1);
     });
 
-    it("persists activeWorkspace to localStorage", () => {
+    it("persists activeWorkspace to sessionStorage", () => {
       const store = makeStore();
       store.dispatch(setActiveWorkspace(ws1));
-      expect(JSON.parse(localStorage.getItem(WORKSPACE_KEY) ?? "null")).toEqual(ws1);
+      expect(JSON.parse(sessionStorage.getItem(WORKSPACE_KEY) ?? "null")).toEqual(ws1);
     });
 
     it("replaces a previously-set workspace", () => {
@@ -112,11 +112,11 @@ describe("workspaceSlice — reducers", () => {
       expect(store.getState().workspace.workspaces).toEqual([]);
     });
 
-    it("removes the workspace key from localStorage", () => {
-      localStorage.setItem(WORKSPACE_KEY, JSON.stringify(ws1));
+    it("removes the workspace key from sessionStorage", () => {
+      sessionStorage.setItem(WORKSPACE_KEY, JSON.stringify(ws1));
       const store = makeStore();
       store.dispatch(clearWorkspace());
-      expect(localStorage.getItem(WORKSPACE_KEY)).toBeNull();
+      expect(sessionStorage.getItem(WORKSPACE_KEY)).toBeNull();
     });
   });
 
@@ -131,11 +131,11 @@ describe("workspaceSlice — reducers", () => {
       expect(state.workspaces).toEqual([]);
     });
 
-    it("removes workspace from localStorage on auth/logout", () => {
-      localStorage.setItem(WORKSPACE_KEY, JSON.stringify(ws1));
+    it("removes workspace from sessionStorage on auth/logout", () => {
+      sessionStorage.setItem(WORKSPACE_KEY, JSON.stringify(ws1));
       const store = makeStore();
       store.dispatch({ type: "auth/logout" });
-      expect(localStorage.getItem(WORKSPACE_KEY)).toBeNull();
+      expect(sessionStorage.getItem(WORKSPACE_KEY)).toBeNull();
     });
   });
 });

@@ -230,6 +230,22 @@ describe("VideoMonitor", () => {
   // ── onWarning callback ─────────────────────────────────────────────────────
 
   describe("onWarning callback", () => {
+    it("fires with an inline (re-created every render) callback: the interval is not reset", () => {
+      currentCtxStub = makeCtxStub(0);
+      const calls = vi.fn();
+      const ref = makeVideoRef();
+      const { rerender } = render(<VideoMonitor videoRef={ref} onWarning={() => calls()} />);
+      patchVideoElement(ref);
+      // Parent re-renders every second (like the exam timer) with a brand-new arrow function.
+      for (let i = 0; i < 15; i++) {
+        rerender(<VideoMonitor videoRef={ref} onWarning={() => calls()} />);
+        act(() => {
+          vi.advanceTimersByTime(1000);
+        });
+      }
+      expect(calls).toHaveBeenCalledTimes(1); // 5 dark checks × 3 s = 15 s → one warning
+    });
+
     it("calls onWarning after 5 consecutive dark frames", () => {
       currentCtxStub = makeCtxStub(0); // always dark
       const onWarning = vi.fn();

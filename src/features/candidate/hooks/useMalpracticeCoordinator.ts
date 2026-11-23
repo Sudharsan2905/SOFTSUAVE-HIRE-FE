@@ -49,6 +49,29 @@ interface UseMalpracticeCoordinatorOptions {
   captureScreenFrame?: () => Promise<Blob | null>;
 }
 
+const RETRY_BASE_MS = 1_000;
+const RETRY_MAX_MS = 30_000;
+const MAX_QUEUED_VIOLATIONS = 50;
+
+interface QueuedViolation {
+  event: ViolationPayload;
+  description: string;
+  screenImage: Blob | null;
+  faceImage: Blob | null;
+}
+
+/** Network errors, timeouts, throttling and 5xx are worth retrying; other 4xx are final. */
+export function isRetryableError(err: unknown): boolean {
+  const status = (err as { response?: { status?: number } } | null)?.response?.status;
+  if (status === undefined) return true; // no response: offline / DNS / timeout
+  return status >= 500 || status === 408 || status === 429;
+}
+
+function backoffMs(attempt: number): number {
+  const ceiling = Math.min(RETRY_BASE_MS * 2 ** attempt, RETRY_MAX_MS);
+  return Math.round(ceiling / 2 + Math.random() * (ceiling / 2));
+}
+
 // ─── Module-level helpers ─────────────────────────────────────────────────────
 
 async function snapshotVideoFrame(
@@ -66,18 +89,18 @@ async function snapshotVideoFrame(
   });
 }
 
+/** Applies the server's verdict to the store; returns true when the session was terminated. */
 function dispatchViolationResult(
   data: { malpractice_count?: number; is_terminal?: boolean },
   event: ViolationPayload,
-  dispatch: ReturnType<typeof useAppDispatch>,
-  onTerminated?: (reason: string) => void
-): void {
+  dispatch: ReturnType<typeof useAppDispatch>
+): boolean {
   if (data.malpractice_count !== undefined) {
     dispatch(setMalpracticeCount(data.malpractice_count));
   }
   if (data.is_terminal) {
     dispatch(setTerminated({ reason: event.type }));
-    onTerminated?.(event.type);
+    return true;
   } else {
     dispatch(
       setLastViolation({
@@ -85,8 +108,12 @@ function dispatchViolationResult(
         message: `Warning ${String(data.malpractice_count)}/3: ${VIOLATION_MESSAGES[event.type]}`,
       })
     );
+    return false;
   }
 }
+
+const EVIDENCE_FORWARD_WAIT_MS = 3_000; // let the final clip record a little before leaving
+const EVIDENCE_FLUSH_MAX_MS = 8_000;
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
@@ -101,6 +128,16 @@ export function useMalpracticeCoordinator({
 }: UseMalpracticeCoordinatorOptions) {
   const dispatch = useAppDispatch();
   const firstWarningIssued = useRef<Partial<Record<MalpracticeType, boolean>>>({});
+  // Violations that could not be delivered yet. They are retried with backoff and as soon
+  // as the browser is back online, so a flaky network can never swallow a strike.
+  const queueRef = useRef<QueuedViolation[]>([]);
+  const retryAttemptRef = useRef(0);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flushingRef = useRef(false);
+  const onTerminatedRef = useRef(onTerminated);
+  useEffect(() => {
+    onTerminatedRef.current = onTerminated;
+  }, [onTerminated]);
   const monitoringConfigRef = useRef(monitoringConfig);
 
   useEffect(() => {
@@ -111,16 +148,99 @@ export function useMalpracticeCoordinator({
   // Screen recording is active when tab_monitoring or screenshot_enabled is on.
   // Audio is merged in when audio_monitoring is on.
   // If only audio_monitoring is on (no screen share), an audio-only clip is captured.
-  const { prepareCapture, commitCapture, abortCapture } = useMalpracticeRecording({
-    submissionId,
-    screenStream: screenStreamRef?.current ?? null,
-    audioStream: audioStreamRef?.current ?? null,
-    hasScreenMonitoring: !!(monitoringConfig.tab_monitoring || monitoringConfig.screenshot_enabled),
-    hasAudioMonitoring: !!monitoringConfig.audio_monitoring,
-  });
+  const { prepareCapture, commitCapture, abortCapture, hasActiveCaptures, flushActiveCaptures } =
+    useMalpracticeRecording({
+      submissionId,
+      screenStream: screenStreamRef?.current ?? null,
+      audioStream: audioStreamRef?.current ?? null,
+      hasScreenMonitoring: !!(
+        monitoringConfig.tab_monitoring || monitoringConfig.screenshot_enabled
+      ),
+      hasAudioMonitoring: !!monitoringConfig.audio_monitoring,
+    });
+
+  const postViolation = useCallback(
+    async (item: QueuedViolation): Promise<{ eventIndex: number; terminal: boolean }> => {
+      const fd = new FormData();
+      fd.append("type", item.event.type);
+      fd.append("description", item.description);
+      if (item.screenImage) fd.append("screen_image", item.screenImage, "screen.jpg");
+      if (item.faceImage) fd.append("face_image", item.faceImage, "face.jpg");
+      const response = await api.post(
+        API_ENDPOINTS.CANDIDATE.SUBMISSION_MALPRACTICE(submissionId),
+        fd,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+      const data = response.data?.data ?? {};
+      const terminal = dispatchViolationResult(data, item.event, dispatch);
+      return { eventIndex: data.event_index ?? -1, terminal };
+    },
+    [submissionId, dispatch]
+  );
+
+  /** Leave the exam only after the terminating violation's clip is safely uploaded. */
+  const terminateAfterEvidence = useCallback(
+    async (reason: string): Promise<void> => {
+      try {
+        if (hasActiveCaptures?.()) {
+          await new Promise((r) => setTimeout(r, EVIDENCE_FORWARD_WAIT_MS));
+          await flushActiveCaptures?.(EVIDENCE_FLUSH_MAX_MS);
+        }
+      } finally {
+        onTerminatedRef.current?.(reason);
+      }
+    },
+    [hasActiveCaptures, flushActiveCaptures]
+  );
+
+  const flushQueue = useCallback(async (): Promise<void> => {
+    if (flushingRef.current) return;
+    flushingRef.current = true;
+    if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+    retryTimerRef.current = null;
+    try {
+      while (queueRef.current.length > 0) {
+        const head = queueRef.current[0];
+        try {
+          const { terminal } = await postViolation(head);
+          queueRef.current.shift();
+          retryAttemptRef.current = 0;
+          if (terminal) void terminateAfterEvidence(head.event.type);
+        } catch (err) {
+          if (!isRetryableError(err)) {
+            queueRef.current.shift(); // e.g. 403 session already ended: nothing to record
+            continue;
+          }
+          const delay = backoffMs(retryAttemptRef.current);
+          retryAttemptRef.current += 1;
+          retryTimerRef.current = setTimeout(() => void flushQueue(), delay);
+          return;
+        }
+      }
+    } finally {
+      flushingRef.current = false;
+    }
+  }, [postViolation, terminateAfterEvidence]);
+
+  /** Schedule a (backed-off) flush unless one is already pending. */
+  const scheduleFlush = useCallback(() => {
+    if (retryTimerRef.current || flushingRef.current) return;
+    const delay = backoffMs(retryAttemptRef.current);
+    retryAttemptRef.current += 1;
+    retryTimerRef.current = setTimeout(() => void flushQueue(), delay);
+  }, [flushQueue]);
+
+  useEffect(() => {
+    const onOnline = () => void flushQueue();
+    globalThis.addEventListener("online", onOnline);
+    return () => {
+      globalThis.removeEventListener("online", onOnline);
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+    };
+  }, [flushQueue]);
 
   const flagViolation = useCallback(
-    async (event: ViolationPayload): Promise<void> => {
+    async (event: ViolationPayload): Promise<boolean> => {
       const cfg = monitoringConfigRef.current;
 
       // Two-strike rule: first occurrence dispatches a UI warning only
@@ -132,7 +252,7 @@ export function useMalpracticeCoordinator({
             message: `Warning: ${VIOLATION_MESSAGES[event.type]}`,
           })
         );
-        return;
+        return true;
       }
 
       // ── Phase 1: start evidence capture BEFORE the POST ───────────────────
@@ -148,25 +268,35 @@ export function useMalpracticeCoordinator({
         cfg.video_monitoring ? snapshotVideoFrame(videoRef?.current) : null,
       ]);
 
-      const fd = new FormData();
-      fd.append("type", event.type);
-      fd.append("description", description);
-      if (screenImage && cfg.screenshot_enabled)
-        fd.append("screen_image", screenImage, "screen.jpg");
-      if (faceImage && cfg.video_monitoring) fd.append("face_image", faceImage, "face.jpg");
+      const item: QueuedViolation = {
+        event,
+        description,
+        screenImage: cfg.screenshot_enabled ? screenImage : null,
+        faceImage: cfg.video_monitoring ? faceImage : null,
+      };
 
+      // Anything still queued must be delivered first so strikes stay in order.
       let eventIndex = -1;
-      try {
-        const response = await api.post(
-          API_ENDPOINTS.CANDIDATE.SUBMISSION_MALPRACTICE(submissionId),
-          fd,
-          { headers: { "Content-Type": "multipart/form-data" } }
-        );
-        const data = response.data?.data ?? {};
-        eventIndex = data.event_index ?? -1;
-        dispatchViolationResult(data, event, dispatch, onTerminated);
-      } catch (err) {
-        console.warn("Malpractice flag failed:", err);
+      let terminal = false;
+      let accepted = true;
+      if (queueRef.current.length > 0) {
+        queueRef.current.push(item);
+        void flushQueue();
+      } else {
+        try {
+          const posted = await postViolation(item);
+          eventIndex = posted.eventIndex;
+          terminal = posted.terminal;
+        } catch (err) {
+          if (isRetryableError(err)) {
+            if (queueRef.current.length < MAX_QUEUED_VIOLATIONS) queueRef.current.push(item);
+            console.warn("Malpractice flag failed — queued for retry:", err);
+            scheduleFlush();
+          } else {
+            console.warn("Malpractice flag rejected:", err);
+            accepted = false;
+          }
+        }
       }
 
       // ── Phase 2: commit or abort the capture ──────────────────────────────
@@ -178,11 +308,15 @@ export function useMalpracticeCoordinator({
         // POST failed — discard the pending capture to free the listener
         abortCapture(captureId);
       }
+      if (terminal) await terminateAfterEvidence(event.type);
+      return accepted;
     },
     [
-      submissionId,
+      postViolation,
+      flushQueue,
+      scheduleFlush,
+      terminateAfterEvidence,
       dispatch,
-      onTerminated,
       videoRef,
       captureScreenFrame,
       prepareCapture,
@@ -195,5 +329,7 @@ export function useMalpracticeCoordinator({
     firstWarningIssued.current = {};
   }, []);
 
-  return { flagViolation, resetFirstWarnings };
+  const pendingViolations = useCallback(() => queueRef.current.length, []);
+
+  return { flagViolation, resetFirstWarnings, pendingViolations };
 }

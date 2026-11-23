@@ -29,6 +29,15 @@ interface PublisherState {
   stopPublishing: () => void;
 }
 
+const PUBLISH_RETRY_BASE_MS = 1_000;
+const PUBLISH_RETRY_MAX_MS = 30_000;
+
+/** Exponential back-off with jitter so 1000 candidates never retry in lock-step. */
+export function publishBackoffMs(attempt: number): number {
+  const ceiling = Math.min(PUBLISH_RETRY_BASE_MS * 2 ** attempt, PUBLISH_RETRY_MAX_MS);
+  return Math.round(ceiling / 2 + Math.random() * (ceiling / 2));
+}
+
 export function useLiveKitPublisher({
   submissionId,
   enabled,
@@ -38,21 +47,72 @@ export function useLiveKitPublisher({
 }: PublisherOptions): PublisherState {
   const roomRef = useRef<Room | null>(null);
   const publishedTracksRef = useRef<(LocalVideoTrack | LocalAudioTrack)[]>([]);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const attemptRef = useRef(0);
+  const wantedRef = useRef(false); // true between startPublishing() and stopPublishing()
+  const connectingRef = useRef(false);
+  const screenEndedCleanupRef = useRef<(() => void) | null>(null);
+  const connectRef = useRef<() => Promise<void>>(async () => undefined);
   const [isPublishing, setIsPublishing] = useState(false);
 
-  // submissionId intentionally excluded — it is only used for logging, not logic.
-  // Including it would recreate stopPublishing (and therefore startPublishing + the
-  // cleanup effect) on every submission change, causing premature disconnection.
-  const stopPublishing = useCallback(() => {
+  /** Stop only the publisher's CLONES; the shared raw tracks (MediaPipe, recorder,
+   * screenshots) keep running. */
+  const teardownRoom = useCallback(() => {
     publishedTracksRef.current.forEach((t) => t.stop());
     publishedTracksRef.current = [];
-    roomRef.current?.disconnect();
+    screenEndedCleanupRef.current?.();
+    screenEndedCleanupRef.current = null;
+    const room = roomRef.current;
     roomRef.current = null;
-    setIsPublishing(false);
+    if (room) {
+      room.removeAllListeners();
+      void room.disconnect();
+    }
   }, []);
 
-  const startPublishing = useCallback(async () => {
-    if (!enabled || !submissionId || isPublishing) return;
+  // submissionId intentionally excluded — it is only used for logging, not logic.
+  const stopPublishing = useCallback(() => {
+    wantedRef.current = false;
+    if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+    retryTimerRef.current = null;
+    teardownRoom();
+    setIsPublishing(false);
+  }, [teardownRoom]);
+
+  const scheduleRetry = useCallback(() => {
+    if (!wantedRef.current || retryTimerRef.current) return;
+    const delay = publishBackoffMs(attemptRef.current);
+    attemptRef.current += 1;
+    console.warn(`[LiveKit] Retrying publish in ${delay}ms (attempt ${attemptRef.current})`);
+    retryTimerRef.current = setTimeout(() => {
+      retryTimerRef.current = null;
+      void connectRef.current();
+    }, delay);
+  }, []);
+
+  const publishClone = useCallback(
+    async (
+      room: Room,
+      raw: MediaStreamTrack | undefined,
+      kind: "video" | "audio",
+      name: string,
+      source: Track.Source
+    ) => {
+      if (!raw) return;
+      // Clone: stopping/unpublishing the clone never touches the shared original.
+      const clone = raw.clone();
+      const track = kind === "video" ? new LocalVideoTrack(clone) : new LocalAudioTrack(clone);
+      publishedTracksRef.current.push(track);
+      await room.localParticipant.publishTrack(track, { name, source });
+      console.warn(`[LiveKit] Published ${kind} track: ${name}`);
+    },
+    []
+  );
+
+  const connectAndPublish = useCallback(async () => {
+    if (!enabled || !submissionId || !wantedRef.current || connectingRef.current) return;
+    connectingRef.current = true;
+    teardownRoom();
     console.warn(`[LiveKit] Connecting: submission=${submissionId}`);
     try {
       const { data } = await api.post(
@@ -62,69 +122,76 @@ export function useLiveKitPublisher({
 
       const room = new Room();
       roomRef.current = room;
+      room.on(RoomEvent.Disconnected, () => {
+        if (roomRef.current !== room || !wantedRef.current) return;
+        console.warn("[LiveKit] Publisher disconnected — scheduling re-publish");
+        setIsPublishing(false);
+        teardownRoom();
+        scheduleRetry();
+      });
       await room.connect(CONFIG.LIVEKIT_URL, token);
-      console.warn(`[LiveKit] Room connected: host=${CONFIG.LIVEKIT_URL} submission=${submissionId}`);
 
-      // Screen share — reuse the pre-acquired stream (no second getDisplayMedia prompt)
-      const screenStream = screenStreamRef?.current;
-      if (screenStream) {
-        const rawScreenTrack = screenStream.getVideoTracks()[0];
-        if (rawScreenTrack) {
-          const screenTrack = new LocalVideoTrack(rawScreenTrack);
-          publishedTracksRef.current.push(screenTrack);
-          await room.localParticipant.publishTrack(screenTrack, {
-            name: `screen-${submissionId}`,
-            source: Track.Source.ScreenShare,
-          });
-          console.warn(`[LiveKit] Published screen track: screen-${submissionId}`);
-          rawScreenTrack.addEventListener("ended", stopPublishing);
-        }
+      const screenRaw = screenStreamRef?.current?.getVideoTracks()[0];
+      await publishClone(
+        room,
+        screenRaw,
+        "video",
+        `screen-${submissionId}`,
+        Track.Source.ScreenShare
+      );
+      if (screenRaw) {
+        // The user ending the share is a real stop: nothing left to publish.
+        const onEnded = () => stopPublishing();
+        screenRaw.addEventListener("ended", onEnded);
+        screenEndedCleanupRef.current = () => screenRaw.removeEventListener("ended", onEnded);
       }
+      await publishClone(
+        room,
+        cameraStreamRef?.current?.getVideoTracks()[0],
+        "video",
+        `camera-${submissionId}`,
+        Track.Source.Camera
+      );
+      await publishClone(
+        room,
+        audioStreamRef?.current?.getAudioTracks()[0],
+        "audio",
+        `mic-${submissionId}`,
+        Track.Source.Microphone
+      );
 
-      // Camera — reuse pre-acquired camera stream
-      const cameraStream = cameraStreamRef?.current;
-      if (cameraStream) {
-        const rawCamTrack = cameraStream.getVideoTracks()[0];
-        if (rawCamTrack) {
-          const camTrack = new LocalVideoTrack(rawCamTrack);
-          publishedTracksRef.current.push(camTrack);
-          await room.localParticipant.publishTrack(camTrack, {
-            name: `camera-${submissionId}`,
-            source: Track.Source.Camera,
-          });
-          console.warn(`[LiveKit] Published camera track: camera-${submissionId}`);
-        }
-      }
-
-      // Microphone — reuse pre-acquired audio stream
-      const micStream = audioStreamRef?.current;
-      if (micStream) {
-        const rawAudioTrack = micStream.getAudioTracks()[0];
-        if (rawAudioTrack) {
-          const audioTrack = new LocalAudioTrack(rawAudioTrack);
-          publishedTracksRef.current.push(audioTrack);
-          await room.localParticipant.publishTrack(audioTrack, {
-            name: `mic-${submissionId}`,
-            source: Track.Source.Microphone,
-          });
-          console.warn(`[LiveKit] Published audio track: mic-${submissionId}`);
-        }
-      }
-
+      attemptRef.current = 0;
       setIsPublishing(true);
     } catch (err) {
       console.error(`[LiveKit] Publish failed: submission=${submissionId}`, err);
-      stopPublishing();
+      teardownRoom();
+      setIsPublishing(false);
+      scheduleRetry();
+    } finally {
+      connectingRef.current = false;
     }
   }, [
     enabled,
-    isPublishing,
     submissionId,
+    teardownRoom,
+    scheduleRetry,
+    publishClone,
     stopPublishing,
     screenStreamRef,
     cameraStreamRef,
     audioStreamRef,
   ]);
+
+  useEffect(() => {
+    connectRef.current = connectAndPublish;
+  }, [connectAndPublish]);
+
+  const startPublishing = useCallback(async () => {
+    if (!enabled || !submissionId || isPublishing || wantedRef.current) return;
+    wantedRef.current = true;
+    attemptRef.current = 0;
+    await connectAndPublish();
+  }, [enabled, submissionId, isPublishing, connectAndPublish]);
 
   useEffect(() => {
     return () => stopPublishing();
@@ -246,7 +313,9 @@ export function useLiveKitViewer({ workspaceId, targetSubmissionId }: ViewerOpti
         // autoSubscribe: false — admin explicitly subscribes only to the selected
         // candidate's screen track. Without this, LiveKit auto-subscribes to every
         // participant in the room (all candidates), wasting bandwidth at scale.
-        return room.connect(CONFIG.LIVEKIT_URL, data.data.token as string, { autoSubscribe: false });
+        return room.connect(CONFIG.LIVEKIT_URL, data.data.token as string, {
+          autoSubscribe: false,
+        });
       })
       .catch((err: unknown) => {
         if (!active) return;
