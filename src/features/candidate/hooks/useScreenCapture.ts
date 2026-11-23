@@ -1,3 +1,4 @@
+import { isEntireScreenSurface } from "@/utils/mediaDevices";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { takeScreenStream } from "../services/screenCaptureStore";
 
@@ -56,11 +57,7 @@ export function useScreenCapture({
   const validateScreenStream = useCallback((): boolean => {
     const track = streamRef.current?.getVideoTracks?.()?.[0];
     if (!track || track.readyState !== "live") return false;
-    const settings = track.getSettings() as MediaTrackSettings & { displaySurface?: string };
-    // If displaySurface is unavailable the browser can't tell us the surface type — trust the track
-    if (settings.displaySurface !== undefined && settings.displaySurface !== "monitor")
-      return false;
-    return true;
+    return isEntireScreenSurface(track);
   }, []);
 
   const setupStream = useCallback(
@@ -134,8 +131,7 @@ export function useScreenCapture({
         audio: false,
       });
       const track = stream.getVideoTracks()[0];
-      const settings = track?.getSettings() as MediaTrackSettings & { displaySurface?: string };
-      if (settings?.displaySurface !== undefined && settings.displaySurface !== "monitor") {
+      if (!isEntireScreenSurface(track)) {
         stream.getTracks().forEach((t) => t.stop());
         return false;
       }

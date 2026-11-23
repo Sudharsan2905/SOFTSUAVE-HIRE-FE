@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, MutableRefObject } from "react";
 import { takeAudioStream } from "../services/screenCaptureStore";
+import { watchTrackHealth } from "@/utils/mediaDevices";
 
 interface UseAudioMonitoringOptions {
   enabled: boolean;
@@ -14,6 +15,10 @@ interface UseAudioMonitoringOptions {
   onViolation: (description: string) => void;
   analyserRef?: MutableRefObject<AnalyserNode | null>;
   onStreamReady?: (stream: MediaStream) => void;
+  /** Called when the microphone cannot be acquired / started, so the UI can show a retry. */
+  onError?: (message: string) => void;
+  /** Increment to re-run acquisition (Retry microphone). */
+  attempt?: number;
 }
 
 const COOLDOWN_MS = 15_000;
@@ -36,6 +41,8 @@ export function useAudioMonitoring({
   onViolation,
   analyserRef,
   onStreamReady,
+  onError,
+  attempt = 0,
 }: UseAudioMonitoringOptions): void {
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -48,6 +55,7 @@ export function useAudioMonitoring({
   const isActiveRef = useRef(false);
   const onViolationRef = useRef(onViolation);
   const onStreamReadyRef = useRef(onStreamReady);
+  const onErrorRef = useRef(onError);
 
   useEffect(() => {
     onViolationRef.current = onViolation;
@@ -55,6 +63,7 @@ export function useAudioMonitoring({
 
   useEffect(() => {
     onStreamReadyRef.current = onStreamReady;
+    onErrorRef.current = onError;
   });
 
   const cleanup = useCallback(() => {
@@ -77,6 +86,7 @@ export function useAudioMonitoring({
     if (!enabled || !shouldInitialize) return;
 
     let cancelled = false;
+    let stopWatchingMic: (() => void) | null = null;
 
     const start = async () => {
       try {
@@ -94,6 +104,14 @@ export function useAudioMonitoring({
         }
 
         streamRef.current = stream;
+        // A muted / unplugged microphone reads as silence — report it instead.
+        const micTrack = stream.getAudioTracks?.()[0];
+        if (micTrack) {
+          stopWatchingMic = watchTrackHealth(micTrack, {
+            onEnded: () => onViolationRef.current("Microphone was stopped or disconnected"),
+            onMute: () => onViolationRef.current("Microphone was muted"),
+          });
+        }
         onStreamReadyRef.current?.(stream);
         const audioContext = new AudioContext();
         audioContextRef.current = audioContext;
@@ -172,6 +190,11 @@ export function useAudioMonitoring({
         intervalRef.current = setInterval(tick, POLL_MS);
       } catch (err) {
         console.warn("Audio monitoring could not start:", err);
+        if (!cancelled) {
+          onErrorRef.current?.(
+            "Microphone access was denied or the device is unavailable. Please allow microphone permission and retry."
+          );
+        }
       }
     };
 
@@ -179,7 +202,8 @@ export function useAudioMonitoring({
 
     return () => {
       cancelled = true;
+      stopWatchingMic?.();
       cleanup();
     };
-  }, [enabled, shouldInitialize, threshold, sustainedSeconds, analyserRef, cleanup]);
+  }, [enabled, shouldInitialize, threshold, sustainedSeconds, analyserRef, cleanup, attempt]);
 }

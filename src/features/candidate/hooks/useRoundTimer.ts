@@ -1,22 +1,24 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type React from "react";
 
 interface UseRoundTimerOptions {
-  initialSeconds: number;
+  /** Optional seed. 0 / omitted means "not synchronised with the server yet". */
+  initialSeconds?: number;
   active: boolean;
   onExpired: () => void;
 }
 
 interface UseRoundTimerReturn {
   timeLeft: number;
-  setTimeLeft: React.Dispatch<React.SetStateAction<number>>;
+  /** Synchronise the countdown with the server clock. */
+  setTimeLeft: (seconds: number) => void;
   timeLeftRef: React.MutableRefObject<number>;
   isLowTime: boolean;
   formattedTime: { hh: string; mm: string; ss: string };
 }
 
-import type React from "react";
-
 const LOW_TIME_THRESHOLD_SECONDS = 120;
+const TICK_MS = 250;
 
 function formatHMS(totalSeconds: number) {
   const h = Math.floor(totalSeconds / 3600);
@@ -30,71 +32,83 @@ function formatHMS(totalSeconds: number) {
 }
 
 /**
- * Countdown timer for an interview round.
+ * Countdown for an interview round.
  *
- * - Ticks only when `active` is true (pauses on network loss / on_hold).
- * - Calls `onExpired` exactly once when the counter reaches zero.
- * - Exposes `timeLeftRef` so callbacks closed over this hook can read the
- *   current value without stale-closure issues.
+ * - The duration always comes from the server (`setTimeLeft`); there is no default here.
+ * - Wall-clock based (`Date.now()`), so background-tab throttling can't slow it down.
+ * - Never expires until it has been given a value — an unsynchronised timer is inert.
+ * - Ticks only while `active` (paused while the server holds the session).
+ * - Calls `onExpired` exactly once per synchronised value that reaches zero.
  */
 export function useRoundTimer({
-  initialSeconds,
+  initialSeconds = 0,
   active,
   onExpired,
 }: UseRoundTimerOptions): UseRoundTimerReturn {
-  const [timeLeft, setTimeLeft] = useState(initialSeconds);
-  const timeLeftRef = useRef(initialSeconds);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [timeLeft, setTimeLeftState] = useState(Math.max(0, initialSeconds));
+  const timeLeftRef = useRef(Math.max(0, initialSeconds));
+  const initialisedRef = useRef(initialSeconds > 0);
+  const endsAtRef = useRef<number | null>(null);
+  const firedRef = useRef(false);
+  const activeRef = useRef(active);
   const onExpiredRef = useRef(onExpired);
 
   useEffect(() => {
     onExpiredRef.current = onExpired;
   }, [onExpired]);
 
-  // Sync external initial value (e.g. server restore after network loss)
+  const publish = useCallback((seconds: number) => {
+    timeLeftRef.current = seconds;
+    setTimeLeftState((prev) => (prev === seconds ? prev : seconds));
+  }, []);
+
+  const setTimeLeft = useCallback(
+    (seconds: number) => {
+      const safe = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
+      initialisedRef.current = true;
+      firedRef.current = false;
+      endsAtRef.current = activeRef.current ? Date.now() + safe * 1000 : null;
+      publish(safe);
+    },
+    [publish]
+  );
+
+  // Seed from the optional prop (only meaningful when > 0).
   useEffect(() => {
-    setTimeLeft(initialSeconds);
-    timeLeftRef.current = initialSeconds;
-  }, [initialSeconds]);
+    if (initialSeconds > 0) setTimeLeft(initialSeconds);
+  }, [initialSeconds, setTimeLeft]);
 
   useEffect(() => {
+    activeRef.current = active;
     if (!active) {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
+      // Freeze: remember what is left so resuming continues from here.
+      if (endsAtRef.current !== null) {
+        publish(Math.max(0, Math.ceil((endsAtRef.current - Date.now()) / 1000)));
+        endsAtRef.current = null;
       }
       return;
     }
+    if (initialisedRef.current) endsAtRef.current = Date.now() + timeLeftRef.current * 1000;
 
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        // Not initialised yet (no real duration set) — never expire on 0.
-        if (prev <= 0) return prev;
-        const next = prev - 1;
-        timeLeftRef.current = next;
-        if (next <= 0) {
-          clearInterval(timerRef.current!);
-          timerRef.current = null;
-          onExpiredRef.current();
-          return 0;
-        }
-        return next;
-      });
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
+    const id = setInterval(() => {
+      if (!initialisedRef.current) return; // inert until synchronised with the server
+      endsAtRef.current ??= Date.now() + timeLeftRef.current * 1000;
+      const remaining = Math.max(0, Math.ceil((endsAtRef.current - Date.now()) / 1000));
+      publish(remaining);
+      if (remaining <= 0 && !firedRef.current) {
+        firedRef.current = true;
+        onExpiredRef.current();
       }
-    };
-  }, [active]);
+    }, TICK_MS);
+
+    return () => clearInterval(id);
+  }, [active, publish]);
 
   return {
     timeLeft,
     setTimeLeft,
     timeLeftRef,
-    isLowTime: timeLeft < LOW_TIME_THRESHOLD_SECONDS,
+    isLowTime: initialisedRef.current && timeLeft < LOW_TIME_THRESHOLD_SECONDS,
     formattedTime: formatHMS(timeLeft),
   };
 }

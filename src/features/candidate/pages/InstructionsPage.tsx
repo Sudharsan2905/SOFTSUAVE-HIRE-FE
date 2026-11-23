@@ -32,6 +32,14 @@ import { markAssessmentDone, saveSubmissionId } from "@/utils/assessmentSession"
 import { useInterviewSession } from "@/features/candidate/context/InterviewSessionContext";
 import { storeMonitoringStreams } from "@/features/candidate/services/screenCaptureStore";
 import toast from "react-hot-toast";
+import { classifyForbidden } from "@/utils/forbidden";
+import {
+  findVirtualCamera,
+  findVirtualMic,
+  isEntireScreenSurface,
+  VIRTUAL_CAMERA_MESSAGE,
+  VIRTUAL_MIC_MESSAGE,
+} from "@/utils/mediaDevices";
 import {
   detectMultipleMonitors,
   useMultiMonitorMonitoring,
@@ -77,7 +85,7 @@ function handleStartCatchError(
   navigateFn: (path: string, opts?: { replace?: boolean }) => void
 ): void {
   const msg = extractStartErrorMessage(e);
-  if (msg.toLowerCase().includes("already completed")) {
+  if (classifyForbidden(msg) === "finished") {
     if (shareLink) markDone(shareLink);
     navigateFn(ROUTES.ASSESSMENT.completed(shareLink!), { replace: true });
   } else {
@@ -538,6 +546,12 @@ export default function InstructionsPage() {
     setCheckingCamera(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      const virtualCam = findVirtualCamera(stream);
+      if (virtualCam) {
+        stream.getTracks().forEach((t) => t.stop());
+        toast.error(VIRTUAL_CAMERA_MESSAGE);
+        return;
+      }
       const videoTrack = stream.getVideoTracks()[0];
       if (videoTrack) {
         storeMonitoringStreams({ camera: new MediaStream([videoTrack]) });
@@ -556,6 +570,11 @@ export default function InstructionsPage() {
     setCheckingMicrophone(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (findVirtualMic(stream)) {
+        stream.getTracks().forEach((t) => t.stop());
+        toast.error(VIRTUAL_MIC_MESSAGE);
+        return;
+      }
       const audioTrack = stream.getAudioTracks()[0];
       if (audioTrack) {
         storeMonitoringStreams({ audio: new MediaStream([audioTrack]) });
@@ -581,10 +600,7 @@ export default function InstructionsPage() {
         audio: false,
       });
       const videoTrack = stream.getVideoTracks()[0];
-      const { displaySurface } = videoTrack.getSettings() as MediaTrackSettings & {
-        displaySurface?: string;
-      };
-      if (displaySurface !== "monitor") {
+      if (!isEntireScreenSurface(videoTrack)) {
         for (const track of stream.getTracks()) track.stop();
         setShowScreenInstructionModal(true);
         return;

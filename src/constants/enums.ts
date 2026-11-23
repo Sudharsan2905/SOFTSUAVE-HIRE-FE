@@ -65,6 +65,7 @@ export const WsMessageType = {
   PONG: "pong",
   ERROR: "error",
   ADMIN_WARNING: "admin_warning",
+  TIME_EXPIRED: "time_expired",
 } as const;
 export type WsMessageType = (typeof WsMessageType)[keyof typeof WsMessageType];
 

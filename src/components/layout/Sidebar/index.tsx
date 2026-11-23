@@ -44,7 +44,9 @@ export function Sidebar() {
   const { activeWorkspace } = useAppSelector((s) => s.workspace);
   const isSuperAdmin = user?.role === UserRole.SUPER_ADMIN;
 
-  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSED_KEY) === "true");
+  const [collapsed, setCollapsed] = useState(
+    () => sessionStorage.getItem(COLLAPSED_KEY) === "true"
+  );
 
   const effectiveWidth = collapsed ? COLLAPSED_WIDTH : DEFAULT_WIDTH;
 
@@ -55,7 +57,7 @@ export function Sidebar() {
   const toggleCollapse = () => {
     setCollapsed((prev) => {
       const next = !prev;
-      localStorage.setItem(COLLAPSED_KEY, String(next));
+      sessionStorage.setItem(COLLAPSED_KEY, String(next));
       return next;
     });
   };

@@ -11,7 +11,7 @@ interface WorkspaceState {
 
 const savedWorkspace = (): Workspace | null => {
   try {
-    return JSON.parse(localStorage.getItem(WORKSPACE_KEY) ?? "null");
+    return JSON.parse(sessionStorage.getItem(WORKSPACE_KEY) ?? "null");
   } catch {
     return null;
   }
@@ -20,7 +20,7 @@ const savedWorkspace = (): Workspace | null => {
 function resetWorkspaceState(state: WorkspaceState) {
   state.activeWorkspace = null;
   state.workspaces = [];
-  localStorage.removeItem(WORKSPACE_KEY);
+  sessionStorage.removeItem(WORKSPACE_KEY);
 }
 
 const initialState: WorkspaceState = {
@@ -34,7 +34,7 @@ const workspaceSlice = createSlice({
   reducers: {
     setActiveWorkspace(state, action: PayloadAction<Workspace>) {
       state.activeWorkspace = action.payload;
-      localStorage.setItem(WORKSPACE_KEY, JSON.stringify(action.payload));
+      sessionStorage.setItem(WORKSPACE_KEY, JSON.stringify(action.payload));
     },
     setWorkspaces(state, action: PayloadAction<Workspace[]>) {
       state.workspaces = action.payload;

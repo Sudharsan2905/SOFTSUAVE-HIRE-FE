@@ -56,6 +56,9 @@ export interface UseExamOrchestratorReturn {
   phaseError: string | null;
   /** Synchronous ref — true only while exam is ACTIVE and network connected. */
   examActiveRef: MutableRefObject<boolean>;
+  /** True whenever the exam is ACTIVE, even while offline: detectors stay armed and violations
+   * are buffered/replayed instead of being dropped. */
+  examArmedRef: MutableRefObject<boolean>;
   /** True while a browser permission dialog is open (suppresses tab-switch detection). */
   isPermissionFlowActiveRef: MutableRefObject<boolean>;
   // Gate booleans — resources are only acquired when their gate opens.
@@ -161,11 +164,13 @@ export function useExamOrchestrator({
   const [phaseError, setPhaseError] = useState<string | null>(null);
 
   const examActiveRef = useRef(false);
+  const examArmedRef = useRef(false);
   const isPermissionFlowActiveRef = useRef(false);
 
   // Keep examActiveRef accurate: ACTIVE + network connected = malpractice armed.
   useEffect(() => {
     examActiveRef.current = phase === ExamPhase.ACTIVE && networkStatus === "connected";
+    examArmedRef.current = phase === ExamPhase.ACTIVE;
   }, [phase, networkStatus]);
 
   // ── Devtools detection via resize event (event-driven, no polling) ──────────
@@ -242,16 +247,19 @@ export function useExamOrchestrator({
 
   const suspend = useCallback(() => {
     examActiveRef.current = false;
+    examArmedRef.current = false;
     setPhase(ExamPhase.SUSPENDED);
   }, []);
 
   const resume = useCallback(() => {
     examActiveRef.current = true;
+    examArmedRef.current = true;
     setPhase(ExamPhase.ACTIVE);
   }, []);
 
   const terminate = useCallback(() => {
     examActiveRef.current = false;
+    examArmedRef.current = false;
     setPhase(ExamPhase.TERMINATED);
   }, []);
 
@@ -264,6 +272,7 @@ export function useExamOrchestrator({
     phaseLabel: EXAM_PHASE_LABELS[phase],
     phaseError,
     examActiveRef,
+    examArmedRef,
     isPermissionFlowActiveRef,
     shouldAcquireCamera: inRange(ExamPhase.VALIDATING_VIDEO),
     shouldAcquireAudio: inRange(ExamPhase.VALIDATING_AUDIO),

@@ -7,7 +7,7 @@
  * Strategy:
  *  – Reducer tests dispatch synchronous actions and inspect the resulting state
  *  – Thunk tests dispatch async thunks against a real (but isolated) store and
- *    verify both the state changes and any side-effects (localStorage, toast)
+ *    verify both the state changes and any side-effects (sessionStorage, toast)
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { configureStore } from "@reduxjs/toolkit";
@@ -79,7 +79,7 @@ const validPayload = makeAuthPayload(adminUser);
 
 describe("authSlice — reducers", () => {
   describe("initial state", () => {
-    it("starts unauthenticated when localStorage is empty", () => {
+    it("starts unauthenticated when sessionStorage is empty", () => {
       const state = makeStore().getState().auth;
 
       expect(state.isAuthenticated).toBe(false);
@@ -90,7 +90,7 @@ describe("authSlice — reducers", () => {
     });
 
     // NOTE: loadFromStorage() runs once at module-initialisation time (not
-    // per-store creation), so localStorage values set after import won't affect
+    // per-store creation), so sessionStorage values set after import won't affect
     // the initial Redux state inside the same test file.  Hydration behaviour is
     // covered indirectly via setTokens / setAuthData (which write to storage)
     // and through the logout test (which removes keys from storage).
@@ -120,10 +120,10 @@ describe("authSlice — reducers", () => {
       expect(state.isAuthenticated).toBe(false);
     });
 
-    it("removes all three localStorage keys", () => {
-      localStorage.setItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN, "tok");
-      localStorage.setItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN, "ref");
-      localStorage.setItem(LOCAL_STORAGE_KEYS.USER, JSON.stringify(adminUser));
+    it("removes all three sessionStorage keys", () => {
+      sessionStorage.setItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN, "tok");
+      sessionStorage.setItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN, "ref");
+      sessionStorage.setItem(LOCAL_STORAGE_KEYS.USER, JSON.stringify(adminUser));
 
       const store = makeStore({
         auth: {
@@ -138,9 +138,9 @@ describe("authSlice — reducers", () => {
       mockPost.mockResolvedValue({});
       store.dispatch(logout());
 
-      expect(localStorage.getItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN)).toBeNull();
-      expect(localStorage.getItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN)).toBeNull();
-      expect(localStorage.getItem(LOCAL_STORAGE_KEYS.USER)).toBeNull();
+      expect(sessionStorage.getItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN)).toBeNull();
+      expect(sessionStorage.getItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN)).toBeNull();
+      expect(sessionStorage.getItem(LOCAL_STORAGE_KEYS.USER)).toBeNull();
     });
   });
 
@@ -154,11 +154,11 @@ describe("authSlice — reducers", () => {
       expect(store.getState().auth.accessToken).toBe("new-token");
     });
 
-    it("persists the new accessToken to localStorage", () => {
+    it("persists the new accessToken to sessionStorage", () => {
       const store = makeStore();
       store.dispatch(setTokens({ accessToken: "persisted" }));
 
-      expect(localStorage.getItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN)).toBe("persisted");
+      expect(sessionStorage.getItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN)).toBe("persisted");
     });
   });
 
@@ -172,11 +172,11 @@ describe("authSlice — reducers", () => {
       expect(store.getState().auth.user).toEqual(adminUser);
     });
 
-    it("serialises the user to localStorage", () => {
+    it("serialises the user to sessionStorage", () => {
       const store = makeStore();
       store.dispatch(updateUser(adminUser));
 
-      const stored = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.USER) ?? "null");
+      const stored = JSON.parse(sessionStorage.getItem(LOCAL_STORAGE_KEYS.USER) ?? "null");
       expect(stored).toEqual(adminUser);
     });
   });
@@ -196,15 +196,17 @@ describe("authSlice — reducers", () => {
       expect(state.isLoading).toBe(false);
     });
 
-    it("persists all three values to localStorage", () => {
+    it("persists all three values to sessionStorage", () => {
       const store = makeStore();
       store.dispatch(setAuthData(validPayload));
 
-      expect(localStorage.getItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN)).toBe(validPayload.access_token);
-      expect(localStorage.getItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN)).toBe(
+      expect(sessionStorage.getItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN)).toBe(
+        validPayload.access_token
+      );
+      expect(sessionStorage.getItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN)).toBe(
         validPayload.refresh_token
       );
-      expect(JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.USER) ?? "null")).toEqual(
+      expect(JSON.parse(sessionStorage.getItem(LOCAL_STORAGE_KEYS.USER) ?? "null")).toEqual(
         adminUser
       );
     });

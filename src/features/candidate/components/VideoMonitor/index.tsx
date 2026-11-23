@@ -12,6 +12,12 @@ interface VideoMonitorProps {
 export function VideoMonitor({ videoRef, onWarning }: Readonly<VideoMonitorProps>) {
   const [status, setStatus] = useState<VideoStatus>("checking");
   const darkFrameCountRef = useRef(0);
+  // Keep the latest callback in a ref so the 3 s interval is created once; an inline
+  // arrow prop would otherwise recreate the effect (and the interval) on every render.
+  const onWarningRef = useRef(onWarning);
+  useEffect(() => {
+    onWarningRef.current = onWarning;
+  });
 
   useEffect(() => {
     const canvas = document.createElement("canvas");
@@ -41,7 +47,8 @@ export function VideoMonitor({ videoRef, onWarning }: Readonly<VideoMonitorProps
       if (avgBrightness < 10) {
         darkFrameCountRef.current += 1;
         if (darkFrameCountRef.current >= 5) {
-          onWarning?.();
+          onWarningRef.current?.();
+          darkFrameCountRef.current = 0; // re-warn at most every ~15 s
         }
         setStatus("no-feed");
       } else {
@@ -55,7 +62,7 @@ export function VideoMonitor({ videoRef, onWarning }: Readonly<VideoMonitorProps
     const intervalId = setInterval(check, 3000);
 
     return () => clearInterval(intervalId);
-  }, [videoRef, onWarning]);
+  }, [videoRef]);
 
   let badgeLabel: string;
   if (status === "live") badgeLabel = "Live";

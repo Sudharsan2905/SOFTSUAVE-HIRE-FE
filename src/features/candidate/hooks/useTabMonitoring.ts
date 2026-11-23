@@ -2,6 +2,10 @@ import { useEffect, useRef, MutableRefObject } from "react";
 
 const TAB_SWITCH_GRACE_MS = 1_000;
 const VIOLATION_LOCK_MS = 1_000;
+// Sub-second alt-tab flicker never reaches the 1 s grace, so repeated flickers are counted
+// separately: FLICKER_LIMIT of them inside FLICKER_WINDOW_MS is one tab-switch violation.
+const FLICKER_LIMIT = 3;
+const FLICKER_WINDOW_MS = 30_000;
 
 interface UseTabMonitoringOptions {
   enabled: boolean;
@@ -30,6 +34,7 @@ export function useTabMonitoring({
   const tabSwitchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const focusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastViolationRef = useRef<number>(0);
+  const flickersRef = useRef<number[]>([]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -81,9 +86,27 @@ export function useTabMonitoring({
       if (tabSwitchTimeoutRef.current !== null) {
         clearTimeout(tabSwitchTimeoutRef.current);
         tabSwitchTimeoutRef.current = null;
+        // The tab came back before the grace period: a flicker. Count it.
+        recordFlicker();
       }
       cancelFocusTimer();
     };
+
+    function recordFlicker(): void {
+      const now = performance.now();
+      const log = flickersRef.current.filter((t) => now - t < FLICKER_WINDOW_MS);
+      log.push(now);
+      if (log.length >= FLICKER_LIMIT) {
+        flickersRef.current = [];
+        if (canFire()) {
+          onTabSwitchRef.current(
+            `Candidate repeatedly switched away from the assessment tab (${FLICKER_LIMIT} quick switches)`
+          );
+        }
+      } else {
+        flickersRef.current = log;
+      }
+    }
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {

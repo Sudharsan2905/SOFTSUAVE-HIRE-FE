@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactElement } from "react";
 import { Navigate, Outlet, useLocation, useParams } from "react-router-dom";
 import { useAppSelector } from "@/store";
 import { NoAccessPage } from "@/components/shared/NoAccessPage";
 import { Spinner } from "@/components/ui/Spinner";
+import { Button } from "@/components/ui/Button";
 import { api } from "@/utils/api";
 import { API_ENDPOINTS } from "@/constants/api";
 import { ROUTES } from "@/constants/routes";
@@ -25,6 +26,10 @@ import { markAssessmentDone } from "@/utils/assessmentSession";
  *  - TERMINATED       → No Access page (ended by admin)
  *  - MALPRACTICE      → No Access page (policy violation)
  *  - null / PENDING / IN_PROGRESS → allow through
+ *
+ * Fail-closed: if the status call fails (after one retry) the candidate is NOT passed through;
+ * a "could not verify your session — Retry" screen is shown instead, so a terminated,
+ * on-hold or malpractice session can't slip by on a network error.
  *
  * Wraps all allowed children in InterviewSessionProvider so InstructionsPage and
  * InterviewPage share a single WebSocket connection lifetime.
@@ -88,6 +93,30 @@ function resolveStatusRouting(
   }
 }
 
+const STATUS_RETRY_DELAY_MS = 800;
+
+const StatusCheckFailed = ({ onRetry }: { onRetry: () => void }): ReactElement => (
+  <div
+    role="alert"
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 16,
+      minHeight: "100vh",
+      padding: 24,
+      textAlign: "center",
+    }}
+  >
+    <h2 style={{ margin: 0 }}>We couldn&apos;t verify your session</h2>
+    <p style={{ margin: 0, color: "var(--text-secondary)", maxWidth: 420 }}>
+      Please check your internet connection and try again. You will not lose any saved answers.
+    </p>
+    <Button onClick={onRetry}>Retry</Button>
+  </div>
+);
+
 export function CandidateRoute() {
   const { shareLink } = useParams<{ shareLink: string }>();
   const { isAuthenticated, user } = useAppSelector((s) => s.auth);
@@ -100,28 +129,49 @@ export function CandidateRoute() {
     SubmissionStatusResponse | null | undefined
   >(undefined);
   const [statusLoading, setStatusLoading] = useState(false);
+  const [statusError, setStatusError] = useState(false);
+  const hasStatusRef = useRef(false);
 
-  const fetchStatus = useCallback(async () => {
-    if (!shareLink || !isAuthenticated || user?.role !== UserRole.CANDIDATE || isCompletedPage) {
-      return;
-    }
-    setStatusLoading(true);
-    try {
-      const { data } = await api.get(
-        `${API_ENDPOINTS.CANDIDATE.SUBMISSION_STATUS}?share_link=${shareLink}`
-      );
-      setSubmissionStatus(data.data ?? null);
-    } catch {
-      // Fail open — let the child page surface any real errors
-      setSubmissionStatus(null);
-    } finally {
-      setStatusLoading(false);
-    }
-  }, [shareLink, isAuthenticated, user?.role, isCompletedPage]);
+  const fetchStatus = useCallback(
+    async (silent = false) => {
+      if (!shareLink || !isAuthenticated || user?.role !== UserRole.CANDIDATE || isCompletedPage) {
+        return;
+      }
+      if (!silent) {
+        setStatusLoading(true);
+        setStatusError(false);
+      }
+      const url = `${API_ENDPOINTS.CANDIDATE.SUBMISSION_STATUS}?share_link=${shareLink}`;
+      try {
+        let data: { data?: SubmissionStatusResponse | null };
+        try {
+          data = (await api.get(url)).data;
+        } catch {
+          await new Promise((r) => setTimeout(r, STATUS_RETRY_DELAY_MS));
+          data = (await api.get(url)).data;
+        }
+        setSubmissionStatus(data.data ?? null);
+        hasStatusRef.current = true;
+        setStatusError(false);
+      } catch {
+        // Fail CLOSED. A silent background refresh keeps the last known status instead.
+        if (!silent) setStatusError(true);
+      } finally {
+        if (!silent) setStatusLoading(false);
+      }
+    },
+    [shareLink, isAuthenticated, user?.role, isCompletedPage]
+  );
 
   useEffect(() => {
     void fetchStatus();
   }, [fetchStatus]);
+
+  // The status is otherwise fetched once per mount; refresh it quietly on in-guard navigation
+  // (e.g. interview -> instructions after a termination) so a stale IN_PROGRESS is not reused.
+  useEffect(() => {
+    if (hasStatusRef.current) void fetchStatus(true);
+  }, [location.pathname, fetchStatus]);
 
   // ── 1. Auth checks ────────────────────────────────────────────────────────
 
@@ -147,6 +197,9 @@ export function CandidateRoute() {
 
   // Completed page is a terminal destination — never redirect or block it
   if (!isCompletedPage) {
+    if (statusError) {
+      return <StatusCheckFailed onRetry={() => void fetchStatus()} />;
+    }
     const isStatusPending = statusLoading || submissionStatus === undefined;
     if (isStatusPending) {
       return <StatusSpinner />;

@@ -40,7 +40,7 @@ function makeAuthState(user = makeAdminUser()) {
 
 describe("Sidebar", () => {
   beforeEach(() => {
-    localStorage.clear();
+    sessionStorage.clear();
   });
 
   it("renders brand logo image", () => {
@@ -144,7 +144,7 @@ describe("Sidebar", () => {
     expect(screen.queryByText("Talentia")).not.toBeInTheDocument();
   });
 
-  it("saves collapsed state to localStorage on toggle", () => {
+  it("saves collapsed state to sessionStorage on toggle", () => {
     renderWithProviders(<Sidebar />, {
       preloadedState: {
         auth: makeAuthState(),
@@ -152,11 +152,11 @@ describe("Sidebar", () => {
       },
     });
     fireEvent.click(screen.getByLabelText("Collapse sidebar"));
-    expect(localStorage.getItem("talentia_sidebar_collapsed")).toBe("true");
+    expect(sessionStorage.getItem("talentia_sidebar_collapsed")).toBe("true");
   });
 
-  it("reads collapsed state from localStorage on mount", () => {
-    localStorage.setItem("talentia_sidebar_collapsed", "true");
+  it("reads collapsed state from sessionStorage on mount", () => {
+    sessionStorage.setItem("talentia_sidebar_collapsed", "true");
     renderWithProviders(<Sidebar />, {
       preloadedState: {
         auth: makeAuthState(),
@@ -167,7 +167,7 @@ describe("Sidebar", () => {
   });
 
   it("shows Expand sidebar button when collapsed", () => {
-    localStorage.setItem("talentia_sidebar_collapsed", "true");
+    sessionStorage.setItem("talentia_sidebar_collapsed", "true");
     renderWithProviders(<Sidebar />, {
       preloadedState: {
         auth: makeAuthState(),
@@ -178,7 +178,7 @@ describe("Sidebar", () => {
   });
 
   it("expands sidebar on expand button click", () => {
-    localStorage.setItem("talentia_sidebar_collapsed", "true");
+    sessionStorage.setItem("talentia_sidebar_collapsed", "true");
     renderWithProviders(<Sidebar />, {
       preloadedState: {
         auth: makeAuthState(),

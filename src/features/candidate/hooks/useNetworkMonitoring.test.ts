@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
+import { WS_HEARTBEAT_INTERVAL_MS } from "@/constants/app";
 import { useNetworkMonitoring } from "./useNetworkMonitoring";
 
 vi.mock("@/constants/app", () => ({
@@ -201,17 +202,85 @@ describe("useNetworkMonitoring", () => {
     expect(result.current.networkStatus).toBe("connected");
   });
 
-  it("sends heartbeat pings when WebSocket is open", () => {
-    const getRemainingSeconds = vi.fn().mockReturnValue(600);
+  it("sends heartbeat pings with the question index but never a client-owned clock", () => {
     const getCurrentQuestionIdx = vi.fn().mockReturnValue(1);
-    renderHook(() =>
-      useNetworkMonitoring({ ...defaultOptions, getRemainingSeconds, getCurrentQuestionIdx })
-    );
+    renderHook(() => useNetworkMonitoring({ ...defaultOptions, getCurrentQuestionIdx }));
     act(() => {
       wsInstances[0].simulateOpen();
-      vi.advanceTimersByTime(200);
+      vi.advanceTimersByTime(WS_HEARTBEAT_INTERVAL_MS + 100);
     });
-    expect(wsInstances[0].send).toHaveBeenCalledWith(expect.stringContaining('"type":"ping"'));
+    const sent = JSON.parse(wsInstances[0].send.mock.calls[0][0] as string);
+    expect(sent).toEqual({ type: "ping", current_question_idx: 1 });
+    expect(sent).not.toHaveProperty("remaining_seconds");
+  });
+
+  it("forwards the server-computed remaining time from pong to onTimeSync", () => {
+    const onTimeSync = vi.fn();
+    renderHook(() => useNetworkMonitoring({ ...defaultOptions, onTimeSync }));
+    act(() => {
+      wsInstances[0].simulateOpen();
+      wsInstances[0].simulateMessage({ type: "pong", remaining_seconds: 321 });
+    });
+    expect(onTimeSync).toHaveBeenCalledWith(321);
+  });
+
+  it("calls onTimeExpired and stops reconnecting when the server auto-submits", () => {
+    const onTimeExpired = vi.fn();
+    renderHook(() => useNetworkMonitoring({ ...defaultOptions, onTimeExpired }));
+    act(() => {
+      wsInstances[0].simulateOpen();
+      wsInstances[0].simulateMessage({ type: "time_expired" });
+      wsInstances[0].simulateClose(1000);
+    });
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(onTimeExpired).toHaveBeenCalledTimes(1);
+    expect(wsInstances).toHaveLength(1);
+  });
+
+  it("keeps retrying indefinitely with a capped, jittered delay", () => {
+    renderHook(() => useNetworkMonitoring(defaultOptions));
+    for (let i = 0; i < 15; i += 1) {
+      const ws = wsInstances[wsInstances.length - 1];
+      act(() => {
+        ws.simulateClose(1006);
+      });
+      act(() => {
+        vi.advanceTimersByTime(30_100);
+      });
+    }
+    expect(wsInstances.length).toBeGreaterThan(15);
+  });
+
+  it("does not reconnect after the server ends the session (4003)", () => {
+    renderHook(() => useNetworkMonitoring(defaultOptions));
+    act(() => {
+      wsInstances[0].simulateOpen();
+      wsInstances[0].simulateClose(4003);
+    });
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(wsInstances).toHaveLength(1);
+  });
+
+  it("opening a socket does not by itself clear a held (on_hold) session", () => {
+    const { result } = renderHook(() => useNetworkMonitoring(defaultOptions));
+    act(() => {
+      wsInstances[0].simulateOpen();
+      wsInstances[0].simulateMessage({ type: "on_hold" });
+    });
+    act(() => {
+      wsInstances[0].simulateClose(1006);
+    });
+    act(() => {
+      vi.advanceTimersByTime(31_000);
+    });
+    act(() => {
+      wsInstances[wsInstances.length - 1].simulateOpen();
+    });
+    expect(result.current.networkStatus).toBe("on_hold");
   });
 
   it("schedules reconnect after WebSocket close", () => {

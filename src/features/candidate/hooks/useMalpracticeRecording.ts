@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useRef } from "react";
 import api from "../../../utils/api";
 import { API_ENDPOINTS } from "@/constants/api";
+import { LOCAL_STORAGE_KEYS } from "@/constants/storage";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const FORWARD_RECORD_MS = 20_000; // post-event capture window per event
 const TIMESLICE_MS = 250; // MediaRecorder chunk interval
+const UPLOAD_ATTEMPTS = 3;
+const UPLOAD_RETRY_BASE_MS = 1_000;
+const KEEPALIVE_MAX_BYTES = 60_000; // browsers cap keepalive request bodies at 64 KiB
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -51,6 +55,31 @@ export interface UseMalpracticeRecordingReturn {
    * Stops the dedicated recorder and discards buffered data.
    */
   abortCapture: (id: symbol) => void;
+  /** True while any committed clip is still recording/uploading. */
+  hasActiveCaptures: () => boolean;
+  /**
+   * Finalise every in-flight clip NOW and wait (bounded by `maxMs`) for the uploads.
+   * Used before navigating away on a terminating violation so the most important
+   * evidence is not lost with the unmounting page.
+   */
+  flushActiveCaptures: (maxMs?: number) => Promise<void>;
+}
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/** Fire-and-forget upload that survives page unload (fetch keepalive). */
+function uploadKeepalive(url: string, fd: FormData, token: string | null, bodyBytes: number): void {
+  if (bodyBytes > KEEPALIVE_MAX_BYTES) return; // would be rejected; the retry path covers unmount
+  try {
+    void fetch(url, {
+      method: "POST",
+      body: fd,
+      keepalive: true,
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    }).catch(() => undefined);
+  } catch {
+    /* best effort */
+  }
 }
 
 // ─── MIME selection ───────────────────────────────────────────────────────────
@@ -140,11 +169,20 @@ export function useMalpracticeRecording({
       const fd = new FormData();
       fd.append(isVideo ? "video_chunk" : "audio_clip", blob, isVideo ? "clip.webm" : "audio.webm");
 
-      await api.post(
-        API_ENDPOINTS.CANDIDATE.SUBMISSION_MALPRACTICE_MEDIA(submissionId, eventIndex),
-        fd,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
+      const url = API_ENDPOINTS.CANDIDATE.SUBMISSION_MALPRACTICE_MEDIA(submissionId, eventIndex);
+      let lastErr: unknown;
+      for (let attempt = 0; attempt < UPLOAD_ATTEMPTS; attempt += 1) {
+        try {
+          await api.post(url, fd, { headers: { "Content-Type": "multipart/form-data" } });
+          return;
+        } catch (err) {
+          lastErr = err;
+          const status = (err as { response?: { status?: number } })?.response?.status;
+          if (status !== undefined && status < 500 && status !== 408 && status !== 429) break;
+          if (attempt < UPLOAD_ATTEMPTS - 1) await sleep(UPLOAD_RETRY_BASE_MS * 2 ** attempt);
+        }
+      }
+      throw lastErr;
     },
     [submissionId]
   );
@@ -274,12 +312,58 @@ export function useMalpracticeRecording({
       }
     };
 
-    window.addEventListener("beforeunload", flushAll);
+    // On a real page unload an axios request is cancelled with the page; use a keepalive
+    // fetch for whatever has been recorded so far.
+    const onBeforeUnload = () => {
+      for (const session of pendingRef.current.values()) {
+        if (session.recorder && session.recorder.state !== "inactive") session.recorder.stop();
+      }
+      pendingRef.current.clear();
+      const events = [...activeEventsRef.current.values()];
+      activeEventsRef.current.clear();
+      const token = sessionStorage.getItem(LOCAL_STORAGE_KEYS.ACCESS_TOKEN);
+      for (const ev of events) {
+        clearTimeout(ev.timeoutId);
+        if (ev.recorder && ev.recorder.state !== "inactive") ev.recorder.stop();
+        if (ev.blobs.length === 0) continue;
+        const blob = new Blob(ev.blobs, {
+          type: ev.mimeType || (ev.isVideo ? "video/webm" : "audio/webm"),
+        });
+        const fd = new FormData();
+        fd.append(
+          ev.isVideo ? "video_chunk" : "audio_clip",
+          blob,
+          ev.isVideo ? "clip.webm" : "audio.webm"
+        );
+        uploadKeepalive(
+          API_ENDPOINTS.CANDIDATE.SUBMISSION_MALPRACTICE_MEDIA(submissionId, ev.eventIndex),
+          fd,
+          token,
+          blob.size
+        );
+      }
+    };
+
+    window.addEventListener("beforeunload", onBeforeUnload);
     return () => {
-      window.removeEventListener("beforeunload", flushAll);
+      window.removeEventListener("beforeunload", onBeforeUnload);
       flushAll();
     };
-  }, [uploadCapture]);
+  }, [uploadCapture, submissionId]);
 
-  return { prepareCapture, commitCapture, abortCapture };
+  const hasActiveCaptures = useCallback(
+    () => activeEventsRef.current.size > 0 || pendingRef.current.size > 0,
+    []
+  );
+
+  const flushActiveCaptures = useCallback(
+    async (maxMs = 8_000): Promise<void> => {
+      const ids = [...activeEventsRef.current.keys()];
+      if (ids.length === 0) return;
+      await Promise.race([Promise.all(ids.map((id) => finalizeActive(id))), sleep(maxMs)]);
+    },
+    [finalizeActive]
+  );
+
+  return { prepareCapture, commitCapture, abortCapture, hasActiveCaptures, flushActiveCaptures };
 }

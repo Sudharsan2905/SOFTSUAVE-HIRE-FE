@@ -13,7 +13,10 @@ export interface SessionCallbacks {
   onResumeApproved: (remainingSeconds: number | null, questionIdx: number) => void;
   onTerminated: () => void;
   onAdminWarning: (message: string) => void;
-  getRemainingSeconds: () => number;
+  /** Server-computed remaining seconds, sent with every heartbeat reply. */
+  onTimeSync: (remainingSeconds: number) => void;
+  /** The server auto-submitted this session (time ran out while connected). */
+  onTimeExpired: () => void;
   getCurrentQuestionIdx: () => number;
 }
 
@@ -53,7 +56,8 @@ export function InterviewSessionProvider({ children }: Readonly<{ children: Reac
   const onResumeApprovedRef = useRef<SessionCallbacks["onResumeApproved"] | null>(null);
   const onTerminatedRef = useRef<SessionCallbacks["onTerminated"] | null>(null);
   const onAdminWarningRef = useRef<SessionCallbacks["onAdminWarning"] | null>(null);
-  const getRemainingSecondsRef = useRef<SessionCallbacks["getRemainingSeconds"]>(() => 0);
+  const onTimeSyncRef = useRef<SessionCallbacks["onTimeSync"] | null>(null);
+  const onTimeExpiredRef = useRef<SessionCallbacks["onTimeExpired"] | null>(null);
   const getCurrentQuestionIdxRef = useRef<SessionCallbacks["getCurrentQuestionIdx"]>(() => 0);
 
   const { networkStatus, isOnline } = useNetworkMonitoring({
@@ -70,7 +74,8 @@ export function InterviewSessionProvider({ children }: Readonly<{ children: Reac
     ),
     onTerminated: useCallback(() => onTerminatedRef.current?.(), []),
     onAdminWarning: useCallback((msg: string) => onAdminWarningRef.current?.(msg), []),
-    getRemainingSeconds: useCallback(() => getRemainingSecondsRef.current(), []),
+    onTimeSync: useCallback((rs: number) => onTimeSyncRef.current?.(rs), []),
+    onTimeExpired: useCallback(() => onTimeExpiredRef.current?.(), []),
     getCurrentQuestionIdx: useCallback(() => getCurrentQuestionIdxRef.current(), []),
   });
 
@@ -84,8 +89,8 @@ export function InterviewSessionProvider({ children }: Readonly<{ children: Reac
     if (callbacks.onResumeApproved) onResumeApprovedRef.current = callbacks.onResumeApproved;
     if (callbacks.onTerminated) onTerminatedRef.current = callbacks.onTerminated;
     if (callbacks.onAdminWarning) onAdminWarningRef.current = callbacks.onAdminWarning;
-    if (callbacks.getRemainingSeconds)
-      getRemainingSecondsRef.current = callbacks.getRemainingSeconds;
+    if (callbacks.onTimeSync) onTimeSyncRef.current = callbacks.onTimeSync;
+    if (callbacks.onTimeExpired) onTimeExpiredRef.current = callbacks.onTimeExpired;
     if (callbacks.getCurrentQuestionIdx)
       getCurrentQuestionIdxRef.current = callbacks.getCurrentQuestionIdx;
   }, []);

@@ -106,4 +106,78 @@ describe("useRoundTimer", () => {
     );
     expect(result.current.formattedTime).toEqual({ hh: "00", mm: "00", ss: "00" });
   });
+
+  it("is inert until synchronised: a timer that was never given a value never expires", () => {
+    const onExpired = vi.fn();
+    renderHook(() => useRoundTimer({ active: true, onExpired }));
+    act(() => {
+      vi.advanceTimersByTime(10_000);
+    });
+    expect(onExpired).not.toHaveBeenCalled();
+  });
+
+  it("does not expire when started with initialSeconds 0 and activated (the auto-submit bug)", () => {
+    const onExpired = vi.fn();
+    const { result } = renderHook(() =>
+      useRoundTimer({ initialSeconds: 0, active: true, onExpired })
+    );
+    act(() => {
+      vi.advanceTimersByTime(5_000);
+    });
+    expect(onExpired).not.toHaveBeenCalled();
+    expect(result.current.isLowTime).toBe(false);
+  });
+
+  it("starts counting once the server value arrives, even if active first", () => {
+    const onExpired = vi.fn();
+    const { result } = renderHook(() => useRoundTimer({ active: true, onExpired }));
+    act(() => {
+      vi.advanceTimersByTime(2_000);
+    });
+    act(() => result.current.setTimeLeft(10));
+    act(() => {
+      vi.advanceTimersByTime(4_000);
+    });
+    expect(result.current.timeLeft).toBe(6);
+    expect(onExpired).not.toHaveBeenCalled();
+  });
+
+  it("a server value of exactly 0 means expired and fires onExpired once", () => {
+    const onExpired = vi.fn();
+    const { result } = renderHook(() => useRoundTimer({ active: true, onExpired }));
+    act(() => result.current.setTimeLeft(0));
+    act(() => {
+      vi.advanceTimersByTime(2_000);
+    });
+    expect(onExpired).toHaveBeenCalledTimes(1);
+  });
+
+  it("is wall-clock based: a throttled/suspended tab catches up instead of lagging", () => {
+    const { result } = renderHook(() =>
+      useRoundTimer({ initialSeconds: 100, active: true, onExpired: vi.fn() })
+    );
+    // One huge jump (like a backgrounded tab waking up) must land on the true remaining time.
+    act(() => {
+      vi.setSystemTime(Date.now() + 60_000);
+      vi.advanceTimersByTime(300);
+    });
+    expect(result.current.timeLeft).toBeLessThanOrEqual(40);
+    expect(result.current.timeLeft).toBeGreaterThanOrEqual(39);
+  });
+
+  it("re-syncing to a new server value replaces the countdown and re-arms expiry", () => {
+    const onExpired = vi.fn();
+    const { result } = renderHook(() =>
+      useRoundTimer({ initialSeconds: 2, active: true, onExpired })
+    );
+    act(() => {
+      vi.advanceTimersByTime(2_000);
+    });
+    expect(onExpired).toHaveBeenCalledTimes(1);
+    act(() => result.current.setTimeLeft(5));
+    act(() => {
+      vi.advanceTimersByTime(5_000);
+    });
+    expect(onExpired).toHaveBeenCalledTimes(2);
+  });
 });

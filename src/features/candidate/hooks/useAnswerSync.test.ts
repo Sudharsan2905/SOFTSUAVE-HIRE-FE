@@ -57,7 +57,7 @@ describe("useAnswerSync", () => {
     );
   });
 
-  it("flushPending sends all pending answers immediately", () => {
+  it("flushPending sends all pending answers immediately and resolves true", async () => {
     const { result } = renderHook(() => useAnswerSync({ submissionId: "sub-1", debounceMs: 1000 }));
     act(() => {
       result.current.setAnswer("q-1", "ans-1");
@@ -65,31 +65,72 @@ describe("useAnswerSync", () => {
     });
     expect(mockPost).not.toHaveBeenCalled();
 
-    act(() => result.current.flushPending());
+    let ok = false;
+    await act(async () => {
+      ok = await result.current.flushPending();
+    });
     expect(mockPost).toHaveBeenCalledTimes(2);
+    expect(ok).toBe(true);
+    expect(result.current.pendingCount()).toBe(0);
   });
 
-  it("flushPending clears the pending timers", () => {
+  it("flushPending clears the pending timers", async () => {
     const { result } = renderHook(() => useAnswerSync({ submissionId: "sub-1", debounceMs: 1000 }));
     act(() => result.current.setAnswer("q-1", "val"));
-    act(() => result.current.flushPending());
+    await act(async () => {
+      await result.current.flushPending();
+    });
     mockPost.mockClear();
 
-    // Advancing the timer should NOT fire again after flush
     act(() => {
       vi.advanceTimersByTime(2000);
     });
     expect(mockPost).not.toHaveBeenCalled();
   });
 
-  it("handles server errors silently", async () => {
+  it("keeps a failed answer dirty and retries it with backoff until it is saved", async () => {
     mockPost.mockRejectedValueOnce(new Error("network"));
     const { result } = renderHook(() => useAnswerSync({ submissionId: "sub-1", debounceMs: 100 }));
     act(() => result.current.setAnswer("q-1", "ans"));
     await act(async () => {
-      vi.advanceTimersByTime(100);
+      await vi.advanceTimersByTimeAsync(100);
     });
-    // The hook attempts the POST then swallows the rejection
-    expect(mockPost).toHaveBeenCalled();
+    expect(mockPost).toHaveBeenCalledTimes(1);
+    expect(result.current.pendingCount()).toBe(1); // not lost
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_100); // first retry (1s backoff)
+    });
+    expect(mockPost).toHaveBeenCalledTimes(2);
+    expect(result.current.pendingCount()).toBe(0);
+  });
+
+  it("flushPending resolves false when the server keeps rejecting, so submit can wait", async () => {
+    mockPost.mockRejectedValue(new Error("down"));
+    const { result } = renderHook(() => useAnswerSync({ submissionId: "sub-1", debounceMs: 100 }));
+    act(() => result.current.setAnswer("q-1", "ans"));
+    let ok = true;
+    await act(async () => {
+      const p = result.current.flushPending();
+      await vi.advanceTimersByTimeAsync(5_000);
+      ok = await p;
+    });
+    expect(ok).toBe(false);
+    expect(result.current.pendingCount()).toBe(1);
+  });
+
+  it("re-syncs outstanding answers when the browser comes back online", async () => {
+    mockPost.mockRejectedValueOnce(new Error("offline"));
+    const { result } = renderHook(() => useAnswerSync({ submissionId: "sub-1", debounceMs: 100 }));
+    act(() => result.current.setAnswer("q-1", "ans"));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(100);
+    });
+    expect(result.current.pendingCount()).toBe(1);
+    await act(async () => {
+      globalThis.dispatchEvent(new Event("online"));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(result.current.pendingCount()).toBe(0);
   });
 });
