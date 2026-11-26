@@ -18,6 +18,7 @@ export interface AssessmentDraft {
   accessibility: AssessmentAccessibility;
   monitoring_config: MonitoringConfig;
   expected_candidates?: number;
+  pass_percentage?: number;
 }
 
 export interface AssessmentWizardProps {

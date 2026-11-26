@@ -76,6 +76,8 @@ export interface Assessment {
   created_by: string;
   submission_count?: number;
   expected_candidates?: number;
+  /** Overall percentage a candidate needs to pass. The API returns 50 when none was set. */
+  pass_percentage?: number;
   created_at: string;
   updated_at: string;
 }
@@ -142,6 +144,8 @@ export interface RoundData {
   percentage?: number;
 }
 
+export type SubmissionResult = "passed" | "failed";
+
 export interface Submission {
   id: string;
   assessment_id: string;
@@ -154,6 +158,8 @@ export interface Submission {
   score: number;
   percentage: number;
   score_percentage?: number;
+  /** Derived by the API (admin-only): null until the session is completed and fully scored. */
+  result?: SubmissionResult | null;
   screenshots: Screenshot[];
   is_malpractice: boolean;
   malpractice_data: MalpracticeEvent[];
@@ -293,6 +299,8 @@ export interface CandidateSubmissionDetail {
   status: SubmissionStatus;
   score: number;
   percentage: number;
+  pass_percentage?: number | null;
+  result?: SubmissionResult | null;
   malpractice_count: number;
   reaccess_count: number;
   started_at: string | null;

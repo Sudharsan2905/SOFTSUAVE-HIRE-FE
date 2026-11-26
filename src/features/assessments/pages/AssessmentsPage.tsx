@@ -338,6 +338,8 @@ export default function AssessmentsPage() {
       })),
       accessibility: a.accessibility,
       monitoring_config: a.monitoring_config,
+      expected_candidates: a.expected_candidates,
+      pass_percentage: a.pass_percentage,
     });
     setCloneWorkspaces(workspaces);
     setShowWizard(true);
@@ -612,6 +614,7 @@ export default function AssessmentsPage() {
             accessibility: editTarget.accessibility,
             monitoring_config: editTarget.monitoring_config,
             expected_candidates: editTarget.expected_candidates,
+            pass_percentage: editTarget.pass_percentage,
           }}
           onClose={() => setEditTarget(null)}
           onSuccess={() => {

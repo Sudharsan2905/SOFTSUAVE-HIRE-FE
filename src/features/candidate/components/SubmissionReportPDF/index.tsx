@@ -491,6 +491,17 @@ export function SubmissionReportDocument({
               <Text style={S.statLabel}>Percentage</Text>
               <Text style={S.statValue}>{data.percentage}%</Text>
             </View>
+            {data.result && (
+              <View style={S.statBox}>
+                <Text style={S.statLabel}>Result</Text>
+                <Text style={S.statValue}>
+                  {titleCase(data.result)}
+                  {typeof data.pass_percentage === "number"
+                    ? ` (pass mark ${data.pass_percentage}%)`
+                    : ""}
+                </Text>
+              </View>
+            )}
             <View style={S.statBox}>
               <Text style={S.statLabel}>Rounds</Text>
               <Text style={S.statValue}>{data.rounds.length}</Text>

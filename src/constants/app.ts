@@ -18,6 +18,9 @@ export const SORT_ORDER_OPTIONS = [
 export const PAGE_SIZE_OPTIONS = [20, 50, 100, 200] as const;
 export const DEFAULT_PAGE_SIZE = 20;
 
+/** Pass mark (overall %) the backend applies when an assessment has none configured. */
+export const DEFAULT_PASS_PERCENTAGE = 50;
+
 export const SUBMISSION_STATUS_OPTIONS = [
   { value: "pending", label: "Not Started" },
   { value: "in_progress", label: "Attending" },

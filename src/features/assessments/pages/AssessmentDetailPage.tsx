@@ -8,7 +8,7 @@ import { FilterBar } from "@/components/shared/FilterBar";
 import { Button } from "@/components/ui/Button";
 import { Pagination } from "@/components/ui/Pagination";
 import { Spinner } from "@/components/ui/Spinner";
-import { StatusBadge } from "@/components/ui/Badge";
+import { ResultBadge, StatusBadge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import {
   IconDownload,
@@ -79,6 +79,9 @@ interface SubmissionStats {
   on_hold: number;
   malpractice: number;
   avg_percentage: number;
+  pass_percentage?: number;
+  passed?: number;
+  failed?: number;
 }
 
 type ExportRound = { round_number: number; percentage: number };
@@ -88,6 +91,7 @@ type ExportRow = {
   email: string;
   phone: string;
   percentage: number;
+  result?: string | null;
   rounds: ExportRound[];
   completed_at: string | null;
 };
@@ -102,7 +106,12 @@ function ScoreRing({ pct, roundsData }: Readonly<{ pct: number; roundsData?: Rou
   const txtColor = pct > 0 ? "#1e2330" : "#9aa0ac";
 
   const svg = (
-    <svg width={46} height={46} viewBox="0 0 40 40" style={{ cursor: roundsData?.length ? "pointer" : "default" }}>
+    <svg
+      width={46}
+      height={46}
+      viewBox="0 0 40 40"
+      style={{ cursor: roundsData?.length ? "pointer" : "default" }}
+    >
       <circle cx={20} cy={20} r={r} fill="none" stroke="#edeef2" strokeWidth={4} />
       {pct > 0 && (
         <circle
@@ -259,9 +268,7 @@ export default function AssessmentDetailPage() {
   const handleDeleteSubmission = async () => {
     setDeleteSubmitting(true);
     try {
-      await api.delete(
-        API_ENDPOINTS.ASSESSMENTS.SUBMISSION_DELETE(workspaceId!, id!, deleteSubId)
-      );
+      await api.delete(API_ENDPOINTS.ASSESSMENTS.SUBMISSION_DELETE(workspaceId!, id!, deleteSubId));
       toast.success("Submission deleted.");
       setShowDeleteModal(false);
       fetchSubmissions();
@@ -386,6 +393,10 @@ export default function AssessmentDetailPage() {
           { header: "Email", cell: (r: ExportRow) => r.email },
           { header: "Phone", cell: (r: ExportRow) => r.phone },
           { header: "Score (%)", cell: (r: ExportRow) => r.percentage },
+          {
+            header: "Result",
+            cell: (r: ExportRow) => (r.result ? (r.result === "passed" ? "Passed" : "Failed") : ""),
+          },
           { header: "Rounds", cell: (r: ExportRow) => r.rounds?.length ?? 0 },
           ...roundColumns,
           { header: "Completed At", cell: (r: ExportRow) => formatDate(r.completed_at ?? "") },
@@ -430,6 +441,7 @@ export default function AssessmentDetailPage() {
                 <th>Candidate</th>
                 <th>Status</th>
                 <th>Percentage</th>
+                <th>Result</th>
                 <th>Round</th>
                 <th>Malpractice</th>
                 <th>Started</th>
@@ -461,6 +473,9 @@ export default function AssessmentDetailPage() {
                     </td>
                     <td>
                       <ScoreRing pct={pct} roundsData={sub.rounds_data} />
+                    </td>
+                    <td>
+                      <ResultBadge result={sub.result} />
                     </td>
                     <td style={{ fontSize: 14, color: "var(--text-secondary)" }}>
                       {sub.current_round}
@@ -505,7 +520,10 @@ export default function AssessmentDetailPage() {
                               return;
                             }
                             const rect = e.currentTarget.getBoundingClientRect();
-                            setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                            setMenuPos({
+                              top: rect.bottom + 4,
+                              right: window.innerWidth - rect.right,
+                            });
                             setOpenMenuId(sub.id);
                           }}
                         >
@@ -644,7 +662,11 @@ export default function AssessmentDetailPage() {
             <p className={styles.statValue}>
               {submissionStats ? `${submissionStats.avg_percentage.toFixed(1)}%` : "—"}
             </p>
-            <p className={styles.statSub}>Across all</p>
+            <p className={styles.statSub}>
+              {submissionStats?.pass_percentage === undefined
+                ? "Across all"
+                : `Pass mark ${submissionStats.pass_percentage}% · ${submissionStats.passed ?? 0} passed · ${submissionStats.failed ?? 0} failed`}
+            </p>
           </div>
         </div>
       </div>
