@@ -105,6 +105,44 @@ describe("FilterBar", () => {
     expect(c2.querySelectorAll("button").length).toBeGreaterThan(baseButtons);
   });
 
+  it("renders the result filter when resultOptions and onResultChange are provided", () => {
+    const { container: c1 } = renderWithProviders(<FilterBar {...defaultProps} />);
+    const baseButtons = c1.querySelectorAll("button").length;
+    const { container: c2 } = renderWithProviders(
+      <FilterBar
+        {...defaultProps}
+        resultOptions={[
+          { value: "passed", label: "Passed" },
+          { value: "failed", label: "Failed" },
+        ]}
+        onResultChange={vi.fn()}
+        result=""
+      />
+    );
+    expect(c2.querySelectorAll("button").length).toBeGreaterThan(baseButtons);
+  });
+
+  it("shows the selected result and the All Results default", () => {
+    const options = [
+      { value: "passed", label: "Passed (31)" },
+      { value: "failed", label: "Failed (9)" },
+    ];
+    const { rerender } = renderWithProviders(
+      <FilterBar {...defaultProps} resultOptions={options} onResultChange={vi.fn()} result="" />
+    );
+    expect(screen.getByText("All Results")).toBeInTheDocument();
+
+    rerender(
+      <FilterBar
+        {...defaultProps}
+        resultOptions={options}
+        onResultChange={vi.fn()}
+        result="failed"
+      />
+    );
+    expect(screen.getByText("Failed (9)")).toBeInTheDocument();
+  });
+
   it("renders children", () => {
     renderWithProviders(
       <FilterBar {...defaultProps}>

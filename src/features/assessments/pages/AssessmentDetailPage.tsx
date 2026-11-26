@@ -34,7 +34,7 @@ import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
 import { Assessment, Submission, PaginationMeta, SortOrder, RoundData } from "@/types";
-import { SUBMISSION_STATUS_OPTIONS } from "@/constants/app";
+import { SUBMISSION_RESULT_OPTIONS, SUBMISSION_STATUS_OPTIONS } from "@/constants/app";
 import { API_ENDPOINTS } from "@/constants/api";
 import { ROUTES } from "@/constants/routes";
 import { ASSESSMENT_ERRORS } from "@/features/assessments/constants";
@@ -171,6 +171,7 @@ export default function AssessmentDetailPage() {
   const [sortBy, setSortBy] = useState("started_at");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [status, setStatus] = useState("");
+  const [result, setResult] = useState("");
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [showSchedule, setShowSchedule] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -323,6 +324,7 @@ export default function AssessmentDetailPage() {
         sort_order: sortOrder,
         ...(debouncedSearch && { search: debouncedSearch }),
         ...(status && { status }),
+        ...(result && { result }),
         ...(dateRange.from && { from_date: dateRange.from }),
         ...(dateRange.to && { to_date: dateRange.to }),
       });
@@ -337,7 +339,18 @@ export default function AssessmentDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [id, workspaceId, page, pageSize, sortBy, sortOrder, debouncedSearch, status, dateRange]);
+  }, [
+    id,
+    workspaceId,
+    page,
+    pageSize,
+    sortBy,
+    sortOrder,
+    debouncedSearch,
+    status,
+    result,
+    dateRange,
+  ]);
 
   useEffect(() => {
     fetchSubmissions();
@@ -345,7 +358,7 @@ export default function AssessmentDetailPage() {
 
   useEffect(() => {
     reset();
-  }, [debouncedSearch, sortBy, sortOrder, status, dateRange]);
+  }, [debouncedSearch, sortBy, sortOrder, status, result, dateRange]);
 
   const EXPORT_OPTIONS = [
     { value: "all", label: "Export All" },
@@ -369,6 +382,7 @@ export default function AssessmentDetailPage() {
               sort_order: sortOrder,
               ...(debouncedSearch && { search: debouncedSearch }),
               ...(status && { status }),
+              ...(result && { result }),
               ...(dateRange.from && { from_date: dateRange.from }),
               ...(dateRange.to && { to_date: dateRange.to }),
             });
@@ -415,6 +429,14 @@ export default function AssessmentDetailPage() {
   const pctOf = (n: number) =>
     totalCount > 0 ? `${((n / totalCount) * 100).toFixed(1)}% of total` : "0% of total";
 
+  const hasActiveFilters = Boolean(
+    debouncedSearch || status || result || dateRange.from || dateRange.to
+  );
+  const resultOptions = SUBMISSION_RESULT_OPTIONS.map((o) => {
+    const count = o.value === "passed" ? submissionStats?.passed : submissionStats?.failed;
+    return { value: o.value, label: count === undefined ? o.label : `${o.label} (${count})` };
+  });
+
   let content: React.ReactNode;
   if (isLoading) {
     content = (
@@ -425,9 +447,13 @@ export default function AssessmentDetailPage() {
   } else if (submissions.length === 0) {
     content = (
       <div className={styles.empty}>
-        <p>No submissions yet</p>
+        <p>
+          {hasActiveFilters ? "No candidates match the selected filters" : "No submissions yet"}
+        </p>
         <span style={{ fontSize: 12 }}>
-          Candidates will appear here once they start the assessment
+          {hasActiveFilters
+            ? "Try changing or clearing the filters"
+            : "Candidates will appear here once they start the assessment"}
         </span>
       </div>
     );
@@ -682,6 +708,9 @@ export default function AssessmentDetailPage() {
         status={status}
         onStatusChange={setStatus}
         statusOptions={SUBMISSION_STATUS_OPTIONS}
+        result={result}
+        onResultChange={setResult}
+        resultOptions={resultOptions}
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
         dateRangePlaceholder="Started date"

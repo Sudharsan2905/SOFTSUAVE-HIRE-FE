@@ -64,6 +64,9 @@ interface FilterBarProps {
   status?: string;
   onStatusChange?: (v: string) => void;
   statusOptions?: readonly { value: string; label: string }[];
+  result?: string;
+  onResultChange?: (v: string) => void;
+  resultOptions?: readonly { value: string; label: string }[];
   showComplexity?: boolean;
   showQuestionType?: boolean;
   dateRange?: DateRange;
@@ -330,6 +333,9 @@ export function FilterBar({
   status,
   onStatusChange,
   statusOptions,
+  result,
+  onResultChange,
+  resultOptions,
   onExport,
   onRefresh,
   showComplexity = false,
@@ -343,6 +349,7 @@ export function FilterBar({
     showComplexity && onComplexityChange,
     showQuestionType && onQuestionTypeChange,
     statusOptions && onStatusChange,
+    resultOptions && onResultChange,
     dateRange && onDateRangeChange,
   ].filter(Boolean).length;
 
@@ -376,9 +383,7 @@ export function FilterBar({
             >
               {tab.icon && <span className={styles.tabIcon}>{tab.icon}</span>}
               <span className={styles.tabLabel}>{tab.label}</span>
-              {tab.count !== undefined && (
-                <span className={styles.tabCount}>{tab.count}</span>
-              )}
+              {tab.count !== undefined && <span className={styles.tabCount}>{tab.count}</span>}
             </button>
           ))}
         </div>
@@ -406,7 +411,12 @@ export function FilterBar({
             <ViewModeToggle viewMode={viewMode} onViewModeChange={onViewModeChange} />
           )}
           {onExport && (
-            <Button variant="secondary" size="md" leftIcon={<IconDownload size={16} />} onClick={onExport}>
+            <Button
+              variant="secondary"
+              size="md"
+              leftIcon={<IconDownload size={16} />}
+              onClick={onExport}
+            >
               <span className={styles.btnLabel}>Export</span>
             </Button>
           )}
@@ -437,27 +447,63 @@ export function FilterBar({
         </div>
       </div>
 
-      <div className={`${styles.midSection} ${singleDropdown ? styles.midSingle : styles.midMulti}`}>
+      <div
+        className={`${styles.midSection} ${singleDropdown ? styles.midSingle : styles.midMulti}`}
+      >
         {hasFilterDrops && (
           <div className={styles.filterDrops}>
             {showComplexity && onComplexityChange && (
               <div className={styles.filterSelect}>
-                <Select options={COMPLEXITY_OPTIONS} placeholder="Complexity" value={complexity} onChange={onComplexityChange} fullWidth />
+                <Select
+                  options={COMPLEXITY_OPTIONS}
+                  placeholder="Complexity"
+                  value={complexity}
+                  onChange={onComplexityChange}
+                  fullWidth
+                />
               </div>
             )}
             {showQuestionType && onQuestionTypeChange && (
               <div className={styles.filterSelect}>
-                <Select options={QUESTION_TYPE_OPTIONS} placeholder="Question Type" value={questionType} onChange={onQuestionTypeChange} fullWidth />
+                <Select
+                  options={QUESTION_TYPE_OPTIONS}
+                  placeholder="Question Type"
+                  value={questionType}
+                  onChange={onQuestionTypeChange}
+                  fullWidth
+                />
               </div>
             )}
             {statusOptions && onStatusChange && (
               <div className={styles.filterSelect}>
-                <Select options={[{ value: "", label: "All Statuses" }, ...statusOptions]} placeholder="Status" value={status} onChange={onStatusChange} fullWidth />
+                <Select
+                  options={[{ value: "", label: "All Statuses" }, ...statusOptions]}
+                  placeholder="Status"
+                  value={status}
+                  onChange={onStatusChange}
+                  fullWidth
+                />
+              </div>
+            )}
+            {resultOptions && onResultChange && (
+              <div className={styles.filterSelect}>
+                <Select
+                  options={[{ value: "", label: "All Results" }, ...resultOptions]}
+                  placeholder="Result"
+                  value={result}
+                  onChange={onResultChange}
+                  fullWidth
+                />
               </div>
             )}
             {dateRange && onDateRangeChange && (
               <div className={styles.datePickerWrap}>
-                <DateRangePicker value={dateRange} onChange={onDateRangeChange} placeholder={dateRangePlaceholder} fullWidth />
+                <DateRangePicker
+                  value={dateRange}
+                  onChange={onDateRangeChange}
+                  placeholder={dateRangePlaceholder}
+                  fullWidth
+                />
               </div>
             )}
             {children}
@@ -470,7 +516,12 @@ export function FilterBar({
             <ViewModeToggle viewMode={viewMode} onViewModeChange={onViewModeChange} />
           )}
           {onExport && (
-            <Button variant="secondary" size="md" leftIcon={<IconDownload size={16} />} onClick={onExport}>
+            <Button
+              variant="secondary"
+              size="md"
+              leftIcon={<IconDownload size={16} />}
+              onClick={onExport}
+            >
               <span className={styles.btnLabel}>Export</span>
             </Button>
           )}
