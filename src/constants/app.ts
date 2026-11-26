@@ -30,6 +30,12 @@ export const SUBMISSION_STATUS_OPTIONS = [
   { value: "terminated", label: "Terminated" },
 ] as const;
 
+/** Pass/fail outcome filter on the assessment's View Details page (derived from the pass mark). */
+export const SUBMISSION_RESULT_OPTIONS = [
+  { value: "passed", label: "Passed" },
+  { value: "failed", label: "Failed" },
+] as const;
+
 export const HOLD_RECONNECT_THRESHOLD_MS = 30_000; // show overlay after 30s offline
 export const WS_HEARTBEAT_INTERVAL_MS = 10_000; // ping every 10s
 
