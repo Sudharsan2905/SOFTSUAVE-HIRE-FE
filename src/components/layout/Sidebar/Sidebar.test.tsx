@@ -8,6 +8,7 @@ vi.mock("@/assets/favicon.svg", () => ({ default: "/logo.svg" }));
 vi.mock("@/assets/icons", () => ({
   IconQuestionBank: () => <svg data-testid="icon-vault" />,
   IconAssessment: () => <svg data-testid="icon-assessment" />,
+  IconFilter: () => <svg data-testid="icon-filter" />,
   IconLiveInterview: () => <svg data-testid="icon-live" />,
   IconUsers: () => <svg data-testid="icon-users" />,
   IconDotsVertical: () => <svg data-testid="icon-dots" />,
@@ -101,6 +102,31 @@ describe("Sidebar", () => {
       },
     });
     expect(screen.queryByText("Assessments")).not.toBeInTheDocument();
+  });
+
+  it("renders Score Filter link directly below Assessments, scoped to the workspace", () => {
+    renderWithProviders(<Sidebar />, {
+      preloadedState: {
+        auth: makeAuthState(),
+        workspace: { activeWorkspace: workspace, workspaces: [workspace] },
+      },
+    });
+    const assessments = screen.getByRole("link", { name: "Assessments" });
+    const scoreFilter = screen.getByRole("link", { name: "Score Filter" });
+
+    expect(scoreFilter).toHaveAttribute("href", "/workspaces/ws-1/score-filter");
+    expect(assessments.compareDocumentPosition(scoreFilter)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(assessments.parentElement?.parentElement).toBe(scoreFilter.parentElement?.parentElement);
+  });
+
+  it("does not render Score Filter link when there is no activeWorkspace", () => {
+    renderWithProviders(<Sidebar />, {
+      preloadedState: {
+        auth: makeAuthState(),
+        workspace: { activeWorkspace: null, workspaces: [] },
+      },
+    });
+    expect(screen.queryByText("Score Filter")).not.toBeInTheDocument();
   });
 
   it("renders Users link for super admin", () => {

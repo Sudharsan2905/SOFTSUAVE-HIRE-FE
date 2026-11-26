@@ -30,8 +30,9 @@ export const API_ENDPOINTS = {
     ROOT: (workspaceId: string) => `${API_BASE_PATH}/workspaces/${workspaceId}/assessments`,
     BY_ID: (workspaceId: string, id: string) =>
       `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${id}`,
-    STATS: (workspaceId: string) =>
-      `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/stats`,
+    STATS: (workspaceId: string) => `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/stats`,
+    SCORE_FILTER: (workspaceId: string) =>
+      `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/score-filter`,
     SHARE_LINKS: (workspaceId: string, id: string) =>
       `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${id}/share-links`,
     SHARE_LINK_BY_ID: (workspaceId: string, assessmentId: string, linkId: string) =>
@@ -133,8 +134,7 @@ export const API_ENDPOINTS = {
       `${API_BASE_PATH}/candidate/submission/${id}/malpractice/${eventIndex}/media`,
     SUBMISSION_LIVEKIT_TOKEN: (id: string) =>
       `${API_BASE_PATH}/candidate/submission/${id}/livekit-token`,
-    SUBMISSION_START: (id: string) =>
-      `${API_BASE_PATH}/candidate/submission/${id}/start`,
+    SUBMISSION_START: (id: string) => `${API_BASE_PATH}/candidate/submission/${id}/start`,
   },
 
   LIVE_MONITORING: {

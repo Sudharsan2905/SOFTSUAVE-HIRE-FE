@@ -8,6 +8,7 @@ import { Tooltip } from "@/components/ui/Tooltip";
 import {
   IconQuestionBank,
   IconAssessment,
+  IconFilter,
   IconLiveInterview,
   IconUsers,
   IconUserSetting,
@@ -101,6 +102,15 @@ export function Sidebar() {
               >
                 <IconAssessment size={22} />
                 {!collapsed && <span>Assessments</span>}
+              </NavLink>
+            </Tooltip>
+            <Tooltip content="Score Filter" placement="right" disabled={!collapsed}>
+              <NavLink
+                to={ROUTES.ADMIN.scoreFilter(activeWorkspace.id)}
+                className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ""}`}
+              >
+                <IconFilter size={22} />
+                {!collapsed && <span>Score Filter</span>}
               </NavLink>
             </Tooltip>
           </div>
