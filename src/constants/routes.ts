@@ -29,6 +29,8 @@ export const ROUTES = {
     ASSESSMENTS: "/workspaces/:workspaceId/assessments",
     ASSESSMENT_DETAIL: "/workspaces/:workspaceId/assessments/:id",
     CANDIDATE_DETAIL: "/workspaces/:workspaceId/assessments/:assessmentId/candidates/:candidateId",
+    // A sibling of /assessments (not nested under it) so the Assessments nav item stays inactive.
+    SCORE_FILTER: "/workspaces/:workspaceId/score-filter",
     LIVE_INTERVIEWS: "/live-interviews",
     PROFILE: "/profile",
     PROFILE_BY_ID: "/profile/:userId",
@@ -43,6 +45,7 @@ export const ROUTES = {
       `/workspaces/${workspaceId}/assessments/${id}`,
     candidateDetail: (workspaceId: string, assessmentId: string, candidateId: string) =>
       `/workspaces/${workspaceId}/assessments/${assessmentId}/candidates/${candidateId}`,
+    scoreFilter: (workspaceId: string) => `/workspaces/${workspaceId}/score-filter`,
     profileById: (userId: string) => `/profile/${userId}`,
     candidateProfile: (candidateId: string) => `/candidates/${candidateId}`,
   },

@@ -33,13 +33,12 @@ const AssessmentsPage = lazy(() => import("@/features/assessments/pages/Assessme
 const AssessmentDetailPage = lazy(
   () => import("@/features/assessments/pages/AssessmentDetailPage")
 );
+const ScoreFilterPage = lazy(() => import("@/features/scoreFilter/pages/ScoreFilterPage"));
 const CandidateDetailsPage = lazy(() => import("@/features/candidate/pages/CandidateDetailsPage"));
 const LiveMonitoringPage = lazy(() => import("@/features/liveMonitoring/pages/LiveMonitoringPage"));
 const UsersPage = lazy(() => import("@/features/users/pages/UsersPage"));
 const CandidatesPage = lazy(() => import("@/features/candidates/pages/CandidatesPage"));
-const CandidateProfilePage = lazy(
-  () => import("@/features/candidates/pages/CandidateProfilePage")
-);
+const CandidateProfilePage = lazy(() => import("@/features/candidates/pages/CandidateProfilePage"));
 const UserProfilePage = lazy(() => import("@/features/profile/pages/UserProfilePage"));
 const NotificationsPage = lazy(() => import("@/features/notifications/pages/NotificationsPage"));
 
@@ -99,6 +98,7 @@ export default function App() {
           <Route path={ROUTES.ADMIN.QUESTION_BANK} element={<CategoriesPage />} />
           <Route path={ROUTES.ADMIN.QUESTION_BANK_CATEGORY} element={<QuestionsPage />} />
           <Route path={ROUTES.ADMIN.ASSESSMENTS} element={<AssessmentsPage />} />
+          <Route path={ROUTES.ADMIN.SCORE_FILTER} element={<ScoreFilterPage />} />
           <Route path={ROUTES.ADMIN.LIVE_INTERVIEWS} element={<LiveMonitoringPage />} />
           <Route path={ROUTES.ADMIN.PROFILE} element={<UserProfilePage />} />
           <Route path={ROUTES.ADMIN.NOTIFICATIONS} element={<NotificationsPage />} />
