@@ -36,19 +36,21 @@ describe("AssessmentCard", () => {
     expect(screen.getByLabelText(/javascript test/i)).toBeInTheDocument();
   });
 
-  it("renders Normal badge for public accessibility", () => {
+  it("renders icon-only Standard badge for non-monitoring accessibility", () => {
     renderWithProviders(<AssessmentCard {...defaultProps} />);
-    expect(screen.getByText("Normal")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Standard" })).toBeInTheDocument();
+    expect(screen.queryByText("Standard")).not.toBeInTheDocument();
   });
 
-  it("renders Monitoring badge for monitoring accessibility", () => {
+  it("renders icon-only Monitoring badge for monitoring accessibility", () => {
     renderWithProviders(
       <AssessmentCard
         {...defaultProps}
         assessment={makeAssessment({ accessibility: "monitoring" })}
       />
     );
-    expect(screen.getByText("Monitoring")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Monitoring" })).toBeInTheDocument();
+    expect(screen.queryByText("Monitoring")).not.toBeInTheDocument();
   });
 
   it("renders round count badge", () => {

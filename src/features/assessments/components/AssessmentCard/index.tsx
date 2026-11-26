@@ -9,6 +9,8 @@ import {
   IconRectangleList,
   IconCalendar,
   IconChevronRight,
+  IconShield,
+  IconMonitor,
 } from "@/assets/icons";
 import { Assessment } from "@/types";
 import { formatDate } from "@/utils/helpers";
@@ -94,6 +96,7 @@ export function AssessmentCard({
   const expected = a.expected_candidates ?? 100;
   const progressPct = expected > 0 ? Math.min(100, Math.round((submitted / expected) * 100)) : 0;
   const isMonitoring = a.accessibility === "monitoring";
+  const modeLabel = isMonitoring ? "Monitoring" : "Standard";
 
   function renderProgress() {
     if (expected > 0) {
@@ -146,9 +149,11 @@ export function AssessmentCard({
         <div className={styles.badgeRow}>
           <span
             className={`${styles.modeBadge} ${isMonitoring ? styles.modeBadgeMonitor : styles.modeBadgeNormal}`}
+            role="img"
+            title={modeLabel}
+            aria-label={modeLabel}
           >
-            <span className={styles.modeDot} />
-            {isMonitoring ? "Monitoring" : "Standard"}
+            {isMonitoring ? <IconShield size={14} /> : <IconMonitor size={14} />}
           </span>
           <span className={styles.roundBadge}>
             {a.rounds.length} round{a.rounds.length === 1 ? "" : "s"}
