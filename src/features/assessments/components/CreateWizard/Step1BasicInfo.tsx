@@ -17,6 +17,7 @@ import {
 } from "@/assets/icons";
 import { AssessmentDraft, RoundSetup } from "./WizardContainer";
 import { AssessmentAccessibility, MonitoringConfig } from "@/types";
+import { DEFAULT_PASS_PERCENTAGE } from "@/constants/app";
 
 interface Props {
   draft: AssessmentDraft;
@@ -50,7 +51,12 @@ function MonitoringRow({ icon, label, hint, checked, onChange }: Readonly<Monito
 export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<Props>) {
   const [name, setName] = useState(draft.name);
   const [description, setDescription] = useState(draft.description);
-  const [expectedCandidates, setExpectedCandidates] = useState<number>(draft.expected_candidates ?? 10);
+  const [expectedCandidates, setExpectedCandidates] = useState<number>(
+    draft.expected_candidates ?? 10
+  );
+  const [passPercentage, setPassPercentage] = useState<number>(
+    draft.pass_percentage ?? DEFAULT_PASS_PERCENTAGE
+  );
   const [accessibility, setAccessibility] = useState<AssessmentAccessibility>(draft.accessibility);
   const [rounds, setRounds] = useState<RoundSetup[]>(draft.rounds);
   const [monitoring, setMonitoring] = useState<MonitoringConfig>(
@@ -89,6 +95,8 @@ export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<
   const canProceed =
     name.trim().length > 0 &&
     expectedCandidates > 0 &&
+    passPercentage >= 1 &&
+    passPercentage <= 100 &&
     rounds.length > 0 &&
     rounds.every((r) => r.question_count > 0 && r.max_duration_minutes > 0);
 
@@ -115,6 +123,14 @@ export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<
           value={expectedCandidates}
           onValueChange={(v) => setExpectedCandidates(v)}
           hint="Number of candidates expected to take this assessment"
+        />
+        <NumberField
+          label="Pass Percentage (%)"
+          min={1}
+          max={100}
+          value={passPercentage}
+          onValueChange={(v) => setPassPercentage(v)}
+          hint={`Overall score needed to pass, across all rounds. Defaults to ${DEFAULT_PASS_PERCENTAGE}%.`}
         />
       </div>
 
@@ -270,7 +286,15 @@ export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<
         <Button
           disabled={!canProceed || disableNext}
           onClick={() =>
-            onNext({ name, description, accessibility, rounds, monitoring_config: monitoring, expected_candidates: expectedCandidates })
+            onNext({
+              name,
+              description,
+              accessibility,
+              rounds,
+              monitoring_config: monitoring,
+              expected_candidates: expectedCandidates,
+              pass_percentage: passPercentage,
+            })
           }
           size="lg"
         >

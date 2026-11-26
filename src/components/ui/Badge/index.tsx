@@ -48,6 +48,13 @@ export function ComplexityBadge({ complexity }: Readonly<{ complexity: string }>
   );
 }
 
+/** Admin-facing pass/fail outcome. Renders nothing special ("—") while there is no result yet. */
+export function ResultBadge({ result }: Readonly<{ result?: string | null }>) {
+  if (result === "passed") return <Badge variant="success">Passed</Badge>;
+  if (result === "failed") return <Badge variant="error">Failed</Badge>;
+  return <span style={{ color: "var(--text-tertiary)" }}>—</span>;
+}
+
 export function StatusBadge({ status }: Readonly<{ status: string }>) {
   const map: Record<string, BadgeVariant> = {
     pending: "default",

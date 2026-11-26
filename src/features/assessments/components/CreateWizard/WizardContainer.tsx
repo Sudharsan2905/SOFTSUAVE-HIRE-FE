@@ -104,6 +104,8 @@ export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
     rounds: initialData?.rounds || [{ ...DEFAULT_ROUND }],
     accessibility: initialData?.accessibility ?? "normal",
     monitoring_config: initialData?.monitoring_config || { ...DEFAULT_MONITORING_CONFIG },
+    expected_candidates: initialData?.expected_candidates,
+    pass_percentage: initialData?.pass_percentage,
   });
 
   const updateDraft = (updates: Partial<AssessmentDraft>) => {

@@ -309,6 +309,47 @@ describe("Step1BasicInfo", () => {
     expect(payload.monitoring_config).toBeDefined();
   });
 
+  // ── Pass percentage ──────────────────────────────────────────────────────
+
+  it("defaults the pass percentage to 50 and sends it in the onNext payload", async () => {
+    const user = userEvent.setup();
+    const { onNext } = renderStep();
+    expect(screen.getByLabelText("Pass Percentage (%)")).toHaveValue(50);
+
+    await user.type(screen.getByLabelText("Assessment Name *"), "Quiz");
+    await user.click(nextBtn());
+
+    const payload = (onNext as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(payload.pass_percentage).toBe(50);
+  });
+
+  it("loads the saved pass percentage from the draft (edit mode)", () => {
+    renderStep({ draft: makeDraft({ name: "Saved", pass_percentage: 70 }) });
+    expect(screen.getByLabelText("Pass Percentage (%)")).toHaveValue(70);
+  });
+
+  it("sends an edited pass percentage in the onNext payload", async () => {
+    const user = userEvent.setup();
+    const { onNext } = renderStep({ draft: makeDraft({ name: "Saved", pass_percentage: 70 }) });
+    const field = screen.getByLabelText("Pass Percentage (%)");
+    await user.clear(field);
+    await user.type(field, "65");
+    await user.click(nextBtn());
+
+    const payload = (onNext as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(payload.pass_percentage).toBe(65);
+  });
+
+  it("clamps the pass percentage to 100 on blur", async () => {
+    const user = userEvent.setup();
+    renderStep({ draft: makeDraft({ name: "Saved" }) });
+    const field = screen.getByLabelText("Pass Percentage (%)");
+    await user.clear(field);
+    await user.type(field, "150");
+    await user.tab();
+    expect(field).toHaveValue(100);
+  });
+
   it("includes added rounds and monitoring accessibility in the onNext payload", async () => {
     const user = userEvent.setup();
     const { onNext } = renderStep();

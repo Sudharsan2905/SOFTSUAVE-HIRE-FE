@@ -5,7 +5,7 @@ import { Select } from "@/components/ui/Select";
 
 import { RichText } from "@/components/ui/RichText";
 import { Modal } from "@/components/ui/Modal";
-import { Badge } from "@/components/ui/Badge";
+import { Badge, ResultBadge } from "@/components/ui/Badge";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { clsx, formatDateTime, parseApiDate } from "@/utils/helpers";
 import { getAssessmentAccessibility } from "@/utils/assessmentSession";
@@ -282,6 +282,16 @@ function StatusSummary({
           <div className={styles.overviewStat}>
             <span className={styles.overviewStatLabel}>Score</span>
             <OverviewScoreRing pct={data.percentage} />
+          </div>
+
+          <div className={styles.overviewStat}>
+            <span className={styles.overviewStatLabel}>Result</span>
+            <ResultBadge result={data.result} />
+            {typeof data.pass_percentage === "number" && (
+              <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
+                Pass mark {data.pass_percentage}%
+              </span>
+            )}
           </div>
 
           <div className={styles.overviewStat}>
