@@ -41,6 +41,8 @@ interface AssessmentStats {
   total: number;
   monitoring: number;
   standard: number;
+  /** Candidates currently taking a test (IN_PROGRESS submissions). */
+  active_now: number;
   submissions_30d: number;
   avg_completion: number;
 }
@@ -49,9 +51,12 @@ const STATS_DEFAULT: AssessmentStats = {
   total: 0,
   monitoring: 0,
   standard: 0,
+  active_now: 0,
   submissions_30d: 0,
   avg_completion: 0,
 };
+
+const STATS_REFRESH_MS = 30_000;
 
 // ─── Counter animation hook ───────────────────────────────────────────────────
 
@@ -236,7 +241,7 @@ export default function AssessmentsPage() {
 
   // ── Counter animations ──────────────────────────────────────────────────────
   const animTotal = useCountUp(stats.total);
-  const animMonitoring = useCountUp(stats.monitoring);
+  const animActiveNow = useCountUp(stats.active_now);
   const animSubmissions = useCountUp(stats.submissions_30d);
   const animCompletion = useCountUp(stats.avg_completion);
 
@@ -249,7 +254,7 @@ export default function AssessmentsPage() {
     if (!workspaceId) return;
     try {
       const { data } = await api.get(API_ENDPOINTS.ASSESSMENTS.STATS(workspaceId));
-      setStats(data.data ?? STATS_DEFAULT);
+      setStats({ ...STATS_DEFAULT, ...data.data });
     } catch {
       // stats are decorative — fail silently
     }
@@ -298,6 +303,15 @@ export default function AssessmentsPage() {
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
+
+  // Keep the "Active Right Now" count fresh while the tab is visible.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "visible") fetchStats();
+    }, STATS_REFRESH_MS);
+    return () => window.clearInterval(id);
+  }, [fetchStats]);
+
   useEffect(() => {
     fetchAssessments();
   }, [fetchAssessments]);
@@ -438,7 +452,7 @@ export default function AssessmentsPage() {
                 >
                   <IconCircleCheck size={30} />
                 </div>
-                <span className={styles.statCardValue}>{animMonitoring}</span>
+                <span className={styles.statCardValue}>{animActiveNow}</span>
               </div>
               <div className={styles.statCardBottom}>
                 <span className={styles.statCardLabel}>Active Right Now</span>
