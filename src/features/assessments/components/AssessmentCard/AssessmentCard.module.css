@@ -58,34 +58,26 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+/* Icon-only mode badge: soft tinted circle, same icons as the filter tabs */
 .modeBadge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 20px;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
 }
 .modeBadgeMonitor {
-  background: rgb(22, 199, 132);
-  color: rgb(255, 255, 255);
+  color: var(--success-600);
+  background: color-mix(in srgb, var(--success-500) 16%, transparent);
+  border-color: color-mix(in srgb, var(--success-500) 35%, transparent);
 }
 .modeBadgeNormal {
-  background: rgb(59, 130, 246);
-  color: rgb(255, 255, 255);
-}
-.modeDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.modeBadgeMonitor .modeDot {
-  background: rgba(255, 255, 255, 0.75);
-}
-.modeBadgeNormal .modeDot {
-  background: #6b7280;
+  color: var(--primary-600);
+  background: color-mix(in srgb, var(--primary-500) 16%, transparent);
+  border-color: color-mix(in srgb, var(--primary-500) 35%, transparent);
 }
 
 .roundBadge {
