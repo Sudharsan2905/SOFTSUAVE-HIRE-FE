@@ -431,6 +431,41 @@ describe("AssessmentDetailPage", () => {
   });
 
   // -------------------------------------------------------------------------
+  // Percentage ring — colours must follow the theme (dark theme regression)
+  // -------------------------------------------------------------------------
+  // The page loads the assessment, the stats and the submissions, so answer by URL.
+  const mockPageWith = (submissions: object[]) =>
+    mockGet.mockImplementation((url: string) => {
+      if (url.includes("/submissions/stats")) return Promise.resolve({ data: { data: null } });
+      if (url.includes("/submissions"))
+        return Promise.resolve(makeSubmissionsResponse(submissions));
+      return Promise.resolve(makeAssessmentResponse());
+    });
+
+  it("draws the percentage label and ring track with theme variables, not fixed colours", async () => {
+    mockPageWith([makeSingleSubmission({ percentage: 72 })]);
+    renderPage();
+
+    const label = await screen.findByText("72%");
+
+    expect(label.tagName.toLowerCase()).toBe("text");
+    expect(label).toHaveAttribute("fill", "var(--text-primary)");
+    expect(label.parentElement?.querySelector("circle")).toHaveAttribute(
+      "stroke",
+      "var(--border-default)"
+    );
+  });
+
+  it("keeps a 0% label readable by using the secondary text colour", async () => {
+    mockPageWith([makeSingleSubmission({ percentage: 0 })]);
+    renderPage();
+
+    const label = await screen.findByText("0%");
+
+    expect(label).toHaveAttribute("fill", "var(--text-secondary)");
+  });
+
+  // -------------------------------------------------------------------------
   // Export (Download) — success path
   // -------------------------------------------------------------------------
   it("calls writeXlsxFile and toFile when Export button is clicked", async () => {

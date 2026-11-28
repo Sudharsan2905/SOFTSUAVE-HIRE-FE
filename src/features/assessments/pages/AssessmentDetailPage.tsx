@@ -100,10 +100,11 @@ function ScoreRing({ pct, roundsData }: Readonly<{ pct: number; roundsData?: Rou
   const r = 15;
   const C = 2 * Math.PI * r;
   const filled = (pct / 100) * C;
-  let ringColor = "#e7e8ed";
+  let ringColor = "var(--border-default)";
   if (pct >= 50) ringColor = "#7c5cff";
   else if (pct > 0) ringColor = "#16b674";
-  const txtColor = pct > 0 ? "#1e2330" : "#9aa0ac";
+  // Theme variables, not fixed hex: the label sits on the table surface, which is dark in dark mode.
+  const txtColor = pct > 0 ? "var(--text-primary)" : "var(--text-secondary)";
 
   const svg = (
     <svg
@@ -112,7 +113,7 @@ function ScoreRing({ pct, roundsData }: Readonly<{ pct: number; roundsData?: Rou
       viewBox="0 0 40 40"
       style={{ cursor: roundsData?.length ? "pointer" : "default" }}
     >
-      <circle cx={20} cy={20} r={r} fill="none" stroke="#edeef2" strokeWidth={4} />
+      <circle cx={20} cy={20} r={r} fill="none" stroke="var(--border-default)" strokeWidth={4} />
       {pct > 0 && (
         <circle
           cx={20}
