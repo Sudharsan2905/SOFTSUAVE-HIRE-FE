@@ -39,6 +39,7 @@ export type {
   MonitoringConfig,
   RoundConfig,
   Assessment,
+  Batch,
   ShareLink,
   CandidateQuestionOption,
   CandidateQuestion,

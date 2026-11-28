@@ -64,6 +64,11 @@ export interface RoundConfig {
   question_ids: string[];
 }
 
+export interface Batch {
+  bName: string;
+  bId: string;
+}
+
 export interface Assessment {
   id: string;
   workspace_id: string;
@@ -78,6 +83,7 @@ export interface Assessment {
   expected_candidates?: number;
   /** Overall percentage a candidate needs to pass. The API returns 50 when none was set. */
   pass_percentage?: number;
+  batch?: Batch[];
   created_at: string;
   updated_at: string;
 }

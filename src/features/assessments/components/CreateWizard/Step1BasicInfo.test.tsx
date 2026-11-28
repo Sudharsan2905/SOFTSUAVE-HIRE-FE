@@ -75,7 +75,7 @@ function makeDraft(overrides: Partial<AssessmentDraft> = {}): AssessmentDraft {
       audio_monitoring: true,
       video_monitoring: true,
       screenshot_mode: "time_interval",
-      screenshot_interval_seconds: 5,
+      screenshot_interval_seconds: 20,
       screenshot_enabled: true,
     },
     ...overrides,

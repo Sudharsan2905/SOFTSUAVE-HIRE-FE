@@ -15,6 +15,8 @@ export const ASSESSMENT_ERRORS = {
   DETAIL_LOAD_FAILED: "Failed to load assessment details.",
   SUBMISSIONS_LOAD_FAILED: "Failed to load submissions.",
   EXPORT_FAILED: "Failed to export submissions.",
+  BATCH_CREATE_FAILED: "Failed to create batch. Please try again.",
+  BATCH_NAME_REQUIRED: "Batch name is required.",
   NO_QUESTIONS: "Add at least one question before saving.",
   LINK_EXPIRED: "This assessment link has expired.",
   ALREADY_ATTEMPTED: "You have already attempted this assessment.",

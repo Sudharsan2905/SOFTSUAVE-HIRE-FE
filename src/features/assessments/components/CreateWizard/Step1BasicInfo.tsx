@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import styles from "./Step1BasicInfo.module.css";
 import { Input, Textarea, NumberField } from "@/components/ui/Input";
+import { MIN_SCREENSHOT_INTERVAL_SECONDS } from "../../constants/form";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { SkeuToggle } from "./SkeuToggle";
@@ -23,6 +24,11 @@ interface Props {
   draft: AssessmentDraft;
   onNext: (info: Partial<AssessmentDraft>) => void;
   disableNext?: boolean;
+  // Edit mode only: shows a Save button that persists without walking through the questions.
+  onSave?: (info: Partial<AssessmentDraft>) => void;
+  saving?: boolean;
+  // True when edits made outside this step (e.g. question picks) are still unsaved.
+  hasOtherChanges?: boolean;
 }
 
 // ─── Monitoring toggle row — icon + label/hint on the left, toggle on the right ──
@@ -48,7 +54,14 @@ function MonitoringRow({ icon, label, hint, checked, onChange }: Readonly<Monito
   );
 }
 
-export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<Props>) {
+export function Step1BasicInfo({
+  draft,
+  onNext,
+  disableNext = false,
+  onSave,
+  saving = false,
+  hasOtherChanges = false,
+}: Readonly<Props>) {
   const [name, setName] = useState(draft.name);
   const [description, setDescription] = useState(draft.description);
   const [expectedCandidates, setExpectedCandidates] = useState<number>(
@@ -59,16 +72,23 @@ export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<
   );
   const [accessibility, setAccessibility] = useState<AssessmentAccessibility>(draft.accessibility);
   const [rounds, setRounds] = useState<RoundSetup[]>(draft.rounds);
-  const [monitoring, setMonitoring] = useState<MonitoringConfig>(
-    draft.monitoring_config || {
+  const [monitoring, setMonitoring] = useState<MonitoringConfig>(() => {
+    const base: MonitoringConfig = draft.monitoring_config || {
       tab_monitoring: true,
       audio_monitoring: true,
       video_monitoring: true,
       screenshot_mode: "time_interval",
-      screenshot_interval_minutes: 5,
       screenshot_enabled: true,
-    }
-  );
+    };
+    // Older assessments may hold a shorter interval; lift it to the minimum.
+    return {
+      ...base,
+      screenshot_interval_seconds: Math.max(
+        MIN_SCREENSHOT_INTERVAL_SECONDS,
+        base.screenshot_interval_seconds ?? 0
+      ),
+    };
+  });
 
   const addRound = () => {
     setRounds((prev) => [
@@ -100,6 +120,22 @@ export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<
     rounds.length > 0 &&
     rounds.every((r) => r.question_count > 0 && r.max_duration_minutes > 0);
 
+  const currentInfo: Partial<AssessmentDraft> = {
+    name,
+    description,
+    accessibility,
+    rounds,
+    monitoring_config: monitoring,
+    expected_candidates: expectedCandidates,
+    pass_percentage: passPercentage,
+  };
+  // Snapshot of the values this step opened with, to detect edits.
+  const baseline = useRef(JSON.stringify(currentInfo));
+  const isDirty = hasOtherChanges || JSON.stringify(currentInfo) !== baseline.current;
+  // Every round must still have all its questions picked; otherwise continue via Next.
+  const questionsComplete = rounds.every((r) => (r.question_ids?.length ?? 0) >= r.question_count);
+  const canSave = isDirty && questionsComplete;
+
   return (
     <div className={styles.container}>
       {/* Basic Info */}
@@ -117,21 +153,23 @@ export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<
           onChange={(e) => setDescription(e.target.value)}
           rows={2}
         />
-        <NumberField
-          label="Expected Candidates *"
-          min={1}
-          value={expectedCandidates}
-          onValueChange={(v) => setExpectedCandidates(v)}
-          hint="Number of candidates expected to take this assessment"
-        />
-        <NumberField
-          label="Pass Percentage (%)"
-          min={1}
-          max={100}
-          value={passPercentage}
-          onValueChange={(v) => setPassPercentage(v)}
-          hint={`Overall score needed to pass, across all rounds. Defaults to ${DEFAULT_PASS_PERCENTAGE}%.`}
-        />
+        <div className={styles.fieldRow}>
+          <NumberField
+            label="Expected Candidates *"
+            min={1}
+            value={expectedCandidates}
+            onValueChange={(v) => setExpectedCandidates(v)}
+            hint="Number of candidates expected to take this assessment"
+          />
+          <NumberField
+            label="Pass Percentage (%)"
+            min={1}
+            max={100}
+            value={passPercentage}
+            onValueChange={(v) => setPassPercentage(v)}
+            hint={`Overall score needed to pass, across all rounds. Defaults to ${DEFAULT_PASS_PERCENTAGE}%.`}
+          />
+        </div>
       </div>
 
       {/* Rounds Config */}
@@ -262,8 +300,10 @@ export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<
                 {monitoring.screenshot_mode === "time_interval" ? (
                   <NumberField
                     label="Interval (seconds)"
-                    min={1}
-                    value={monitoring.screenshot_interval_seconds ?? 5}
+                    min={MIN_SCREENSHOT_INTERVAL_SECONDS}
+                    value={
+                      monitoring.screenshot_interval_seconds ?? MIN_SCREENSHOT_INTERVAL_SECONDS
+                    }
                     onValueChange={(n) =>
                       setMonitoring((p) => ({ ...p, screenshot_interval_seconds: n }))
                     }
@@ -282,20 +322,21 @@ export function Step1BasicInfo({ draft, onNext, disableNext = false }: Readonly<
         )}
       </div>
 
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
+        {onSave && (
+          <Button
+            variant="secondary"
+            size="lg"
+            isLoading={saving}
+            disabled={!canProceed || disableNext || !canSave}
+            onClick={() => onSave(currentInfo)}
+          >
+            Save
+          </Button>
+        )}
         <Button
-          disabled={!canProceed || disableNext}
-          onClick={() =>
-            onNext({
-              name,
-              description,
-              accessibility,
-              rounds,
-              monitoring_config: monitoring,
-              expected_candidates: expectedCandidates,
-              pass_percentage: passPercentage,
-            })
-          }
+          disabled={!canProceed || disableNext || saving}
+          onClick={() => onNext(currentInfo)}
           size="lg"
         >
           Next: Select Questions
