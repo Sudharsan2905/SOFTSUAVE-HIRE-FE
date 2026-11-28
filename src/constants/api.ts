@@ -33,6 +33,8 @@ export const API_ENDPOINTS = {
     STATS: (workspaceId: string) => `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/stats`,
     SCORE_FILTER: (workspaceId: string) =>
       `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/score-filter`,
+    SCORE_FILTER_EXPORT: (workspaceId: string) =>
+      `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/score-filter/export`,
     SHARE_LINKS: (workspaceId: string, id: string) =>
       `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${id}/share-links`,
     SHARE_LINK_BY_ID: (workspaceId: string, assessmentId: string, linkId: string) =>

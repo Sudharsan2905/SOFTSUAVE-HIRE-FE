@@ -50,7 +50,7 @@ export function ComplexityBadge({ complexity }: Readonly<{ complexity: string }>
 
 /**
  * Admin-facing pass/fail outcome. Renders nothing special ("—") while there is no result yet.
- * "incomplete" is used by the Score Filter for candidates who have not finished every assessment.
+ * "incomplete" is used by the Score Filter for entries whose submission is not finished and scored.
  */
 export function ResultBadge({ result }: Readonly<{ result?: string | null }>) {
   if (result === "passed") return <Badge variant="success">Passed</Badge>;
@@ -59,26 +59,32 @@ export function ResultBadge({ result }: Readonly<{ result?: string | null }>) {
   return <span style={{ color: "var(--text-tertiary)" }}>—</span>;
 }
 
+const STATUS_VARIANTS: Record<string, BadgeVariant> = {
+  pending: "default",
+  in_progress: "primary",
+  completed: "success",
+  malpractice: "error",
+  terminated: "error",
+  on_hold: "warning",
+  // Score Filter only: completed, but scoring has not finished yet.
+  scoring_pending: "warning",
+};
+
+/** Display text for a submission status; reuse it wherever a status is printed (e.g. exports). */
+export const STATUS_LABELS: Record<string, string> = {
+  pending: "Not Started",
+  in_progress: "Attending",
+  completed: "Completed",
+  malpractice: "Malpractice",
+  terminated: "Terminated",
+  on_hold: "On Hold",
+  scoring_pending: "Scoring Pending",
+};
+
 export function StatusBadge({ status }: Readonly<{ status: string }>) {
-  const map: Record<string, BadgeVariant> = {
-    pending: "default",
-    in_progress: "primary",
-    completed: "success",
-    malpractice: "error",
-    terminated: "error",
-    on_hold: "warning",
-  };
-  const labels: Record<string, string> = {
-    pending: "Not Started",
-    in_progress: "Attending",
-    completed: "Completed",
-    malpractice: "Malpractice",
-    terminated: "Terminated",
-    on_hold: "On Hold",
-  };
   return (
-    <Badge variant={map[status] ?? "default"} dot>
-      {labels[status] ?? status}
+    <Badge variant={STATUS_VARIANTS[status] ?? "default"} dot>
+      {STATUS_LABELS[status] ?? status}
     </Badge>
   );
 }

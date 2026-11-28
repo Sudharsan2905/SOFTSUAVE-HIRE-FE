@@ -1,4 +1,4 @@
-import type { ScoreFilterResultFilter } from "../types";
+import type { ScoreFilterResult, ScoreFilterResultFilter } from "../types";
 
 /** The backend rejects more than this many assessments in one request. */
 export const MAX_ASSESSMENTS = 10;
@@ -22,20 +22,28 @@ export const RESULT_JUDGED_OPTIONS: ResultOption[] = [
   { value: "failed", label: "Failed" },
 ];
 
-/** Readable label for a candidate's state in one assessment (see backend `ScoreFilterBreakdownItem`). */
-export const BREAKDOWN_STATE_LABELS: Record<string, string> = {
-  not_attempted: "Not attempted",
-  pending: "Not started",
-  in_progress: "In progress",
-  on_hold: "On hold",
-  terminated: "Terminated",
-  malpractice: "Malpractice",
-  scoring_pending: "Scoring pending",
-  completed: "Completed",
+/** Result text written to the Excel export (the table shows the same words through `ResultBadge`). */
+export const RESULT_LABELS: Record<ScoreFilterResult, string> = {
+  passed: "Passed",
+  failed: "Failed",
+  incomplete: "Incomplete",
 };
+
+/**
+ * Same two choices as the submissions export on the assessment's View Details page.
+ * "all" ignores the search, result and sort controls; the pass percentage always applies, as it
+ * is what the Result column is judged against.
+ */
+export const EXPORT_OPTIONS = [
+  { value: "all", label: "Export All" },
+  { value: "filtered", label: "Export With Filters" },
+] as const;
+
+export const EXPORT_FILE_NAME = "score_filter_results.xlsx";
 
 export const SCORE_FILTER_ERRORS = {
   LOAD_FAILED: "Failed to load score filter results",
   ASSESSMENTS_LOAD_FAILED: "Failed to load assessments",
+  EXPORT_FAILED: "Failed to export score filter results.",
   PASS_PERCENTAGE_RANGE: `Enter a value between ${PASS_PERCENTAGE_MIN} and ${PASS_PERCENTAGE_MAX}`,
 } as const;

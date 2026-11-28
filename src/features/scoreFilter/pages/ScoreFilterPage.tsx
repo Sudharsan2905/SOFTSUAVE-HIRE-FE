@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import writeXlsxFile from "write-excel-file/browser";
 import styles from "./ScoreFilterPage.module.css";
 import { Header } from "@/components/layout/Header";
 import { Input } from "@/components/ui/Input";
 import { MultiSelect } from "@/components/ui/MultiSelect";
 import { Pagination } from "@/components/ui/Pagination";
-import { ResultBadge } from "@/components/ui/Badge";
+import { ResultBadge, STATUS_LABELS, StatusBadge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import { Spinner } from "@/components/ui/Spinner";
 import {
@@ -14,6 +15,7 @@ import {
   IconChevronUp,
   IconCircleCheck,
   IconClose,
+  IconDownload,
   IconSearch,
   IconTime,
   IconUsersGroup,
@@ -25,7 +27,8 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
 import { clsx, getAvatarColor, getInitials } from "@/utils/helpers";
 import {
-  BREAKDOWN_STATE_LABELS,
+  EXPORT_FILE_NAME,
+  EXPORT_OPTIONS,
   MAX_ASSESSMENTS,
   PASS_PERCENTAGE_DEBOUNCE_MS,
   PASS_PERCENTAGE_MAX,
@@ -33,12 +36,14 @@ import {
   RESULT_ALL,
   RESULT_INCOMPLETE,
   RESULT_JUDGED_OPTIONS,
+  RESULT_LABELS,
   SCORE_FILTER_ERRORS,
 } from "../constants";
 import type {
   ScoreFilterData,
+  ScoreFilterEntry,
+  ScoreFilterExportRow,
   ScoreFilterResultFilter,
-  ScoreFilterRow,
   ScoreFilterSortBy,
 } from "../types";
 
@@ -62,6 +67,27 @@ function formatPercentage(value: number | null): string {
   return value === null ? "—" : `${value}%`;
 }
 
+interface QueryState {
+  assessmentIds: string[];
+  passPercentage: number | null;
+  result: ScoreFilterResultFilter;
+  search: string;
+  sortBy: ScoreFilterSortBy;
+  sortOrder: SortOrder;
+}
+
+/** Query string shared by the table (`/score-filter`) and the export (`/score-filter/export`). */
+function buildQuery(q: QueryState): URLSearchParams {
+  const params = new URLSearchParams();
+  q.assessmentIds.forEach((a) => params.append("assessment_ids", a));
+  if (q.passPercentage !== null) params.set("pass_percentage", String(q.passPercentage));
+  if (q.result !== "all") params.set("result", q.result);
+  if (q.search) params.set("search", q.search);
+  params.set("sort_by", q.sortBy);
+  params.set("sort_order", q.sortOrder);
+  return params;
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ScoreFilterPage() {
@@ -73,12 +99,13 @@ export default function ScoreFilterPage() {
   const [passInput, setPassInput] = useState("");
   const [resultFilter, setResultFilter] = useState<ScoreFilterResultFilter>("all");
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<ScoreFilterSortBy>("combined_percentage");
+  const [sortBy, setSortBy] = useState<ScoreFilterSortBy>("percentage");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
   // ── Results ─────────────────────────────────────────────────────────────────
   const [data, setData] = useState<ScoreFilterData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const requestId = useRef(0);
 
   const { page, pageSize, goToPage, reset, changePageSize } = usePagination();
@@ -139,13 +166,14 @@ export default function ScoreFilterPage() {
     const id = ++requestId.current; // ignore responses that arrive out of order
     setIsLoading(true);
     try {
-      const params = new URLSearchParams();
-      selectedIds.forEach((a) => params.append("assessment_ids", a));
-      if (appliedPass !== null) params.set("pass_percentage", String(appliedPass));
-      if (effectiveResult !== "all") params.set("result", effectiveResult);
-      if (debouncedSearch) params.set("search", debouncedSearch);
-      params.set("sort_by", sortBy);
-      params.set("sort_order", sortOrder);
+      const params = buildQuery({
+        assessmentIds: selectedIds,
+        passPercentage: appliedPass,
+        result: effectiveResult,
+        search: debouncedSearch,
+        sortBy,
+        sortOrder,
+      });
       params.set("page", String(page));
       params.set("page_size", String(pageSize));
       const { data: res } = await api.get(
@@ -175,9 +203,56 @@ export default function ScoreFilterPage() {
     fetchResults();
   }, [fetchResults]);
 
-  // ── Helpers ─────────────────────────────────────────────────────────────────
-  const assessmentNames = new Map(assessmentOptions.map((o) => [o.value, o.label]));
+  // ── Export ──────────────────────────────────────────────────────────────────
+  // Same flow as the submissions export on the assessment's View Details page: the backend
+  // returns every matching row (unpaged) and the Excel file is built in the browser.
+  const handleExport = async (withFilters: boolean) => {
+    if (!workspaceId || selectedIds.length === 0) return;
+    setExporting(true);
+    try {
+      const params = buildQuery({
+        assessmentIds: selectedIds,
+        passPercentage: appliedPass,
+        result: withFilters ? effectiveResult : "all",
+        search: withFilters ? debouncedSearch : "",
+        sortBy: withFilters ? sortBy : "percentage",
+        sortOrder: withFilters ? sortOrder : SortOrder.DESC,
+      });
+      const { data: res } = await api.get(
+        `${API_ENDPOINTS.ASSESSMENTS.SCORE_FILTER_EXPORT(workspaceId)}?${params}`
+      );
+      const rows: ScoreFilterExportRow[] = res.data ?? res;
+      await writeXlsxFile<ScoreFilterExportRow>(rows, {
+        columns: [
+          { header: "Name", cell: (r: ScoreFilterExportRow) => r.name },
+          { header: "Email", cell: (r: ScoreFilterExportRow) => r.email ?? "" },
+          { header: "Assessment", cell: (r: ScoreFilterExportRow) => r.assessment },
+          {
+            header: "Status",
+            cell: (r: ScoreFilterExportRow) => STATUS_LABELS[r.status] ?? r.status,
+          },
+          { header: "Score", cell: (r: ScoreFilterExportRow) => r.score ?? "" },
+          { header: "Total Questions", cell: (r: ScoreFilterExportRow) => r.total ?? "" },
+          { header: "Percentage (%)", cell: (r: ScoreFilterExportRow) => r.percentage ?? "" },
+          {
+            header: "Result",
+            cell: (r: ScoreFilterExportRow) => (r.result ? RESULT_LABELS[r.result] : ""),
+          },
+        ],
+      }).toFile(EXPORT_FILE_NAME);
+    } catch {
+      toast.error(SCORE_FILTER_ERRORS.EXPORT_FAILED);
+    } finally {
+      setExporting(false);
+    }
+  };
 
+  const handleExportSelect = (value: string) => {
+    if (value === "all") handleExport(false);
+    else if (value === "filtered") handleExport(true);
+  };
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
   const toggleSort = (field: ScoreFilterSortBy) => {
     if (sortBy === field) {
       setSortOrder((o) => (o === SortOrder.ASC ? SortOrder.DESC : SortOrder.ASC));
@@ -196,11 +271,12 @@ export default function ScoreFilterPage() {
     );
   };
 
-  const renderRow = (row: ScoreFilterRow) => {
-    const { candidate } = row;
-    const total = data?.assessments.length ?? 0;
+  // The list is flat, so the same candidate (even the same candidate and assessment) can repeat;
+  // the row position keeps the keys unique.
+  const renderEntry = (entry: ScoreFilterEntry, index: number) => {
+    const { candidate, assessment } = entry;
     return (
-      <tr key={candidate.id}>
+      <tr key={`${candidate.id}:${assessment.id}:${index}`}>
         <td>
           <div className={styles.candidateCell}>
             <div className={styles.avatar} style={{ background: getAvatarColor(candidate.name) }}>
@@ -212,39 +288,20 @@ export default function ScoreFilterPage() {
             </div>
           </div>
         </td>
+        <td className={styles.assessmentName} title={assessment.name}>
+          {assessment.name || "Assessment"}
+        </td>
         <td>
-          <ul className={styles.breakdown}>
-            {row.breakdown.map((item) => {
-              const done = item.status === "completed";
-              const label = done
-                ? formatPercentage(item.percentage)
-                : (BREAKDOWN_STATE_LABELS[item.status] ?? item.status);
-              return (
-                <li
-                  key={item.assessment_id}
-                  className={clsx(styles.chip, done ? styles.chipDone : styles.chipOpen)}
-                  title={done ? `${item.score} / ${item.total} correct` : undefined}
-                >
-                  <span className={styles.chipName}>
-                    {assessmentNames.get(item.assessment_id) ?? "Assessment"}
-                  </span>
-                  <span className={styles.chipValue}>{label}</span>
-                </li>
-              );
-            })}
-          </ul>
+          <StatusBadge status={entry.status} />
         </td>
         <td className={styles.nowrap}>
-          {row.completed_count} / {total}
-        </td>
-        <td className={styles.nowrap}>
-          {row.combined_score === null ? "—" : `${row.combined_score} / ${row.combined_total}`}
+          {entry.score === null ? "—" : `${entry.score} / ${entry.total}`}
         </td>
         <td className={clsx(styles.nowrap, styles.percentage)}>
-          {formatPercentage(row.combined_percentage)}
+          {formatPercentage(entry.percentage)}
         </td>
         <td>
-          <ResultBadge result={row.result} />
+          <ResultBadge result={entry.result} />
         </td>
       </tr>
     );
@@ -269,7 +326,7 @@ export default function ScoreFilterPage() {
         <Spinner size="lg" />
       </div>
     );
-  } else if (!data || data.candidates.length === 0) {
+  } else if (!data || data.entries.length === 0) {
     content = (
       <div className={styles.empty}>
         <p>
@@ -296,22 +353,22 @@ export default function ScoreFilterPage() {
                     Candidate {sortIndicator("name")}
                   </button>
                 </th>
-                <th>Assessments</th>
-                <th>Completed</th>
+                <th>Assessment</th>
+                <th>Status</th>
                 <th>Score</th>
-                <th aria-sort={sortBy === "combined_percentage" ? sortAria(sortOrder) : "none"}>
+                <th aria-sort={sortBy === "percentage" ? sortAria(sortOrder) : "none"}>
                   <button
                     type="button"
                     className={styles.sortBtn}
-                    onClick={() => toggleSort("combined_percentage")}
+                    onClick={() => toggleSort("percentage")}
                   >
-                    Combined % {sortIndicator("combined_percentage")}
+                    Percentage {sortIndicator("percentage")}
                   </button>
                 </th>
                 <th>Result</th>
               </tr>
             </thead>
-            <tbody>{data.candidates.map(renderRow)}</tbody>
+            <tbody>{data.entries.map(renderEntry)}</tbody>
           </table>
         </div>
         <Pagination
@@ -331,7 +388,20 @@ export default function ScoreFilterPage() {
     <div>
       <Header
         title="Score Filter"
-        subtitle="Combine assessments and judge candidates against one pass percentage"
+        subtitle="List candidates across assessments and judge each result against one pass percentage"
+        actions={
+          <Select
+            value=""
+            onChange={handleExportSelect}
+            options={EXPORT_OPTIONS}
+            placeholder={exporting ? "Exporting…" : "Export to Excel"}
+            leftIcon={exporting ? <Spinner size="sm" /> : <IconDownload size={16} />}
+            fullWidth={false}
+            hideArrow={true}
+            disabled={exporting || selectedIds.length === 0}
+            style={{ minWidth: 145 }}
+          />
+        }
       />
 
       <div className={styles.filters}>
@@ -381,7 +451,7 @@ export default function ScoreFilterPage() {
               <IconUsersGroup size={24} />
             </div>
             <div>
-              <p className={styles.statLabel}>Candidates</p>
+              <p className={styles.statLabel}>Submissions</p>
               <p className={styles.statValue}>{summary.total}</p>
             </div>
           </div>
