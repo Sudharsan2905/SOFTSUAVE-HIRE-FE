@@ -34,6 +34,7 @@ import { ShareLink, MonitoringOverrides } from "@/types";
 import toast from "react-hot-toast";
 import { clsx } from "@/utils/helpers";
 import { RestrictionMode } from "@/constants/enums";
+import { MIN_SCREENSHOT_INTERVAL_SECONDS } from "../../constants/form";
 import { CandidateAccessRestriction } from "./CandidateAccessRestriction";
 import { useRestrictedEmails } from "./useRestrictedEmails";
 
@@ -397,10 +398,7 @@ function PermanentTab({
       )}
 
       <div className={styles.generateRow}>
-        <Button
-          onClick={() => void handleSaveRestriction()}
-          isLoading={savingRestriction}
-        >
+        <Button onClick={() => void handleSaveRestriction()} isLoading={savingRestriction}>
           Save Restriction
         </Button>
       </div>
@@ -600,7 +598,7 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
     video_monitoring: true,
     screenshot_enabled: true,
     screenshot_mode: "time_interval",
-    screenshot_interval_seconds: 5,
+    screenshot_interval_seconds: MIN_SCREENSHOT_INTERVAL_SECONDS,
   });
   const [restrictEnabled, setRestrictEnabled] = useState(false);
   const [restrictionMode, setRestrictionMode] = useState<RestrictionMode>(RestrictionMode.INCLUDE);
@@ -848,8 +846,8 @@ function CustomLinkTab({ assessmentId, workspaceId }: Readonly<CustomLinkTabProp
                 <NumberStepper
                   label="Interval (seconds)"
                   id="screenshot-interval"
-                  min={1}
-                  value={monitoring.screenshot_interval_seconds ?? 5}
+                  min={MIN_SCREENSHOT_INTERVAL_SECONDS}
+                  value={monitoring.screenshot_interval_seconds ?? MIN_SCREENSHOT_INTERVAL_SECONDS}
                   onChange={(v) => setMonitoringKey("screenshot_interval_seconds", v)}
                 />
               ) : (

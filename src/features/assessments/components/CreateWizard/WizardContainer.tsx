@@ -96,6 +96,8 @@ export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
   const [step, setStep] = useState(1);
   const [currentRound, setCurrentRound] = useState(0);
   const [saving, setSaving] = useState(false);
+  // Edits made beyond Step 1's own fields (Step 1 re-opened after Next, or question picks).
+  const [touched, setTouched] = useState(false);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState(workspaceId);
 
   const [draft, setDraft] = useState<AssessmentDraft>({
@@ -114,6 +116,7 @@ export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
 
   const handleStep1Next = (info: Partial<AssessmentDraft>) => {
     updateDraft(info);
+    setTouched(true);
     setStep(2);
     setCurrentRound(0);
   };
@@ -130,6 +133,7 @@ export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
   };
 
   const updateRoundQuestions = (roundIdx: number, questionIds: string[]) => {
+    setTouched(true);
     setDraft((prev) => ({
       ...prev,
       rounds: prev.rounds.map((r, i) => (i === roundIdx ? { ...r, question_ids: questionIds } : r)),
@@ -138,14 +142,14 @@ export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
 
   const isLastRound = currentRound === draft.rounds.length - 1;
 
-  const handleFinish = async () => {
+  const handleFinish = async (payload: AssessmentDraft = draft) => {
     setSaving(true);
     try {
       if (editMode && assessmentId) {
-        await api.put(API_ENDPOINTS.ASSESSMENTS.BY_ID(selectedWorkspaceId, assessmentId), draft);
+        await api.put(API_ENDPOINTS.ASSESSMENTS.BY_ID(selectedWorkspaceId, assessmentId), payload);
         toast.success(ASSESSMENT_SUCCESS.UPDATED);
       } else {
-        await api.post(API_ENDPOINTS.ASSESSMENTS.ROOT(selectedWorkspaceId), draft);
+        await api.post(API_ENDPOINTS.ASSESSMENTS.ROOT(selectedWorkspaceId), payload);
         toast.success(ASSESSMENT_SUCCESS.CREATED);
       }
       onSuccess();
@@ -157,6 +161,13 @@ export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
     } finally {
       setSaving(false);
     }
+  };
+
+  // Edit mode: save straight from Step 1 with the values currently on screen.
+  const handleStep1Save = (info: Partial<AssessmentDraft>) => {
+    const merged = { ...draft, ...info };
+    setDraft(merged);
+    handleFinish(merged);
   };
 
   const roundRequired = draft.rounds[currentRound]?.question_count ?? 0;
@@ -188,7 +199,7 @@ export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
             finishLabel={finishLabel}
             onPrev={handleRoundPrev}
             onNext={handleRoundNext}
-            onFinish={handleFinish}
+            onFinish={() => handleFinish()}
           />
         )
       }
@@ -227,6 +238,9 @@ export const CreateAssessmentWizard = memo(function CreateAssessmentWizard({
               draft={draft}
               onNext={handleStep1Next}
               disableNext={workspaceSelectorEmpty}
+              onSave={editMode ? handleStep1Save : undefined}
+              saving={saving}
+              hasOtherChanges={touched}
             />
           </>
         ) : (

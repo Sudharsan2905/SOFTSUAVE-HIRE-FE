@@ -1,11 +1,14 @@
 import type { AssessmentDraft } from "../types/assessments.types";
 
+// Shortest allowed gap between periodic screenshots (mirrors the backend limit).
+export const MIN_SCREENSHOT_INTERVAL_SECONDS = 20;
+
 export const DEFAULT_MONITORING_CONFIG = {
   tab_monitoring: true,
   audio_monitoring: true,
   video_monitoring: true,
   screenshot_mode: "time_interval" as const,
-  screenshot_interval_seconds: 5,
+  screenshot_interval_seconds: MIN_SCREENSHOT_INTERVAL_SECONDS,
   screenshot_enabled: true,
 };
 

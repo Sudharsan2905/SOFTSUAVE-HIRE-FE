@@ -26,18 +26,22 @@ import {
   IconPower,
   IconDelete,
   IconAlertTriangle,
+  IconPlus,
+  IconEdit,
 } from "@/assets/icons";
 import { Modal } from "@/components/ui/Modal";
+import { Input } from "@/components/ui/Input";
 import { Tooltip } from "@/components/ui/Tooltip";
 import type { DateRange } from "@/components/datetime/DateRangePicker";
 import { api } from "@/utils/api";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usePagination } from "@/hooks/usePagination";
-import { Assessment, Submission, PaginationMeta, SortOrder, RoundData } from "@/types";
+import { Assessment, Batch, Submission, PaginationMeta, SortOrder, RoundData } from "@/types";
 import { SUBMISSION_RESULT_OPTIONS, SUBMISSION_STATUS_OPTIONS } from "@/constants/app";
 import { API_ENDPOINTS } from "@/constants/api";
 import { ROUTES } from "@/constants/routes";
 import { ASSESSMENT_ERRORS } from "@/features/assessments/constants";
+import { CreateAssessmentWizard } from "@/features/assessments/components/CreateWizard/WizardContainer";
 import { ShareWizardModal } from "@/features/assessments/components/ShareWizard/ShareWizardModal";
 import { formatDateTime, getAvatarColor, getInitials, getFullName } from "@/utils/helpers";
 import { saveAssessmentAccessibility } from "@/utils/assessmentSession";
@@ -173,6 +177,13 @@ export default function AssessmentDetailPage() {
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [status, setStatus] = useState("");
   const [result, setResult] = useState("");
+  // null until the assessment (and its batches) has loaded; "" means no batch filter.
+  const [batchId, setBatchId] = useState<string | null>(null);
+  const [showEdit, setShowEdit] = useState(false);
+  const [showBatchModal, setShowBatchModal] = useState(false);
+  const [batchName, setBatchName] = useState("");
+  const [batchError, setBatchError] = useState("");
+  const [batchSubmitting, setBatchSubmitting] = useState(false);
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [showSchedule, setShowSchedule] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -194,19 +205,59 @@ export default function AssessmentDetailPage() {
   const debouncedSearch = useDebounce(search, 300);
 
   // Fetch full assessment (needed by share wizard and max-rounds display)
-  useEffect(() => {
+  const refreshAssessment = useCallback(() => {
     if (!workspaceId || !id) return;
     api
       .get(API_ENDPOINTS.ASSESSMENTS.BY_ID(workspaceId, id))
       .then(({ data }) => {
         const fetchedAssessment = data.data ?? null;
         setAssessment(fetchedAssessment);
+        if (fetchedAssessment?.name) setAssessmentName(fetchedAssessment.name);
+        // Batch-1 (the first batch) is preselected on first load only.
+        setBatchId((prev) => prev ?? fetchedAssessment?.batch?.[0]?.bId ?? "");
         if (fetchedAssessment?.accessibility) {
           saveAssessmentAccessibility(fetchedAssessment.accessibility);
         }
       })
-      .catch(() => undefined);
+      .catch(() => setBatchId((prev) => prev ?? ""));
   }, [workspaceId, id]);
+
+  useEffect(() => {
+    refreshAssessment();
+  }, [refreshAssessment]);
+
+  const closeBatchModal = () => {
+    setShowBatchModal(false);
+    setBatchName("");
+    setBatchError("");
+  };
+
+  const handleCreateBatch = async () => {
+    const name = batchName.trim();
+    if (!name) {
+      setBatchError(ASSESSMENT_ERRORS.BATCH_NAME_REQUIRED);
+      return;
+    }
+    setBatchSubmitting(true);
+    try {
+      const { data } = await api.post(API_ENDPOINTS.ASSESSMENTS.BATCHES(workspaceId!, id!), {
+        name,
+      });
+      const created: Batch | undefined = data.data;
+      if (created) {
+        setAssessment((prev) =>
+          prev ? { ...prev, batch: [...(prev.batch ?? []), created] } : prev
+        );
+      }
+      closeBatchModal();
+      toast.success(data.message ?? "Batch created");
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setBatchError(msg ?? ASSESSMENT_ERRORS.BATCH_CREATE_FAILED);
+    } finally {
+      setBatchSubmitting(false);
+    }
+  };
 
   // Fetch aggregate stats from the dedicated BE endpoint
   useEffect(() => {
@@ -316,6 +367,7 @@ export default function AssessmentDetailPage() {
   };
 
   const fetchSubmissions = useCallback(async () => {
+    if (batchId === null) return; // wait for the default batch to be resolved
     setIsLoading(true);
     try {
       const params = new URLSearchParams({
@@ -326,6 +378,7 @@ export default function AssessmentDetailPage() {
         ...(debouncedSearch && { search: debouncedSearch }),
         ...(status && { status }),
         ...(result && { result }),
+        ...(batchId && { batch: batchId }),
         ...(dateRange.from && { from_date: dateRange.from }),
         ...(dateRange.to && { to_date: dateRange.to }),
       });
@@ -350,6 +403,7 @@ export default function AssessmentDetailPage() {
     debouncedSearch,
     status,
     result,
+    batchId,
     dateRange,
   ]);
 
@@ -359,7 +413,9 @@ export default function AssessmentDetailPage() {
 
   useEffect(() => {
     reset();
-  }, [debouncedSearch, sortBy, sortOrder, status, result, dateRange]);
+  }, [debouncedSearch, sortBy, sortOrder, status, result, batchId, dateRange]);
+
+  const batchOptions = (assessment?.batch ?? []).map((b) => ({ value: b.bId, label: b.bName }));
 
   const EXPORT_OPTIONS = [
     { value: "all", label: "Export All" },
@@ -384,6 +440,7 @@ export default function AssessmentDetailPage() {
               ...(debouncedSearch && { search: debouncedSearch }),
               ...(status && { status }),
               ...(result && { result }),
+              ...(batchId && { batch: batchId }),
               ...(dateRange.from && { from_date: dateRange.from }),
               ...(dateRange.to && { to_date: dateRange.to }),
             });
@@ -587,6 +644,22 @@ export default function AssessmentDetailPage() {
         subtitle={`${meta?.total ?? 0} submissions`}
         actions={
           <div style={{ display: "flex", gap: 8 }}>
+            <Button
+              variant="secondary"
+              leftIcon={<IconEdit size={14} />}
+              onClick={() => setShowEdit(true)}
+              disabled={!assessment}
+            >
+              Edit
+            </Button>
+            <Button
+              variant="secondary"
+              leftIcon={<IconPlus size={14} />}
+              onClick={() => setShowBatchModal(true)}
+              disabled={!assessment}
+            >
+              Create Batch
+            </Button>
             <Select
               value={exportType}
               onChange={handleExportSelect}
@@ -716,7 +789,19 @@ export default function AssessmentDetailPage() {
         onDateRangeChange={setDateRange}
         dateRangePlaceholder="Started date"
         onRefresh={fetchSubmissions}
-      />
+      >
+        {batchOptions.length > 0 && (
+          <div style={{ minWidth: 150, flex: 1 }}>
+            <Select
+              options={batchOptions}
+              placeholder="Batch"
+              value={batchId ?? ""}
+              onChange={setBatchId}
+              fullWidth
+            />
+          </div>
+        )}
+      </FilterBar>
 
       {content}
 
@@ -781,6 +866,65 @@ export default function AssessmentDetailPage() {
           }}
         />
       )}
+
+      {showEdit && assessment && workspaceId && (
+        <CreateAssessmentWizard
+          workspaceId={workspaceId}
+          editMode
+          assessmentId={assessment.id}
+          initialData={{
+            name: assessment.name,
+            description: assessment.description,
+            rounds: assessment.rounds.map((r) => ({
+              round_number: r.round_number,
+              question_count: r.question_count,
+              max_duration_minutes: r.max_duration_minutes,
+              question_ids: r.question_ids,
+            })),
+            accessibility: assessment.accessibility,
+            monitoring_config: assessment.monitoring_config,
+            expected_candidates: assessment.expected_candidates,
+            pass_percentage: assessment.pass_percentage,
+          }}
+          onClose={() => setShowEdit(false)}
+          onSuccess={() => {
+            setShowEdit(false);
+            refreshAssessment();
+          }}
+        />
+      )}
+
+      <Modal
+        isOpen={showBatchModal}
+        onClose={closeBatchModal}
+        title="Create Batch"
+        footer={
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+            <Button variant="secondary" onClick={closeBatchModal} disabled={batchSubmitting}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateBatch} isLoading={batchSubmitting}>
+              Save
+            </Button>
+          </div>
+        }
+      >
+        <Input
+          label="Batch Name"
+          placeholder="e.g. Batch-2"
+          value={batchName}
+          maxLength={50}
+          autoFocus
+          error={batchError}
+          onChange={(e) => {
+            setBatchName(e.target.value);
+            setBatchError("");
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleCreateBatch();
+          }}
+        />
+      </Modal>
 
       <Modal
         isOpen={showDeleteModal}

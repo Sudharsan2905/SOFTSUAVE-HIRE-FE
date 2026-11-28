@@ -45,6 +45,8 @@ export const API_ENDPOINTS = {
       `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${assessmentId}/shares`,
     SHARE_BY_ID: (workspaceId: string, assessmentId: string, shareId: string) =>
       `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${assessmentId}/shares/${shareId}`,
+    BATCHES: (workspaceId: string, id: string) =>
+      `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${id}/batches`,
     SUBMISSIONS: (workspaceId: string, id: string) =>
       `${API_BASE_PATH}/workspaces/${workspaceId}/assessments/${id}/submissions`,
     SUBMISSIONS_EXPORT: (workspaceId: string, id: string) =>
